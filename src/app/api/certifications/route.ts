@@ -17,7 +17,12 @@ export async function GET(request: NextRequest) {
         include: { student: true },
         take: limit,
         skip: (page - 1) * limit,
-        orderBy: { fechaEmision: 'desc' },
+        orderBy: [
+          { fechaEmision: 'desc' },
+          { student: { cedula: 'asc' } },
+          { student: { seccion: 'asc' } },
+          { student: { apellidos: 'asc' } },
+        ],
       }),
       prisma.certification.count({ where }),
     ])

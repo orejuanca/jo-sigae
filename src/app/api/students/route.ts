@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     if (!q) {
       const [students, total] = await Promise.all([
-        prisma.student.findMany({ take: limit, skip: (page - 1) * limit, orderBy: { apellidos: 'asc' } }),
+        prisma.student.findMany({ take: limit, skip: (page - 1) * limit, orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }] }),
         prisma.student.count(),
       ])
       return NextResponse.json({ students, total, page, limit, totalPages: Math.ceil(total / limit) })
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         where,
         take: limit,
         skip: (page - 1) * limit,
-        orderBy: { apellidos: 'asc' },
+        orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }],
       }),
       prisma.student.count({ where }),
     ])
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
           ],
         },
         take: limit * 5,
-        orderBy: { apellidos: 'asc' },
+        orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }],
       })
 
       const filtered = allStudents.filter(s =>

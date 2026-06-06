@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
+      orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }],
     })
 
     return NextResponse.json({

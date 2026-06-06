@@ -44,7 +44,7 @@ interface Calificacion {
 export default function BoletinPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([])
-  const [grado, setGrado] = useState('6to Grado')
+  const [grado, setGrado] = useState('1er Año')
   const [seccion, setSeccion] = useState('A')
   const [periodo, setPeriodo] = useState('2025-2026')
   const [generating, setGenerating] = useState(false)

@@ -175,6 +175,8 @@ const emptyCertData = (planTipo?: string): CertData => {
     promedioAcumulado: '',
     director: { apellidosNombres: schoolConfig.director.apellidosNombres, cedula: schoolConfig.director.cedula },
     directorCdcce: { apellidosNombres: schoolConfig.directorCdcce.apellidosNombres, cedula: schoolConfig.directorCdcce.cedula },
+    planTipo: planTipo || 'vigente',
+    aniosEscolares: [],
   }
 }
 

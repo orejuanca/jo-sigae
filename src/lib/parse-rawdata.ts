@@ -300,7 +300,7 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
       const numNota = parseFloat(g.nota)
-      const literal = (!isNaN(numNota) && numNota > 0) ? notaEnLetras(g.nota) : (g.nota === 'IN' ? 'IN' : '')
+      const literal = notaEnLetras(g.nota)
       const subjectIndex = sIdx % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
 
@@ -473,15 +473,15 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
       const numNota = parseFloat(g.nota)
-      const literal = (!isNaN(numNota) && numNota > 0) ? notaEnLetras(g.nota) : (g.nota === 'PE' ? 'PENDIENTE' : g.nota === 'IN' ? 'IN' : '')
+      const literal = notaEnLetras(g.nota)
       const subjectIndex = sIdx % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
 
       return {
         materia,
         numero: sIdx + 1,
-        nota: g.nota === 'PE' ? 'PE' : g.nota,
-        literal: g.nota === 'PE' ? 'PENDIENTE' : literal,
+        nota: g.nota,
+        literal,
         tipoEvaluacion: g.tipo || '',
         fechaMes: parseMes(g.mes),
         fechaAnio: g.anio,

@@ -22,6 +22,7 @@ model Student {
   updatedAt       DateTime @updatedAt
 
   certifications Certification[]
+  boletaNotas     BoletaNota[]
 
   @@index([cedula])
   @@index([apellidos])
@@ -41,4 +42,24 @@ model Certification {
 
   @@index([studentId])
   @@index([tipo])
+}
+
+// Notas por lapso para boletines (BOLETAS)
+model BoletaNota {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  anioEscolar String   // Ej: "2021-2022"
+  grado       String   // Ej: "2" (2do año)
+  seccion     String   // Ej: "A"
+  materia     String   // Ej: "Castellano"
+  lapso1      String?  // Nota numérica o IN/PE
+  lapso2      String?
+  lapso3      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([studentId, anioEscolar, grado, seccion, materia])
+  @@index([studentId])
+  @@index([anioEscolar, grado, seccion])
 }

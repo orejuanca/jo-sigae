@@ -28,6 +28,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavLink href="/certificaciones">Certificaciones</NavLink>
               <NavLink href="/constancias">Constancias</NavLink>
               <NavLink href="/boletin">Boletín</NavLink>
+              <NavLink href="/boletas">Boletas</NavLink>
               <NavLink href="/titulos">Títulos</NavLink>
               <NavLink href="/validar">Validar</NavLink>
             </div>
@@ -41,6 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink href="/certificaciones" small>Cert.</NavLink>
             <NavLink href="/constancias" small>Const.</NavLink>
             <NavLink href="/boletin" small>Boletín</NavLink>
+            <NavLink href="/boletas" small>Boletas</NavLink>
             <NavLink href="/titulos" small>Títulos</NavLink>
             <NavLink href="/validar" small>Validar</NavLink>
           </div>

@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  cedula          String   @unique
+  apellidos       String
+  nombres         String
+  fechaNacimiento String?
+  pais            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  certifications Certification[]
+}
+
+model Certification {
+  id        String   @id @default(cuid())
+  tipo      String // "CERTIFICACION" | "CONSTANCIA" | "BOLETIN" | "TITULO"
+  datos     String? // JSON string with document data
+  numero    String? // Sequential number
+  emitidoEl DateTime @default(now())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  cedula          String   @unique
+  fechaNacimiento String?
+  apellidos       String
+  nombres         String
+  pais            String   @default("VENEZUELA")
+  estado          String   @default("")
+  municipio       String   @default("")
+  plan            String   @default("vigente")
+  rawData         String   @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  certifications Certification[]
+
+  @@index([cedula])
+  @@index([apellidos])
+  @@index([nombres])
+}
+
+model Certification {
+  id           String   @id @default(cuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tipo         String   @default("certificacion")
+  fechaEmision DateTime @default(now())
+  datos        String   @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

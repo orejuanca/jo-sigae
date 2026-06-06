@@ -43,6 +43,7 @@ export const schoolConfig = {
 export interface MateriaAnio {
   nombre: string
   numero: number
+  tipo?: 'numerica' | 'cualitativa' // default: numerica (1-20). cualitativa usa letras (A, EX, etc.)
 }
 
 export interface PlanAnio {
@@ -61,6 +62,8 @@ export const planEMG: PlanAnio[] = [
       { nombre: 'Arte y Patrimonio', numero: 5 },
       { nombre: 'Ciencias Naturales', numero: 6 },
       { nombre: 'Geografía, Historia y Ciudadanía', numero: 7 },
+      { nombre: 'Orientación y Convivencia', numero: 8, tipo: 'cualitativa' as const },
+      { nombre: 'Participación Grupal', numero: 9, tipo: 'cualitativa' as const },
     ],
   },
   {
@@ -73,6 +76,8 @@ export const planEMG: PlanAnio[] = [
       { nombre: 'Arte y Patrimonio', numero: 5 },
       { nombre: 'Ciencias Naturales', numero: 6 },
       { nombre: 'Geografía, Historia y Ciudadanía', numero: 7 },
+      { nombre: 'Orientación y Convivencia', numero: 8, tipo: 'cualitativa' as const },
+      { nombre: 'Participación Grupal', numero: 9, tipo: 'cualitativa' as const },
     ],
   },
   {
@@ -86,6 +91,9 @@ export const planEMG: PlanAnio[] = [
       { nombre: 'Química', numero: 6 },
       { nombre: 'Biología', numero: 7 },
       { nombre: 'Geografía, Historia y Ciudadanía', numero: 8 },
+      { nombre: 'Formación para la Soberanía Nacional', numero: 9 },
+      { nombre: 'Orientación y Convivencia', numero: 10, tipo: 'cualitativa' as const },
+      { nombre: 'Participación Grupal', numero: 11, tipo: 'cualitativa' as const },
     ],
   },
   {
@@ -100,6 +108,8 @@ export const planEMG: PlanAnio[] = [
       { nombre: 'Biología', numero: 7 },
       { nombre: 'Geografía, Historia y Ciudadanía', numero: 8 },
       { nombre: 'Formación para la Soberanía Nacional', numero: 9 },
+      { nombre: 'Orientación y Convivencia', numero: 10, tipo: 'cualitativa' as const },
+      { nombre: 'Participación Grupal', numero: 11, tipo: 'cualitativa' as const },
     ],
   },
   {
@@ -115,6 +125,8 @@ export const planEMG: PlanAnio[] = [
       { nombre: 'Ciencias de la Tierra', numero: 8 },
       { nombre: 'Geografía, Historia y Ciudadanía', numero: 9 },
       { nombre: 'Formación para la Soberanía Nacional', numero: 10 },
+      { nombre: 'Orientación y Convivencia', numero: 11, tipo: 'cualitativa' as const },
+      { nombre: 'Participación Grupal', numero: 12, tipo: 'cualitativa' as const },
     ],
   },
 ]

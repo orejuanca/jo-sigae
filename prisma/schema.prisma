@@ -24,6 +24,7 @@ model Student {
 
   certifications Certification[]
   boletaNotas     BoletaNota[]
+  boletaExtras    BoletaExtra[]
 
   @@index([cedula])
   @@index([apellidos])
@@ -62,5 +63,25 @@ model BoletaNota {
 
   @@unique([studentId, anioEscolar, grado, seccion, materia])
   @@index([studentId])
+  @@index([anioEscolar, grado, seccion])
+}
+
+// Datos extra por alumno en boletas (GRUPO, OBS)
+model BoletaExtra {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  anioEscolar String
+  grado       String
+  seccion     String
+  grupo1      String?   // Exoneración grupo lapso 1 (ej: "EXONERADO")
+  grupo2      String?
+  grupo3      String?
+  grupo4      String?
+  observacion String?  // Observaciones del boletín
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([studentId, anioEscolar, grado, seccion])
   @@index([anioEscolar, grado, seccion])
 }

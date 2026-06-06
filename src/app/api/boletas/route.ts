@@ -9,15 +9,11 @@ export async function GET(request: NextRequest) {
     const grado = searchParams.get('grado') || ''
     const seccion = searchParams.get('seccion') || ''
 
-    // Require at least anioEscolar and grado to return results
     if (!anioEscolar || !grado) {
       return NextResponse.json({ students: [], materias: [] })
     }
 
-    // Fetch all students (ordered by apellidos)
-    // The grado and seccion are stored as part of the BoletaNota, not in the Student table
-    // We need to find students who have BoletaNota records matching the filters,
-    // or return all students if no notas exist yet
+    // Fetch students with boletaNotas and boletaExtras, ordered by cedula -> seccion -> apellidos
     const studentsWithNotas = await prisma.student.findMany({
       where: {
         boletaNotas: {
@@ -30,6 +26,13 @@ export async function GET(request: NextRequest) {
       },
       include: {
         boletaNotas: {
+          where: {
+            anioEscolar,
+            grado,
+            seccion: seccion || undefined,
+          },
+        },
+        boletaExtras: {
           where: {
             anioEscolar,
             grado,
@@ -53,11 +56,11 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT /api/boletas
-// Body: { anioEscolar, grado, seccion, notas: [{ studentId, materia, lapso1, lapso2, lapso3 }] }
+// Body: { anioEscolar, grado, seccion, notas: [...], extras: [...] }
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { anioEscolar, grado, seccion, notas } = body
+    const { anioEscolar, grado, seccion, notas, extras } = body
 
     if (!anioEscolar || !grado || !notas || !Array.isArray(notas)) {
       return NextResponse.json(
@@ -66,11 +69,10 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Save notas
     const results = []
-
     for (const nota of notas) {
       const { studentId, materia, lapso1, lapso2, lapso3 } = nota
-
       if (!studentId || !materia) continue
 
       const upserted = await prisma.boletaNota.upsert({
@@ -99,8 +101,44 @@ export async function PUT(request: NextRequest) {
           lapso3: lapso3 || null,
         },
       })
-
       results.push(upserted)
+    }
+
+    // Save extras (GRUPO, OBS) if provided
+    if (extras && Array.isArray(extras)) {
+      for (const extra of extras) {
+        const { studentId, grupo1, grupo2, grupo3, grupo4, observacion } = extra
+        if (!studentId) continue
+
+        await prisma.boletaExtra.upsert({
+          where: {
+            studentId_anioEscolar_grado_seccion: {
+              studentId,
+              anioEscolar,
+              grado,
+              seccion,
+            },
+          },
+          create: {
+            studentId,
+            anioEscolar,
+            grado,
+            seccion,
+            grupo1: grupo1 || null,
+            grupo2: grupo2 || null,
+            grupo3: grupo3 || null,
+            grupo4: grupo4 || null,
+            observacion: observacion || null,
+          },
+          update: {
+            grupo1: grupo1 || null,
+            grupo2: grupo2 || null,
+            grupo3: grupo3 || null,
+            grupo4: grupo4 || null,
+            observacion: observacion || null,
+          },
+        })
+      }
     }
 
     return NextResponse.json({ success: true, count: results.length, notas: results })

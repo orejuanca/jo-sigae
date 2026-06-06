@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,15 +11,6 @@ import { useToast } from '@/hooks/use-toast'
 import { planEMG, formatCedulaFinal, type PlanAnio, type MateriaAnio } from '@/lib/school-config'
 
 // ── Types ──────────────────────────────────────────────────────────────
-interface StudentNota {
-  id: string
-  cedula: string
-  apellidos: string
-  nombres: string
-  seccion: string
-  boletaNotas: BoletaNotaRecord[]
-}
-
 interface BoletaNotaRecord {
   id: string
   studentId: string
@@ -29,8 +20,33 @@ interface BoletaNotaRecord {
   lapso3: string | null
 }
 
-// Local editable structure: studentId → materia → { lapso1, lapso2, lapso3 }
+interface BoletaExtraRecord {
+  id: string
+  studentId: string
+  grupo1: string | null
+  grupo2: string | null
+  grupo3: string | null
+  grupo4: string | null
+  observacion: string | null
+}
+
+interface StudentNota {
+  id: string
+  cedula: string
+  apellidos: string
+  nombres: string
+  seccion: string
+  fechaNacimiento: string | null
+  municipio: string
+  estado: string
+  boletaNotas: BoletaNotaRecord[]
+  boletaExtras: BoletaExtraRecord[]
+}
+
+// Local editable structures
 type NotasMap = Record<string, Record<string, { lapso1: string; lapso2: string; lapso3: string }>>
+type ExtrasMap = Record<string, { grupo1: string; grupo2: string; grupo3: string; grupo4: string; observacion: string }>
+type ObsMap = Record<string, string>
 
 // ── Grado options ────────────────────────────────────────────────────────
 const GRADO_OPTIONS = [
@@ -48,9 +64,15 @@ function getMateriasForGrado(grado: string): MateriaAnio[] {
   return planEMG[idx].materias
 }
 
-function calcDef(l1: string, l2: string, l3: string): string {
+function calcDef(materia: MateriaAnio, l1: string, l2: string, l3: string): string {
+  // For qualitative subjects, just use the first non-empty value (all lapsos are the same)
+  if (materia.tipo === 'cualitativa') {
+    const vals = [l1, l2, l3].filter(v => v.trim() !== '')
+    if (vals.length === 0) return ''
+    return vals[0].trim()
+  }
+  // For numeric subjects, calculate average
   const vals = [l1, l2, l3]
-  // If any is IN or PE, definitive is IN or PE
   for (const v of vals) {
     if (v.trim().toUpperCase() === 'IN' || v.trim().toUpperCase() === 'PE') {
       return v.trim().toUpperCase()
@@ -61,6 +83,27 @@ function calcDef(l1: string, l2: string, l3: string): string {
   if (valid.length === 0) return ''
   const avg = valid.reduce((a, b) => a + b, 0) / 3
   return String(Math.round(avg))
+}
+
+function calcProm(materias: MateriaAnio[], notas: Record<string, { lapso1: string; lapso2: string; lapso3: string }>, lapso: number): string {
+  let sum = 0
+  let count = 0
+  const lapsoKey = lapso === 1 ? 'lapso1' : lapso === 2 ? 'lapso2' : 'lapso3'
+
+  for (const m of materias) {
+    if (m.tipo === 'cualitativa') continue // Skip qualitative subjects for average
+    const val = notas[m.nombre]?.[lapsoKey] || ''
+    const trimmed = val.trim()
+    if (trimmed === '' || trimmed === 'IN' || trimmed === 'PE') continue
+    const n = parseFloat(trimmed)
+    if (!isNaN(n) && n > 0) {
+      sum += n
+      count++
+    }
+  }
+  if (count === 0) return ''
+  const avg = sum / count
+  return avg.toFixed(2).replace('.', ',')
 }
 
 function getNotaColorClass(value: string): string {
@@ -92,6 +135,8 @@ export default function BoletasPage() {
   const [seccion, setSeccion] = useState('A')
   const [students, setStudents] = useState<StudentNota[]>([])
   const [notasMap, setNotasMap] = useState<NotasMap>({})
+  const [extrasMap, setExtrasMap] = useState<ExtrasMap>({})
+  const [obsMap, setObsMap] = useState<ObsMap>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searched, setSearched] = useState(false)
@@ -105,11 +150,7 @@ export default function BoletasPage() {
     setLoading(true)
     setSearched(true)
     try {
-      const params = new URLSearchParams({
-        anioEscolar,
-        grado,
-        seccion,
-      })
+      const params = new URLSearchParams({ anioEscolar, grado, seccion })
       const res = await fetch(`/api/boletas?${params}`)
       if (!res.ok) throw new Error('Error en la búsqueda')
       const data = await res.json()
@@ -118,19 +159,36 @@ export default function BoletasPage() {
       setStudents(loaded)
 
       // Build notasMap from loaded data
-      const map: NotasMap = {}
+      const nMap: NotasMap = {}
+      const eMap: ExtrasMap = {}
+      const oMap: ObsMap = {}
+
       for (const s of loaded) {
-        map[s.id] = {}
+        nMap[s.id] = {}
         for (const m of getMateriasForGrado(grado)) {
           const nota = s.boletaNotas?.find((n: BoletaNotaRecord) => n.materia === m.nombre)
-          map[s.id][m.nombre] = {
+          nMap[s.id][m.nombre] = {
             lapso1: nota?.lapso1 || '',
             lapso2: nota?.lapso2 || '',
             lapso3: nota?.lapso3 || '',
           }
         }
+
+        // Load extras (GRUPO)
+        const extra = s.boletaExtras?.[0]
+        eMap[s.id] = {
+          grupo1: extra?.grupo1 || '',
+          grupo2: extra?.grupo2 || '',
+          grupo3: extra?.grupo3 || '',
+          grupo4: extra?.grupo4 || '',
+          observacion: extra?.observacion || '',
+        }
+        oMap[s.id] = extra?.observacion || ''
       }
-      setNotasMap(map)
+
+      setNotasMap(nMap)
+      setExtrasMap(eMap)
+      setObsMap(oMap)
     } catch {
       toast({ title: 'Error', description: 'Error al buscar alumnos', variant: 'destructive' })
     } finally {
@@ -151,46 +209,63 @@ export default function BoletasPage() {
     })
   }, [])
 
-  // ── Save all notas ────────────────────────────────────────────────────
+  // ── Update GRUPO cell ─────────────────────────────────────────────
+  const updateGrupo = useCallback((studentId: string, lapso: 'grupo1' | 'grupo2' | 'grupo3' | 'grupo4', value: string) => {
+    setExtrasMap(prev => {
+      const copy = { ...prev }
+      const current = { ...(copy[studentId] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '' }) }
+      current[lapso] = value
+      copy[studentId] = current
+      return copy
+    })
+  }, [])
+
+  // ── Update OBS ─────────────────────────────────────────────────────
+  const updateObs = useCallback((studentId: string, value: string) => {
+    setExtrasMap(prev => {
+      const copy = { ...prev }
+      const current = { ...(copy[studentId] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '' }) }
+      current.observacion = value
+      copy[studentId] = current
+      return copy
+    })
+  }, [])
+
+  // ── Save all ────────────────────────────────────────────────────────
   const handleSave = useCallback(async () => {
     if (students.length === 0) return
     setSaving(true)
     try {
       const notasPayload: { studentId: string; materia: string; lapso1: string; lapso2: string; lapso3: string }[] = []
+      const extrasPayload: { studentId: string; grupo1: string; grupo2: string; grupo3: string; grupo4: string; observacion: string }[] = []
 
       for (const student of students) {
         for (const m of materias) {
           const n = notasMap[student.id]?.[m.nombre]
-          if (n) {
-            notasPayload.push({
-              studentId: student.id,
-              materia: m.nombre,
-              lapso1: n.lapso1 || '',
-              lapso2: n.lapso2 || '',
-              lapso3: n.lapso3 || '',
-            })
-          } else {
-            // Create empty record for all students so they are included in the boleta
-            notasPayload.push({
-              studentId: student.id,
-              materia: m.nombre,
-              lapso1: '',
-              lapso2: '',
-              lapso3: '',
-            })
-          }
+          notasPayload.push({
+            studentId: student.id,
+            materia: m.nombre,
+            lapso1: n?.lapso1 || '',
+            lapso2: n?.lapso2 || '',
+            lapso3: n?.lapso3 || '',
+          })
         }
+
+        const e = extrasMap[student.id]
+        extrasPayload.push({
+          studentId: student.id,
+          grupo1: e?.grupo1 || '',
+          grupo2: e?.grupo2 || '',
+          grupo3: e?.grupo3 || '',
+          grupo4: e?.grupo4 || '',
+          observacion: e?.observacion || '',
+        })
       }
 
       const res = await fetch('/api/boletas', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          anioEscolar,
-          grado,
-          seccion,
-          notas: notasPayload,
-        }),
+        body: JSON.stringify({ anioEscolar, grado, seccion, notas: notasPayload, extras: extrasPayload }),
       })
 
       if (!res.ok) {
@@ -211,15 +286,10 @@ export default function BoletasPage() {
     } finally {
       setSaving(false)
     }
-  }, [students, notasMap, materias, anioEscolar, grado, seccion, toast])
+  }, [students, notasMap, extrasMap, materias, anioEscolar, grado, seccion, toast])
 
-  // ── Handle Tab key navigation in inputs ──────────────────────────────
+  // ── Arrow key navigation ─────────────────────────────────────────────
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, studentIdx: number, materiaIdx: number, lapsoIdx: number) => {
-    if (e.key === 'Tab') {
-      // Let default Tab work - browser handles focus movement
-      return
-    }
-    // Arrow keys for navigation
     let targetStudent = studentIdx
     let targetMateria = materiaIdx
     let targetLapso = lapsoIdx
@@ -253,13 +323,9 @@ export default function BoletasPage() {
     const lapsoKeys = ['lapso1', 'lapso2', 'lapso3'] as const
     const inputId = `nota-${targetStudent}-${targetMateria}-${lapsoKeys[targetLapso]}`
     const el = document.getElementById(inputId) as HTMLInputElement
-    if (el) {
-      el.focus()
-      el.select()
-    }
+    if (el) { el.focus(); el.select() }
   }, [students.length, materias.length])
 
-  // ── Get grado label ──────────────────────────────────────────────────
   const gradoLabel = GRADO_OPTIONS.find(g => g.value === grado)?.label || grado
 
   return (
@@ -273,13 +339,13 @@ export default function BoletasPage() {
               Boletas de Calificaciones
             </h1>
             <p className="text-muted-foreground text-sm">
-              Registro masivo de notas por lapso — Plan EMG
+              Registro masivo de notas por lapso — Plan EMG — {gradoLabel}
             </p>
           </div>
           {students.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                {students.length} alumno{students.length !== 1 ? 's' : ''} cargado{students.length !== 1 ? 's' : ''}
+                {students.length} alumno{students.length !== 1 ? 's' : ''}
               </span>
             </div>
           )}
@@ -330,7 +396,7 @@ export default function BoletasPage() {
           </CardContent>
         </Card>
 
-        {/* Empty state - before search */}
+        {/* Empty state */}
         {!searched && (
           <Card>
             <CardContent className="py-16">
@@ -348,7 +414,7 @@ export default function BoletasPage() {
           </Card>
         )}
 
-        {/* No results state */}
+        {/* No results */}
         {searched && !loading && students.length === 0 && (
           <Card>
             <CardContent className="py-16">
@@ -359,8 +425,7 @@ export default function BoletasPage() {
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   No hay alumnos registrados con notas para {gradoLabel} — Sección {seccion}
-                  en el año escolar {anioEscolar}. Verifique que las notas hayan sido ingresadas
-                  previamente o que los filtros sean correctos.
+                  en el año escolar {anioEscolar}.
                 </p>
               </div>
             </CardContent>
@@ -378,12 +443,12 @@ export default function BoletasPage() {
                     {saving ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando...</>
                     ) : (
-                      <><Save className="h-4 w-4 mr-2" /> Guardar Notas</>
+                      <><Save className="h-4 w-4 mr-2" /> Guardar Todo</>
                     )}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => window.print()}>
                     <Printer className="h-4 w-4 mr-2" />
-                    Exportar a PDF
+                    Imprimir
                   </Button>
                   <div className="ml-auto text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
                     <span className="flex items-center gap-1">
@@ -407,126 +472,197 @@ export default function BoletasPage() {
             {/* Table */}
             <Card>
               <CardContent className="p-0">
-                <div ref={tableRef} className="overflow-x-auto max-h-[70vh] overflow-y-auto">
+                <div ref={tableRef} className="overflow-x-auto max-h-[75vh] overflow-y-auto">
                   <table className="w-full text-xs border-collapse">
                     <thead className="sticky top-0 z-10">
+                      {/* Row 1: Main headers */}
                       <tr>
-                        {/* Fixed columns header */}
-                        <th
-                          className="sticky left-0 z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-center font-semibold w-8"
-                        >
-                          Nº
-                        </th>
-                        <th
-                          className="sticky left-[32px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[100px]"
-                        >
-                          Cédula
-                        </th>
-                        <th
-                          className="sticky left-[132px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-3 py-2 text-left font-semibold min-w-[180px]"
-                        >
-                          Apellidos y Nombres
-                        </th>
-                        <th
-                          className="sticky left-[312px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-center font-semibold w-10"
-                        >
-                          Sec.
-                        </th>
+                        {/* Fixed identity columns */}
+                        <th className="sticky left-0 z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-7 text-[10px]">N°</th>
+                        <th className="sticky left-[28px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[95px] text-[10px]">CEDULA</th>
+                        <th className="sticky left-[123px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[170px] text-[10px]">APELLNOMB</th>
+                        <th className="sticky left-[293px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-8 text-[10px]">S</th>
 
                         {/* Subject columns */}
                         {materias.map((m) => (
                           <th
                             key={m.nombre}
                             colSpan={4}
-                            className="bg-emerald-700 text-white border-b border-l border-emerald-600 px-1 py-2 text-center font-semibold"
+                            className={`border-b border-l border-r border-emerald-600 px-1 py-1.5 text-center font-semibold text-[9px] ${m.tipo === 'cualitativa' ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white'}`}
                           >
-                            <span className="block truncate max-w-[140px]" title={m.nombre}>
-                              {m.nombre}
+                            <span className="block truncate max-w-[110px]" title={m.nombre}>
+                              {m.nombre.toUpperCase()}
                             </span>
                           </th>
                         ))}
-                      </tr>
-                      <tr>
-                        {/* Fixed columns sub-header */}
-                        <th className="sticky left-0 z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
-                        <th className="sticky left-[32px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
-                        <th className="sticky left-[132px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-3" />
-                        <th className="sticky left-[312px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
 
-                        {/* Subject sub-columns */}
+                        {/* GRUPO columns */}
+                        <th colSpan={4} className="bg-slate-700 text-white border-b border-l border-r border-slate-600 px-1 py-1.5 text-center font-semibold text-[9px]">GRUPO</th>
+
+                        {/* PROM columns */}
+                        <th colSpan={4} className="bg-slate-600 text-white border-b border-l border-r border-slate-500 px-1 py-1.5 text-center font-semibold text-[9px]">PROM</th>
+
+                        {/* Biographic columns */}
+                        <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">FN</th>
+                        <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">LN</th>
+                        <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">EN</th>
+
+                        {/* OBS */}
+                        <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[120px]">OBS</th>
+                      </tr>
+
+                      {/* Row 2: Sub-headers */}
+                      <tr>
+                        <th className="sticky left-0 z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+                        <th className="sticky left-[28px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
+                        <th className="sticky left-[123px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
+                        <th className="sticky left-[293px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+
+                        {/* Subject sub-columns: 1er, 2do, 3er, DEF */}
                         {materias.map((m) => (
                           <React.Fragment key={`sub-${m.nombre}`}>
-                            <th className="bg-emerald-900 text-emerald-300 border-b border-l border-r border-emerald-700 py-1 px-1 w-[48px] text-center text-[10px] font-medium">
-                              L1
-                            </th>
-                            <th className="bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1 w-[48px] text-center text-[10px] font-medium">
-                              L2
-                            </th>
-                            <th className="bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1 w-[48px] text-center text-[10px] font-medium">
-                              L3
-                            </th>
-                            <th className="bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1 w-[48px] text-center text-[10px] font-bold">
-                              DEF
-                            </th>
+                            <th className={`border-b border-l border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>1er</th>
+                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>2do</th>
+                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>3er</th>
+                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-bold ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-200' : 'bg-emerald-900 text-emerald-200'}`}>DEF</th>
                           </React.Fragment>
                         ))}
+
+                        {/* GRUPO sub-columns */}
+                        <th className="bg-slate-800 text-slate-300 border-b border-l border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-medium">G1</th>
+                        <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-medium">G2</th>
+                        <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-medium">G3</th>
+                        <th className="bg-slate-800 text-slate-200 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-bold">G4</th>
+
+                        {/* PROM sub-columns */}
+                        <th className="bg-slate-700 text-slate-300 border-b border-l border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-medium">P1</th>
+                        <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-medium">P2</th>
+                        <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-medium">P3</th>
+                        <th className="bg-slate-700 text-slate-200 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-bold">P4</th>
+
+                        {/* Bio sub-headers */}
+                        <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
+                        <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
+                        <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
+                        <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
                       </tr>
                     </thead>
+
                     <tbody>
-                      {students.map((student, studentIdx) => (
-                        <tr key={student.id} className="hover:bg-muted/30 transition-colors">
-                          {/* Fixed columns data */}
-                          <td className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-2 py-1.5 text-center text-muted-foreground font-mono">
-                            {studentIdx + 1}
-                          </td>
-                          <td className="sticky left-[32px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1.5 font-mono text-[11px]">
-                            {formatCedulaFinal(student.cedula)}
-                          </td>
-                          <td className="sticky left-[132px] z-10 bg-white border-b border-r border-gray-200 px-3 py-1.5 font-medium whitespace-nowrap text-[11px]">
-                            {student.apellidos}, {student.nombres}
-                          </td>
-                          <td className="sticky left-[312px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1.5 text-center font-semibold text-[11px]">
-                            {student.seccion || seccion}
-                          </td>
+                      {students.map((student, studentIdx) => {
+                        const studentNotas = notasMap[student.id] || {}
+                        const studentExtras = extrasMap[student.id] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '' }
 
-                          {/* Subject nota cells */}
-                          {materias.map((m, materiaIdx) => {
-                            const notas = notasMap[student.id]?.[m.nombre] || { lapso1: '', lapso2: '', lapso3: '' }
-                            const def = calcDef(notas.lapso1, notas.lapso2, notas.lapso3)
-                            const lapsoKeys = ['lapso1', 'lapso2', 'lapso3'] as const
+                        return (
+                          <tr key={student.id} className="hover:bg-muted/30 transition-colors">
+                            {/* Fixed identity columns */}
+                            <td className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center text-muted-foreground font-mono text-[10px]">
+                              {studentIdx + 1}
+                            </td>
+                            <td className="sticky left-[28px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-mono text-[10px] whitespace-nowrap">
+                              {formatCedulaFinal(student.cedula)}
+                            </td>
+                            <td className="sticky left-[123px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-medium whitespace-nowrap text-[10px]">
+                              {student.apellidos}, {student.nombres}
+                            </td>
+                            <td className="sticky left-[293px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center font-semibold text-[10px]">
+                              {student.seccion || seccion}
+                            </td>
 
-                            return (
-                              <React.Fragment key={`${student.id}-${m.nombre}`}>
-                                {lapsoKeys.map((lapso, lapsoIdx) => {
-                                  const val = notas[lapso]
-                                  return (
-                                    <td
-                                      key={`${student.id}-${m.nombre}-${lapso}`}
-                                      className={`border-b border-r border-gray-200 py-0 px-0.5 ${getNotaBgClass(val)}`}
-                                    >
-                                      <input
-                                        id={`nota-${studentIdx}-${materiaIdx}-${lapsoIdx}`}
-                                        type="text"
-                                        value={val}
-                                        onChange={(e) => updateNota(student.id, m.nombre, lapso, e.target.value.toUpperCase())}
-                                        onKeyDown={(e) => handleKeyDown(e, studentIdx, materiaIdx, lapsoIdx)}
-                                        className={`h-7 w-12 text-center text-xs border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded ${getNotaColorClass(val)}`}
-                                        maxLength={3}
-                                      />
-                                    </td>
-                                  )
-                                })}
-                                {/* Definitiva */}
-                                <td
-                                  className={`border-b border-r border-gray-200 py-1.5 px-1 text-center font-bold ${getNotaColorClass(def)} ${getNotaBgClass(def)}`}
-                                >
-                                  {def || '—'}
+                            {/* Subject nota cells */}
+                            {materias.map((m, materiaIdx) => {
+                              const notas = studentNotas[m.nombre] || { lapso1: '', lapso2: '', lapso3: '' }
+                              const def = calcDef(m, notas.lapso1, notas.lapso2, notas.lapso3)
+                              const lapsoKeys = ['lapso1', 'lapso2', 'lapso3'] as const
+                              const isCualitativa = m.tipo === 'cualitativa'
+
+                              return (
+                                <React.Fragment key={`${student.id}-${m.nombre}`}>
+                                  {lapsoKeys.map((lapso, lapsoIdx) => {
+                                    const val = notas[lapso]
+                                    return (
+                                      <td
+                                        key={`${student.id}-${m.nombre}-${lapso}`}
+                                        className={`border-b border-r border-gray-200 py-0 px-0 ${isCualitativa ? 'bg-blue-50/30' : getNotaBgClass(val)}`}
+                                      >
+                                        <input
+                                          id={`nota-${studentIdx}-${materiaIdx}-${lapsoIdx}`}
+                                          type="text"
+                                          value={val}
+                                          onChange={(e) => updateNota(student.id, m.nombre, lapso, isCualitativa ? e.target.value.toUpperCase() : e.target.value.toUpperCase())}
+                                          onKeyDown={(e) => handleKeyDown(e, studentIdx, materiaIdx, lapsoIdx)}
+                                          className={`h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 ${isCualitativa ? 'focus:ring-blue-400' : 'focus:ring-emerald-500'} rounded ${isCualitativa ? 'text-blue-700 font-medium' : getNotaColorClass(val)}`}
+                                          maxLength={isCualitativa ? 12 : 3}
+                                        />
+                                      </td>
+                                    )
+                                  })}
+                                  {/* Definitiva */}
+                                  <td className={`border-b border-r border-gray-200 py-1 px-0.5 text-center font-bold text-[10px] ${isCualitativa ? (def ? 'text-blue-700 bg-blue-50/50' : 'text-muted-foreground') : getNotaColorClass(def) + ' ' + getNotaBgClass(def)}`}>
+                                    {def || '—'}
+                                  </td>
+                                </React.Fragment>
+                              )
+                            })}
+
+                            {/* GRUPO cells (editable) */}
+                            {(['grupo1', 'grupo2', 'grupo3', 'grupo4'] as const).map((gKey) => {
+                              const val = studentExtras[gKey] || ''
+                              return (
+                                <td key={`${student.id}-${gKey}`} className="border-b border-r border-gray-200 py-0 px-0 bg-slate-50/50">
+                                  <input
+                                    type="text"
+                                    value={val}
+                                    onChange={(e) => updateGrupo(student.id, gKey, e.target.value.toUpperCase())}
+                                    className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 rounded text-slate-600 font-medium"
+                                    placeholder="—"
+                                    maxLength={12}
+                                  />
                                 </td>
-                              </React.Fragment>
-                            )
-                          })}
-                        </tr>
-                      ))}
+                              )
+                            })}
+
+                            {/* PROM cells (calculated) */}
+                            {[1, 2, 3, 4].map((lapsoNum) => {
+                              const prom = calcProm(materias, studentNotas, lapsoNum)
+                              const n = parseFloat(prom.replace(',', '.'))
+                              const promColor = !prom ? 'text-muted-foreground' : n >= 18 ? 'text-emerald-700 font-bold' : n >= 15 ? 'text-amber-600 font-semibold' : n >= 12 ? 'text-orange-500 font-medium' : n > 0 ? 'text-red-600 font-bold' : 'text-muted-foreground'
+                              return (
+                                <td key={`${student.id}-prom${lapsoNum}`} className="border-b border-r border-gray-200 py-1 px-0.5 text-center text-[10px] bg-slate-50/30">
+                                  <span className={promColor}>{prom || '—'}</span>
+                                </td>
+                              )
+                            })}
+
+                            {/* FN - Fecha de Nacimiento */}
+                            <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">
+                              {student.fechaNacimiento || '—'}
+                            </td>
+
+                            {/* LN - Lugar de Nacimiento (municipio) */}
+                            <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap max-w-[80px] truncate" title={student.municipio}>
+                              {student.municipio || '—'}
+                            </td>
+
+                            {/* EN - Entidad Federal (estado) */}
+                            <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">
+                              {student.estado || '—'}
+                            </td>
+
+                            {/* OBS - Observaciones (editable) */}
+                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-amber-50/30">
+                              <input
+                                type="text"
+                                value={studentExtras.observacion || ''}
+                                onChange={(e) => updateObs(student.id, e.target.value)}
+                                className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600"
+                                placeholder="—"
+                                maxLength={100}
+                              />
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -1,72 +1,29 @@
-
 ---
 Task ID: 1
-Agent: main
-Task: Implement rawData parsing for certificaciones, support BD/BD2 plans, auto-populate grades
+Agent: Main Agent
+Task: Corregir formato cédula, letras, tipo evaluación y fechas en certificaciones
 
 Work Log:
-- Analyzed BD (students_bd.json, 1870 students) and BD2 (students_bd2.json, 305 students) data structures
-- Mapped BD grade pattern: keys 23-227 in groups of 5 (nota, tipo, mes, año, lapso), 7-7-8-9-10 subjects per year
-- Mapped BD2 grade pattern: keys 39+ in groups of 5, variable structure with specializations
-- Created src/lib/parse-rawdata.ts: parser for both BD and BD2 rawData formats
-- Created /api/students/[id]/cert-data endpoint
-- Rewrote certificaciones/page.tsx with auto-population from rawData
-- Updated student-search.tsx with plan badge display
-- Build passed, lint clean, pushed to GitHub
+- Analizó el código fuente completo: parse-rawdata.ts, certificaciones/page.tsx, seed/route.ts, schema.prisma
+- Verificó el formato real de datos en students_bd.json: cédula como "E 84607347" (letra+espacio+número)
+- Confirmó que rawData tiene: NOTA (numérico), TIPO (F/R/P), MES (número), AÑO (4 dígitos)
+- Confirmó que las LETRAS se calculan con notaToLiteral() (A=18-20, B=15-17, C=12-14, D=10-11, E=01-09)
+- Corrigió parse-rawdata.ts:
+  - formatDateVal() ahora normaliza ISO y DD/MM/YYYY a DD/MM/YYYY con ceros
+  - Agregó currentDateDDMMYYYY() para fecha de expedición
+  - fechaNacimiento se normaliza a DD/MM/YYYY en parsedToCertData()
+  - tipoEvaluacion por defecto cambió de 'EF' a '' (vacío)
+- Corrigió certificaciones/page.tsx:
+  - emptyCertData() tipoEvaluacion por defecto a '' en vez de 'EF'
+  - fechaExpedicion normalizada a DD/MM/YYYY
+  - handleSelectStudent() normaliza fechaNacimiento a DD/MM/YYYY
+- Corrigió seed/route.ts:
+  - Agregó normalizeFecha() para convertir ISO a DD/MM/YYYY al importar
+- Build exitoso, push a GitHub, Vercel desplegando
 
 Stage Summary:
-- Certificaciones page now auto-populates ALL data from rawData when a student is selected
-- Supports both BD (plan vigente EMG) and BD2 (planes derogados)
-- Grades, dates, T/E types, institutions, OC, groups, observations, acta data all extracted
-- Deployed to Vercel via GitHub push (commit b3bdfd6)
-
----
-Task ID: 2
-Agent: main
-Task: Fix cert parser for asterisk blocks, ensure all grade data shows correctly, BD+BD2 dual database support
-
-Work Log:
-- Analyzed raw data structure: BD has asterisk blocks (**, ****) interspersed between real grade groups
-- BD2 has alternating real-grade and asterisk-block patterns (real, ***, *, **, ****, *, real, real, ...)
-- Rewrote parseBDRawData: scans keys 23-227 in groups of 5, uses isValidGrade() to skip asterisk blocks
-- Rewrote parseBD2RawData: scans keys 39-293 with same asterisk-skipping approach
-- Added isValidGrade(val): validates numeric 01-20 and special types (PE, IN, EX)
-- Improved isAsterisk(val): handles *, **, ****, * * patterns with regex
-- Fixed db.ts to use @prisma/client instead of @/generated/prisma (legacy route compatibility)
-- Enhanced certificaciones/page.tsx Vista Previa with NOTA column and Valor Fiscal display
-- Verified no primary education references anywhere in codebase
-- Seeded both databases: 1,870 BD vigente + 305 BD2 derogado = 2,175 total
-- Verified Neon PostgreSQL has all 2,175 students
-- Tested parser with BD student: 41 grades correctly extracted (7+7+8+9+10) with nota, literal, T-E, mes, año
-- Tested parser with BD2 student: 30 grades extracted, 3 institutions, specializations parsed
-- Build successful, pushed to GitHub (commit 02e437b)
-
-Stage Summary:
-- Certification format now shows ALL required data: Nota, Literal, Tipo Evaluación (T-E), Mes, Año
-- Both BD (plan vigente) and BD2 (planes derogados) databases fully supported
-- System is exclusively for Educación Media General (secondary, 1ro-5to año)
-- Parser correctly handles asterisk blocks in raw data from .xlsm files
-- Institutions, Orientación, Grupos, Observaciones, Acta all extracted properly
-
----
-Task ID: 3
-Agent: main
-Task: Verify rawData in DB, fix certificaciones data display, remove primary education refs
-
-Work Log:
-- Investigated why certifications showed no grades: rawData was already populated for all 2,175 students
-- Verified parser works correctly: NAVARRO CAÑATE → 41 grades (7+7+8+9+10 across 5 years), with nota/literal/T-E/mes/año
-- Verified BELLO RAMOS → 22 grades across 5 years (some years partial)
-- Verified URBANO SANTA MARIA → 31 grades across 4 years
-- Root cause: Vercel deploy was using OLD code before rawData seed; code was already correct
-- Fixed emptyCertData() to include planTipo and aniosEscolares (was missing, could cause type issues)
-- Fixed boletin page: changed default grado from '6to Grado' to '1er Año' (EMG only, no primary)
-- Verified no primary education references remain in src/ (only boletin had '6to Grado', now fixed)
-- Build passed cleanly, pushed to GitHub (commit c61077b), Vercel auto-deploying
-
-Stage Summary:
-- All 2,175 students have rawData with grades in Neon PostgreSQL
-- Certificaciones page auto-loads and displays: NOTA, LETRAS, T-E, MES, AÑO for all years
-- Both BD (plan vigente) and BD2 (plan derogado) fully supported
-- System is exclusively Educación Media General (secondary education only)
-- Vercel deployment triggered via GitHub push
+- Archivos modificados: parse-rawdata.ts, certificaciones/page.tsx, seed/route.ts
+- Todas las fechas ahora se muestran en DD/MM/YYYY
+- Tipo de evaluación muestra valor real de rawData (F/R/P/E/Q) sin valor por defecto
+- Cédula preserva formato original (letra + espacio + número)
+- Commit: 1eff2ca

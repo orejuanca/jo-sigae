@@ -858,9 +858,10 @@ export default function CertificacionesPage() {
                                   <tr className="border border-black bg-gray-100">
                                     <th className="border border-black p-0.5 w-6">N°</th>
                                     <th className="border border-black p-0.5 text-left">Área de Formación</th>
-                                    <th className="border border-black p-0.5 w-12">LETRAS</th>
-                                    <th className="border border-black p-0.5 w-10">T-E</th>
-                                    <th className="border border-black p-0.5 w-10">MES</th>
+                                    <th className="border border-black p-0.5 w-10">NOTA</th>
+                                    <th className="border border-black p-0.5 w-10">LETRAS</th>
+                                    <th className="border border-black p-0.5 w-8">T-E</th>
+                                    <th className="border border-black p-0.5 w-8">MES</th>
                                     <th className="border border-black p-0.5 w-10">AÑO</th>
                                   </tr>
                                 </thead>
@@ -869,6 +870,7 @@ export default function CertificacionesPage() {
                                     <tr key={idx} className="border border-black">
                                       <td className="border border-black p-0.5 text-center">{cal.numero}</td>
                                       <td className="border border-black p-0.5">{cal.materia}</td>
+                                      <td className={`border border-black p-0.5 text-center font-bold ${getNotaColor(cal.nota)}`}>{cal.nota || '—'}</td>
                                       <td className={`border border-black p-0.5 text-center font-bold ${getNotaColor(cal.nota)}`}>{cal.literal || '—'}</td>
                                       <td className="border border-black p-0.5 text-center">{cal.tipoEvaluacion || '—'}</td>
                                       <td className="border border-black p-0.5 text-center">{cal.fechaMes || '—'}</td>
@@ -977,7 +979,8 @@ export default function CertificacionesPage() {
 
                       {/* VALOR FISCAL */}
                       <div className="border-t-2 border-black pt-2 mt-4">
-                        <p className="text-[8px] text-center font-semibold">{schoolConfig.valorFiscalTexto}</p>
+                        <p className="text-[8px] text-center font-semibold">Valor Fiscal: {schoolConfig.valorFiscal}</p>
+                        <p className="text-[8px] text-center mt-1">{schoolConfig.valorFiscalTexto}</p>
                       </div>
 
                       {previewCert && (

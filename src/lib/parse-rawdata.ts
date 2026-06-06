@@ -159,23 +159,50 @@ function parseMes(m: string): string {
   return MESES[m] || m.padStart(2, '0')
 }
 
+// Check if a value is an asterisk placeholder (empty slot in the spreadsheet)
 function isAsterisk(val: string | undefined): boolean {
   if (!val) return true
   const v = String(val).trim()
-  return v === '' || v === '*' || v.startsWith('**') || v.startsWith('* *') || v.includes('****')
+  // Matches: *, **, ****, * *, * * * *, etc.
+  return v === '' || /^\*+$/.test(v) || /^\*\s+\*/.test(v)
+}
+
+// Check if a nota value represents a valid grade
+function isValidGrade(val: string | undefined): boolean {
+  if (!val) return false
+  const v = String(val).trim()
+  if (isAsterisk(v)) return false
+  // Numeric grades: 01-20 (with or without leading zero)
+  if (/^\d{1,2}$/.test(v)) {
+    const n = parseInt(v, 10)
+    return n >= 1 && n <= 20
+  }
+  // Special grade types
+  return ['PE', 'IN', 'EX'].includes(v.toUpperCase())
 }
 
 function cleanSchoolName(val: string): string {
   return String(val).replace(/^\*/, '').trim()
 }
 
+// Find the acta key by scanning backwards from the end of the data
+function findActaKey(rawData: Record<string, string>, startSearch: number, endSearch: number): string {
+  for (let k = endSearch; k >= startSearch; k--) {
+    const val = rawData[String(k)]
+    if (val && !isAsterisk(val)) {
+      return val.trim()
+    }
+  }
+  return ''
+}
+
 // === PARSER BD VIGENTE ===
 export function parseBDRawData(rawData: Record<string, string>): ParsedCertData {
   const result: ParsedCertData = {
     plan: 'vigente',
-    acta: rawData['253'] || '',
-    actaFecha: rawData['254'] ? formatDateVal(rawData['254']) : '',
-    actaAnio: rawData['255'] || '',
+    acta: '',
+    actaFecha: '',
+    actaAnio: '',
     instituciones: [],
     calificaciones: {},
     aniosEscolares: [],
@@ -187,7 +214,7 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
     literalesFinales: [],
   }
 
-  // Instituciones (Sección IV) - keys 8-22, grupos de 3 (nombre, localidad, EF)
+  // ---- Instituciones (Sección IV) - keys 8-22, grupos de 3 (nombre, localidad, EF) ----
   const instSlots = [
     [8, 9, 10],
     [11, 12, 13],
@@ -211,88 +238,108 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
     }
   })
 
-  // Calificaciones - keys 23 onwards, groups of 5
-  // BD vigente: 7-7-8-9-10 subjects per year
-  const subjectsPerYear = [7, 7, 8, 9, 10] // matched to planEMG
-  const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
-  let currentKey = 23
-  const allAnios: string[] = []
+  // ---- Calificaciones - keys 23 to 227, scan in groups of 5 ----
+  // Strategy: scan ALL groups of 5 from key 23 to 227
+  // Skip groups where the nota field is asterisks/invalid
+  // Group valid grades by year to detect year boundaries
+  // Then map grades to subjects from planEMG based on year index
 
-  for (let y = 0; y < 5; y++) {
-    const numSubjects = subjectsPerYear[y]
-    const grades: ParsedCalificacion[] = []
-    let yearFound = ''
-
-    for (let s = 0; s < numSubjects; s++) {
-      const notaRaw = rawData[String(currentKey)]
-      const tipoRaw = rawData[String(currentKey + 1)]
-      const mesRaw = rawData[String(currentKey + 2)]
-      const anioRaw = rawData[String(currentKey + 3)]
-      // lapso = rawData[String(currentKey + 4)] // not displayed separately
-
-      if (!notaRaw || isAsterisk(notaRaw)) {
-        currentKey += 5
-        continue
-      }
-
-      const notaStr = String(notaRaw).trim()
-      const tipoStr = String(tipoRaw || '').trim()
-      const mesStr = parseMes(String(mesRaw || '').trim())
-      const anioStr = String(anioRaw || '').trim()
-
-      if (!yearFound && anioStr) yearFound = anioStr
-
-      // Calculate literal from numeric grade
-      const numNota = parseFloat(notaStr)
-      const literal = !isNaN(numNota) ? notaToLiteral(numNota) : ''
-
-      // Map to subject name from planEMG
-      const subjectIndex = s % planEMG[y].materias.length
-      const materia = planEMG[y].materias[subjectIndex]?.nombre || `Materia ${s + 1}`
-
-      grades.push({
-        materia,
-        numero: s + 1,
-        nota: notaStr,
-        literal,
-        tipoEvaluacion: tipoStr || '',
-        fechaMes: mesStr,
-        fechaAnio: anioStr,
-      })
-
-      currentKey += 5
-    }
-
-    if (grades.length > 0) {
-      result.calificaciones[yearNames[y]] = grades
-      if (yearFound) {
-        allAnios.push(yearFound)
-        result.aniosEscolares.push(yearFound)
-      }
-    }
+  interface RawGrade {
+    nota: string
+    tipo: string
+    mes: string
+    anio: string
+    lapso: string
   }
 
-  // Orientación y Convivencia - keys 228-232
+  const allValidGrades: RawGrade[] = []
+  let key = 23
+  while (key <= 227) {
+    const notaRaw = rawData[String(key)]
+    const tipoRaw = rawData[String(key + 1)]
+    const mesRaw = rawData[String(key + 2)]
+    const anioRaw = rawData[String(key + 3)]
+    const lapsoRaw = rawData[String(key + 4)]
+
+    if (isValidGrade(notaRaw)) {
+      allValidGrades.push({
+        nota: String(notaRaw).trim(),
+        tipo: String(tipoRaw || '').trim(),
+        mes: String(mesRaw || '').trim(),
+        anio: String(anioRaw || '').trim(),
+        lapso: String(lapsoRaw || '').trim(),
+      })
+    }
+    // Always advance by 5 regardless of whether it was valid or asterisk
+    key += 5
+  }
+
+  // Group grades by year (detecting year transitions)
+  const gradesByYear: string[] = [] // the actual year values in order
+  const gradeGroupsByYear: Record<string, RawGrade[]> = {}
+
+  for (const grade of allValidGrades) {
+    const year = grade.anio
+    if (!year) continue
+    if (!gradeGroupsByYear[year]) {
+      gradeGroupsByYear[year] = []
+      gradesByYear.push(year)
+    }
+    gradeGroupsByYear[year].push(grade)
+  }
+
+  // Map to planEMG year names and assign subjects
+  const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+
+  gradesByYear.forEach((year, yearIdx) => {
+    if (yearIdx >= 5) return // Max 5 school years
+    const grades = gradeGroupsByYear[year]
+    const planIdx = Math.min(yearIdx, planEMG.length - 1)
+    const subjects = planEMG[planIdx].materias
+    const yearName = yearNames[yearIdx]
+
+    const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
+      const numNota = parseFloat(g.nota)
+      const literal = (!isNaN(numNota) && numNota > 0) ? notaToLiteral(numNota) : ''
+      const subjectIndex = sIdx % subjects.length
+      const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
+
+      return {
+        materia,
+        numero: sIdx + 1,
+        nota: g.nota,
+        literal,
+        tipoEvaluacion: g.tipo || '',
+        fechaMes: parseMes(g.mes),
+        fechaAnio: g.anio,
+      }
+    })
+
+    result.calificaciones[yearName] = calificaciones
+    result.aniosEscolares.push(year)
+  })
+
+  // ---- Orientación y Convivencia - keys 228-232 ----
   for (let i = 0; i < 5; i++) {
     const val = rawData[String(228 + i)]
     result.orientacion.push({
-      anio: allAnios[i] || '',
+      anio: gradesByYear[i] || '',
       literal: val && !isAsterisk(val) ? String(val).trim() : '',
     })
   }
 
-  // Grupos de Creación/Recreación/Producción - keys 233-242
+  // ---- Grupos de Creación/Recreación/Producción - keys 233-242 ----
   for (let i = 0; i < 5; i++) {
     const grupoDesc = rawData[String(233 + i)]
     const grupoLiteral = rawData[String(238 + i)]
     result.grupos.push({
-      anio: allAnios[i] || '',
+      anio: gradesByYear[i] || '',
       grupo: grupoDesc && !isAsterisk(grupoDesc) ? String(grupoDesc).trim() : '',
       literal: grupoLiteral && !isAsterisk(grupoLiteral) ? String(grupoLiteral).trim() : '',
     })
   }
 
-  // Observaciones - keys 243-247
+  // ---- Observaciones - keys 243-247 ----
   for (let i = 0; i < 5; i++) {
     const obs = rawData[String(243 + i)]
     if (obs && !isAsterisk(obs)) {
@@ -301,13 +348,18 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
   }
   result.observacionCompleta = result.observaciones.join(' ')
 
-  // Literales finales - keys 248-252
+  // ---- Literales finales - keys 248-252 ----
   for (let i = 0; i < 5; i++) {
     const lit = rawData[String(248 + i)]
     if (lit && !isAsterisk(lit)) {
       result.literalesFinales.push(String(lit).trim())
     }
   }
+
+  // ---- Acta - keys 253+ ----
+  result.acta = rawData['253'] ? rawData['253'].trim() : ''
+  result.actaFecha = rawData['254'] ? formatDateVal(rawData['254']) : ''
+  result.actaAnio = rawData['255'] ? rawData['255'].trim() : ''
 
   return result
 }
@@ -316,9 +368,9 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
 export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData {
   const result: ParsedCertData = {
     plan: 'derogado',
-    acta: rawData['335'] || '',
-    actaFecha: rawData['336'] ? formatDateVal(rawData['336']) : '',
-    actaAnio: rawData['337'] || '',
+    acta: '',
+    actaFecha: '',
+    actaAnio: '',
     instituciones: [],
     calificaciones: {},
     aniosEscolares: [],
@@ -330,10 +382,10 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
     literalesFinales: [],
   }
 
-  // Instituciones en BD2 - keys "9°"-"38"
+  // ---- Instituciones en BD2 - keys "9°"-"38" ----
   // Escuela 1: keys "9°", "10", "11"
   // Escuela 2: keys "12", "13", "14"
-  // Escuela 3-5: keys 15-38 en grupos de 3 (but many are asterisks)
+  // Escuela 3-10: keys 15-38 en grupos de 3 (but many are asterisks)
   const bd2InstSlots = [
     ['9°', '10', '11'],
     ['12', '13', '14'],
@@ -363,38 +415,61 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
     }
   }
 
-  // Calificaciones BD2 - start at key 39, groups of 5
-  // Read until we hit asterisks
-  const gradeGroups: Array<{ nota: string; tipo: string; mes: string; anio: string; lapso: string }> = []
-  let currentKey = 39
-  while (rawData[String(currentKey)] !== undefined && !isAsterisk(rawData[String(currentKey)])) {
-    gradeGroups.push({
-      nota: String(rawData[String(currentKey)] || '').trim(),
-      tipo: String(rawData[String(currentKey + 1)] || '').trim(),
-      mes: String(rawData[String(currentKey + 2)] || '').trim(),
-      anio: String(rawData[String(currentKey + 3)] || '').trim(),
-      lapso: String(rawData[String(currentKey + 4)] || '').trim(),
-    })
-    currentKey += 5
+  // ---- Calificaciones BD2 - scan keys 39 to 293 in groups of 5 ----
+  // Skip asterisk groups; collect valid grades; group by year
+  interface RawGrade {
+    nota: string
+    tipo: string
+    mes: string
+    anio: string
+    lapso: string
   }
 
-  // Group grades by year (anio field)
-  const byYear: Record<string, typeof gradeGroups> = {}
-  gradeGroups.forEach(g => {
-    if (!byYear[g.anio]) byYear[g.anio] = []
-    byYear[g.anio].push(g)
-  })
+  const allValidGrades: RawGrade[] = []
+  let key = 39
+  while (key <= 293) {
+    const notaRaw = rawData[String(key)]
+    const tipoRaw = rawData[String(key + 1)]
+    const mesRaw = rawData[String(key + 2)]
+    const anioRaw = rawData[String(key + 3)]
+    const lapsoRaw = rawData[String(key + 4)]
 
-  // Sort years and assign to school years
-  const sortedYears = Object.keys(byYear).sort()
+    if (isValidGrade(notaRaw)) {
+      allValidGrades.push({
+        nota: String(notaRaw).trim(),
+        tipo: String(tipoRaw || '').trim(),
+        mes: String(mesRaw || '').trim(),
+        anio: String(anioRaw || '').trim(),
+        lapso: String(lapsoRaw || '').trim(),
+      })
+    }
+    key += 5
+  }
+
+  // Group grades by year
+  const gradesByYear: string[] = []
+  const gradeGroupsByYear: Record<string, RawGrade[]> = {}
+
+  for (const grade of allValidGrades) {
+    const year = grade.anio
+    if (!year) continue
+    if (!gradeGroupsByYear[year]) {
+      gradeGroupsByYear[year] = []
+      gradesByYear.push(year)
+    }
+    gradeGroupsByYear[year].push(grade)
+  }
+
+  // Map to PLAN_DEROGADO year names
   const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+  const sortedYears = Object.keys(gradeGroupsByYear).sort()
 
   sortedYears.forEach((year, yearIdx) => {
     if (yearIdx >= 5) return // Max 5 years
-    const grades = byYear[year]
-    const yearName = yearNames[yearIdx]
+    const grades = gradeGroupsByYear[year]
     const planIdx = Math.min(yearIdx, PLAN_DEROGADO.length - 1)
     const subjects = PLAN_DEROGADO[planIdx].materias
+    const yearName = yearNames[yearIdx]
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
       const numNota = parseFloat(g.nota)
@@ -417,7 +492,7 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
     result.aniosEscolares.push(year)
   })
 
-  // Literales finales - keys 294-298
+  // ---- Literales finales - keys 294-298 ----
   for (let i = 0; i < 5; i++) {
     const lit = rawData[String(294 + i)]
     if (lit && !isAsterisk(lit)) {
@@ -425,7 +500,7 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
     }
   }
 
-  // Especializaciones - keys 299+ (year, specialization, period - repeating)
+  // ---- Especializaciones - keys 299+ (year, specialization, period - repeating) ----
   let specKey = 299
   const specs: ParsedSpecialization[] = []
   while (rawData[String(specKey)] && !isAsterisk(rawData[String(specKey)]) && specKey < 320) {
@@ -441,19 +516,27 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
 
   // If there are specialization groups, populate the "grupos" section with them
   if (specs.length > 0) {
-    result.grupos = specs.map((s, i) => ({
+    result.grupos = specs.map((s) => ({
       anio: s.anio,
       grupo: s.especialidad,
       literal: '',
     }))
   }
 
-  // Observaciones BD2 - key 339
+  // ---- Orientación - populate from aniosEscolares if empty ----
+  while (result.orientacion.length < 5) {
+    result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
+  }
+
+  // ---- Observaciones BD2 - key 339 (or search for it) ----
   const obs339 = rawData['339']
   if (obs339 && !isAsterisk(obs339)) {
     result.observacionCompleta = String(obs339).trim()
     result.observaciones.push(String(obs339).trim())
   }
+
+  // ---- Acta - find it ----
+  result.acta = findActaKey(rawData, 335, 340)
 
   return result
 }

@@ -46,3 +46,27 @@ Stage Summary:
 - 130 registros actualizados en la BD
 - 14 archivos modificados, todo compilando correctamente
 - Desplegado a Vercel (jo-sigae.vercel.app)
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Analizar PDF "boletin de Lapso.pdf" y replicar formato exacto en la web
+
+Work Log:
+- Analizó PDF con PyMuPDF y VLM (3 pasadas de análisis visual detallado)
+- PDF es formato Letter (612x792 pts) con diseño escaneado/gráfico
+- Extrajo estructura completa: encabezado institucional, datos alumno, tabla principal, materia pendiente, secciones cualitativas, observaciones, firmas
+- Identificó diferencias clave vs implementación anterior:
+  - Faltaba encabezado institucional completo
+  - Materias cualitativas (Orientación y Convivencia, Participación Grupal) deben estar DENTRO de la tabla principal
+  - Faltaba fila GRUPO (de BoletaExtra)
+  - Posición debe ser POR LAPSO (no solo global)
+  - Fecha debe ir DEBAJO de firmas
+- Reescribió completamente src/app/boletin-calificaciones/page.tsx (504 líneas nuevas)
+- Implementó cálculo de posición por lapso en useMemo
+- Build exitoso, commit y push a GitHub
+
+Stage Summary:
+- Formato del boletín ahora replica fielmente el PDF proporcionado por el usuario
+- Estructura exacta: Encabezado → Datos Alumno → Tabla (9 columnas) → Materia Pendiente → Orientación/Convivencia → Creación/Recreación/Producción → Observaciones → Firmas → Fecha
+- Deploy en Vercel pendiente (auto-deploy desde GitHub)

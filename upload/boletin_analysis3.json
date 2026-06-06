@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "1) El logo/escudo está **arriba a la izquierda**. Tiene una forma de **escudo con un dibujo central** (parece un libro o similar) y un borde.  \n2) Las filas de \"Orientación y Convivencia\" y \"Participación en Grupos\" en la tabla principal **tienen las columnas IN vacías** (sin asterisco).  \n3) La fila \"GRUPO\" **no tiene valores en las columnas IN** (contiene \"EXONERADO\" en los lapsos).  \n4) El promedio **tiene 2 decimales con COMA** (ej: 10,00, 11,14, 12,71, 11,29).  \n5) La posición muestra **un número por cada lapso** (22, 20, 20, 21) en formato **numérico sin decimales**.  \n6) Las secciones \"Orientación y Convivencia\" y \"Creación Recreación y Producción\" **tienen una celda grande a la izquierda con el título en vertical** y **4 filas a la derecha con A/B/C/D**.  \n7) La fecha 'Miranda, 29 de Mayo de 2026.' **está debajo de las firmas** (Director(a) y Coordinador(a)).  \n8) La sección de Observaciones **tiene 1 fila** (una celda grande).  \n9) Los borders de las tablas **son negros y de 1px** (líneas delgadas y definidas).",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1780784279,
+  "id": "202606070617513b6c71c611034218",
+  "model": "glm-4.6v",
+  "object": "chat.completion",
+  "request_id": "202606070617513b6c71c611034218",
+  "usage": {
+    "completion_tokens": 342,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 6309,
+    "prompt_tokens_details": {
+      "cached_tokens": 4
+    },
+    "total_tokens": 6651
+  }
+}

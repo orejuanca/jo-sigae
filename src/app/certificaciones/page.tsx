@@ -377,6 +377,17 @@ export default function CertificacionesPage() {
   const handleViewCert = (cert: Certification) => {
     try {
       const data = JSON.parse(cert.datos || '{}')
+      // Corregir literales viejos: IN→INASISTENTE, PE→PENDIENTE
+      if (data.calificaciones) {
+        for (const anio of Object.keys(data.calificaciones)) {
+          for (const cal of data.calificaciones[anio]) {
+            if (cal.nota === 'IN' && cal.literal !== 'INASISTENTE') cal.literal = 'INASISTENTE'
+            if (cal.nota === 'PE' && cal.literal !== 'PENDIENTE') cal.literal = 'PENDIENTE'
+            // Si el literal está vacío pero la nota tiene valor, regenerar
+            if (!cal.literal && cal.nota) cal.literal = notaEnLetras(cal.nota)
+          }
+        }
+      }
       setLoadedData(data)
       setPreviewCert(cert)
       setActiveTab('vista')

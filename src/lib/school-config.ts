@@ -128,13 +128,44 @@ export const calificacionesLiterales: Record<string, string> = {
   '01-09': 'E',
 }
 
-// Convertir nota numérica a literal
+// Convertir nota numérica a literal (A-E) — usado en boletín
 export function notaToLiteral(nota: number): string {
   if (nota >= 18) return 'A'
   if (nota >= 15) return 'B'
   if (nota >= 12) return 'C'
   if (nota >= 10) return 'D'
   return 'E'
+}
+
+// Convertir nota numérica a PALABRAS — usado en certificación de calificaciones
+// Ejemplo: 10 = DIEZ, 20 = VEINTE, 01 = CERO UNO
+const NOTAS_EN_LETRAS: Record<number, string> = {
+  1: 'CERO UNO',
+  2: 'CERO DOS',
+  3: 'CERO TRES',
+  4: 'CERO CUATRO',
+  5: 'CERO CINCO',
+  6: 'CERO SEIS',
+  7: 'CERO SIETE',
+  8: 'CERO OCHO',
+  9: 'CERO NUEVE',
+  10: 'DIEZ',
+  11: 'ONCE',
+  12: 'DOCE',
+  13: 'TRECE',
+  14: 'CATORCE',
+  15: 'QUINCE',
+  16: 'DIECISÉIS',
+  17: 'DIECISIETE',
+  18: 'DIECIOCHO',
+  19: 'DIECINUEVE',
+  20: 'VEINTE',
+}
+
+export function notaEnLetras(nota: number | string): string {
+  const n = typeof nota === 'string' ? parseInt(nota, 10) : nota
+  if (isNaN(n) || n < 1 || n > 20) return ''
+  return NOTAS_EN_LETRAS[n] || String(nota)
 }
 
 // Tipos de evaluación

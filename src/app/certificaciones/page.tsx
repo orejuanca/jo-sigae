@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StudentSearch } from '@/components/student-search'
 import { FileText, Printer, Loader2, Eye, Database, AlertCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { schoolConfig, planEMG, notaToLiteral, tiposEvaluacion } from '@/lib/school-config'
+import { schoolConfig, planEMG, notaEnLetras, tiposEvaluacion } from '@/lib/school-config'
 import type { PlanAnio } from '@/lib/school-config'
 
 // === INTERFACES ===
@@ -311,8 +311,7 @@ export default function CertificacionesPage() {
       updated.calificaciones[anio] = [...prev.calificaciones[anio]]
       updated.calificaciones[anio][matIndex] = { ...updated.calificaciones[anio][matIndex], [field]: value }
       if (field === 'nota' && value) {
-        const num = parseFloat(value)
-        if (!isNaN(num)) updated.calificaciones[anio][matIndex].literal = notaToLiteral(num)
+        updated.calificaciones[anio][matIndex].literal = notaEnLetras(value)
       }
       return updated
     })

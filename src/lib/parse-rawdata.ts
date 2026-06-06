@@ -1,7 +1,7 @@
 // Parser para extraer datos de certificación desde rawData (BD vigente y BD2 derogado)
 // Los datos originales provienen del archivo .xlsm y se almacenan como JSON en Student.rawData
 
-import { planEMG, notaToLiteral, schoolConfig, type PlanAnio, type MateriaAnio } from './school-config'
+import { planEMG, notaEnLetras, schoolConfig, type PlanAnio, type MateriaAnio } from './school-config'
 
 // === INTERFACES ===
 
@@ -300,7 +300,7 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
       const numNota = parseFloat(g.nota)
-      const literal = (!isNaN(numNota) && numNota > 0) ? notaToLiteral(numNota) : ''
+      const literal = (!isNaN(numNota) && numNota > 0) ? notaEnLetras(g.nota) : (g.nota === 'IN' ? 'IN' : '')
       const subjectIndex = sIdx % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
 
@@ -473,7 +473,7 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
       const numNota = parseFloat(g.nota)
-      const literal = (!isNaN(numNota) && numNota > 0) ? notaToLiteral(numNota) : ''
+      const literal = (!isNaN(numNota) && numNota > 0) ? notaEnLetras(g.nota) : (g.nota === 'PE' ? 'PENDIENTE' : g.nota === 'IN' ? 'IN' : '')
       const subjectIndex = sIdx % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
 
@@ -481,7 +481,7 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
         materia,
         numero: sIdx + 1,
         nota: g.nota === 'PE' ? 'PE' : g.nota,
-        literal: g.nota === 'PE' ? 'PE' : literal,
+        literal: g.nota === 'PE' ? 'PENDIENTE' : literal,
         tipoEvaluacion: g.tipo || '',
         fechaMes: parseMes(g.mes),
         fechaAnio: g.anio,

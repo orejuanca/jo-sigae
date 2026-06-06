@@ -11,6 +11,9 @@ interface Student {
   nombres: string
   fechaNacimiento?: string | null
   pais?: string | null
+  estado?: string | null
+  municipio?: string | null
+  plan?: string | null
 }
 
 interface StudentSearchProps {
@@ -111,14 +114,22 @@ export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, ape
               onClick={() => handleSelect(student)}
               className="w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b border-border last:border-0"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="font-medium text-sm">{student.apellidos}, {student.nombres}</p>
                   <p className="text-xs text-muted-foreground">C.I.: {student.cedula}</p>
                 </div>
-                {student.fechaNacimiento && (
-                  <span className="text-xs text-muted-foreground">{student.fechaNacimiento}</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {student.plan === 'derogado' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">BD2</span>
+                  )}
+                  {student.plan === 'vigente' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">BD</span>
+                  )}
+                  {student.fechaNacimiento && (
+                    <span className="text-xs text-muted-foreground">{student.fechaNacimiento}</span>
+                  )}
+                </div>
               </div>
             </button>
           ))}

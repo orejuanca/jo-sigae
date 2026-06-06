@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { schoolConfig } from '@/lib/school-config'
 
 export default function LoginPage() {
   const [password, setPassword] = useState('')
@@ -43,9 +44,11 @@ export default function LoginPage() {
             <p className="text-sm mt-1 text-gray-500">Sistema de Certificaciones Escolares</p>
           </div>
           <div className="text-xs text-gray-400 space-y-0.5">
-            <p>Código OD16751520</p>
-            <p>Urb. José de S. Martín — Sector Los Bloques — Nueva Cúa</p>
-            <p>Municipio Rafael Urdaneta, Miranda</p>
+            <p>Gobierno Bolivariano de Venezuela</p>
+            <p>Ministerio del Poder Popular para la Educacion</p>
+            <p>Codigo {schoolConfig.od}</p>
+            <p>{schoolConfig.direccion}</p>
+            <p>Municipio {schoolConfig.municipio}, {schoolConfig.estado}</p>
           </div>
         </div>
 
@@ -81,7 +84,7 @@ export default function LoginPage() {
             </button>
 
             <p className="text-xs text-center text-gray-400">
-              Ministerio del Poder Popular para la Educación
+              Gobierno Bolivariano de Venezuela — Ministerio del Poder Popular para la Educacion
             </p>
           </form>
         </div>

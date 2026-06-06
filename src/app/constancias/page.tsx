@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StudentSearch } from '@/components/student-search'
 import { ScrollText, Printer, Loader2, Eye } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { schoolConfig } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -15,6 +16,8 @@ interface Student {
   nombres: string
   fechaNacimiento?: string | null
   pais?: string | null
+  estado?: string | null
+  municipio?: string | null
 }
 
 interface Certification {
@@ -38,18 +41,12 @@ export default function ConstanciasPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/certifications/${studentId}`)
-      if (!res.ok) {
-        setCertifications([])
-        return
-      }
+      if (!res.ok) { setCertifications([]); return }
       const data = await res.json()
       const all = Array.isArray(data) ? data : []
       setCertifications(all.filter((c: Certification) => c.tipo === 'CONSTANCIA'))
-    } catch {
-      setCertifications([])
-    } finally {
-      setLoading(false)
-    }
+    } catch { setCertifications([]) }
+    finally { setLoading(false) }
   }
 
   const handleSelectStudent = (student: Student) => {
@@ -63,46 +60,45 @@ export default function ConstanciasPage() {
     setGenerating(true)
     try {
       const datos = {
-        escuela: 'U.E.N. Creación Cúa',
-        codigo: 'EMG 31059',
-        od: 'OD16751520',
-        direccion: 'Urb. José de S. Martín — Sector Los Bloques — Nueva Cúa, Municipio Rafael Urdaneta, Miranda',
+        escuela: schoolConfig.nombre,
+        codigo: `EMG ${schoolConfig.planCodigo}`,
+        od: schoolConfig.od,
+        direccion: `${schoolConfig.direccion}, Municipio ${schoolConfig.municipio}, ${schoolConfig.estado}`,
+        telefono: schoolConfig.telefono,
+        municipio: schoolConfig.municipio,
+        estado: schoolConfig.estado,
+        planEstudio: schoolConfig.planEstudio,
+        director: schoolConfig.director,
         estudiante: {
           cedula: selectedStudent.cedula,
           apellidos: selectedStudent.apellidos,
           nombres: selectedStudent.nombres,
           fechaNacimiento: selectedStudent.fechaNacimiento,
+          pais: selectedStudent.pais || 'VENEZUELA',
+          estado: selectedStudent.estado || '',
+          municipio: selectedStudent.municipio || '',
         },
       }
 
       const res = await fetch('/api/certifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tipo: 'CONSTANCIA',
-          studentId: selectedStudent.id,
-          datos,
-        }),
+        body: JSON.stringify({ tipo: 'CONSTANCIA', studentId: selectedStudent.id, datos }),
       })
 
       if (!res.ok) throw new Error('Error al generar')
       const cert = await res.json()
       setPreviewCert(cert)
       setCertifications(prev => [cert, ...prev])
-      toast({ title: 'Constancia Generada', description: `Número: ${cert.numero}` })
+      toast({ title: 'Constancia Generada', description: `Numero: ${cert.numero}` })
     } catch {
       toast({ title: 'Error', description: 'Error al generar constancia', variant: 'destructive' })
-    } finally {
-      setGenerating(false)
-    }
+    } finally { setGenerating(false) }
   }
 
   const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' })
-    } catch {
-      return dateStr
-    }
+    try { return new Date(dateStr).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' }) }
+    catch { return dateStr }
   }
 
   const certData = previewCert ? JSON.parse(previewCert.datos || '{}') : null
@@ -111,8 +107,8 @@ export default function ConstanciasPage() {
     <AppShell>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Constancias de Egreso</h1>
-          <p className="text-muted-foreground">Generar Constancia de Egreso — Código EMG 31059</p>
+          <h1 className="text-2xl font-bold">Constancia de Egreso</h1>
+          <p className="text-muted-foreground">Generar Constancia de Egreso — Plan EMG {schoolConfig.planCodigo}</p>
         </div>
 
         <Card>
@@ -120,7 +116,7 @@ export default function ConstanciasPage() {
             <CardTitle className="text-base">Buscar Alumno</CardTitle>
           </CardHeader>
           <CardContent>
-            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cédula, apellidos o nombres..." />
+            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cedula, apellidos o nombres..." />
           </CardContent>
         </Card>
 
@@ -142,9 +138,7 @@ export default function ConstanciasPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {loading && (
-                <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-              )}
+              {loading && <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
               {!loading && certifications.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">No hay constancias para este alumno</p>
               )}
@@ -159,7 +153,7 @@ export default function ConstanciasPage() {
                           <p className="text-xs text-muted-foreground">{formatDate(cert.fechaEmision)}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => setPreviewCert(cert)}>
+                      <Button variant="ghost" size="sm" onClick={() => { setPreviewCert(cert) }}>
                         <Eye className="h-3.5 w-3.5 mr-1" /> Ver
                       </Button>
                     </div>
@@ -183,16 +177,17 @@ export default function ConstanciasPage() {
             <CardContent>
               <div className="border p-8 bg-white text-black rounded-lg max-w-3xl mx-auto print:shadow-none" id="const-preview">
                 <div className="text-center space-y-2 mb-8">
-                  <h2 className="text-lg font-bold uppercase">República Bolivariana de Venezuela</h2>
-                  <h2 className="text-lg font-bold uppercase">Ministerio del Poder Popular para la Educación</h2>
-                  <h1 className="text-xl font-bold text-primary mt-4">{certData.escuela}</h1>
-                  <p className="text-sm">Código: {certData.codigo} | OD: {certData.od}</p>
+                  <h2 className="text-lg font-bold uppercase">Gobierno Bolivariano de Venezuela</h2>
+                  <h2 className="text-lg font-bold uppercase">Ministerio del Poder Popular para la Educacion</h2>
+                  <h1 className="text-xl font-bold text-emerald-700 mt-4">{certData.escuela}</h1>
+                  <p className="text-sm">Codigo: {certData.codigo} | OD: {certData.od}</p>
                   <p className="text-xs">{certData.direccion}</p>
+                  {certData.telefono && <p className="text-xs">Tel: {certData.telefono}</p>}
                 </div>
 
                 <div className="text-center my-8">
                   <h3 className="text-lg font-semibold uppercase">Constancia de Egreso</h3>
-                  <div className="w-32 h-0.5 bg-primary mx-auto mt-2" />
+                  <div className="w-32 h-0.5 bg-emerald-600 mx-auto mt-2" />
                 </div>
 
                 <div className="space-y-4 text-justify mx-auto max-w-xl">
@@ -203,23 +198,26 @@ export default function ConstanciasPage() {
 
                 <div className="bg-emerald-50 p-4 rounded-lg my-6 max-w-lg mx-auto text-center">
                   <p className="font-bold text-lg">{certData.estudiante.nombres} {certData.estudiante.apellidos}</p>
-                  <p className="text-sm">Cédula de Identidad: {certData.estudiante.cedula}</p>
+                  <p className="text-sm">Cedula de Identidad: {certData.estudiante.cedula}</p>
                   <p className="text-sm">Fecha de Nacimiento: {certData.estudiante.fechaNacimiento || 'No registrada'}</p>
+                  {certData.estudiante.estado && <p className="text-sm">Estado: {certData.estudiante.estado}</p>}
+                  {certData.estudiante.municipio && <p className="text-sm">Municipio: {certData.estudiante.municipio}</p>}
                 </div>
 
                 <div className="space-y-4 text-justify mx-auto max-w-xl">
                   <p className="text-sm leading-relaxed">
-                    Culminó satisfactoriamente sus estudios en esta institución educativa <strong>{certData.escuela}</strong>,
-                    código <strong>{certData.codigo}</strong>, por lo que se extiende la presente constancia a los fines
-                    consiguientes.
+                    Culmino satisfactoriamente sus estudios en esta institucion educativa <strong>{certData.escuela}</strong>,
+                    codigo <strong>{certData.codigo}</strong>, bajo el plan de <strong>{certData.planEstudio}</strong>,
+                    por lo que se extiende la presente constancia a los fines consiguientes.
                   </p>
                 </div>
 
                 <div className="text-right mt-12 space-y-2">
-                  <p className="text-sm font-medium">Número: {previewCert.numero}</p>
-                  <p className="text-sm">Fecha de Emisión: {formatDate(previewCert.fechaEmision)}</p>
+                  <p className="text-sm font-medium">Numero: {previewCert.numero}</p>
+                  <p className="text-sm">Fecha de Emision: {formatDate(previewCert.fechaEmision)}</p>
                   <div className="mt-8 border-b border-black w-64 ml-auto" />
-                  <p className="text-sm font-medium">Dirección(a)</p>
+                  <p className="text-sm font-medium">{certData.director?.apellidosNombres || 'Direccion(a)'}</p>
+                  <p className="text-xs">C.I.: {certData.director?.cedula || ''}</p>
                   <p className="text-xs">{certData.escuela}</p>
                 </div>
               </div>

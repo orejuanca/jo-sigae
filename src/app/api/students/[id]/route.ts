@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params
     const student = await prisma.student.findUnique({
       where: { id },
-      include: { certifications: { orderBy: { emitidoEl: 'desc' } } },
+      include: { certifications: { orderBy: { fechaEmision: 'desc' } } },
     })
 
     if (!student) {
@@ -32,7 +32,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { cedula, apellidos, nombres, fechaNacimiento, pais } = body
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio } = body
 
     const student = await prisma.student.update({
       where: { id },
@@ -42,6 +42,8 @@ export async function PUT(
         ...(nombres && { nombres: nombres.trim() }),
         ...(fechaNacimiento !== undefined && { fechaNacimiento: fechaNacimiento?.trim() || null }),
         ...(pais !== undefined && { pais: pais?.trim() || 'VENEZUELA' }),
+        ...(estado !== undefined && { estado: estado?.trim() || '' }),
+        ...(municipio !== undefined && { municipio: municipio?.trim() || '' }),
       },
     })
 

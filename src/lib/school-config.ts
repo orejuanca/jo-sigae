@@ -1,0 +1,141 @@
+// Configuración institucional de la U.E.N. Creación Cúa
+// Datos extraídos del formato oficial de Certificación de Calificaciones
+
+export const schoolConfig = {
+  // Nombre oficial
+  nombre: 'U.E.N. Creación Cúa',
+  nombreCompleto: 'Unidad Educativa Nacional Creación Cúa',
+
+  // Código OD
+  od: 'OD16751520',
+
+  // Plan de estudio
+  planEstudio: 'EDUCACIÓN MEDIA GENERAL',
+  planCodigo: '31059',
+
+  // Ubicación
+  direccion: 'Urb. José de S. Martín — Sector Los Bloques — Nueva Cúa',
+  municipio: 'Rafael Urdaneta',
+  estado: 'Miranda',
+  telefono: '(0239) 7163530',
+
+  // CDCCE
+  cdcceEstado: 'Miranda',
+
+  // Director(a) - Sección VII
+  director: {
+    apellidosNombres: 'PAREDES HURTADO, RAQUEL',
+    cedula: 'V-6419439',
+  },
+
+  // Director(a) CDCCE - Sección VIII
+  directorCdcce: {
+    apellidosNombres: '',
+    cedula: '',
+  },
+
+  // Valor fiscal
+  valorFiscal: '0,3 U.T.',
+  valorFiscalTexto: 'Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres décimas de la Unidad Tributaria (0,3 U.T.)',
+}
+
+// Materias por año según el plan de Educación Media General vigente
+export interface MateriaAnio {
+  nombre: string
+  numero: number
+}
+
+export interface PlanAnio {
+  anio: string
+  materias: MateriaAnio[]
+}
+
+export const planEMG: PlanAnio[] = [
+  {
+    anio: 'Primer Año',
+    materias: [
+      { nombre: 'Castellano', numero: 1 },
+      { nombre: 'Inglés y otras Lenguas Extranjeras', numero: 2 },
+      { nombre: 'Matemáticas', numero: 3 },
+      { nombre: 'Educación Física', numero: 4 },
+      { nombre: 'Arte y Patrimonio', numero: 5 },
+      { nombre: 'Ciencias Naturales', numero: 6 },
+      { nombre: 'Geografía, Historia y Ciudadanía', numero: 7 },
+    ],
+  },
+  {
+    anio: 'Segundo Año',
+    materias: [
+      { nombre: 'Castellano', numero: 1 },
+      { nombre: 'Inglés y otras Lenguas Extranjeras', numero: 2 },
+      { nombre: 'Matemáticas', numero: 3 },
+      { nombre: 'Educación Física', numero: 4 },
+      { nombre: 'Arte y Patrimonio', numero: 5 },
+      { nombre: 'Ciencias Naturales', numero: 6 },
+      { nombre: 'Geografía, Historia y Ciudadanía', numero: 7 },
+    ],
+  },
+  {
+    anio: 'Tercer Año',
+    materias: [
+      { nombre: 'Castellano', numero: 1 },
+      { nombre: 'Inglés y otras Lenguas Extranjeras', numero: 2 },
+      { nombre: 'Matemáticas', numero: 3 },
+      { nombre: 'Educación Física', numero: 4 },
+      { nombre: 'Física', numero: 5 },
+      { nombre: 'Química', numero: 6 },
+      { nombre: 'Biología', numero: 7 },
+      { nombre: 'Geografía, Historia y Ciudadanía', numero: 8 },
+    ],
+  },
+  {
+    anio: 'Cuarto Año',
+    materias: [
+      { nombre: 'Castellano', numero: 1 },
+      { nombre: 'Inglés y otras Lenguas Extranjeras', numero: 2 },
+      { nombre: 'Matemáticas', numero: 3 },
+      { nombre: 'Educación Física', numero: 4 },
+      { nombre: 'Física', numero: 5 },
+      { nombre: 'Química', numero: 6 },
+      { nombre: 'Biología', numero: 7 },
+      { nombre: 'Geografía, Historia y Ciudadanía', numero: 8 },
+      { nombre: 'Formación para la Soberanía Nacional', numero: 9 },
+    ],
+  },
+  {
+    anio: 'Quinto Año',
+    materias: [
+      { nombre: 'Castellano', numero: 1 },
+      { nombre: 'Inglés y otras Lenguas Extranjeras', numero: 2 },
+      { nombre: 'Matemáticas', numero: 3 },
+      { nombre: 'Educación Física', numero: 4 },
+      { nombre: 'Física', numero: 5 },
+      { nombre: 'Química', numero: 6 },
+      { nombre: 'Biología', numero: 7 },
+      { nombre: 'Ciencias de la Tierra', numero: 8 },
+      { nombre: 'Geografía, Historia y Ciudadanía', numero: 9 },
+      { nombre: 'Formación para la Soberanía Nacional', numero: 10 },
+    ],
+  },
+]
+
+// Calificaciones literales según el sistema venezolano
+export const calificacionesLiterales: Record<string, string> = {
+  '18-20': 'A',
+  '15-17': 'B',
+  '12-14': 'C',
+  '10-11': 'D',
+  '01-09': 'E',
+}
+
+// Convertir nota numérica a literal
+export function notaToLiteral(nota: number): string {
+  if (nota >= 18) return 'A'
+  if (nota >= 15) return 'B'
+  if (nota >= 12) return 'C'
+  if (nota >= 10) return 'D'
+  return 'E'
+}
+
+// Tipos de evaluación
+export const tiposEvaluacion = ['AC', 'PR', 'AP', 'EF', 'EQ'] as const

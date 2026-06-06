@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { cedula, apellidos, nombres, fechaNacimiento, pais } = body
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio } = body
 
     if (!cedula || !apellidos || !nombres) {
       return NextResponse.json(
@@ -67,6 +67,8 @@ export async function POST(request: NextRequest) {
         nombres: nombres.trim(),
         fechaNacimiento: fechaNacimiento?.trim() || null,
         pais: pais?.trim() || 'VENEZUELA',
+        estado: estado?.trim() || '',
+        municipio: municipio?.trim() || '',
       },
     })
 

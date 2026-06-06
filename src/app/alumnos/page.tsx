@@ -51,6 +51,8 @@ interface Student {
   nombres: string
   fechaNacimiento?: string | null
   pais?: string | null
+  estado?: string | null
+  municipio?: string | null
 }
 
 export default function AlumnosPage() {
@@ -71,6 +73,8 @@ export default function AlumnosPage() {
   const [formNombres, setFormNombres] = useState('')
   const [formFecha, setFormFecha] = useState('')
   const [formPais, setFormPais] = useState('VENEZUELA')
+  const [formEstado, setFormEstado] = useState('')
+  const [formMunicipio, setFormMunicipio] = useState('')
 
   const { toast } = useToast()
 
@@ -101,6 +105,8 @@ export default function AlumnosPage() {
     setFormNombres('')
     setFormFecha('')
     setFormPais('VENEZUELA')
+    setFormEstado('')
+    setFormMunicipio('')
     setDialogOpen(true)
   }
 
@@ -111,6 +117,8 @@ export default function AlumnosPage() {
     setFormNombres(student.nombres)
     setFormFecha(student.fechaNacimiento || '')
     setFormPais(student.pais || 'VENEZUELA')
+    setFormEstado(student.estado || '')
+    setFormMunicipio(student.municipio || '')
     setDialogOpen(true)
   }
 
@@ -127,6 +135,8 @@ export default function AlumnosPage() {
         nombres: formNombres,
         fechaNacimiento: formFecha,
         pais: formPais,
+        estado: formEstado,
+        municipio: formMunicipio,
       }
 
       if (editingStudent) {
@@ -222,7 +232,8 @@ export default function AlumnosPage() {
                         <TableHead>Apellidos</TableHead>
                         <TableHead>Nombres</TableHead>
                         <TableHead className="hidden sm:table-cell">Fecha Nac.</TableHead>
-                        <TableHead className="hidden md:table-cell">País</TableHead>
+                        <TableHead className="hidden lg:table-cell">Estado</TableHead>
+                        <TableHead className="hidden lg:table-cell">Municipio</TableHead>
                         <TableHead className="w-[100px]">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -233,7 +244,8 @@ export default function AlumnosPage() {
                           <TableCell className="font-medium">{student.apellidos}</TableCell>
                           <TableCell>{student.nombres}</TableCell>
                           <TableCell className="hidden sm:table-cell text-sm">{student.fechaNacimiento || '—'}</TableCell>
-                          <TableCell className="hidden md:table-cell text-sm">{student.pais || '—'}</TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm">{student.estado || '—'}</TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm">{student.municipio || '—'}</TableCell>
                           <TableCell>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(student)}>
@@ -299,6 +311,16 @@ export default function AlumnosPage() {
               <div className="grid gap-2">
                 <Label>País</Label>
                 <Input value={formPais} onChange={(e) => setFormPais(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Estado</Label>
+                <Input value={formEstado} onChange={(e) => setFormEstado(e.target.value)} placeholder="Ej: Miranda" />
+              </div>
+              <div className="grid gap-2">
+                <Label>Municipio</Label>
+                <Input value={formMunicipio} onChange={(e) => setFormMunicipio(e.target.value)} placeholder="Ej: Rafael Urdaneta" />
               </div>
             </div>
           </div>

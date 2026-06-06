@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         include: { student: true },
         take: limit,
         skip: (page - 1) * limit,
-        orderBy: { emitidoEl: 'desc' },
+        orderBy: { fechaEmision: 'desc' },
       }),
       prisma.certification.count({ where }),
     ])
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       data: {
         tipo,
         studentId,
-        datos: datos ? JSON.stringify(datos) : null,
+        datos: datos ? JSON.stringify(datos) : '{}',
         numero: certNumero,
       },
       include: { student: true },

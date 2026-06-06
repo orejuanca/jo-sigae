@@ -21,8 +21,8 @@ interface Certification {
   id: string
   tipo: string
   numero: string
-  datos: string | null
-  emitidoEl: string
+  datos: string
+  fechaEmision: string
   studentId: string
 }
 
@@ -38,8 +38,13 @@ export default function ConstanciasPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/certifications/${studentId}`)
+      if (!res.ok) {
+        setCertifications([])
+        return
+      }
       const data = await res.json()
-      setCertifications(data.filter((c: Certification) => c.tipo === 'CONSTANCIA') || [])
+      const all = Array.isArray(data) ? data : []
+      setCertifications(all.filter((c: Certification) => c.tipo === 'CONSTANCIA'))
     } catch {
       setCertifications([])
     } finally {
@@ -151,7 +156,7 @@ export default function ConstanciasPage() {
                         <ScrollText className="h-4 w-4 text-primary" />
                         <div>
                           <p className="text-sm font-medium">{cert.numero}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(cert.emitidoEl)}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(cert.fechaEmision)}</p>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" onClick={() => setPreviewCert(cert)}>
@@ -212,7 +217,7 @@ export default function ConstanciasPage() {
 
                 <div className="text-right mt-12 space-y-2">
                   <p className="text-sm font-medium">Número: {previewCert.numero}</p>
-                  <p className="text-sm">Fecha de Emisión: {formatDate(previewCert.emitidoEl)}</p>
+                  <p className="text-sm">Fecha de Emisión: {formatDate(previewCert.fechaEmision)}</p>
                   <div className="mt-8 border-b border-black w-64 ml-auto" />
                   <p className="text-sm font-medium">Dirección(a)</p>
                   <p className="text-xs">{certData.escuela}</p>

@@ -10,7 +10,7 @@ export async function GET(
     const { studentId } = await params
     const certifications = await prisma.certification.findMany({
       where: { studentId },
-      orderBy: { emitidoEl: 'desc' },
+      orderBy: { fechaEmision: 'desc' },
     })
 
     return NextResponse.json(certifications)

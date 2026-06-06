@@ -22,8 +22,8 @@ interface Certification {
   id: string
   tipo: string
   numero: string
-  datos: string | null
-  emitidoEl: string
+  datos: string
+  fechaEmision: string
   studentId: string
 }
 
@@ -39,8 +39,12 @@ export default function CertificacionesPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/certifications/${studentId}`)
+      if (!res.ok) {
+        setCertifications([])
+        return
+      }
       const data = await res.json()
-      setCertifications(data || [])
+      setCertifications(Array.isArray(data) ? data : [])
     } catch {
       setCertifications([])
     } finally {
@@ -158,7 +162,7 @@ export default function CertificacionesPage() {
                         <FileText className="h-4 w-4 text-primary" />
                         <div>
                           <p className="text-sm font-medium">{cert.numero}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(cert.emitidoEl)}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(cert.fechaEmision)}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -223,7 +227,7 @@ export default function CertificacionesPage() {
 
                 <div className="text-right mt-12 space-y-2">
                   <p className="text-sm font-medium">Número: {previewCert.numero}</p>
-                  <p className="text-sm">Fecha de Emisión: {formatDate(previewCert.emitidoEl)}</p>
+                  <p className="text-sm">Fecha de Emisión: {formatDate(previewCert.fechaEmision)}</p>
                   <div className="mt-8 border-b border-black w-64 ml-auto" />
                   <p className="text-sm font-medium">Dirección(a)</p>
                   <p className="text-xs">{certData.escuela}</p>

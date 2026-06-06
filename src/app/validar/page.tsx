@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -18,7 +17,6 @@ import { StudentSearch } from '@/components/student-search'
 import {
   CheckCircle,
   XCircle,
-  AlertTriangle,
   FileText,
   Loader2,
   Search,
@@ -38,22 +36,30 @@ interface Certification {
   id: string
   tipo: string
   numero: string
-  datos: string | null
-  emitidoEl: string
+  datos: string
+  fechaEmision: string
   studentId: string
 }
 
 const tipoLabels: Record<string, string> = {
+  certificacion: 'Certificación de Estudios',
   CERTIFICACION: 'Certificación de Estudios',
+  constancia: 'Constancia de Egreso',
   CONSTANCIA: 'Constancia de Egreso',
+  boletin: 'Boletín de Calificaciones',
   BOLETIN: 'Boletín de Calificaciones',
+  titulo: 'Título de Bachiller',
   TITULO: 'Título de Bachiller',
 }
 
 const tipoColors: Record<string, string> = {
+  certificacion: 'bg-blue-100 text-blue-700',
   CERTIFICACION: 'bg-blue-100 text-blue-700',
+  constancia: 'bg-amber-100 text-amber-700',
   CONSTANCIA: 'bg-amber-100 text-amber-700',
+  boletin: 'bg-purple-100 text-purple-700',
   BOLETIN: 'bg-purple-100 text-purple-700',
+  titulo: 'bg-emerald-100 text-emerald-700',
   TITULO: 'bg-emerald-100 text-emerald-700',
 }
 
@@ -74,17 +80,24 @@ export default function ValidarPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/certifications/${studentId}`)
+      if (!res.ok) {
+        console.error('Error loading certifications:', res.status)
+        setCertifications([])
+        return
+      }
       const data = await res.json()
-      setCertifications(data || [])
-    } catch {
+      if (Array.isArray(data)) {
+        setCertifications(data)
+      } else {
+        console.error('Unexpected response format:', data)
+        setCertifications([])
+      }
+    } catch (err) {
+      console.error('Error loading certifications:', err)
       setCertifications([])
     } finally {
       setLoading(false)
     }
-  }
-
-  const getStatusIcon = (tipo: string) => {
-    return <CheckCircle className="h-4 w-4 text-emerald-600" />
   }
 
   const formatDate = (dateStr: string) => {
@@ -95,10 +108,14 @@ export default function ValidarPage() {
     }
   }
 
+  const normalizeTipo = (tipo: string) => {
+    return tipo.toUpperCase()
+  }
+
   const getStatusSummary = () => {
     const tipos = ['CERTIFICACION', 'CONSTANCIA', 'BOLETIN', 'TITULO']
     return tipos.map(tipo => {
-      const found = certifications.find(c => c.tipo === tipo)
+      const found = certifications.find(c => normalizeTipo(c.tipo) === tipo)
       return { tipo, found }
     })
   }
@@ -142,11 +159,11 @@ export default function ValidarPage() {
                         ) : (
                           <XCircle className="h-4 w-4 text-muted-foreground/50" />
                         )}
-                        <span className="text-xs font-medium">{tipoLabels[tipo]}</span>
+                        <span className="text-xs font-medium">{tipoLabels[tipo] || tipo}</span>
                       </div>
                       {found ? (
                         <p className="text-xs text-muted-foreground">
-                          Emitido: {formatDate(found.emitidoEl)}
+                          Emitido: {formatDate(found.fechaEmision)}
                         </p>
                       ) : (
                         <p className="text-xs text-muted-foreground">No emitido</p>
@@ -175,35 +192,41 @@ export default function ValidarPage() {
                 )}
 
                 {!loading && certifications.length > 0 && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Número</TableHead>
-                        <TableHead>Fecha Emisión</TableHead>
-                        <TableHead>Estado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {certifications.map((cert) => (
-                        <TableRow key={cert.id}>
-                          <TableCell>
-                            <Badge className={tipoColors[cert.tipo] || ''} variant="secondary">
-                              {tipoLabels[cert.tipo] || cert.tipo}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">{cert.numero}</TableCell>
-                          <TableCell className="text-sm">{formatDate(cert.emitidoEl)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {getStatusIcon(cert.tipo)}
-                              <span className="text-sm text-emerald-600 font-medium">Válido</span>
-                            </div>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Número</TableHead>
+                          <TableHead>Fecha Emisión</TableHead>
+                          <TableHead>Estado</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {certifications.map((cert) => {
+                          const colorClass = tipoColors[cert.tipo] || 'bg-gray-100 text-gray-700'
+                          const label = tipoLabels[cert.tipo] || cert.tipo
+                          return (
+                            <TableRow key={cert.id}>
+                              <TableCell>
+                                <Badge className={colorClass} variant="secondary">
+                                  {label}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">{cert.numero || '—'}</TableCell>
+                              <TableCell className="text-sm">{formatDate(cert.fechaEmision)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <span className="text-sm text-emerald-600 font-medium">Válido</span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>

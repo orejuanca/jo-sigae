@@ -1,0 +1,4745 @@
+[
+  [
+    "Nombre del Plantel",
+    "Localidad",
+    "CODIGO",
+    "EF",
+    "",
+    "",
+    ""
+  ],
+  [
+    " * * * * *",
+    "* * *",
+    "",
+    "* *",
+    "",
+    "",
+    ""
+  ],
+  [
+    " APOYO DOCENTE",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    " D.R.C.E.E.",
+    "ALTAMIRA",
+    "Z - 15",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    " U E N CREACIÓN CÚA",
+    "NUEVA CÚA",
+    "OD16751520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    " ZONA EDUCATIVA",
+    "MIRANDA",
+    "PD16660105",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CB CREACION CARTANAL",
+    "SANTA TERESA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CC EZEQUIEL ZAMORA EXT",
+    "NUEVA CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CC MANUEL M VILLALOBOS",
+    "CARRIZAL",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CD EMIRO FUENMAYOR",
+    "BETIJOQUE",
+    "",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CE ANDRES BELLO",
+    "CARACAS",
+    "S0002D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "CEN MERCEDES RASCO",
+    "LA CABRERA",
+    "OD19021512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COLEGIO FRANCISCO TAMAYO",
+    "SANTA TERESA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COLEGIO IBERO AMERICANO",
+    "EL JUNQUITO",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COLEGIO PRIVADO ARRIAS",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "COLEGIO PRIVADO CUA",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "DR DOMINGO BADARACCO B",
+    "GUIRIA",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB ANDRES M HERNANDEZ C",
+    "PTO LA CRUZ",
+    "",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB ANTONIO JOSE SOTILLO",
+    "ZARAZA",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB ANTONIO LEMUS PEREZ",
+    "CUMANA",
+    "S3058D1914",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB BATALLA NAVAL DEL LAGO",
+    "SAN FRANCISCO",
+    "S3414D2317",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB CARLOS B GALENO",
+    "PALO NEGRO",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB CECILIA MUJICA",
+    "SAN FELIPE",
+    "",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB CECILIO ACOSTA",
+    "SAN FELIPE",
+    "",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB CREACION ANTIMANO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB CREACION GUAYANA",
+    "GUAYANA",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB CREACION OCUMARE",
+    "OCUMARE DEL TUY",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB EL CUJI",
+    "EL CUJI",
+    "",
+    "LA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB FELIX MARIA PAREDES",
+    "MARACAY",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB FELIX SOLANO",
+    "PUERTO AYACUCHO",
+    "OD00030203",
+    "AM",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB FERNANDO DE PEÑALVER",
+    "CHACAO",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB FIDEL JESUS OROZCO",
+    "CARACAS",
+    "S1922D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB FRAY PEDRO DE AGREDA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB GUARENAS",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB HUMBERTO PARODI A",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB JOSE A VELANDIA",
+    "LA TRINIDAD",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB JOSE ROJAS ARMAS",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB JUAN A MANDARINO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB JUAN DE GURUCEAGA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB JULIO CESAR SALAS",
+    "VILLA DEL R",
+    "",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB LA COMUNIDAD",
+    "GUANARE",
+    "",
+    "PO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB LUIS CAÑIZALES VERDE",
+    "CARACAS",
+    "PD00940105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB MANUEL DAGNINO",
+    "MARACAIBO",
+    "",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB MARIANO MONTILLA",
+    "PARROQUIA CS",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB MARIANO MONTILLA",
+    "MAIQUETIA",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB MARTIN TOVAR PONTE",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB MERCEDES I DE CORRO",
+    "ORTIZ",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB NTRASRADE COROMOTO",
+    "LOS TEQUES",
+    "S4577D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB PAEZ",
+    "MARACAY",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB RAMON DIAZ SANCHEZ",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB RICARDO MONTILLA",
+    "GUARENAS",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB S ECHEVERRIA LOZANO",
+    "TOCUYITO",
+    "",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB SANTIAGO KEY AYALA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB SANTOS MICHELENA",
+    "MARACAY",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB SIMON BOLIVAR",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB TOMAS V GONZALEZ",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB VICTOR ANGEL HERNANDEZ",
+    "VILLA DE CURA",
+    "S1297D0516",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EB YORACO",
+    "EL ROBLE",
+    "",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBB RICARDO MONTILLA",
+    "GUARENAS",
+    "S2470D1517",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBC EL PARQUECITO",
+    "MATURIN",
+    "",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBD JUAN ESPAÑA",
+    "EL VALLE",
+    "S2842D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBD RAMON P OROPEZA",
+    "CARACAS",
+    "S1455D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBE GRAL RAFAEL URDANETA",
+    "CUA",
+    "ED00971520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBE JOSE TADEO MONAGAS",
+    "BARUTA",
+    "S0164D1503",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBG DrSAVERIO BARBARITO",
+    "APURITO",
+    "",
+    "AP",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN 25 DE MARZO",
+    "SAN FELIX",
+    "",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN ALBERTO SMITH",
+    "OCUMARE DEL TUY",
+    "S3143D1512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN ANDRES NAVARTE",
+    "SEBUCAN",
+    "S0980D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN ANTONIO GUZMAN B",
+    "CARACAS",
+    "S0655D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN CREACION PAOLA",
+    "SANTA RITA",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN Dr ELISEO ACOSTA",
+    "SAN SEBASTIAN",
+    "S0822D0510",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN DRJOSE MVARGAS",
+    "MARACAY",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN DrJULIO S ALVAREZ",
+    "CARORA",
+    "",
+    "LA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN ELBA H DE YANEZ",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN FERNANDO DE PEÑALVER",
+    "CHACAO",
+    "T101D1507",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN J M ALFARO ZAMORA",
+    "BARUTA",
+    "S2658D1503",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JOSE ANGEL ALAMO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JOSE C MORIN",
+    "TUCUPIDO",
+    "S1486D1211",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JOSE FELIX BLANCO",
+    "CARACAS",
+    "S0748D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JOSE M SISO MARTINEZ",
+    "UPATA",
+    "S1080D0706",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JOSE ROJAS ARMAS",
+    "CARACAS",
+    "S0799D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JOSEFINA DE ACOSTA",
+    "SAN FRANCISCO",
+    "",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JUAN BAUTISTA PLAZA",
+    "MONTECRISTO",
+    "S1400D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JUAN RODRIGUEZ SUAREZ",
+    "CARACAS",
+    "S1166D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN JULIO ROSALES",
+    "LOS TEQUES",
+    "S1167D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN LINO DE CLEMENTE",
+    "PETARE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN MIGUEL A ALVAREZ",
+    "LA VICTORIA",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN RAFAEL CABRERA MALO",
+    "S JUAN DE L M",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBN SIMON RODRIGUEZ",
+    "CARACAS",
+    "S1273D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "EBNB JUAN A MANDARINO",
+    "CARACAS",
+    "S1919D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ET F/A MONSEÑOR JJ BERNAL",
+    "CUA",
+    "PD03741520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ET RUBEN GONZALEZ",
+    "GUARENAS",
+    "T0102D1517",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA CUMANAGOTOS",
+    "LAS MANOAS",
+    "T0600D1913",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA DIEGO BAUTISTA URBANEJA",
+    "SAN JOSE DE GUARIBE",
+    "T404D1213",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA GUARAUNOS",
+    "GUARAUNOS",
+    "S2741D1904",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA ILDEFONSO MENDEZ O",
+    "LA PRADERA",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA LA PRADERA",
+    "LA PRADERA",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA MAYORICA",
+    "ALBARICO",
+    "S1395D2211",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA PIÑATE",
+    "OCUMARE DEL TUY",
+    "S3714D1512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA RAUL VAZQUEZ OLIVERO",
+    "SAN SEBASTIAN",
+    "OD01450510",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA SAN JOSE DE BOLIVAR",
+    "SAN JOSE DE BOLIVAR",
+    "S0834D2008",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA SIMON BOLIVAR",
+    "LA AZULITA",
+    "T0703D1402",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETA SJOSE DE TIZNADOS",
+    "SJTIZNADOS",
+    "S1825D1210",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETC ANGEL DE LA GUARDA ",
+    "MATURIN",
+    "",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETC DALLA COSTA",
+    "CIUDAD BOLIVAR",
+    "T0026D0705",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETC LUIS RAZETTI",
+    "CARACAS",
+    "S0011D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETC MADRE RAFOLS",
+    "VALERA",
+    "",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETCR MANUEL P FAJARDO",
+    "CARACAS",
+    "S0012D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI CRUZ VILLEGAS",
+    "QDA DE CUA",
+    "OD16591520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI FUNDACION LA SALLE",
+    "CIUDAD GUAYANA",
+    "",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI GREGORIO MAC GREGOR",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI JOAQUIN AVELLAN",
+    "MARACAY",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI JOSE DE SAN MARTIN",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI JULIO CALCAÑO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI LAUDELINO MEJIAS",
+    "TRUJILLO",
+    "",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETI RAFAEL VEGAS",
+    "CARACAS",
+    "T0058D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ETP EDUARDO MEZA ISTURIZ",
+    "CARACAS",
+    "S3138D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "FE Y ALEGRIA LA RINCONADA",
+    "CARACAS",
+    "S0670D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ICB ALMIRANTE BRION",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ICB FELIPE FERMIN PAUL",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ICB NICANOR B PERAZA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ICC BENITO CANONICO",
+    "GUARENAS",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "IE REP DE VENEZUELA",
+    "SAN FELIX",
+    "",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "INST NUEVA LUZ DE ESPERANZA",
+    "* * *",
+    "",
+    "* *",
+    "",
+    "",
+    ""
+  ],
+  [
+    "INSTTEC JESUS OBRERO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB CACIQUE NAIGUATA",
+    "NAIGUATA",
+    "S1164D2404",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB CORAZON DE JESUS",
+    "CUMANA",
+    "S2742D1914",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB CREACION ORINOCO",
+    "ORINOCO",
+    "OD14671912",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB CREACION PARIAGUAN",
+    "PARIAGUAN",
+    "S322DO315",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB CREACION RIO GRANDE A",
+    "RIO GRANDE A",
+    "OD00751910",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB CRISTOBAL COLON",
+    "PUERTO LA CRUZ",
+    "S0877D0321",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB DIEGO DE LOSADA",
+    "CARACAS",
+    "S0603D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB DIEGO DE VALLENILLA",
+    "CUMANACOA",
+    "S1384D1912",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB DR CARLOS FCO GRISANTI",
+    "RIO CARIBE",
+    "S0368D1903",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB Dr LUIS B PRIETO F",
+    "RIO CASANAY",
+    "S3593D1902",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB FELIX ANGEL LOZADA",
+    "LA PICA",
+    "S1591D1608",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB FIDEL JESUS OROZCO",
+    "CARACAS",
+    "S1922D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB JOSE GIL FORTOUL",
+    "CARIPITO",
+    "S3045D1603",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB JUAN A PEREZ BONALDE",
+    "OCUMARE DEL TUY",
+    "OD16341512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB LEOPOLDO AGUERREVERE",
+    "CARACAS",
+    "S0815D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB LUIS BELTRAN SANABRIA",
+    "CUMANACOA",
+    "S0371D1912",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB MARIANO MONTILLA",
+    "CARLOS SOUBLETTE",
+    "S0887D2403",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB MARISCAL SUCRE",
+    "CUMANA",
+    "OD00301914",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB MIGUEL A DIAZ O",
+    "SAN FERNANDO",
+    "",
+    "AP",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB NESTOR LUIS PEREZ",
+    "TUCUPITA",
+    "",
+    "DA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB NUEVO HORIZONTE",
+    "CARACAS",
+    "OD07200105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB PABLO VILA",
+    "CARACAS",
+    "S1991D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB PEDRO ROLINGSON HERRERA",
+    "PIRITU",
+    "S1370D0318",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB TOMAS ALFARO CALATRAVA",
+    "Pto LA CRUZ",
+    "S0127D0321",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LB WILLIAM LARA",
+    "PARIAGUAN",
+    "OD15510315",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LBFC FERMIN TORO",
+    "CARACAS",
+    "S0007D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LBN Dr PEDRO M ARCAYA",
+    "PUNTO FIJO",
+    "S1044D1105",
+    "FA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LBN LUIS ENRIQUE MARQUEZ B",
+    "MERIDA",
+    "S0622D1420",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LBN RAFAEL HERNANDEZ LEON",
+    "CAGUA",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LBN ROSSANA MELIDEI PALACIOS",
+    "SANTA TERESA DEL TUY",
+    "OD00981511",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LENB G/J ALBERTO MULLER ROJAS",
+    "CARACAS",
+    "OD18500101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO ANDRES BELLO",
+    "SABANA GRANDE",
+    "S2120D2103",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO CARACAS",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO DOCTOR JACINTO CONVIT",
+    "VILLA BRUZUAL",
+    "S1446D1814",
+    "PO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO ESTEBAN GIL BORGES",
+    "PETARE",
+    "S0711D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO FEDERACION",
+    "CHURUGUARA",
+    "",
+    "FA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO JOSE ROJAS ARMAS",
+    "CARACAS",
+    "S0799D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO NACIONAL ESTHER DE AÑEZ",
+    "CAPATARIDA",
+    "",
+    "FA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO NACIONAL LA YUCA",
+    "BARINAS",
+    "",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LICEO NACIONAL LIBERTADOR",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LM(GN) 4 DE AGOSTO",
+    "COLON",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LN GRAN CACIQUE GUAICAIPURO",
+    "CARACAS",
+    "OD18760105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LN HORTENSIO W GUERRERO CARDENAS",
+    "EL PABELLON",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LN JESUS MARIA FARIAS",
+    "SAN ANTONIO DE IRAPA",
+    "OD00701910",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LN JOSE ANTONIO RINCON",
+    "MARACAIBO",
+    "OD03842313",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LN LEANDRO CALDERON",
+    "LAS MINAS",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LN ROMAN CARDENAS",
+    "CAPACHO",
+    "",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LNB DR CARLOS FRANCISCO GRISANTI",
+    "RIO CARIBE",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LNB LIBERTADOR",
+    "BARINAS",
+    "OD19450604",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LNB MAESTRA ARGELIA LAYA",
+    "VILLA ROSA",
+    "OD04501704",
+    "NE",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LNB REPUBLICA DE PANAMA",
+    "LA GUAIRA",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LP JUAN V CAMACHO C",
+    "STA CRUZ DE MARA",
+    "PD05112312",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "LPB GUSTAVO H MACHADO",
+    "CARACAS",
+    "S0758D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "PEDRO JOSE SALAZAR",
+    "CARUPANO",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SANTA ANA DEL JUNQUITO",
+    "EL JUNQUITO",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SANTO ANGEL DE LA GUARDA",
+    "CUMANA",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "SANTO DOMINGO DE GUZMAN",
+    "CARABALLEDA",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UB JESUS Ma ALFARO Z",
+    "BARUTA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UBN DIEGO DE LOSADA",
+    "CARACAS",
+    "S2154D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE AGUSTIN ARMARIO",
+    "PUERTO CABELLO",
+    "",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE ALI PRIMERA",
+    "CUMANA",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE ALMIRANTE LUIS BRION",
+    "MAMPORAL",
+    "OD17101505",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE ANTONIO J SALDIVIA",
+    "CUICAS",
+    "T0263D2105",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE ANTONIO JOSE DE SUCRE",
+    "GUARENAS",
+    "S1253D1517",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE BERNARDO BERMUDEZ",
+    "TUNAPUY",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE BERNARDO VILLASMIL",
+    "PUEBLO NVO EL CHIVO",
+    "S1980D2306",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Br TRINIDAD FIGUEIRA",
+    "SAN FELIPE",
+    "S2295D2211",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE BRRAFAEL CASTRO M",
+    "CUMANA",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE CARLOS URDANETA",
+    "CARRASQUERO",
+    "S1118D2312",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE CARMEN ROSALES GOMEZ",
+    "LAS VARIANTES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE CARTANAL II",
+    "SANTA TERESA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE CENTRO AMERICA",
+    "DISTRITO CAPITAL",
+    "OD02590104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COL BICENTENARIO",
+    "TURMERO",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Col CRISTO REDENTOR",
+    "CARACAS",
+    "PD01510105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Col Fund  CARLOS DELFINO",
+    "CARACAS",
+    "T0183D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Col JUAN G ROSCIO",
+    "VALLE DE LA P",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLANDRES E BLANCO",
+    "TARIBA",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE ColCUATRICENTENARIO",
+    "GUANARE",
+    "",
+    "PO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO ARRIAS",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO CERVANTES",
+    "CARACAS",
+    "S0662D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO LUZ Y LIBERTAD",
+    "SAN FERNANDO",
+    "S0888D0407",
+    "AP",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO MICAELIANO",
+    "MERIDA",
+    "",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO MONTESANO",
+    "CARLOS SOUBLETTE",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO SAN JOSE",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO SANTA ANA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE COLEGIO VARGAS II",
+    "CARACAS",
+    "PD01740103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE CREACION SOAPIRE",
+    "SOAPIRE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE CUA",
+    "CUA",
+    "S3508D1520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE DIEGO Bta URBANEJA",
+    "S J de Gbe",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE DIEGO DE OSORIO",
+    "NAIGUATA",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Dr PABLO VALERA",
+    "GUATIRE",
+    "PD04101521",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE DrRUBEN MERENFELD",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE EL BATATILLO",
+    "EL BATATILLO",
+    "S4758D2104",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE ESTADO YARACUY",
+    "SANTA LUCIA",
+    "OD19031515",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FcoSALDIVIA LANDAETA",
+    "BARBACOAS",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FE Y ALEGRIA VIRGINIA DE RUIZ",
+    "CARACAS",
+    "S2853D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FEDERICO QUIROZ",
+    "URACHICHE",
+    "S0963D2213",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FELIPE NERI PULIDO SANCHEZ",
+    "VALENCIA",
+    "S1307D0814",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FELIPE TEJERA",
+    "CARACAS",
+    "S2153D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FERNANDO P CASTILLO",
+    "ARAIRA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FRANCISCO DE MIRANDA",
+    "CARACAS",
+    "PD01240105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FRAY JOSE ZAPICO",
+    "SAN JOSE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE FRAY PEDRO DE AGREDA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE GASPAR MARCANO",
+    "S JUAN BAUTISTA",
+    "S1092D1703",
+    "NE",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE GERVASIO RUBIO",
+    "RUBIO",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE GmoFco DE MIRANDA",
+    "Pto LA CRUZ",
+    "",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE GONZALO RGUTIERREZ",
+    "MARACAIBO",
+    "",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Gral JUAN A PAREDES",
+    "MARACAIBO",
+    "",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE Gral RUBEN D MENDEZ",
+    "NAIGUATA",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE GUSTAVO OLIVARES B",
+    "LAS TUNITAS",
+    "",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE INSTITUTO MARGARITA",
+    "PORLAMAR",
+    "",
+    "NE",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JAROMAN VALECILLOS",
+    "CARACHE",
+    "",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JESUS BANDRES",
+    "LEZAMA DE Oco",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JJOSUNA RODRIGUEZ",
+    "MÉRIDA",
+    "",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JORGE ORDOSGOITTI",
+    "PLAYA GRANDE",
+    "S1560D1905",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JOSE ANTONIO RAMOS SUCRE",
+    "CUMANA",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JOSE C MUÑOZ",
+    "MANTECAL",
+    "",
+    "AP",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JOSE FELIX RIBAS",
+    "SAN JOAQUIN",
+    "",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JOSE TADEO MONAGAS",
+    "CARIPITO",
+    "",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JUAN GERMAN ROSCIO",
+    "CHARALLAVE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JUAN GERMAN ROSCIO",
+    "VALLE DE LA PASCUA",
+    "OD09561205",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JUAN JOSE DE MAYA",
+    "INDEPENDENCIA",
+    "",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE JULIO GARMENDIA",
+    "PETARE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LA COLORADA",
+    "LA COLORADA",
+    "S3092D2007",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LA PALMITA",
+    "LA PALMITA",
+    "S3064D1401",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LICEO AVILA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LINO DE CLEMENTE",
+    "SANTA TERESA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LUIS CAÑIZALES VERDE",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LUIS CORREA",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LUISA CACERES DE ARISMENDI",
+    "CARACAS",
+    "S2256D0101",
+    "DF",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE LUISA CACERES DE ARISMENDI",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE MANSEÑOR MEJIA",
+    "TRUJILLO",
+    "S1109D2102",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE MODULO RURAL DE BELEN",
+    "BELEN",
+    "S1937D0802",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE NICANOR BOLET PERAZA",
+    "CARACAS",
+    "S0870D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE NORBERTO PRADO",
+    "GUARENAS",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE NTRA SRA DE LA COROMOTO",
+    "VALENCIA",
+    "S4502D0814",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE PARACOTOS",
+    "MIRANDA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE PEDRO A RIOS REYNA",
+    "LA FRIA",
+    "S0956D2009",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE PEDRO GUZMAN GAGO",
+    "VALENCIA",
+    "",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE RAFAEL AREVALO G",
+    "HIGUEROTE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE RAFAEL MEDINA JIMENEZ",
+    "BARINAS",
+    "S1458D0604",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE RAMON IGNACIO MENDEZ",
+    "TRUJILLO",
+    "S0960D2118",
+    "TR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SAN FERNANDO",
+    "EL RECREO",
+    "",
+    "AP",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SAN MARTIN DE PORRES",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SANTA BARBARA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SANTA LUCIA DEL TUY",
+    "SANTA LUCIA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SANTA MARIA",
+    "SANTA MARIA",
+    "S2967D2204",
+    "YA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SANTOS LUZARDO",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE SIMON RODRIGUEZ",
+    "PUERTO CABELLO",
+    "OD 73310811",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE TALENTOS ARTISTICOS",
+    "BARINAS",
+    "OD14480604",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE UNION DE NACIONES II",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE VIRGEN DE LAS NIEVES",
+    "GUACARA",
+    "S2867D0804",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UE YARACAL",
+    "YARACAL",
+    "",
+    "FA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEA DE CARAPITA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEA MORAL Y LUCES DEL T",
+    "OCUMARE DEL TUY",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEB GUACHICAPAZON",
+    "GUACHICAPAZON",
+    "",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEB Mª DE J NOGUERA DE T",
+    "GUACHICAPAZON",
+    "OD04411414",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEB MARIA TERESA DEL TORO",
+    "CAPAZON ABAJO",
+    "",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEBM JUAN de D GUANCHE",
+    "EL PEDREGAL",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC ALBERTO I PADRA",
+    "GUARENAS",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC ALBERTO I PADRA",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC AUGUSTE COMTE",
+    "EJIDO",
+    "",
+    "ME",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC CNEL ANTONIO NICOLAS BRICEÑO",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC EL BUEN PASTOR",
+    "BARINAS",
+    "",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC IQBAL MASIH",
+    "SAN FELIX",
+    "",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC JOSE A PULIDO",
+    "MARICHES",
+    "PD79011519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC JUAN GERMAN ROSCIO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC N S LA CANDELARIA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC Ntra Sra DEL CARMEN",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC OBRA DEL BUEN CONSEJO",
+    "SAN ANTONIO",
+    "S3982D1513",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEC SANTO ANGEL",
+    "SAN FELIX",
+    "PD00150701",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UECA NUESTRA SRA DEL CARMEN",
+    "EL SOMBRERO",
+    "PD00421207",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UECOP ANDRES ELOY BLANCO",
+    "CARACAS",
+    "S0027D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UECP NUESTROS SIMBOLOS",
+    "CHARALLAVE",
+    "PD1677158",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UECP SANTA TERESITA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UED JUAN ESPAÑA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UED RAMON P OROPEZA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE ABILIO REYES OCHOA",
+    "LA MATA",
+    "S4767D1509",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE CARMEN RUIZ",
+    "CHARALLAVE",
+    "OD00221508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE DRJOSE M NUÑEZ PONTE",
+    "LA URBINA",
+    "OD04711519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE EVARISTO GONZALEZ PALMA",
+    "CHAGUARAMAS",
+    "S4290D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE GMO FCO DE MIRANDA",
+    "CUA",
+    "OD01651520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE GMO. FCO. DE MIRANDA",
+    "MARICHES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE Gral RAFAEL URDANETA",
+    "CUA",
+    "OD00971520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE GRAN MARISCAL DE AYACUCHO",
+    "OCUMARE DEL TUY",
+    "OD15941512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE JOSE GIL FORTOUL",
+    "NUEVA CUA",
+    "OD09751520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE LAS COLONIAS",
+    "HIGUEROTE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE RAUL LEONI",
+    "PAULO VI",
+    "OD11751519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEE URQUIA",
+    "SAN PEDRO",
+    "OD12681510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEEN LUIS BELTRAN PRIETO F",
+    "PETARE",
+    "OD18171519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEETA CUMANAGOTOS",
+    "LAS MANOAS",
+    "",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEI Cs N CTE J M GARCIA",
+    "LA ASUNCION",
+    "PD00361702",
+    "NE",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEIE NUEVA VENEZUELA",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UELB GUAICAIPURO",
+    "CARAYACA",
+    "ODS8282401",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UELB PBRO MANUEL MONTANER S",
+    "VILLA ROSA",
+    "S1804D1704",
+    "NE",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM (GN) 4 DE AGOSTO",
+    "SAN JUAN DE COLON",
+    "S1573D2003",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM 5 DE JULIO",
+    "PETARE",
+    "S2753D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM ALBERTO RAVELL",
+    "PETARE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM CARMEN VALVERDE",
+    "PETARE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM SAGRADO CORAZON DE J",
+    "PETARE",
+    "OD00101519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM TITO SALAS",
+    "MARICHES",
+    "S4619D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEM TULIO FEBRES CORDERO",
+    "S JUAN DE C",
+    "",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEMN (GN) CAP (F) PMOM",
+    "LOS TEQUES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEMO CAP PEDRO M OCHOA M",
+    "LOS TEQUES",
+    "S0514D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN 12 DE OCTUBRE",
+    "LAS QUEBRADITAS",
+    "S3910D1520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN 25 DE JULIO",
+    "CARACAS",
+    "S0874D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN 25 DE MARZO",
+    "SAN MATEO",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN 5 DE DICIEMBRE",
+    "ACARIGUA",
+    "S1336D1808",
+    "PO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN AGUSTIN AVELEDO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ALBERTO SMITH",
+    "OCUMARE DEL TUY",
+    "S3143D1512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ALEJANDRO OROPEZA C",
+    "GUATIRE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ALMIRANTE BRION",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ANDRES BELLO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ANDRES E BLANCO",
+    "GUANAPE",
+    "",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ANDRES ELOY BLANCO",
+    "CARACAS",
+    "S0003D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ANTONIO ARRAIZ",
+    "CARACAS",
+    "S0654D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ANTONIO J DE SUCRE",
+    "CARACAS",
+    "T070D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ANTONIO ORTEGA ORDOÑEZ",
+    "PETARE",
+    "S3267D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN AQUILES NAZOA",
+    "TURMERO",
+    "S1415D0517",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN AUGUSTO D`AUBETERRE",
+    "BOCA DE UCHIRE",
+    "",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN AUGUSTO PI SUÑER",
+    "CARACAS",
+    "S0757D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN BARRIO LAS FLORES",
+    "SAN JUAN DE COLON",
+    "S3089D2003",
+    "TA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN BEATRIZ DE RODRIGUEZ",
+    "ORTIZ",
+    "",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN BENITO JUAREZ",
+    "CARACAS",
+    "S0876D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN BICENTENARIO REPUBLICANO",
+    "CARACAS",
+    "OD18210102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CACIQUE NAIGUATA",
+    "NAIGUATA",
+    "S1164D2404",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CARLOS MORALES",
+    "CARACAS",
+    "S0826D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CARLOS RAMON APONTE",
+    "SANTA CRUZ",
+    "S1012D0504",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CARMEN DE CURA",
+    "CARMEN DE CURA",
+    "OD00010502",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CARTANAL II",
+    "SANTA TERESA DEL TUY",
+    "S5520D1511",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CHARAVARE",
+    "CHARALLAVE",
+    "OD24691508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION CALLE PAEZ",
+    "SABANETA",
+    "OD01860506",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION CHARALLAVE",
+    "CHARALLAVE",
+    "S3546D1508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION OCUMARE",
+    "OCUMARE DEL TUY",
+    "S3393D1512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION SUCUTA",
+    "OCUMARE DEL TUY",
+    "S4000D1512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION TAPIPA",
+    "MIRANDA",
+    "OD17121501",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION UD-4",
+    "CARACAS",
+    "OD01651520",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CREACION VENEZUELA",
+    "FCO DE MIRANDA",
+    "OD02090517",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN CUA",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN DE APLICACION",
+    "CARACAS",
+    "S0006D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN DIEGO DE LOSADA",
+    "CARACAS",
+    "S0603D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN DOS MONTES",
+    "DOS MONTES",
+    "OD17360515",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN DR FELIX S ANGULO A",
+    "GUANARE",
+    "S0123D1804",
+    "PO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN DR J M NUÑEZ PONTE",
+    "CARACAS",
+    "OD02830104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN EDOARDO CREMA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN EDUARDO CALCAÑO",
+    "CARACAS",
+    "S0719D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ELBA HERNANDEZ DE YANEZ",
+    "CARACAS",
+    "S1761D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN EZEQUIEL ZAMORA",
+    "CUA",
+    "S1292D1520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN Fco TOSTA GARCIA",
+    "CHARALLAVE",
+    "S1070D1508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN FEDERICO VILLENA",
+    "TURMERO",
+    "S1303D0511",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN FELIPE FERMIN PAUL",
+    "CARACAS",
+    "S1165D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN FERNANDO PAZ CASTILLO",
+    "GUATIRE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN FRANCISCO DE MIRANDA",
+    "EL CAFE",
+    "OD17151501",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN FROILAN NORIEGA",
+    "CARACAS",
+    "S3386D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GABRIELA MISTRAL",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GRAN COLOMBIA",
+    "CARACAS",
+    "N0001D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GUANIPA",
+    "BARINAS",
+    "S4155D0604",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GUANIPA",
+    "SAN JOSE DE GUANIPA",
+    "",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GUARENAS",
+    "LOS TEQUES",
+    "S3176D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GUILLERMO COVA",
+    "SANTA TERESA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GUSTAVO HERRERA",
+    "CHACAO",
+    "OD17921507",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN GUSTAVO OLIVARES BOSQUE",
+    "CATIA LA MAR",
+    "S2109D2402",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN HUGO RAFAEL CHAVEZ FRIAS",
+    "FILAS DE MARICHE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN HUGO RAFAEL CHAVEZ FRIAS.",
+    "EL DELEITE",
+    "OD06311520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN J A PEREZ BONALDE",
+    "OCUMARE DEL TUY",
+    "OD16341512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JESUS MARIA PORTILLO",
+    "MENE GRANDE",
+    "S0836D2302",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOAQUIN CRESPO",
+    "PARAPARA",
+    "OD09021212",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE A CALCAÑO",
+    "SAN FRANCISCO",
+    "S1350D2317",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE ANTONIO MAITIN",
+    "PUERTO CABELLO",
+    "OD11100811",
+    "CA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE AVALOS",
+    "CARACAS",
+    "T0071D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE E SANCHEZ A",
+    "EL PALMAR",
+    "S1142D0711",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE FELIX RIBAS",
+    "SEBUCAN",
+    "S1291D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE FELIX RIVAS",
+    "S JUAN DE L M",
+    "S1429D1212",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JOSE MARTI",
+    "SAN FELIX",
+    "OD18690701",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN A RODRIGUEZ D",
+    "AGUADA GRANDE",
+    "",
+    "LA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN BAUTISTA CASTRO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN DE ESCALONA",
+    "EL HATILLO",
+    "OD19641509",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN DE GURUCEAGA",
+    "CARACAS",
+    "S1404D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN DE URPIN",
+    "VALLE GUANAPE",
+    "S0965D0205",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN ESPAÑA",
+    "CHARALLAVE",
+    "OD00311508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN FRANCISCO DE LEON",
+    "CAUCAGUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN JUAN LOVERA",
+    "CARACAS",
+    "S1280D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LA CANDELARIA",
+    "PAO DE ZARATE",
+    "OD01800505",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LA CEIBA DEL ALTO",
+    "SANTA LUCIA",
+    "OD20971515",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LA ESPERANZA",
+    "BARINAS",
+    "OD12610602",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LAS CAROLINAS",
+    "MATURIN",
+    "OD09001608",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LAS DOS LAGUNAS",
+    "SANTA TERESA DEL T",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LIBERTADOR",
+    "SAN FRANCISCO DE YARE",
+    "S0026D1518",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LICEO CARICUAO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LICEO ESTADO VARGAS",
+    "SANTA LUCIA",
+    "OD01921515",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LINO GALLARDO",
+    "CARACAS",
+    "T0057D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LUIS CARDENAS SAAVEDRA",
+    "CARACAS",
+    "S0867D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LUIS EZPELOSIN",
+    "CARACAS",
+    "S0010D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LUIS HURTADO H",
+    "CARACAS",
+    "OD00040105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LUIS HURTADO HIGUERA",
+    "EL JUNQUITO",
+    "OD00040105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LUIS MARIANO RIVERA",
+    "MARACAY",
+    "OD02330503",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN LYA IMBER DE CORONIL",
+    "SANTA TERESA DEL TUY",
+    "S2301D1511",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MANUEL CEDEÑO",
+    "CAICARA DEL O",
+    "S0185D0702",
+    "BO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MANUEL DE ALESON",
+    "OCUMARE DEL TUY",
+    "OD16301512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MANUEL L ROSALES",
+    "CARACAS",
+    "S0868D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MARIA DE NAZARETH",
+    "CAMATAGUA",
+    "OD14470502",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MARIANO PICON SALAS",
+    "PETARE",
+    "S0508D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MIGUEL ANTONIO CARO",
+    "CARACAS",
+    "N0002D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MIREYA VANEGAS",
+    "CARACAS",
+    "S2219D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN Mons MARIANO MARTI",
+    "MAGDALENO",
+    "S1421D0516",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN MONSEÑOR PEREZ LEON",
+    "TACATA",
+    "OD16491512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN NARCISO GONELL",
+    "CATIA LA MAR",
+    "S1163D2402",
+    "VA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN NICOLAS LOPEZ",
+    "MATURIN",
+    "S3050D1608",
+    "MO",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN NUEVA CUA",
+    "NUEVA CUA",
+    "OD22971520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN OSWALDO TORRES VIÑAS",
+    "CAÑA DE AZUCAR",
+    "S1788D0508",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PABLO ACOSTA ORTIZ",
+    "CARACAS",
+    "S0694D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PADRE Fco ANDUJAR",
+    "CAGUA",
+    "OD11830513",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PANAQUIRE",
+    "PANAQUIRE",
+    "S1496D1501",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PEDRO EMILIO COLL",
+    "CARACAS",
+    "S0013D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PEDRO FONTES",
+    "CARACAS",
+    "S2797D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PEDRO ITRIAGO CHACIN",
+    "LAS MERCEDES",
+    "T366D1206",
+    "GU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PEREZ BONALDE",
+    "OCUMARE DEL TUY",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN PERU DE LACROIX",
+    "CARACAS",
+    "T0060D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN RAFAEL GUINAND",
+    "CARACAS",
+    "S1279D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN RAFAEL OLIVARES F",
+    "SANTA TERESA DEL TUY",
+    "S1168D1511",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN RAFAEL SEIJAS",
+    "CARACAS",
+    "S0871D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN RAFAEL URDANETA",
+    "CUA",
+    "OD09651520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN RAMON DIAZ SANCHEZ",
+    "CARACAS",
+    "S0862D0104",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN REPUBLICA DE CHILE",
+    "BARCELONA",
+    "S2686D0304",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN REPUBLICA DE INDONESIA",
+    "BARUTA",
+    "OD1744503",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ROBERTO M CENTENO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN ROGELIO ILLARAMENDI",
+    "MARACAIBO",
+    "",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SAN CASIMIRO",
+    "SAN CASIMIRO",
+    "S0511D0509",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SAN CASIMIRO DE GUIRIPA",
+    "SAN CASIMIRO",
+    "OD04380509",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SAN PEDRO",
+    "SAN PEDRO DE LOS ALTOS",
+    "S3575D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SANTIAGO KEY AYALA",
+    "CARACAS",
+    "S0016D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SERGIO MEDINA",
+    "LAS TEJERIAS",
+    "S1190D0512",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SIMON BOLIVAR",
+    "PALO NEGRO",
+    "OD01900507",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SIMON BOLIVAR",
+    "CARACAS",
+    "T0073D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN SIMON BOLIVAR",
+    "LOS TEQUES",
+    "S31122D1510",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN TAGUAY",
+    "TAGUAY",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN TALENTOS DEPORTIVOS",
+    "BARINAS",
+    "OD17900604",
+    "BA",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN TERESA CARREÑO",
+    "CARACAS",
+    "S0821D0102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN TITO SALAS",
+    "BARUTA",
+    "S0824D1503",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN TOMAS V GONZALEZ",
+    "CARACAS",
+    "",
+    "DF",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN VALLES DEL TUY",
+    "OCUMARE DEL TUY",
+    "OD16241512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEN WENCESLAO CASADO F",
+    "SAN SEBASTIAN",
+    "OD01340510",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB BICENTENARIO REPUBLICANO",
+    "CARACAS",
+    "OD18210102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB CACIQUE TAMANACO",
+    "CHARALLAVE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB GRAN COLOMBIA",
+    "CARACAS",
+    "N0001D0101",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB MARIA TERESA DEL TORO",
+    "CHARALLAVE",
+    "OD16361508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB PEDRO FONTES",
+    "CARACAS",
+    "S2797D0103",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB RAFAEL AREVALO G",
+    "HIGUEROTE",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB VALLES DEL TUY",
+    "OCUMARE DEL TUY",
+    "OD16241512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENB VENEZUELA",
+    "SANTA LUCIA",
+    "OD17831515",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENG SAN Fco DE ASIS",
+    "S Fco DE A",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENLB JUAN LANDAETA",
+    "CARACAS",
+    "S1128D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UENLB LAS HERNANDEZ",
+    "LAS HERNANDEZ",
+    "",
+    "NE",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP 1 DE ENERO",
+    "QUEBRADA DE CUA",
+    "PD16821520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP ALFREDO ROJAS HERNANDEZ",
+    "CARACAS",
+    "PD00700105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP ANTONIO GUZMAN BLANCO",
+    "BARCELONA",
+    "PD00790304",
+    "AN",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP BOLIVAR",
+    "CARACAS",
+    "PD18110102",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP CNEL ANGEL C SERRANO",
+    "CUA",
+    "PD00611520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP Col DEL AVE MARIA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP Col JOSE ATENODORO PULIDO",
+    "MARICHES",
+    "PD79011519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP COLEGIO ARANDU",
+    "CHARALLAVE",
+    "PD20931508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP COLEGIO EMILIO CRESPO",
+    "CUA",
+    "PD16631520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP CONGRESO DE ANGOSTURA",
+    "SANTA TERESA",
+    "PD00981511",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP DR JOSE G HERNANDEZ",
+    "CHARALLAVE",
+    "S0309D1508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP DR JOSE RAMON FIGUERA",
+    "CHARALLAVE",
+    "PD00751508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP EL CRISTO",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP EL RESPLANDOR DEL TUY",
+    "CHARALLAVE",
+    "P1676D1508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP FEDERICO QUIROS",
+    "CARACAS",
+    "S0041D0105",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP IGNACIO ANDRADE",
+    "CUA",
+    "PD23801520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP IGNACIO BURK I",
+    "CUA",
+    "PD02591520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP INST ELENA DE BUENO",
+    "PETARE",
+    "T0103D1519",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP INSTITUTO MARA",
+    "OCUMARE DEL TUY",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP JOSE Mª CARREÑO",
+    "CUA",
+    "PD00451520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP JOSE RAMON FIGUERA",
+    "CHARALLAVE",
+    "PD00751508",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP JUAN A PEREZ BONALDE",
+    "MARICHES",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP JUAN CRISOSTOMO FALCON",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP LA ROSA MISTICA",
+    "CUA",
+    "PD01751520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP LEONARDO DI SER DAVINCI",
+    "SANTA TERESA DEL TUY",
+    "PD01341511",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP LISANDRO ALVARADO",
+    "CUA",
+    "PD19081520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP LUIS EDUARDO EGUI AROCHA",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP MANUEL F PALACIO",
+    "OCUMARE DEL TUY",
+    "PD23761512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP MANUEL RAMON OYON",
+    "OCUMARE DEL TUY",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP MARIA ANTONIA BOLIVAR",
+    "SANTA LUCIA",
+    "PD14221515",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP PBRO ESTEVAN PAEZ",
+    "OCUMARE DEL TUY",
+    "PD17701512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP PEDRO JUAN PEREZ DE VALENZUELA",
+    "CAMATAGUA",
+    "",
+    "AR",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP PEDRO V SOSA H",
+    "MAMPORAL",
+    "PD00941505",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP RAMON A RODRIGUEZ",
+    "CUA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP RODRIGUEZ Y BOLIVAR",
+    "OCUMARE DEL TUY",
+    "PD18101512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP SAN FRANCISCO SOLANO",
+    "MARACAIBO",
+    "PD24972313",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP SANTA LUCIA DE PARIAGUAN",
+    "SANTA LUCIA",
+    "",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP SANTISIMA CARIDAD",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP SANTO NIÑO DE ATOCHA",
+    "CUA",
+    "PD14281520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP SIMON BOLIVAR",
+    "CARUPANO",
+    "N0149D1905",
+    "SU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP SIMON Y SIMON",
+    "SANTA LUCIA",
+    "PD15781515",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP TOMAS LANDER",
+    "OCUMARE DEL TUY",
+    "S3143D1512",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP URDANETA Y ZAMORA",
+    "CUA",
+    "PD23251520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP VILLA DEL DIVINO NIÑO",
+    "NUEVA CUA",
+    "S4495D1520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEP ZOA F ROLDAN PORTILLO",
+    "SANTA BARBARA",
+    "PD01252305",
+    "ZU",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEPC ANTONIO NICOLAS BRICEÑO",
+    "SAN FCO DE YARE",
+    "PD00801518",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UEPC LUIS EDUARDO EGUI A",
+    "CUA",
+    "S4576D1520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "UNIDAD EDUCATIVA NACIONAL CUA",
+    "CUA",
+    "S3508D1520",
+    "MI",
+    "",
+    "",
+    ""
+  ],
+  [
+    "ZONA EDUCATIVA",
+    "CARACAS",
+    "",
+    "DC",
+    "",
+    "",
+    ""
+  ]
+]

@@ -31,6 +31,16 @@ interface BoletaExtraRecord {
   grupo4: string | null
   observacion: string | null
   obsBoletin: string | null
+  materiaPendiente1: string | null
+  materiaPendiente2: string | null
+  mp1m1: string | null
+  mp1m2: string | null
+  mp1m3: string | null
+  mp1m4: string | null
+  mp2m1: string | null
+  mp2m2: string | null
+  mp2m3: string | null
+  mp2m4: string | null
 }
 
 interface StudentNota {
@@ -48,8 +58,13 @@ interface StudentNota {
 
 // Local editable structures
 type NotasMap = Record<string, Record<string, { lapso1: string; lapso2: string; lapso3: string; revision: string }>>
-type ExtrasMap = Record<string, { grupo1: string; grupo2: string; grupo3: string; grupo4: string; observacion: string; obsBoletin: string }>
-type ObsMap = Record<string, string>
+type ExtrasMap = Record<string, {
+  grupo1: string; grupo2: string; grupo3: string; grupo4: string;
+  observacion: string; obsBoletin: string;
+  materiaPendiente1: string; materiaPendiente2: string;
+  mp1m1: string; mp1m2: string; mp1m3: string; mp1m4: string;
+  mp2m1: string; mp2m2: string; mp2m3: string; mp2m4: string;
+}>
 
 // ── Grado options ────────────────────────────────────────────────────────
 const GRADO_OPTIONS = [
@@ -131,6 +146,14 @@ function getNotaBgClass(value: string): string {
   return 'bg-red-50'
 }
 
+const emptyExtras = (): typeof ExtrasMap[string] => ({
+  grupo1: '', grupo2: '', grupo3: '', grupo4: '',
+  observacion: '', obsBoletin: '',
+  materiaPendiente1: '', materiaPendiente2: '',
+  mp1m1: '', mp1m2: '', mp1m3: '', mp1m4: '',
+  mp2m1: '', mp2m2: '', mp2m3: '', mp2m4: '',
+})
+
 // ── Page Component ─────────────────────────────────────────────────────
 export default function BoletasPage() {
   const [anioEscolar, setAnioEscolar] = useState('2025-2026')
@@ -139,7 +162,6 @@ export default function BoletasPage() {
   const [students, setStudents] = useState<StudentNota[]>([])
   const [notasMap, setNotasMap] = useState<NotasMap>({})
   const [extrasMap, setExtrasMap] = useState<ExtrasMap>({})
-  const [obsMap, setObsMap] = useState<ObsMap>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searched, setSearched] = useState(false)
@@ -164,7 +186,6 @@ export default function BoletasPage() {
       // Build notasMap from loaded data
       const nMap: NotasMap = {}
       const eMap: ExtrasMap = {}
-      const oMap: ObsMap = {}
 
       for (const s of loaded) {
         nMap[s.id] = {}
@@ -178,7 +199,7 @@ export default function BoletasPage() {
           }
         }
 
-        // Load extras (GRUPO)
+        // Load extras (GRUPO, OBS, MP)
         const extra = s.boletaExtras?.[0]
         eMap[s.id] = {
           grupo1: extra?.grupo1 || '',
@@ -187,13 +208,21 @@ export default function BoletasPage() {
           grupo4: extra?.grupo4 || '',
           observacion: extra?.observacion || '',
           obsBoletin: extra?.obsBoletin || '',
+          materiaPendiente1: extra?.materiaPendiente1 || '',
+          materiaPendiente2: extra?.materiaPendiente2 || '',
+          mp1m1: extra?.mp1m1 || '',
+          mp1m2: extra?.mp1m2 || '',
+          mp1m3: extra?.mp1m3 || '',
+          mp1m4: extra?.mp1m4 || '',
+          mp2m1: extra?.mp2m1 || '',
+          mp2m2: extra?.mp2m2 || '',
+          mp2m3: extra?.mp2m3 || '',
+          mp2m4: extra?.mp2m4 || '',
         }
-        oMap[s.id] = extra?.observacion || ''
       }
 
       setNotasMap(nMap)
       setExtrasMap(eMap)
-      setObsMap(oMap)
     } catch {
       toast({ title: 'Error', description: 'Error al buscar alumnos', variant: 'destructive' })
     } finally {
@@ -227,33 +256,12 @@ export default function BoletasPage() {
     })
   }, [])
 
-  // ── Update OBSBOLETIN ──────────────────────────────────────────────
-  const updateObsBoletin = useCallback((studentId: string, value: string) => {
+  // ── Update an extra field ────────────────────────────────────────────
+  const updateExtraField = useCallback((studentId: string, field: string, value: string) => {
     setExtrasMap(prev => {
       const copy = { ...prev }
-      const current = { ...(copy[studentId] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '', obsBoletin: '' }) }
-      current.obsBoletin = value
-      copy[studentId] = current
-      return copy
-    })
-  }, [])
-
-  const updateGrupo = useCallback((studentId: string, lapso: 'grupo1' | 'grupo2' | 'grupo3' | 'grupo4', value: string) => {
-    setExtrasMap(prev => {
-      const copy = { ...prev }
-      const current = { ...(copy[studentId] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '', obsBoletin: '' }) }
-      current[lapso] = value
-      copy[studentId] = current
-      return copy
-    })
-  }, [])
-
-  // ── Update OBS ─────────────────────────────────────────────────────
-  const updateObs = useCallback((studentId: string, value: string) => {
-    setExtrasMap(prev => {
-      const copy = { ...prev }
-      const current = { ...(copy[studentId] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '', obsBoletin: '' }) }
-      current.observacion = value
+      const current = { ...(copy[studentId] || emptyExtras()) }
+      ;(current as Record<string, string>)[field] = value
       copy[studentId] = current
       return copy
     })
@@ -265,7 +273,7 @@ export default function BoletasPage() {
     setSaving(true)
     try {
       const notasPayload: { studentId: string; materia: string; lapso1: string; lapso2: string; lapso3: string; revision: string }[] = []
-      const extrasPayload: { studentId: string; grupo1: string; grupo2: string; grupo3: string; grupo4: string; observacion: string; obsBoletin: string }[] = []
+      const extrasPayload: Record<string, string>[] = []
 
       for (const student of students) {
         for (const m of materias) {
@@ -280,15 +288,10 @@ export default function BoletasPage() {
           })
         }
 
-        const e = extrasMap[student.id]
+        const e = extrasMap[student.id] || emptyExtras()
         extrasPayload.push({
           studentId: student.id,
-          grupo1: e?.grupo1 || '',
-          grupo2: e?.grupo2 || '',
-          grupo3: e?.grupo3 || '',
-          grupo4: e?.grupo4 || '',
-          observacion: e?.observacion || '',
-          obsBoletin: e?.obsBoletin || '',
+          ...e,
         })
       }
 
@@ -514,11 +517,11 @@ export default function BoletasPage() {
                         <th className="sticky left-[151px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[170px] text-[10px]">APELLNOMB</th>
                         <th className="sticky left-[321px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-8 text-[10px]">S</th>
 
-                        {/* Subject columns */}
+                        {/* Subject columns (1er, 2do, 3er, DEF — sin REV) */}
                         {materias.map((m) => (
                           <th
                             key={m.nombre}
-                            colSpan={5}
+                            colSpan={4}
                             className={`border-b border-l border-r border-emerald-600 px-1 py-1.5 text-center font-semibold text-[9px] ${m.tipo === 'cualitativa' ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white'}`}
                           >
                             <span className="block truncate max-w-[110px]" title={m.nombre}>
@@ -526,6 +529,9 @@ export default function BoletasPage() {
                             </span>
                           </th>
                         ))}
+
+                        {/* REV. column group — separado después de las materias */}
+                        <th colSpan={materias.length} className="bg-purple-700 text-white border-b border-l border-r border-purple-600 px-1 py-1.5 text-center font-semibold text-[9px]">REV.</th>
 
                         {/* GRUPO columns */}
                         <th colSpan={4} className="bg-slate-700 text-white border-b border-l border-r border-slate-600 px-1 py-1.5 text-center font-semibold text-[9px]">GRUPO</th>
@@ -537,6 +543,9 @@ export default function BoletasPage() {
                         <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">FN</th>
                         <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">LN</th>
                         <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">EN</th>
+
+                        {/* MATERIA PENDIENTE */}
+                        <th colSpan={10} className="bg-red-800 text-white border-b border-l border-r border-red-700 px-1 py-1.5 text-center font-semibold text-[9px]">MATERIA PENDIENTE</th>
 
                         {/* OBS */}
                         <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[120px]">OBS</th>
@@ -553,15 +562,25 @@ export default function BoletasPage() {
                         <th className="sticky left-[151px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
                         <th className="sticky left-[321px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
 
-                        {/* Subject sub-columns: 1er, 2do, 3er, DEF */}
+                        {/* Subject sub-columns: 1er, 2do, 3er, DEF (sin REV) */}
                         {materias.map((m) => (
                           <React.Fragment key={`sub-${m.nombre}`}>
                             <th className={`border-b border-l border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>1er</th>
                             <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>2do</th>
                             <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>3er</th>
                             <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-bold ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-200' : 'bg-emerald-900 text-emerald-200'}`}>DEF</th>
-                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-bold ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-200' : 'bg-emerald-900 text-emerald-200'}`}>REV</th>
                           </React.Fragment>
+                        ))}
+
+                        {/* REV. sub-columns (una por materia, separadas del grupo de materias) */}
+                        {materias.map((m) => (
+                          <th
+                            key={`rev-sub-${m.nombre}`}
+                            className={`border-b border-l border-r border-purple-700 py-1 px-0.5 w-[42px] text-center text-[8px] font-bold ${m.tipo === 'cualitativa' ? 'bg-purple-900 text-purple-200' : 'bg-purple-900 text-purple-200'}`}
+                            title={`Rev. ${m.nombre}`}
+                          >
+                            {m.nombre.substring(0, 3).toUpperCase()}
+                          </th>
                         ))}
 
                         {/* GRUPO sub-columns */}
@@ -580,6 +599,20 @@ export default function BoletasPage() {
                         <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
                         <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
                         <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
+
+                        {/* MATERIA PENDIENTE sub-columns */}
+                        <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[65px] text-center text-[8px] font-medium">MP1</th>
+                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">1M</th>
+                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">2M</th>
+                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">3M</th>
+                        <th className="bg-red-900 text-red-200 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">4M</th>
+                        <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[65px] text-center text-[8px] font-medium">MP2</th>
+                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">1M</th>
+                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">2M</th>
+                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">3M</th>
+                        <th className="bg-red-900 text-red-200 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">4M</th>
+
+                        {/* OBS sub-headers */}
                         <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
                         <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
                       </tr>
@@ -588,7 +621,7 @@ export default function BoletasPage() {
                     <tbody>
                       {students.map((student, studentIdx) => {
                         const studentNotas = notasMap[student.id] || {}
-                        const studentExtras = extrasMap[student.id] || { grupo1: '', grupo2: '', grupo3: '', grupo4: '', observacion: '', obsBoletin: '' }
+                        const studentExtras = extrasMap[student.id] || emptyExtras()
 
                         return (
                           <tr key={student.id} className="hover:bg-muted/30 transition-colors">
@@ -615,7 +648,7 @@ export default function BoletasPage() {
                               {student.seccion || seccion}
                             </td>
 
-                            {/* Subject nota cells */}
+                            {/* Subject nota cells (1er, 2do, 3er, DEF — sin REV) */}
                             {materias.map((m, materiaIdx) => {
                               const notas = studentNotas[m.nombre] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }
                               const def = calcDef(m, notas.lapso1, notas.lapso2, notas.lapso3)
@@ -647,18 +680,28 @@ export default function BoletasPage() {
                                   <td className={`border-b border-r border-gray-200 py-1 px-0.5 text-center font-bold text-[10px] ${isCualitativa ? (def ? 'text-blue-700 bg-blue-50/50' : 'text-muted-foreground') : getNotaColorClass(def) + ' ' + getNotaBgClass(def)}`}>
                                     {def || '—'}
                                   </td>
-                                  {/* Revisión */}
-                                  <td className={`border-b border-r border-gray-200 py-0 px-0 ${isCualitativa ? 'bg-blue-50/30' : ''}`}>
-                                    <input
-                                      type="text"
-                                      value={notas.revision || ''}
-                                      onChange={(e) => updateRevision(student.id, m.nombre, e.target.value.toUpperCase())}
-                                      className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded text-emerald-600 font-medium"
-                                      placeholder="—"
-                                      maxLength={3}
-                                    />
-                                  </td>
                                 </React.Fragment>
+                              )
+                            })}
+
+                            {/* REV. cells — grupo separado después de todas las materias */}
+                            {materias.map((m) => {
+                              const notas = studentNotas[m.nombre] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }
+                              const isCualitativa = m.tipo === 'cualitativa'
+                              return (
+                                <td
+                                  key={`rev-${student.id}-${m.nombre}`}
+                                  className={`border-b border-r border-gray-200 py-0 px-0 bg-purple-50/40`}
+                                >
+                                  <input
+                                    type="text"
+                                    value={notas.revision || ''}
+                                    onChange={(e) => updateRevision(student.id, m.nombre, e.target.value.toUpperCase())}
+                                    className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-purple-600 font-medium"
+                                    placeholder="—"
+                                    maxLength={3}
+                                  />
+                                </td>
                               )
                             })}
 
@@ -670,7 +713,7 @@ export default function BoletasPage() {
                                   <input
                                     type="text"
                                     value={val}
-                                    onChange={(e) => updateGrupo(student.id, gKey, e.target.value.toUpperCase())}
+                                    onChange={(e) => updateExtraField(student.id, gKey, e.target.value.toUpperCase())}
                                     className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 rounded text-slate-600 font-medium"
                                     placeholder="—"
                                     maxLength={12}
@@ -706,12 +749,60 @@ export default function BoletasPage() {
                               {student.estado || '—'}
                             </td>
 
+                            {/* MATERIA PENDIENTE: MP1 + momentos */}
+                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/40">
+                              <input
+                                type="text"
+                                value={studentExtras.materiaPendiente1 || ''}
+                                onChange={(e) => updateExtraField(student.id, 'materiaPendiente1', e.target.value)}
+                                className="h-7 w-full text-left text-[8px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded px-0.5 text-stone-600"
+                                placeholder="—"
+                                maxLength={25}
+                              />
+                            </td>
+                            {(['mp1m1', 'mp1m2', 'mp1m3', 'mp1m4'] as const).map((key) => (
+                              <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/30">
+                                <input
+                                  type="text"
+                                  value={studentExtras[key] || ''}
+                                  onChange={(e) => updateExtraField(student.id, key, e.target.value)}
+                                  className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded text-stone-600"
+                                  placeholder="—"
+                                  maxLength={3}
+                                />
+                              </td>
+                            ))}
+
+                            {/* MATERIA PENDIENTE: MP2 + momentos */}
+                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/40">
+                              <input
+                                type="text"
+                                value={studentExtras.materiaPendiente2 || ''}
+                                onChange={(e) => updateExtraField(student.id, 'materiaPendiente2', e.target.value)}
+                                className="h-7 w-full text-left text-[8px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded px-0.5 text-stone-600"
+                                placeholder="—"
+                                maxLength={25}
+                              />
+                            </td>
+                            {(['mp2m1', 'mp2m2', 'mp2m3', 'mp2m4'] as const).map((key) => (
+                              <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/30">
+                                <input
+                                  type="text"
+                                  value={studentExtras[key] || ''}
+                                  onChange={(e) => updateExtraField(student.id, key, e.target.value)}
+                                  className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded text-stone-600"
+                                  placeholder="—"
+                                  maxLength={3}
+                                />
+                              </td>
+                            ))}
+
                             {/* OBS - Observaciones (editable) */}
                             <td className="border-b border-r border-gray-200 py-0 px-0 bg-amber-50/30">
                               <input
                                 type="text"
                                 value={studentExtras.observacion || ''}
-                                onChange={(e) => updateObs(student.id, e.target.value)}
+                                onChange={(e) => updateExtraField(student.id, 'observacion', e.target.value)}
                                 className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600"
                                 placeholder="—"
                                 maxLength={100}
@@ -723,7 +814,7 @@ export default function BoletasPage() {
                               <input
                                 type="text"
                                 value={studentExtras.obsBoletin || ''}
-                                onChange={(e) => updateObsBoletin(student.id, e.target.value)}
+                                onChange={(e) => updateExtraField(student.id, 'obsBoletin', e.target.value)}
                                 className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600"
                                 placeholder="—"
                                 maxLength={100}

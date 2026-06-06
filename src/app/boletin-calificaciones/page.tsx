@@ -36,6 +36,16 @@ interface BoletaExtraRecord {
   grupo4: string | null
   observacion: string | null
   obsBoletin: string | null
+  materiaPendiente1: string | null
+  materiaPendiente2: string | null
+  mp1m1: string | null
+  mp1m2: string | null
+  mp1m3: string | null
+  mp1m4: string | null
+  mp2m1: string | null
+  mp2m2: string | null
+  mp2m3: string | null
+  mp2m4: string | null
 }
 
 interface StudentNota {
@@ -144,9 +154,9 @@ function BoletinContent({
   const materias = getMateriasForGrado(grado)
   const numericMaterias = materias.filter(m => m.tipo !== 'cualitativa')
 
-  const notasMap: Record<string, { lapso1: string; lapso2: string; lapso3: string }> = {}
+  const notasMap: Record<string, { lapso1: string; lapso2: string; lapso3: string; revision: string }> = {}
   for (const nota of student.boletaNotas) {
-    notasMap[nota.materia] = { lapso1: nota.lapso1 || '', lapso2: nota.lapso2 || '', lapso3: nota.lapso3 || '' }
+    notasMap[nota.materia] = { lapso1: nota.lapso1 || '', lapso2: nota.lapso2 || '', lapso3: nota.lapso3 || '', revision: nota.revision || '' }
   }
 
   const extra = student.boletaExtras?.[0]
@@ -158,18 +168,20 @@ function BoletinContent({
   const orientacionGrade = orientacionNota?.lapso1?.trim().toUpperCase() || ''
   const participacionGrade = participacionNota?.lapso1?.trim().toUpperCase() || ''
 
-  // Reprobadas (Final < 10)
-  const reprobadas: { materia: string; final: number }[] = []
-  for (const m of numericMaterias) {
-    const n = notasMap[m.nombre]
-    if (!n) continue
-    const def = calcDef(n.lapso1 || null, n.lapso2 || null, n.lapso3 || null)
-    const num = parseFloat(def)
-    if (!isNaN(num) && num > 0 && num < 10) reprobadas.push({ materia: m.nombre, final: num })
+  // Materias Pendientes — usar datos de BD (MP1/MP2 + momentos)
+  const pendienteRows: { materia: string; momentos: [string, string, string, string] }[] = []
+  if (extra?.materiaPendiente1) {
+    pendienteRows.push({
+      materia: extra.materiaPendiente1,
+      momentos: [extra.mp1m1 || '', extra.mp1m2 || '', extra.mp1m3 || '', extra.mp1m4 || ''],
+    })
   }
-
-  // Fill up to max rows if fewer reprobadas
-  const pendienteRows = reprobadas.length > 0 ? reprobadas : [{ materia: '', final: 0 }]
+  if (extra?.materiaPendiente2) {
+    pendienteRows.push({
+      materia: extra.materiaPendiente2,
+      momentos: [extra.mp2m1 || '', extra.mp2m2 || '', extra.mp2m3 || '', extra.mp2m4 || ''],
+    })
+  }
 
   const gradoLabel = GRADO_LABELS[grado] || `Año ${grado}`
   const lugarNacimiento = [student.municipio, student.estado].filter(Boolean).join(', ') || ''
@@ -333,15 +345,22 @@ function BoletinContent({
           </tr>
         </thead>
         <tbody>
-          {pendienteRows.map((r, i) => (
+          {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
             <tr key={i}>
               <td style={cell}>{r.materia}</td>
+              {r.momentos.map((m, j) => (
+                <td key={j} style={{ ...cell, textAlign: 'center' }}>{m}</td>
+              ))}
+            </tr>
+          )) : (
+            <tr>
+              <td style={cell}>{'—'}</td>
               <td style={cell}></td>
               <td style={cell}></td>
               <td style={cell}></td>
               <td style={cell}></td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 

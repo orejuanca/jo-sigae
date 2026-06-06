@@ -81,6 +81,17 @@ model BoletaExtra {
   grupo4      String?
   observacion String?  // Observaciones generales (col OBS del Excel)
   obsBoletin  String?  // Observaciones del boletín (col OBSBOLETIN del Excel)
+  // Materia Pendiente (cols BD-BM del Excel)
+  materiaPendiente1 String?  // Nombre materia pendiente 1 (col MP1)
+  materiaPendiente2 String?  // Nombre materia pendiente 2 (col MP2)
+  mp1m1 String?  // Materia Pendiente 1, Momento 1 (col 1M primer set)
+  mp1m2 String?  // Materia Pendiente 1, Momento 2 (col 2M primer set)
+  mp1m3 String?  // Materia Pendiente 1, Momento 3 (col 3M primer set)
+  mp1m4 String?  // Materia Pendiente 1, Momento 4 (col 4M primer set)
+  mp2m1 String?  // Materia Pendiente 2, Momento 1 (col 1M segundo set)
+  mp2m2 String?  // Materia Pendiente 2, Momento 2 (col 2M segundo set)
+  mp2m3 String?  // Materia Pendiente 2, Momento 3 (col 3M segundo set)
+  mp2m4 String?  // Materia Pendiente 2, Momento 4 (col 4M segundo set)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

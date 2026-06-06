@@ -106,10 +106,17 @@ export async function PUT(request: NextRequest) {
       results.push(upserted)
     }
 
-    // Save extras (GRUPO, OBS) if provided
+    // Save extras (GRUPO, OBS, Materia Pendiente) if provided
     if (extras && Array.isArray(extras)) {
       for (const extra of extras) {
-        const { studentId, grupo1, grupo2, grupo3, grupo4, observacion, obsBoletin } = extra
+        const {
+          studentId,
+          grupo1, grupo2, grupo3, grupo4,
+          observacion, obsBoletin,
+          materiaPendiente1, materiaPendiente2,
+          mp1m1, mp1m2, mp1m3, mp1m4,
+          mp2m1, mp2m2, mp2m3, mp2m4,
+        } = extra
         if (!studentId) continue
 
         await prisma.boletaExtra.upsert({
@@ -132,6 +139,16 @@ export async function PUT(request: NextRequest) {
             grupo4: grupo4 || null,
             observacion: observacion || null,
             obsBoletin: obsBoletin || null,
+            materiaPendiente1: materiaPendiente1 || null,
+            materiaPendiente2: materiaPendiente2 || null,
+            mp1m1: mp1m1 || null,
+            mp1m2: mp1m2 || null,
+            mp1m3: mp1m3 || null,
+            mp1m4: mp1m4 || null,
+            mp2m1: mp2m1 || null,
+            mp2m2: mp2m2 || null,
+            mp2m3: mp2m3 || null,
+            mp2m4: mp2m4 || null,
           },
           update: {
             grupo1: grupo1 || null,
@@ -140,6 +157,16 @@ export async function PUT(request: NextRequest) {
             grupo4: grupo4 || null,
             observacion: observacion || null,
             obsBoletin: obsBoletin || null,
+            materiaPendiente1: materiaPendiente1 || null,
+            materiaPendiente2: materiaPendiente2 || null,
+            mp1m1: mp1m1 || null,
+            mp1m2: mp1m2 || null,
+            mp1m3: mp1m3 || null,
+            mp1m4: mp1m4 || null,
+            mp2m1: mp2m1 || null,
+            mp2m2: mp2m2 || null,
+            mp2m3: mp2m3 || null,
+            mp2m4: mp2m4 || null,
           },
         })
       }

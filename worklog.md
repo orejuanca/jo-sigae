@@ -19,3 +19,31 @@ Stage Summary:
 - Supports both BD (plan vigente EMG) and BD2 (planes derogados)
 - Grades, dates, T/E types, institutions, OC, groups, observations, acta data all extracted
 - Deployed to Vercel via GitHub push (commit b3bdfd6)
+
+---
+Task ID: 2
+Agent: main
+Task: Fix cert parser for asterisk blocks, ensure all grade data shows correctly, BD+BD2 dual database support
+
+Work Log:
+- Analyzed raw data structure: BD has asterisk blocks (**, ****) interspersed between real grade groups
+- BD2 has alternating real-grade and asterisk-block patterns (real, ***, *, **, ****, *, real, real, ...)
+- Rewrote parseBDRawData: scans keys 23-227 in groups of 5, uses isValidGrade() to skip asterisk blocks
+- Rewrote parseBD2RawData: scans keys 39-293 with same asterisk-skipping approach
+- Added isValidGrade(val): validates numeric 01-20 and special types (PE, IN, EX)
+- Improved isAsterisk(val): handles *, **, ****, * * patterns with regex
+- Fixed db.ts to use @prisma/client instead of @/generated/prisma (legacy route compatibility)
+- Enhanced certificaciones/page.tsx Vista Previa with NOTA column and Valor Fiscal display
+- Verified no primary education references anywhere in codebase
+- Seeded both databases: 1,870 BD vigente + 305 BD2 derogado = 2,175 total
+- Verified Neon PostgreSQL has all 2,175 students
+- Tested parser with BD student: 41 grades correctly extracted (7+7+8+9+10) with nota, literal, T-E, mes, año
+- Tested parser with BD2 student: 30 grades extracted, 3 institutions, specializations parsed
+- Build successful, pushed to GitHub (commit 02e437b)
+
+Stage Summary:
+- Certification format now shows ALL required data: Nota, Literal, Tipo Evaluación (T-E), Mes, Año
+- Both BD (plan vigente) and BD2 (planes derogados) databases fully supported
+- System is exclusively for Educación Media General (secondary, 1ro-5to año)
+- Parser correctly handles asterisk blocks in raw data from .xlsm files
+- Institutions, Orientación, Grupos, Observaciones, Acta all extracted properly

@@ -27,7 +27,7 @@ const {
   Public,
   getRuntime,
   createParam,
-} = require('./runtime/wasm-engine-edge.js')
+} = require('@prisma/client/runtime/wasm-engine-edge.js')
 
 
 const Prisma = {}
@@ -93,21 +93,27 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
   cedula: 'cedula',
+  fechaNacimiento: 'fechaNacimiento',
   apellidos: 'apellidos',
   nombres: 'nombres',
-  fechaNacimiento: 'fechaNacimiento',
   pais: 'pais',
+  estado: 'estado',
+  municipio: 'municipio',
+  plan: 'plan',
+  rawData: 'rawData',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CertificationScalarFieldEnum = {
   id: 'id',
+  studentId: 'studentId',
   tipo: 'tipo',
-  datos: 'datos',
   numero: 'numero',
-  emitidoEl: 'emitidoEl',
-  studentId: 'studentId'
+  fechaEmision: 'fechaEmision',
+  datos: 'datos',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -136,7 +142,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/z/my-project/src/generated/prisma",
+      "value": "/home/z/my-project/node_modules/@prisma/client",
       "fromEnvVar": null
     },
     "config": {
@@ -150,8 +156,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/z/my-project/prisma/schema.prisma",
-    "isCustomOutput": true
+    "sourceFilePath": "/home/z/my-project/prisma/schema.prisma"
   },
   "relativeEnvPaths": {
     "rootEnvPath": null,
@@ -172,13 +177,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Student {\n  id              String   @id @default(cuid())\n  cedula          String   @unique\n  apellidos       String\n  nombres         String\n  fechaNacimiento String?\n  pais            String?\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n\n  certifications Certification[]\n}\n\nmodel Certification {\n  id        String   @id @default(cuid())\n  tipo      String // \"CERTIFICACION\" | \"CONSTANCIA\" | \"BOLETIN\" | \"TITULO\"\n  datos     String? // JSON string with document data\n  numero    String? // Sequential number\n  emitidoEl DateTime @default(now())\n\n  studentId String\n  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)\n}\n",
-  "inlineSchemaHash": "1a3ecbf495acfa9647bb773d2d3f105cd6f7f36b46a21e51d4de663c46aeade1",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Student {\n  id              String   @id @default(cuid())\n  cedula          String   @unique\n  fechaNacimiento String?\n  apellidos       String\n  nombres         String\n  pais            String   @default(\"VENEZUELA\")\n  estado          String   @default(\"\")\n  municipio       String   @default(\"\")\n  plan            String   @default(\"vigente\")\n  rawData         String   @default(\"{}\")\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n\n  certifications Certification[]\n\n  @@index([cedula])\n  @@index([apellidos])\n  @@index([nombres])\n}\n\nmodel Certification {\n  id           String   @id @default(cuid())\n  studentId    String\n  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)\n  tipo         String   @default(\"certificacion\")\n  numero       String   @default(\"\")\n  fechaEmision DateTime @default(now())\n  datos        String   @default(\"{}\")\n  createdAt    DateTime @default(now())\n  updatedAt    DateTime @updatedAt\n\n  @@index([studentId])\n  @@index([tipo])\n}\n",
+  "inlineSchemaHash": "cbb87d2d3411014cb5e6f0d02cc0a65208f67f4dbc4db710d9254affada99f68",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Student\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cedula\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"apellidos\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"nombres\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fechaNacimiento\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pais\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"certifications\",\"kind\":\"object\",\"type\":\"Certification\",\"relationName\":\"CertificationToStudent\"}],\"dbName\":null},\"Certification\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tipo\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"datos\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"numero\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emitidoEl\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"studentId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"student\",\"kind\":\"object\",\"type\":\"Student\",\"relationName\":\"CertificationToStudent\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Student\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cedula\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fechaNacimiento\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"apellidos\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"nombres\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pais\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"estado\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"municipio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"plan\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rawData\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"certifications\",\"kind\":\"object\",\"type\":\"Certification\",\"relationName\":\"CertificationToStudent\"}],\"dbName\":null},\"Certification\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"studentId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"student\",\"kind\":\"object\",\"type\":\"Student\",\"relationName\":\"CertificationToStudent\"},{\"name\":\"tipo\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"numero\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fechaEmision\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"datos\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

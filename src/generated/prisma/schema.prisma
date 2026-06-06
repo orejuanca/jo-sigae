@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -11,23 +10,35 @@ datasource db {
 model Student {
   id              String   @id @default(cuid())
   cedula          String   @unique
+  fechaNacimiento String?
   apellidos       String
   nombres         String
-  fechaNacimiento String?
-  pais            String?
+  pais            String   @default("VENEZUELA")
+  estado          String   @default("")
+  municipio       String   @default("")
+  plan            String   @default("vigente")
+  rawData         String   @default("{}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   certifications Certification[]
+
+  @@index([cedula])
+  @@index([apellidos])
+  @@index([nombres])
 }
 
 model Certification {
-  id        String   @id @default(cuid())
-  tipo      String // "CERTIFICACION" | "CONSTANCIA" | "BOLETIN" | "TITULO"
-  datos     String? // JSON string with document data
-  numero    String? // Sequential number
-  emitidoEl DateTime @default(now())
+  id           String   @id @default(cuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tipo         String   @default("certificacion")
+  numero       String   @default("")
+  fechaEmision DateTime @default(now())
+  datos        String   @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  @@index([studentId])
+  @@index([tipo])
 }

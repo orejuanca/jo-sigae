@@ -12,7 +12,7 @@ const {
   Public,
   getRuntime,
   skip
-} = require('./runtime/index-browser.js')
+} = require('@prisma/client/runtime/index-browser.js')
 
 
 const Prisma = {}
@@ -121,21 +121,27 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.StudentScalarFieldEnum = {
   id: 'id',
   cedula: 'cedula',
+  fechaNacimiento: 'fechaNacimiento',
   apellidos: 'apellidos',
   nombres: 'nombres',
-  fechaNacimiento: 'fechaNacimiento',
   pais: 'pais',
+  estado: 'estado',
+  municipio: 'municipio',
+  plan: 'plan',
+  rawData: 'rawData',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CertificationScalarFieldEnum = {
   id: 'id',
+  studentId: 'studentId',
   tipo: 'tipo',
-  datos: 'datos',
   numero: 'numero',
-  emitidoEl: 'emitidoEl',
-  studentId: 'studentId'
+  fechaEmision: 'fechaEmision',
+  datos: 'datos',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {

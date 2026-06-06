@@ -3,7 +3,7 @@
  * Client
 **/
 
-import * as runtime from './runtime/library.js';
+import * as runtime from '@prisma/client/runtime/library.js';
 import $Types = runtime.Types // general types
 import $Public = runtime.Types.Public
 import $Utils = runtime.Types.Utils
@@ -995,10 +995,14 @@ export namespace Prisma {
   export type StudentMinAggregateOutputType = {
     id: string | null
     cedula: string | null
+    fechaNacimiento: string | null
     apellidos: string | null
     nombres: string | null
-    fechaNacimiento: string | null
     pais: string | null
+    estado: string | null
+    municipio: string | null
+    plan: string | null
+    rawData: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1006,10 +1010,14 @@ export namespace Prisma {
   export type StudentMaxAggregateOutputType = {
     id: string | null
     cedula: string | null
+    fechaNacimiento: string | null
     apellidos: string | null
     nombres: string | null
-    fechaNacimiento: string | null
     pais: string | null
+    estado: string | null
+    municipio: string | null
+    plan: string | null
+    rawData: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1017,10 +1025,14 @@ export namespace Prisma {
   export type StudentCountAggregateOutputType = {
     id: number
     cedula: number
+    fechaNacimiento: number
     apellidos: number
     nombres: number
-    fechaNacimiento: number
     pais: number
+    estado: number
+    municipio: number
+    plan: number
+    rawData: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1030,10 +1042,14 @@ export namespace Prisma {
   export type StudentMinAggregateInputType = {
     id?: true
     cedula?: true
+    fechaNacimiento?: true
     apellidos?: true
     nombres?: true
-    fechaNacimiento?: true
     pais?: true
+    estado?: true
+    municipio?: true
+    plan?: true
+    rawData?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1041,10 +1057,14 @@ export namespace Prisma {
   export type StudentMaxAggregateInputType = {
     id?: true
     cedula?: true
+    fechaNacimiento?: true
     apellidos?: true
     nombres?: true
-    fechaNacimiento?: true
     pais?: true
+    estado?: true
+    municipio?: true
+    plan?: true
+    rawData?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1052,10 +1072,14 @@ export namespace Prisma {
   export type StudentCountAggregateInputType = {
     id?: true
     cedula?: true
+    fechaNacimiento?: true
     apellidos?: true
     nombres?: true
-    fechaNacimiento?: true
     pais?: true
+    estado?: true
+    municipio?: true
+    plan?: true
+    rawData?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1136,10 +1160,14 @@ export namespace Prisma {
   export type StudentGroupByOutputType = {
     id: string
     cedula: string
+    fechaNacimiento: string | null
     apellidos: string
     nombres: string
-    fechaNacimiento: string | null
-    pais: string | null
+    pais: string
+    estado: string
+    municipio: string
+    plan: string
+    rawData: string
     createdAt: Date
     updatedAt: Date
     _count: StudentCountAggregateOutputType | null
@@ -1164,10 +1192,14 @@ export namespace Prisma {
   export type StudentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     cedula?: boolean
+    fechaNacimiento?: boolean
     apellidos?: boolean
     nombres?: boolean
-    fechaNacimiento?: boolean
     pais?: boolean
+    estado?: boolean
+    municipio?: boolean
+    plan?: boolean
+    rawData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     certifications?: boolean | Student$certificationsArgs<ExtArgs>
@@ -1177,10 +1209,14 @@ export namespace Prisma {
   export type StudentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     cedula?: boolean
+    fechaNacimiento?: boolean
     apellidos?: boolean
     nombres?: boolean
-    fechaNacimiento?: boolean
     pais?: boolean
+    estado?: boolean
+    municipio?: boolean
+    plan?: boolean
+    rawData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["student"]>
@@ -1188,10 +1224,14 @@ export namespace Prisma {
   export type StudentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     cedula?: boolean
+    fechaNacimiento?: boolean
     apellidos?: boolean
     nombres?: boolean
-    fechaNacimiento?: boolean
     pais?: boolean
+    estado?: boolean
+    municipio?: boolean
+    plan?: boolean
+    rawData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["student"]>
@@ -1199,15 +1239,19 @@ export namespace Prisma {
   export type StudentSelectScalar = {
     id?: boolean
     cedula?: boolean
+    fechaNacimiento?: boolean
     apellidos?: boolean
     nombres?: boolean
-    fechaNacimiento?: boolean
     pais?: boolean
+    estado?: boolean
+    municipio?: boolean
+    plan?: boolean
+    rawData?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type StudentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cedula" | "apellidos" | "nombres" | "fechaNacimiento" | "pais" | "createdAt" | "updatedAt", ExtArgs["result"]["student"]>
+  export type StudentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cedula" | "fechaNacimiento" | "apellidos" | "nombres" | "pais" | "estado" | "municipio" | "plan" | "rawData" | "createdAt" | "updatedAt", ExtArgs["result"]["student"]>
   export type StudentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     certifications?: boolean | Student$certificationsArgs<ExtArgs>
     _count?: boolean | StudentCountOutputTypeDefaultArgs<ExtArgs>
@@ -1223,10 +1267,14 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       cedula: string
+      fechaNacimiento: string | null
       apellidos: string
       nombres: string
-      fechaNacimiento: string | null
-      pais: string | null
+      pais: string
+      estado: string
+      municipio: string
+      plan: string
+      rawData: string
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["student"]>
@@ -1655,10 +1703,14 @@ export namespace Prisma {
   interface StudentFieldRefs {
     readonly id: FieldRef<"Student", 'String'>
     readonly cedula: FieldRef<"Student", 'String'>
+    readonly fechaNacimiento: FieldRef<"Student", 'String'>
     readonly apellidos: FieldRef<"Student", 'String'>
     readonly nombres: FieldRef<"Student", 'String'>
-    readonly fechaNacimiento: FieldRef<"Student", 'String'>
     readonly pais: FieldRef<"Student", 'String'>
+    readonly estado: FieldRef<"Student", 'String'>
+    readonly municipio: FieldRef<"Student", 'String'>
+    readonly plan: FieldRef<"Student", 'String'>
+    readonly rawData: FieldRef<"Student", 'String'>
     readonly createdAt: FieldRef<"Student", 'DateTime'>
     readonly updatedAt: FieldRef<"Student", 'DateTime'>
   }
@@ -2101,58 +2153,70 @@ export namespace Prisma {
 
   export type CertificationMinAggregateOutputType = {
     id: string | null
-    tipo: string | null
-    datos: string | null
-    numero: string | null
-    emitidoEl: Date | null
     studentId: string | null
+    tipo: string | null
+    numero: string | null
+    fechaEmision: Date | null
+    datos: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type CertificationMaxAggregateOutputType = {
     id: string | null
-    tipo: string | null
-    datos: string | null
-    numero: string | null
-    emitidoEl: Date | null
     studentId: string | null
+    tipo: string | null
+    numero: string | null
+    fechaEmision: Date | null
+    datos: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type CertificationCountAggregateOutputType = {
     id: number
-    tipo: number
-    datos: number
-    numero: number
-    emitidoEl: number
     studentId: number
+    tipo: number
+    numero: number
+    fechaEmision: number
+    datos: number
+    createdAt: number
+    updatedAt: number
     _all: number
   }
 
 
   export type CertificationMinAggregateInputType = {
     id?: true
-    tipo?: true
-    datos?: true
-    numero?: true
-    emitidoEl?: true
     studentId?: true
+    tipo?: true
+    numero?: true
+    fechaEmision?: true
+    datos?: true
+    createdAt?: true
+    updatedAt?: true
   }
 
   export type CertificationMaxAggregateInputType = {
     id?: true
-    tipo?: true
-    datos?: true
-    numero?: true
-    emitidoEl?: true
     studentId?: true
+    tipo?: true
+    numero?: true
+    fechaEmision?: true
+    datos?: true
+    createdAt?: true
+    updatedAt?: true
   }
 
   export type CertificationCountAggregateInputType = {
     id?: true
-    tipo?: true
-    datos?: true
-    numero?: true
-    emitidoEl?: true
     studentId?: true
+    tipo?: true
+    numero?: true
+    fechaEmision?: true
+    datos?: true
+    createdAt?: true
+    updatedAt?: true
     _all?: true
   }
 
@@ -2230,11 +2294,13 @@ export namespace Prisma {
 
   export type CertificationGroupByOutputType = {
     id: string
-    tipo: string
-    datos: string | null
-    numero: string | null
-    emitidoEl: Date
     studentId: string
+    tipo: string
+    numero: string
+    fechaEmision: Date
+    datos: string
+    createdAt: Date
+    updatedAt: Date
     _count: CertificationCountAggregateOutputType | null
     _min: CertificationMinAggregateOutputType | null
     _max: CertificationMaxAggregateOutputType | null
@@ -2256,44 +2322,52 @@ export namespace Prisma {
 
   export type CertificationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    tipo?: boolean
-    datos?: boolean
-    numero?: boolean
-    emitidoEl?: boolean
     studentId?: boolean
+    tipo?: boolean
+    numero?: boolean
+    fechaEmision?: boolean
+    datos?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["certification"]>
 
   export type CertificationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    tipo?: boolean
-    datos?: boolean
-    numero?: boolean
-    emitidoEl?: boolean
     studentId?: boolean
+    tipo?: boolean
+    numero?: boolean
+    fechaEmision?: boolean
+    datos?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["certification"]>
 
   export type CertificationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    tipo?: boolean
-    datos?: boolean
-    numero?: boolean
-    emitidoEl?: boolean
     studentId?: boolean
+    tipo?: boolean
+    numero?: boolean
+    fechaEmision?: boolean
+    datos?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["certification"]>
 
   export type CertificationSelectScalar = {
     id?: boolean
-    tipo?: boolean
-    datos?: boolean
-    numero?: boolean
-    emitidoEl?: boolean
     studentId?: boolean
+    tipo?: boolean
+    numero?: boolean
+    fechaEmision?: boolean
+    datos?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
   }
 
-  export type CertificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tipo" | "datos" | "numero" | "emitidoEl" | "studentId", ExtArgs["result"]["certification"]>
+  export type CertificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "studentId" | "tipo" | "numero" | "fechaEmision" | "datos" | "createdAt" | "updatedAt", ExtArgs["result"]["certification"]>
   export type CertificationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     student?: boolean | StudentDefaultArgs<ExtArgs>
   }
@@ -2311,11 +2385,13 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      tipo: string
-      datos: string | null
-      numero: string | null
-      emitidoEl: Date
       studentId: string
+      tipo: string
+      numero: string
+      fechaEmision: Date
+      datos: string
+      createdAt: Date
+      updatedAt: Date
     }, ExtArgs["result"]["certification"]>
     composites: {}
   }
@@ -2741,11 +2817,13 @@ export namespace Prisma {
    */
   interface CertificationFieldRefs {
     readonly id: FieldRef<"Certification", 'String'>
-    readonly tipo: FieldRef<"Certification", 'String'>
-    readonly datos: FieldRef<"Certification", 'String'>
-    readonly numero: FieldRef<"Certification", 'String'>
-    readonly emitidoEl: FieldRef<"Certification", 'DateTime'>
     readonly studentId: FieldRef<"Certification", 'String'>
+    readonly tipo: FieldRef<"Certification", 'String'>
+    readonly numero: FieldRef<"Certification", 'String'>
+    readonly fechaEmision: FieldRef<"Certification", 'DateTime'>
+    readonly datos: FieldRef<"Certification", 'String'>
+    readonly createdAt: FieldRef<"Certification", 'DateTime'>
+    readonly updatedAt: FieldRef<"Certification", 'DateTime'>
   }
     
 
@@ -3172,10 +3250,14 @@ export namespace Prisma {
   export const StudentScalarFieldEnum: {
     id: 'id',
     cedula: 'cedula',
+    fechaNacimiento: 'fechaNacimiento',
     apellidos: 'apellidos',
     nombres: 'nombres',
-    fechaNacimiento: 'fechaNacimiento',
     pais: 'pais',
+    estado: 'estado',
+    municipio: 'municipio',
+    plan: 'plan',
+    rawData: 'rawData',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -3185,11 +3267,13 @@ export namespace Prisma {
 
   export const CertificationScalarFieldEnum: {
     id: 'id',
+    studentId: 'studentId',
     tipo: 'tipo',
-    datos: 'datos',
     numero: 'numero',
-    emitidoEl: 'emitidoEl',
-    studentId: 'studentId'
+    fechaEmision: 'fechaEmision',
+    datos: 'datos',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   };
 
   export type CertificationScalarFieldEnum = (typeof CertificationScalarFieldEnum)[keyof typeof CertificationScalarFieldEnum]
@@ -3246,10 +3330,14 @@ export namespace Prisma {
     NOT?: StudentWhereInput | StudentWhereInput[]
     id?: StringFilter<"Student"> | string
     cedula?: StringFilter<"Student"> | string
+    fechaNacimiento?: StringNullableFilter<"Student"> | string | null
     apellidos?: StringFilter<"Student"> | string
     nombres?: StringFilter<"Student"> | string
-    fechaNacimiento?: StringNullableFilter<"Student"> | string | null
-    pais?: StringNullableFilter<"Student"> | string | null
+    pais?: StringFilter<"Student"> | string
+    estado?: StringFilter<"Student"> | string
+    municipio?: StringFilter<"Student"> | string
+    plan?: StringFilter<"Student"> | string
+    rawData?: StringFilter<"Student"> | string
     createdAt?: DateTimeFilter<"Student"> | Date | string
     updatedAt?: DateTimeFilter<"Student"> | Date | string
     certifications?: CertificationListRelationFilter
@@ -3258,10 +3346,14 @@ export namespace Prisma {
   export type StudentOrderByWithRelationInput = {
     id?: SortOrder
     cedula?: SortOrder
+    fechaNacimiento?: SortOrderInput | SortOrder
     apellidos?: SortOrder
     nombres?: SortOrder
-    fechaNacimiento?: SortOrderInput | SortOrder
-    pais?: SortOrderInput | SortOrder
+    pais?: SortOrder
+    estado?: SortOrder
+    municipio?: SortOrder
+    plan?: SortOrder
+    rawData?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     certifications?: CertificationOrderByRelationAggregateInput
@@ -3273,10 +3365,14 @@ export namespace Prisma {
     AND?: StudentWhereInput | StudentWhereInput[]
     OR?: StudentWhereInput[]
     NOT?: StudentWhereInput | StudentWhereInput[]
+    fechaNacimiento?: StringNullableFilter<"Student"> | string | null
     apellidos?: StringFilter<"Student"> | string
     nombres?: StringFilter<"Student"> | string
-    fechaNacimiento?: StringNullableFilter<"Student"> | string | null
-    pais?: StringNullableFilter<"Student"> | string | null
+    pais?: StringFilter<"Student"> | string
+    estado?: StringFilter<"Student"> | string
+    municipio?: StringFilter<"Student"> | string
+    plan?: StringFilter<"Student"> | string
+    rawData?: StringFilter<"Student"> | string
     createdAt?: DateTimeFilter<"Student"> | Date | string
     updatedAt?: DateTimeFilter<"Student"> | Date | string
     certifications?: CertificationListRelationFilter
@@ -3285,10 +3381,14 @@ export namespace Prisma {
   export type StudentOrderByWithAggregationInput = {
     id?: SortOrder
     cedula?: SortOrder
+    fechaNacimiento?: SortOrderInput | SortOrder
     apellidos?: SortOrder
     nombres?: SortOrder
-    fechaNacimiento?: SortOrderInput | SortOrder
-    pais?: SortOrderInput | SortOrder
+    pais?: SortOrder
+    estado?: SortOrder
+    municipio?: SortOrder
+    plan?: SortOrder
+    rawData?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: StudentCountOrderByAggregateInput
@@ -3302,10 +3402,14 @@ export namespace Prisma {
     NOT?: StudentScalarWhereWithAggregatesInput | StudentScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Student"> | string
     cedula?: StringWithAggregatesFilter<"Student"> | string
+    fechaNacimiento?: StringNullableWithAggregatesFilter<"Student"> | string | null
     apellidos?: StringWithAggregatesFilter<"Student"> | string
     nombres?: StringWithAggregatesFilter<"Student"> | string
-    fechaNacimiento?: StringNullableWithAggregatesFilter<"Student"> | string | null
-    pais?: StringNullableWithAggregatesFilter<"Student"> | string | null
+    pais?: StringWithAggregatesFilter<"Student"> | string
+    estado?: StringWithAggregatesFilter<"Student"> | string
+    municipio?: StringWithAggregatesFilter<"Student"> | string
+    plan?: StringWithAggregatesFilter<"Student"> | string
+    rawData?: StringWithAggregatesFilter<"Student"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Student"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Student"> | Date | string
   }
@@ -3315,21 +3419,25 @@ export namespace Prisma {
     OR?: CertificationWhereInput[]
     NOT?: CertificationWhereInput | CertificationWhereInput[]
     id?: StringFilter<"Certification"> | string
-    tipo?: StringFilter<"Certification"> | string
-    datos?: StringNullableFilter<"Certification"> | string | null
-    numero?: StringNullableFilter<"Certification"> | string | null
-    emitidoEl?: DateTimeFilter<"Certification"> | Date | string
     studentId?: StringFilter<"Certification"> | string
+    tipo?: StringFilter<"Certification"> | string
+    numero?: StringFilter<"Certification"> | string
+    fechaEmision?: DateTimeFilter<"Certification"> | Date | string
+    datos?: StringFilter<"Certification"> | string
+    createdAt?: DateTimeFilter<"Certification"> | Date | string
+    updatedAt?: DateTimeFilter<"Certification"> | Date | string
     student?: XOR<StudentScalarRelationFilter, StudentWhereInput>
   }
 
   export type CertificationOrderByWithRelationInput = {
     id?: SortOrder
-    tipo?: SortOrder
-    datos?: SortOrderInput | SortOrder
-    numero?: SortOrderInput | SortOrder
-    emitidoEl?: SortOrder
     studentId?: SortOrder
+    tipo?: SortOrder
+    numero?: SortOrder
+    fechaEmision?: SortOrder
+    datos?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
     student?: StudentOrderByWithRelationInput
   }
 
@@ -3338,21 +3446,25 @@ export namespace Prisma {
     AND?: CertificationWhereInput | CertificationWhereInput[]
     OR?: CertificationWhereInput[]
     NOT?: CertificationWhereInput | CertificationWhereInput[]
-    tipo?: StringFilter<"Certification"> | string
-    datos?: StringNullableFilter<"Certification"> | string | null
-    numero?: StringNullableFilter<"Certification"> | string | null
-    emitidoEl?: DateTimeFilter<"Certification"> | Date | string
     studentId?: StringFilter<"Certification"> | string
+    tipo?: StringFilter<"Certification"> | string
+    numero?: StringFilter<"Certification"> | string
+    fechaEmision?: DateTimeFilter<"Certification"> | Date | string
+    datos?: StringFilter<"Certification"> | string
+    createdAt?: DateTimeFilter<"Certification"> | Date | string
+    updatedAt?: DateTimeFilter<"Certification"> | Date | string
     student?: XOR<StudentScalarRelationFilter, StudentWhereInput>
   }, "id">
 
   export type CertificationOrderByWithAggregationInput = {
     id?: SortOrder
-    tipo?: SortOrder
-    datos?: SortOrderInput | SortOrder
-    numero?: SortOrderInput | SortOrder
-    emitidoEl?: SortOrder
     studentId?: SortOrder
+    tipo?: SortOrder
+    numero?: SortOrder
+    fechaEmision?: SortOrder
+    datos?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
     _count?: CertificationCountOrderByAggregateInput
     _max?: CertificationMaxOrderByAggregateInput
     _min?: CertificationMinOrderByAggregateInput
@@ -3363,20 +3475,26 @@ export namespace Prisma {
     OR?: CertificationScalarWhereWithAggregatesInput[]
     NOT?: CertificationScalarWhereWithAggregatesInput | CertificationScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Certification"> | string
-    tipo?: StringWithAggregatesFilter<"Certification"> | string
-    datos?: StringNullableWithAggregatesFilter<"Certification"> | string | null
-    numero?: StringNullableWithAggregatesFilter<"Certification"> | string | null
-    emitidoEl?: DateTimeWithAggregatesFilter<"Certification"> | Date | string
     studentId?: StringWithAggregatesFilter<"Certification"> | string
+    tipo?: StringWithAggregatesFilter<"Certification"> | string
+    numero?: StringWithAggregatesFilter<"Certification"> | string
+    fechaEmision?: DateTimeWithAggregatesFilter<"Certification"> | Date | string
+    datos?: StringWithAggregatesFilter<"Certification"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Certification"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Certification"> | Date | string
   }
 
   export type StudentCreateInput = {
     id?: string
     cedula: string
+    fechaNacimiento?: string | null
     apellidos: string
     nombres: string
-    fechaNacimiento?: string | null
-    pais?: string | null
+    pais?: string
+    estado?: string
+    municipio?: string
+    plan?: string
+    rawData?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     certifications?: CertificationCreateNestedManyWithoutStudentInput
@@ -3385,10 +3503,14 @@ export namespace Prisma {
   export type StudentUncheckedCreateInput = {
     id?: string
     cedula: string
+    fechaNacimiento?: string | null
     apellidos: string
     nombres: string
-    fechaNacimiento?: string | null
-    pais?: string | null
+    pais?: string
+    estado?: string
+    municipio?: string
+    plan?: string
+    rawData?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     certifications?: CertificationUncheckedCreateNestedManyWithoutStudentInput
@@ -3397,10 +3519,14 @@ export namespace Prisma {
   export type StudentUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     cedula?: StringFieldUpdateOperationsInput | string
+    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
     apellidos?: StringFieldUpdateOperationsInput | string
     nombres?: StringFieldUpdateOperationsInput | string
-    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
-    pais?: NullableStringFieldUpdateOperationsInput | string | null
+    pais?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    municipio?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    rawData?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     certifications?: CertificationUpdateManyWithoutStudentNestedInput
@@ -3409,10 +3535,14 @@ export namespace Prisma {
   export type StudentUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     cedula?: StringFieldUpdateOperationsInput | string
+    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
     apellidos?: StringFieldUpdateOperationsInput | string
     nombres?: StringFieldUpdateOperationsInput | string
-    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
-    pais?: NullableStringFieldUpdateOperationsInput | string | null
+    pais?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    municipio?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    rawData?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     certifications?: CertificationUncheckedUpdateManyWithoutStudentNestedInput
@@ -3421,10 +3551,14 @@ export namespace Prisma {
   export type StudentCreateManyInput = {
     id?: string
     cedula: string
+    fechaNacimiento?: string | null
     apellidos: string
     nombres: string
-    fechaNacimiento?: string | null
-    pais?: string | null
+    pais?: string
+    estado?: string
+    municipio?: string
+    plan?: string
+    rawData?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -3432,10 +3566,14 @@ export namespace Prisma {
   export type StudentUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     cedula?: StringFieldUpdateOperationsInput | string
+    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
     apellidos?: StringFieldUpdateOperationsInput | string
     nombres?: StringFieldUpdateOperationsInput | string
-    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
-    pais?: NullableStringFieldUpdateOperationsInput | string | null
+    pais?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    municipio?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    rawData?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -3443,74 +3581,92 @@ export namespace Prisma {
   export type StudentUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     cedula?: StringFieldUpdateOperationsInput | string
+    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
     apellidos?: StringFieldUpdateOperationsInput | string
     nombres?: StringFieldUpdateOperationsInput | string
-    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
-    pais?: NullableStringFieldUpdateOperationsInput | string | null
+    pais?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    municipio?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    rawData?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CertificationCreateInput = {
     id?: string
-    tipo: string
-    datos?: string | null
-    numero?: string | null
-    emitidoEl?: Date | string
+    tipo?: string
+    numero?: string
+    fechaEmision?: Date | string
+    datos?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
     student: StudentCreateNestedOneWithoutCertificationsInput
   }
 
   export type CertificationUncheckedCreateInput = {
     id?: string
-    tipo: string
-    datos?: string | null
-    numero?: string | null
-    emitidoEl?: Date | string
     studentId: string
+    tipo?: string
+    numero?: string
+    fechaEmision?: Date | string
+    datos?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CertificationUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     student?: StudentUpdateOneRequiredWithoutCertificationsNestedInput
   }
 
   export type CertificationUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
     studentId?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CertificationCreateManyInput = {
     id?: string
-    tipo: string
-    datos?: string | null
-    numero?: string | null
-    emitidoEl?: Date | string
     studentId: string
+    tipo?: string
+    numero?: string
+    fechaEmision?: Date | string
+    datos?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CertificationUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CertificationUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
     studentId?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -3570,10 +3726,14 @@ export namespace Prisma {
   export type StudentCountOrderByAggregateInput = {
     id?: SortOrder
     cedula?: SortOrder
+    fechaNacimiento?: SortOrder
     apellidos?: SortOrder
     nombres?: SortOrder
-    fechaNacimiento?: SortOrder
     pais?: SortOrder
+    estado?: SortOrder
+    municipio?: SortOrder
+    plan?: SortOrder
+    rawData?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -3581,10 +3741,14 @@ export namespace Prisma {
   export type StudentMaxOrderByAggregateInput = {
     id?: SortOrder
     cedula?: SortOrder
+    fechaNacimiento?: SortOrder
     apellidos?: SortOrder
     nombres?: SortOrder
-    fechaNacimiento?: SortOrder
     pais?: SortOrder
+    estado?: SortOrder
+    municipio?: SortOrder
+    plan?: SortOrder
+    rawData?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -3592,10 +3756,14 @@ export namespace Prisma {
   export type StudentMinOrderByAggregateInput = {
     id?: SortOrder
     cedula?: SortOrder
+    fechaNacimiento?: SortOrder
     apellidos?: SortOrder
     nombres?: SortOrder
-    fechaNacimiento?: SortOrder
     pais?: SortOrder
+    estado?: SortOrder
+    municipio?: SortOrder
+    plan?: SortOrder
+    rawData?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -3655,29 +3823,35 @@ export namespace Prisma {
 
   export type CertificationCountOrderByAggregateInput = {
     id?: SortOrder
-    tipo?: SortOrder
-    datos?: SortOrder
-    numero?: SortOrder
-    emitidoEl?: SortOrder
     studentId?: SortOrder
+    tipo?: SortOrder
+    numero?: SortOrder
+    fechaEmision?: SortOrder
+    datos?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type CertificationMaxOrderByAggregateInput = {
     id?: SortOrder
-    tipo?: SortOrder
-    datos?: SortOrder
-    numero?: SortOrder
-    emitidoEl?: SortOrder
     studentId?: SortOrder
+    tipo?: SortOrder
+    numero?: SortOrder
+    fechaEmision?: SortOrder
+    datos?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type CertificationMinOrderByAggregateInput = {
     id?: SortOrder
-    tipo?: SortOrder
-    datos?: SortOrder
-    numero?: SortOrder
-    emitidoEl?: SortOrder
     studentId?: SortOrder
+    tipo?: SortOrder
+    numero?: SortOrder
+    fechaEmision?: SortOrder
+    datos?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type CertificationCreateNestedManyWithoutStudentInput = {
@@ -3859,18 +4033,22 @@ export namespace Prisma {
 
   export type CertificationCreateWithoutStudentInput = {
     id?: string
-    tipo: string
-    datos?: string | null
-    numero?: string | null
-    emitidoEl?: Date | string
+    tipo?: string
+    numero?: string
+    fechaEmision?: Date | string
+    datos?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CertificationUncheckedCreateWithoutStudentInput = {
     id?: string
-    tipo: string
-    datos?: string | null
-    numero?: string | null
-    emitidoEl?: Date | string
+    tipo?: string
+    numero?: string
+    fechaEmision?: Date | string
+    datos?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CertificationCreateOrConnectWithoutStudentInput = {
@@ -3903,20 +4081,26 @@ export namespace Prisma {
     OR?: CertificationScalarWhereInput[]
     NOT?: CertificationScalarWhereInput | CertificationScalarWhereInput[]
     id?: StringFilter<"Certification"> | string
-    tipo?: StringFilter<"Certification"> | string
-    datos?: StringNullableFilter<"Certification"> | string | null
-    numero?: StringNullableFilter<"Certification"> | string | null
-    emitidoEl?: DateTimeFilter<"Certification"> | Date | string
     studentId?: StringFilter<"Certification"> | string
+    tipo?: StringFilter<"Certification"> | string
+    numero?: StringFilter<"Certification"> | string
+    fechaEmision?: DateTimeFilter<"Certification"> | Date | string
+    datos?: StringFilter<"Certification"> | string
+    createdAt?: DateTimeFilter<"Certification"> | Date | string
+    updatedAt?: DateTimeFilter<"Certification"> | Date | string
   }
 
   export type StudentCreateWithoutCertificationsInput = {
     id?: string
     cedula: string
+    fechaNacimiento?: string | null
     apellidos: string
     nombres: string
-    fechaNacimiento?: string | null
-    pais?: string | null
+    pais?: string
+    estado?: string
+    municipio?: string
+    plan?: string
+    rawData?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -3924,10 +4108,14 @@ export namespace Prisma {
   export type StudentUncheckedCreateWithoutCertificationsInput = {
     id?: string
     cedula: string
+    fechaNacimiento?: string | null
     apellidos: string
     nombres: string
-    fechaNacimiento?: string | null
-    pais?: string | null
+    pais?: string
+    estado?: string
+    municipio?: string
+    plan?: string
+    rawData?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -3951,10 +4139,14 @@ export namespace Prisma {
   export type StudentUpdateWithoutCertificationsInput = {
     id?: StringFieldUpdateOperationsInput | string
     cedula?: StringFieldUpdateOperationsInput | string
+    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
     apellidos?: StringFieldUpdateOperationsInput | string
     nombres?: StringFieldUpdateOperationsInput | string
-    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
-    pais?: NullableStringFieldUpdateOperationsInput | string | null
+    pais?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    municipio?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    rawData?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -3962,44 +4154,56 @@ export namespace Prisma {
   export type StudentUncheckedUpdateWithoutCertificationsInput = {
     id?: StringFieldUpdateOperationsInput | string
     cedula?: StringFieldUpdateOperationsInput | string
+    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
     apellidos?: StringFieldUpdateOperationsInput | string
     nombres?: StringFieldUpdateOperationsInput | string
-    fechaNacimiento?: NullableStringFieldUpdateOperationsInput | string | null
-    pais?: NullableStringFieldUpdateOperationsInput | string | null
+    pais?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    municipio?: StringFieldUpdateOperationsInput | string
+    plan?: StringFieldUpdateOperationsInput | string
+    rawData?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CertificationCreateManyStudentInput = {
     id?: string
-    tipo: string
-    datos?: string | null
-    numero?: string | null
-    emitidoEl?: Date | string
+    tipo?: string
+    numero?: string
+    fechaEmision?: Date | string
+    datos?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CertificationUpdateWithoutStudentInput = {
     id?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CertificationUncheckedUpdateWithoutStudentInput = {
     id?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CertificationUncheckedUpdateManyWithoutStudentInput = {
     id?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
-    datos?: NullableStringFieldUpdateOperationsInput | string | null
-    numero?: NullableStringFieldUpdateOperationsInput | string | null
-    emitidoEl?: DateTimeFieldUpdateOperationsInput | Date | string
+    numero?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    datos?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

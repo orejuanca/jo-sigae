@@ -687,7 +687,7 @@ export default function CertificacionesPage() {
                                     <td className="py-1 px-1 text-xs font-medium">{cal.materia}</td>
                                     <td className="py-1 px-1">
                                       <Input
-                                        type="number" min="0" max="20" step="0.01"
+                                        type="text"
                                         className="h-7 text-center text-xs w-14 mx-auto"
                                         value={cal.nota}
                                         onChange={(e) => updateNota(plan.anio, idx, 'nota', e.target.value)}

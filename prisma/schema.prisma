@@ -58,6 +58,7 @@ model BoletaNota {
   lapso1      String?  // Nota numérica o IN/PE
   lapso2      String?
   lapso3      String?
+  revision    String?  // Nota de revisión (columna Rev. del boletín)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -78,7 +79,8 @@ model BoletaExtra {
   grupo2      String?
   grupo3      String?
   grupo4      String?
-  observacion String?  // Observaciones del boletín
+  observacion String?  // Observaciones generales (col OBS del Excel)
+  obsBoletin  String?  // Observaciones del boletín (col OBSBOLETIN del Excel)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

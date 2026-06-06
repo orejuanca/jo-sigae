@@ -24,6 +24,7 @@ interface BoletaNotaRecord {
   lapso1: string | null
   lapso2: string | null
   lapso3: string | null
+  revision: string | null
 }
 
 interface BoletaExtraRecord {
@@ -34,6 +35,7 @@ interface BoletaExtraRecord {
   grupo3: string | null
   grupo4: string | null
   observacion: string | null
+  obsBoletin: string | null
 }
 
 interface StudentNota {
@@ -148,7 +150,7 @@ function BoletinContent({
   }
 
   const extra = student.boletaExtras?.[0]
-  const observacion = extra?.observacion || ''
+  const observacion = extra?.obsBoletin || extra?.observacion || ''
   const promedio = calcStudentPromedio(materias, notasMap)
 
   const orientacionNota = notasMap['Orientación y Convivencia']
@@ -273,7 +275,7 @@ function BoletinContent({
                 <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
                 <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l3)}</td>
                 <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
-                <td style={{ ...cell, textAlign: 'center' }}></td>
+                <td style={{ ...cell, textAlign: 'center' }}>{n?.revision || ''}</td>
               </tr>
             )
           })}

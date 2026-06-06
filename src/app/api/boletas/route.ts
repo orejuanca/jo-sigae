@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest) {
     // Save notas
     const results = []
     for (const nota of notas) {
-      const { studentId, materia, lapso1, lapso2, lapso3 } = nota
+      const { studentId, materia, lapso1, lapso2, lapso3, revision } = nota
       if (!studentId || !materia) continue
 
       const upserted = await prisma.boletaNota.upsert({
@@ -94,11 +94,13 @@ export async function PUT(request: NextRequest) {
           lapso1: lapso1 || null,
           lapso2: lapso2 || null,
           lapso3: lapso3 || null,
+          revision: revision || null,
         },
         update: {
           lapso1: lapso1 || null,
           lapso2: lapso2 || null,
           lapso3: lapso3 || null,
+          revision: revision || null,
         },
       })
       results.push(upserted)
@@ -107,7 +109,7 @@ export async function PUT(request: NextRequest) {
     // Save extras (GRUPO, OBS) if provided
     if (extras && Array.isArray(extras)) {
       for (const extra of extras) {
-        const { studentId, grupo1, grupo2, grupo3, grupo4, observacion } = extra
+        const { studentId, grupo1, grupo2, grupo3, grupo4, observacion, obsBoletin } = extra
         if (!studentId) continue
 
         await prisma.boletaExtra.upsert({
@@ -129,6 +131,7 @@ export async function PUT(request: NextRequest) {
             grupo3: grupo3 || null,
             grupo4: grupo4 || null,
             observacion: observacion || null,
+            obsBoletin: obsBoletin || null,
           },
           update: {
             grupo1: grupo1 || null,
@@ -136,6 +139,7 @@ export async function PUT(request: NextRequest) {
             grupo3: grupo3 || null,
             grupo4: grupo4 || null,
             observacion: observacion || null,
+            obsBoletin: obsBoletin || null,
           },
         })
       }

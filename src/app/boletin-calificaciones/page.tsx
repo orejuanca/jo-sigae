@@ -82,24 +82,18 @@ function calcDef(l1: string | null, l2: string | null, l3: string | null): strin
 function calcStudentPromedio(materias: MateriaAnio[], notas: Record<string, { lapso1: string; lapso2: string; lapso3: string }>): number {
   let sum = 0
   let count = 0
-
   for (const m of materias) {
     if (m.tipo === 'cualitativa') continue
     const n = notas[m.nombre]
     if (!n) continue
     const def = calcDef(n.lapso1 || null, n.lapso2 || null, n.lapso3 || null)
     const num = parseFloat(def)
-    if (!isNaN(num) && num > 0) {
-      sum += num
-      count++
-    }
+    if (!isNaN(num) && num > 0) { sum += num; count++ }
   }
-
   if (count === 0) return 0
   return sum / count
 }
 
-// Cualitative grade descriptions for Orientación y Convivencia / Participación Grupal
 const CUALITATIVA_DESCRIPTIONS: Record<string, string> = {
   'A': 'EVIDENCIA UN EXCELENTE DESARROLLO DE SUS POTENCIALIDADES, TOMANDO EN CUENTA SU PARTICIPACIÓN INDIVIDUAL Y COLECTIVA DURANTE EL PROCESO',
   'B': 'EVIDENCIA UN BUEN DESARROLLO DE SUS POTENCIALIDADES, TOMANDO EN CUENTA SU PARTICIPACIÓN INDIVIDUAL Y COLECTIVA. DEBE CONTINUAR FORTALECIENDO',
@@ -109,26 +103,25 @@ const CUALITATIVA_DESCRIPTIONS: Record<string, string> = {
 
 function getFechaActual(): string {
   const hoy = new Date()
-  const meses = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-  ]
-  return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+  return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}.`
 }
 
 function formatDate(fechaStr: string | null): string {
   if (!fechaStr) return ''
-  // Handle date string like "2005-01-15T00:00:00.000Z" or "2005-01-15"
   try {
     const d = new Date(fechaStr)
     if (isNaN(d.getTime())) return fechaStr
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
-  } catch {
-    return fechaStr
-  }
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+  } catch { return fechaStr }
 }
 
-// ── Boletín Content Component (separated for print) ─────────────────────
+// Common table style
+const B = 'border: 1px solid #000; border-collapse: collapse;'
+const cell = { fontSize: '9px', padding: '2px 4px', border: '1px solid #000' }
+const hdr = { fontSize: '8px', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const, backgroundColor: '#e8e8e8' }
+
+// ── Boletín Content Component ────────────────────────────────────────────
 function BoletinContent({
   student,
   anioEscolar,
@@ -149,24 +142,15 @@ function BoletinContent({
   const materias = getMateriasForGrado(grado)
   const numericMaterias = materias.filter(m => m.tipo !== 'cualitativa')
 
-  // Build notas map for this student
   const notasMap: Record<string, { lapso1: string; lapso2: string; lapso3: string }> = {}
   for (const nota of student.boletaNotas) {
-    notasMap[nota.materia] = {
-      lapso1: nota.lapso1 || '',
-      lapso2: nota.lapso2 || '',
-      lapso3: nota.lapso3 || '',
-    }
+    notasMap[nota.materia] = { lapso1: nota.lapso1 || '', lapso2: nota.lapso2 || '', lapso3: nota.lapso3 || '' }
   }
 
-  // Get observacion from extras
   const extra = student.boletaExtras?.[0]
   const observacion = extra?.observacion || ''
-
-  // Calculate promedio
   const promedio = calcStudentPromedio(materias, notasMap)
 
-  // Get cualitativa grades
   const orientacionNota = notasMap['Orientación y Convivencia']
   const participacionNota = notasMap['Participación Grupal']
   const orientacionGrade = orientacionNota?.lapso1?.trim().toUpperCase() || ''
@@ -179,253 +163,289 @@ function BoletinContent({
     if (!n) continue
     const def = calcDef(n.lapso1 || null, n.lapso2 || null, n.lapso3 || null)
     const num = parseFloat(def)
-    if (!isNaN(num) && num > 0 && num < 10) {
-      reprobadas.push({ materia: m.nombre, final: num })
-    }
+    if (!isNaN(num) && num > 0 && num < 10) reprobadas.push({ materia: m.nombre, final: num })
   }
 
+  // Fill up to max rows if fewer reprobadas
+  const pendienteRows = reprobadas.length > 0 ? reprobadas : [{ materia: '', final: 0 }]
+
   const gradoLabel = GRADO_LABELS[grado] || `Año ${grado}`
+  const lugarNacimiento = [student.municipio, student.estado].filter(Boolean).join(', ') || ''
 
-  // Calculate promedios per lapso
   function calcPromLapso(lapso: number): string {
-    let sum = 0
-    let count = 0
+    let sum = 0, count = 0
     const key = lapso === 1 ? 'lapso1' : lapso === 2 ? 'lapso2' : 'lapso3'
-
     for (const m of numericMaterias) {
       const n = notasMap[m.nombre]
       if (!n) continue
-      const val = n[key] || ''
-      const trimmed = val.trim()
-      if (trimmed === '' || trimmed === 'IN' || trimmed === 'PE') continue
-      const num = parseFloat(trimmed)
-      if (!isNaN(num) && num > 0) {
-        sum += num
-        count++
-      }
+      const val = (n[key] || '').trim()
+      if (val === '' || val === 'IN' || val === 'PE') continue
+      const num = parseFloat(val)
+      if (!isNaN(num) && num > 0) { sum += num; count++ }
     }
-
     if (count === 0) return ''
     return (sum / count).toFixed(2).replace('.', ',')
   }
 
-  const prom1 = calcPromLapso(1)
-  const prom2 = calcPromLapso(2)
-  const prom3 = calcPromLapso(3)
+  function getIN(lapso: string): string {
+    const v = lapso.trim().toUpperCase()
+    if (v === 'IN') return 'IN'
+    if (v === 'PE') return 'PE'
+    return ''
+  }
 
-  // Lugar de nacimiento
-  const lugarNacimiento = [student.municipio, student.estado].filter(Boolean).join(', ') || ''
+  // Determine how many empty rows to fill in Áreas de Formación (13 total rows in Excel minus numeric subjects)
+  const totalSubjectRows = Math.max(numericMaterias.length, 7)
 
   return (
-    <div id="boletin-print-area" className="boletin-page bg-white p-5 text-black" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.35', color: '#000' }}>
-      {/* ─── HEADER ─── */}
-      <div className="text-center mb-3">
-        <h1 className="text-sm font-bold uppercase tracking-wide" style={{ fontSize: '13px' }}>
-          BOLETIN DE CALIFICACIONES
-        </h1>
-        <p className="font-bold uppercase" style={{ fontSize: '11px' }}>
-          {schoolConfig.nombre}
-        </p>
-        <p className="text-[9px]">
-          Código OD: {schoolConfig.od}
-        </p>
+    <div id="boletin-print-area" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.3', color: '#000', background: '#fff', padding: '20px 25px', maxWidth: '900px', margin: '0 auto' }}>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ROW 1: TÍTULO — "BOLETIN DE CALIFICACIONES"
+          ═══════════════════════════════════════════════════════════════ */}
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', marginBottom: '16px' }}>
+        BOLETIN DE CALIFICACIONES
       </div>
 
-      {/* ─── STUDENT DATA ─── */}
-      <div className="border border-black mb-3" style={{ borderColor: '#000' }}>
-        <table className="w-full" style={{ borderCollapse: 'collapse', borderColor: '#000' }}>
-          <tbody>
-            <tr>
-              <td className="border border-black px-2 py-1 font-bold w-[17%] align-middle" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '9px' }}>Alumno(a):</td>
-              <td className="border border-black px-2 py-1" style={{ borderColor: '#000', fontSize: '10px' }}>{student.apellidos}, {student.nombres}</td>
-              <td className="border border-black px-2 py-1 font-bold w-[8%] align-middle" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '9px' }}>C.I.:</td>
-              <td className="border border-black px-2 py-1 w-[16%]" style={{ borderColor: '#000', fontSize: '10px' }}>{formatCedulaFinal(student.cedula)}</td>
-            </tr>
-            <tr>
-              <td className="border border-black px-2 py-1 font-bold align-middle" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '9px' }}>Fecha y Lugar de Nac.:</td>
-              <td className="border border-black px-2 py-1" style={{ borderColor: '#000', fontSize: '10px' }}>
-                {formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}
-              </td>
-              <td className="border border-black px-2 py-1 font-bold align-middle" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '9px' }}>Grado:</td>
-              <td className="border border-black px-2 py-1" style={{ borderColor: '#000', fontSize: '10px' }}>{gradoLabel}</td>
-            </tr>
-            <tr>
-              <td className="border border-black px-2 py-1 font-bold align-middle" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '9px' }}>Sección:</td>
-              <td className="border border-black px-2 py-1" style={{ borderColor: '#000', fontSize: '10px' }}>{seccion}</td>
-              <td className="border border-black px-2 py-1 font-bold align-middle" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '9px' }}>Año Escolar:</td>
-              <td className="border border-black px-2 py-1" style={{ borderColor: '#000', fontSize: '10px' }}>{anioEscolar}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* ─── ÁREAS DE FORMACIÓN TABLE ─── */}
-      <div className="mb-2">
-        <div className="font-bold text-center text-[9px] uppercase py-0.5 border border-black" style={{ borderColor: '#000', backgroundColor: '#f0f0f0' }}>
-          ÁREAS DE FORMACIÓN
+      {/* ═══════════════════════════════════════════════════════════════
+          ROWS 4-6: DATOS DEL ALUMNO (layout exacto del Excel)
+          ═══════════════════════════════════════════════════════════════ */}
+      <div style={{ marginBottom: '10px' }}>
+        {/* Row 4: Alumno: */}
+        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '55px' }}>Alumno:</span>
+          <span style={{ fontSize: '10px' }}>{student.apellidos}, {student.nombres}</span>
         </div>
-        <table className="w-full" style={{ borderCollapse: 'collapse', borderColor: '#000' }}>
-          <thead>
-            <tr>
-              <th className="border border-black px-1 py-0.5 text-left font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '30%' }}>Áreas de Formación</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '8%' }}>1er Lapso</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '5%' }}>IN</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '8%' }}>2do Lapso</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '5%' }}>IN</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '8%' }}>3er Lapso</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '5%' }}>IN</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '8%' }}>Final</th>
-              <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '5%' }}>Rev.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {numericMaterias.map((m) => {
-              const n = notasMap[m.nombre]
-              const l1 = n?.lapso1 || ''
-              const l2 = n?.lapso2 || ''
-              const l3 = n?.lapso3 || ''
-              const def = calcDef(l1 || null, l2 || null, l3 || null)
-              const defNum = parseFloat(def)
-              const isInL1 = l1.trim().toUpperCase() === 'IN'
-              const isInL2 = l2.trim().toUpperCase() === 'IN'
-              const isInL3 = l3.trim().toUpperCase() === 'IN'
-              const isPeL1 = l1.trim().toUpperCase() === 'PE'
-              const isPeL2 = l2.trim().toUpperCase() === 'PE'
-              const isPeL3 = l3.trim().toUpperCase() === 'PE'
-
-              return (
-                <tr key={m.nombre}>
-                  <td className="border border-black px-1 py-0.5" style={{ borderColor: '#000', fontSize: '8px' }}>{m.nombre}</td>
-                  <td className="border border-black px-1 py-0.5 text-center font-medium" style={{ borderColor: '#000', fontSize: '9px' }}>{l1 || ''}</td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px', color: isInL1 ? 'red' : '#999' }}>{isInL1 ? 'IN' : isPeL1 ? 'PE' : ''}</td>
-                  <td className="border border-black px-1 py-0.5 text-center font-medium" style={{ borderColor: '#000', fontSize: '9px' }}>{l2 || ''}</td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px', color: isInL2 ? 'red' : '#999' }}>{isInL2 ? 'IN' : isPeL2 ? 'PE' : ''}</td>
-                  <td className="border border-black px-1 py-0.5 text-center font-medium" style={{ borderColor: '#000', fontSize: '9px' }}>{l3 || ''}</td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px', color: isInL3 ? 'red' : '#999' }}>{isInL3 ? 'IN' : isPeL3 ? 'PE' : ''}</td>
-                  <td className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', fontSize: '9px', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? 'red' : '#000' }}>
-                    {def || ''}
-                  </td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px' }}></td>
-                </tr>
-              )
-            })}
-
-            {/* PROMEDIO ROW */}
-            <tr>
-              <td className="border border-black px-1 py-0.5 font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '8px' }}>PROMEDIO</td>
-              <td className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '9px' }}>{prom1}</td>
-              <td className="border border-black px-1 py-0.5" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '8px' }}></td>
-              <td className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '9px' }}>{prom2}</td>
-              <td className="border border-black px-1 py-0.5" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '8px' }}></td>
-              <td className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '9px' }}>{prom3}</td>
-              <td className="border border-black px-1 py-0.5" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '8px' }}></td>
-              <td className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '9px' }}>
-                {promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}
-              </td>
-              <td className="border border-black px-1 py-0.5" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '8px' }}></td>
-            </tr>
-
-            {/* POSICIÓN ROW */}
-            <tr>
-              <td className="border border-black px-1 py-0.5 font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '8px' }}>Posición Según Promedio</td>
-              <td colSpan={8} className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f5f5f5', fontSize: '9px' }}>
-                {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {/* Row 5: C.I.: | Fecha y Lugar de Nac: */}
+        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '30px' }}>C.I.:</span>
+          <span style={{ fontSize: '10px', marginRight: '20px' }}>{formatCedulaFinal(student.cedula)}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px' }}>Fecha y Lugar de Nac:</span>
+          <span style={{ fontSize: '9px' }}>{formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}</span>
+        </div>
+        {/* Row 6: Grado: | Sección: | N° de Lista: | Año Escolar: */}
+        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 16px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Grado:</span>
+          <span style={{ fontSize: '10px' }}>{gradoLabel}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Sección:</span>
+          <span style={{ fontSize: '10px' }}>{seccion}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>N° de Lista:</span>
+          <span style={{ fontSize: '10px' }}>{listaNum}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Año Escolar:</span>
+          <span style={{ fontSize: '10px' }}>{anioEscolar}</span>
+        </div>
       </div>
 
-      {/* ─── MATERIA PENDIENTE TABLE ─── */}
-      {reprobadas.length > 0 && (
-        <div className="mb-2">
-          <div className="font-bold text-center text-[9px] uppercase py-0.5 border border-black" style={{ borderColor: '#000', backgroundColor: '#f0f0f0' }}>
-            MATERIA PENDIENTE
-          </div>
-          <table className="w-full" style={{ borderCollapse: 'collapse', borderColor: '#000' }}>
-            <thead>
-              <tr>
-                <th className="border border-black px-1 py-0.5 text-left font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '35%' }}>Materia Pendiente</th>
-                <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '16%' }}>1er Momento</th>
-                <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '16%' }}>2do Momento</th>
-                <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '16%' }}>3er Momento</th>
-                <th className="border border-black px-1 py-0.5 text-center font-bold" style={{ borderColor: '#000', backgroundColor: '#f0f0f0', fontSize: '8px', width: '16%' }}>4to Momento</th>
+      {/* ═══════════════════════════════════════════════════════════════
+          ROW 8+: ÁREAS DE FORMACIÓN (tabla con header en fila 8)
+          ═══════════════════════════════════════════════════════════════ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
+        {/* Header Row (Row 8) */}
+        <thead>
+          <tr>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Áreas de Formación</th>
+            <th style={{ ...hdr, width: '12%' }}>Primer Lapso</th>
+            <th style={{ ...hdr, width: '4%' }}>IN</th>
+            <th style={{ ...hdr, width: '12%' }}>Segundo Lapso</th>
+            <th style={{ ...hdr, width: '4%' }}>IN</th>
+            <th style={{ ...hdr, width: '12%' }}>Tercer Lapso</th>
+            <th style={{ ...hdr, width: '4%' }}>IN</th>
+            <th style={{ ...hdr, width: '12%' }}>Final</th>
+            <th style={{ ...hdr, width: '4%' }}>Rev.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {/* Subject rows */}
+          {numericMaterias.map((m) => {
+            const n = notasMap[m.nombre]
+            const l1 = n?.lapso1 || ''
+            const l2 = n?.lapso2 || ''
+            const l3 = n?.lapso3 || ''
+            const def = calcDef(l1 || null, l2 || null, l3 || null)
+            const defNum = parseFloat(def)
+            return (
+              <tr key={m.nombre}>
+                <td style={{ ...cell, paddingLeft: '6px' }}>{m.nombre}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l1 || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l1)}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l2 || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l2)}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l3)}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
+                <td style={{ ...cell, textAlign: 'center' }}></td>
               </tr>
-            </thead>
-            <tbody>
-              {reprobadas.map((r) => (
-                <tr key={r.materia}>
-                  <td className="border border-black px-1 py-0.5" style={{ borderColor: '#000', fontSize: '8px' }}>{r.materia}</td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px' }}></td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px' }}></td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px' }}></td>
-                  <td className="border border-black px-1 py-0.5 text-center" style={{ borderColor: '#000', fontSize: '8px' }}></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            )
+          })}
 
-      {/* ─── ORIENTACIÓN Y CONVIVENCIA ─── */}
-      <div className="mb-2">
-        <div className="font-bold text-center text-[9px] uppercase py-0.5 border border-black" style={{ borderColor: '#000', backgroundColor: '#f0f0f0' }}>
-          ORIENTACIÓN Y CONVIVENCIA
-        </div>
-        <div className="border border-black px-2 py-1" style={{ borderColor: '#000' }}>
-          <div className="flex items-start gap-2">
-            <span className="font-bold shrink-0" style={{ fontSize: '18px' }}>{orientacionGrade || '—'}</span>
-            <span style={{ fontSize: '7px', lineHeight: '1.3' }}>
-              {orientacionGrade ? CUALITATIVA_DESCRIPTIONS[orientacionGrade] || '' : ''}
-            </span>
-          </div>
-        </div>
-      </div>
+          {/* Empty rows to fill (Excel has 13 subject slots) */}
+          {Array.from({ length: Math.max(0, totalSubjectRows - numericMaterias.length) }).map((_, i) => (
+            <tr key={`empty-${i}`}>
+              <td style={{ ...cell, height: '18px' }}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+            </tr>
+          ))}
 
-      {/* ─── CREACIÓN, RECREACIÓN Y PRODUCCIÓN ─── */}
-      <div className="mb-2">
-        <div className="font-bold text-center text-[9px] uppercase py-0.5 border border-black" style={{ borderColor: '#000', backgroundColor: '#f0f0f0' }}>
-          CREACIÓN, RECREACIÓN Y PRODUCCIÓN
-        </div>
-        <div className="border border-black px-2 py-1" style={{ borderColor: '#000' }}>
-          <div className="flex items-start gap-2">
-            <span className="font-bold shrink-0" style={{ fontSize: '18px' }}>{participacionGrade || '—'}</span>
-            <span style={{ fontSize: '7px', lineHeight: '1.3' }}>
-              {participacionGrade ? CUALITATIVA_DESCRIPTIONS[participacionGrade] || '' : ''}
-            </span>
-          </div>
-        </div>
-      </div>
+          {/* Row 22: P R O M E D I O */}
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>P R O M E D I O</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(1)}</td>
+            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(2)}</td>
+            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(3)}</td>
+            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
+            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+          </tr>
 
-      {/* ─── OBSERVACIONES ─── */}
-      <div className="mb-3">
-        <div className="font-bold text-center text-[9px] uppercase py-0.5 border border-black" style={{ borderColor: '#000', backgroundColor: '#f0f0f0' }}>
-          OBSERVACIONES
-        </div>
-        <div className="border border-black px-2 py-1 min-h-[24px]" style={{ borderColor: '#000', fontSize: '8px' }}>
-          {observacion || '\u00A0'}
-        </div>
-      </div>
+          {/* Row 23: Posición Según Prom. */}
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>Posición Según Prom.</td>
+            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
+            </td>
+            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+          </tr>
+        </tbody>
+      </table>
 
-      {/* ─── FOOTER ─── */}
-      <div className="mt-3">
-        <div className="text-center mb-4" style={{ fontSize: '8px' }}>
+      {/* ═══════════════════════════════════════════════════════════════
+          ROW 24: MATERIA PENDIENTE (siempre visible, con filas vacías)
+          ═══════════════════════════════════════════════════════════════ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+        <thead>
+          <tr>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
+            <th style={{ ...hdr, width: '18%' }}>Primer Momento</th>
+            <th style={{ ...hdr, width: '18%' }}>Segundo Momento</th>
+            <th style={{ ...hdr, width: '18%' }}>Tercer Momento</th>
+            <th style={{ ...hdr, width: '18%' }}>Cuarto Momento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pendienteRows.map((r, i) => (
+            <tr key={i}>
+              <td style={cell}>{r.materia}</td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ORIENTACIÓN Y CONVIVENCIA (2 columnas: rango | descripción)
+          ═══════════════════════════════════════════════════════════════ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+        <tbody>
+          {/* Fila con rango A y su descripción */}
+          <tr>
+            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
+              ORIENTACIÓN Y CONVIVENCIA
+            </td>
+            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
+            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['A']}
+            </td>
+          </tr>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['B']}
+            </td>
+          </tr>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['C']}
+            </td>
+          </tr>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['D']}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          CREACIÓN, RECREACIÓN Y PRODUCCIÓN (mismo formato 2 columnas)
+          ═══════════════════════════════════════════════════════════════ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+        <tbody>
+          <tr>
+            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
+              CREACIÓN, RECREACIÓN Y PRODUCCIÓN
+            </td>
+            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
+            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['A']}
+            </td>
+          </tr>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['B']}
+            </td>
+          </tr>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['C']}
+            </td>
+          </tr>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+              {CUALITATIVA_DESCRIPTIONS['D']}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          OBSERVACIONES (fila 45 + filas 46-48 mergeadas)
+          ═══════════════════════════════════════════════════════════════ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+        <tbody>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', fontSize: '9px', width: '15%' }}>Observaciones</td>
+            <td colSpan={8} style={{ ...cell, minHeight: '45px', fontSize: '9px' }}>
+              {observacion || '\u00A0'}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          FOOTER: Firmas y fecha
+          ═══════════════════════════════════════════════════════════════ */}
+      <div style={{ marginTop: '20px' }}>
+        <div style={{ textAlign: 'center', fontSize: '9px', marginBottom: '30px' }}>
           Miranda, {getFechaActual()}
         </div>
-
-        <div className="flex justify-between items-end px-6">
-          <div className="text-center" style={{ width: '45%' }}>
-            <div className="border-t border-black pt-1 mx-auto" style={{ borderColor: '#000', width: '180px' }}>
-              <p className="font-bold uppercase" style={{ fontSize: '8px' }}>DIRECTOR(A)</p>
-              <p style={{ fontSize: '7px' }}>{schoolConfig.director.apellidosNombres}</p>
-              <p style={{ fontSize: '7px' }}>C.I. {schoolConfig.director.cedula}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
+          <div style={{ textAlign: 'center', width: '40%' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '4px' }}>
+              <span style={{ fontWeight: 'bold', fontSize: '9px' }}>DIRECTOR(A)</span>
             </div>
           </div>
-          <div className="text-center" style={{ width: '45%' }}>
-            <div className="border-t border-black pt-1 mx-auto" style={{ borderColor: '#000', width: '180px' }}>
-              <p className="font-bold uppercase" style={{ fontSize: '8px' }}>COORDINADOR(A)</p>
-              <p style={{ fontSize: '7px' }}>&nbsp;</p>
-              <p style={{ fontSize: '7px' }}>&nbsp;</p>
+          <div style={{ textAlign: 'center', width: '40%' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '4px' }}>
+              <span style={{ fontWeight: 'bold', fontSize: '9px' }}>COORDINADOR(A)</span>
             </div>
           </div>
         </div>
@@ -447,13 +467,11 @@ function BoletinCalificacionesSearch() {
   const [students, setStudents] = useState<StudentNota[]>([])
   const [selectedStudent, setSelectedStudent] = useState<StudentNota | null>(null)
 
-  // Read params from URL
   const paramStudentId = searchParams.get('studentId')
   const paramAnio = searchParams.get('anioEscolar')
   const paramGrado = searchParams.get('grado')
   const paramSeccion = searchParams.get('seccion')
 
-  // Auto-load if params present
   useEffect(() => {
     if (paramAnio && paramGrado) {
       setAnioEscolar(paramAnio)
@@ -463,12 +481,7 @@ function BoletinCalificacionesSearch() {
     }
   }, [paramAnio, paramGrado, paramSeccion, paramStudentId])
 
-  const loadData = useCallback(async (
-    anio: string,
-    grd: string,
-    sec: string,
-    studentId?: string
-  ) => {
+  const loadData = useCallback(async (anio: string, grd: string, sec: string, studentId?: string) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({ anioEscolar: anio, grado: grd, seccion: sec })
@@ -477,19 +490,14 @@ function BoletinCalificacionesSearch() {
       const data = await res.json()
       const loaded: StudentNota[] = data.students || []
       setStudents(loaded)
-
       if (studentId) {
         const found = loaded.find(s => s.id === studentId)
         if (found) setSelectedStudent(found)
-        else {
-          toast({ title: 'Alumno no encontrado', description: 'No se encontró el alumno solicitado en esta sección.', variant: 'destructive' })
-        }
+        else toast({ title: 'Alumno no encontrado', description: 'No se encontró el alumno solicitado.', variant: 'destructive' })
       }
     } catch {
       toast({ title: 'Error', description: 'Error al buscar datos', variant: 'destructive' })
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }, [toast])
 
   const handleSearch = useCallback(() => {
@@ -500,49 +508,26 @@ function BoletinCalificacionesSearch() {
     loadData(anioEscolar, grado, seccion)
   }, [anioEscolar, grado, seccion, loadData, toast])
 
-  // Calculate position for selected student
   const { position, allPromedios, listaNum } = useMemo(() => {
     if (!selectedStudent || students.length === 0) return { position: 0, allPromedios: [], listaNum: 0 }
-
     const materias = getMateriasForGrado(grado)
-
-    // Build promedios for ALL students
     const promedios: { studentId: string; promedio: number }[] = []
     for (const s of students) {
-      const notasMap: Record<string, { lapso1: string; lapso2: string; lapso3: string }> = {}
+      const nm: Record<string, { lapso1: string; lapso2: string; lapso3: string }> = {}
       for (const nota of s.boletaNotas) {
-        notasMap[nota.materia] = {
-          lapso1: nota.lapso1 || '',
-          lapso2: nota.lapso2 || '',
-          lapso3: nota.lapso3 || '',
-        }
+        nm[nota.materia] = { lapso1: nota.lapso1 || '', lapso2: nota.lapso2 || '', lapso3: nota.lapso3 || '' }
       }
-      const prom = calcStudentPromedio(materias, notasMap)
-      promedios.push({ studentId: s.id, promedio: prom })
+      promedios.push({ studentId: s.id, promedio: calcStudentPromedio(materias, nm) })
     }
-
-    // Sort descending
     promedios.sort((a, b) => b.promedio - a.promedio)
-    const allPromValues = promedios.map(p => p.promedio)
+    const allP = promedios.map(p => p.promedio)
     const pos = promedios.findIndex(p => p.studentId === selectedStudent.id) + 1
-    const num = promedios.findIndex(p => p.studentId === selectedStudent.id) + 1
-
-    return { position: pos, allPromedios: allPromValues, listaNum: num }
+    return { position: pos, allPromedios: allP, listaNum: pos }
   }, [selectedStudent, students, grado])
-
-  const handlePrint = useCallback(() => {
-    window.print()
-  }, [])
-
-  const goBack = useCallback(() => {
-    setSelectedStudent(null)
-    router.push('/boletin-calificaciones')
-  }, [router])
 
   return (
     <AppShell>
       <div className="space-y-4">
-        {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 no-print">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -550,32 +535,22 @@ function BoletinCalificacionesSearch() {
               Boletín de Calificaciones
             </h1>
             <p className="text-muted-foreground text-sm">
-              Formato 2 — Boletín individual por alumno
+              Boletín individual por alumno
             </p>
           </div>
         </div>
 
-        {/* Controls (hidden when viewing boletín) */}
         {!selectedStudent && (
           <Card className="no-print">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row items-end gap-3">
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-medium">Año Escolar</Label>
-                  <Input
-                    value={anioEscolar}
-                    onChange={(e) => setAnioEscolar(e.target.value)}
-                    className="h-9 w-36"
-                    placeholder="2025-2026"
-                  />
+                  <Input value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 w-36" placeholder="2025-2026" />
                 </div>
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-medium">Grado</Label>
-                  <select
-                    value={grado}
-                    onChange={(e) => setGrado(e.target.value)}
-                    className="h-9 rounded-md border border-input bg-background px-3 text-sm w-32"
-                  >
+                  <select value={grado} onChange={(e) => setGrado(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-32">
                     <option value="">Seleccionar...</option>
                     {Object.entries(GRADO_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -584,39 +559,24 @@ function BoletinCalificacionesSearch() {
                 </div>
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-medium">Sección</Label>
-                  <Input
-                    value={seccion}
-                    onChange={(e) => setSeccion(e.target.value.toUpperCase())}
-                    className="h-9 w-16 text-center"
-                    maxLength={2}
-                  />
+                  <Input value={seccion} onChange={(e) => setSeccion(e.target.value.toUpperCase())} className="h-9 w-16 text-center" maxLength={2} />
                 </div>
                 <Button onClick={handleSearch} disabled={loading} className="h-9">
-                  {loading ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Buscando...</>
-                  ) : (
-                    <><Search className="h-4 w-4 mr-2" /> Buscar</>
-                  )}
+                  {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Buscando...</> : <><Search className="h-4 w-4 mr-2" /> Buscar</>}
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Student list */}
         {!selectedStudent && students.length > 0 && (
           <Card className="no-print">
             <CardContent className="p-4">
-              <h3 className="font-semibold text-sm mb-3">
-                Alumnos encontrados ({students.length}) — Seleccione un alumno para ver el boletín
-              </h3>
+              <h3 className="font-semibold text-sm mb-3">Alumnos encontrados ({students.length})</h3>
               <div className="max-h-96 overflow-y-auto space-y-1">
                 {students.map((student, idx) => (
-                  <button
-                    key={student.id}
-                    onClick={() => setSelectedStudent(student)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:bg-muted/50 transition text-left"
-                  >
+                  <button key={student.id} onClick={() => setSelectedStudent(student)}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-border hover:bg-muted/50 transition text-left">
                     <span className="text-xs text-muted-foreground font-mono w-6 text-center">{idx + 1}</span>
                     <span className="text-xs font-mono text-muted-foreground w-28">{formatCedulaFinal(student.cedula)}</span>
                     <span className="text-sm font-medium">{student.apellidos}, {student.nombres}</span>
@@ -627,33 +587,21 @@ function BoletinCalificacionesSearch() {
           </Card>
         )}
 
-        {/* Loading state */}
         {loading && (
-          <Card className="no-print">
-            <CardContent className="py-12 text-center">
-              <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Cargando datos...</p>
-            </CardContent>
-          </Card>
+          <Card className="no-print"><CardContent className="py-12 text-center"><Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-muted-foreground" /><p className="text-sm text-muted-foreground">Cargando...</p></CardContent></Card>
         )}
 
-        {/* Boletín View */}
         {selectedStudent && (
           <>
-            {/* Action bar */}
             <div className="flex items-center gap-2 no-print">
-              <Button variant="outline" size="sm" onClick={goBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
+              <Button variant="outline" size="sm" onClick={() => { setSelectedStudent(null); router.push('/boletin-calificaciones') }}>
+                <ArrowLeft className="h-4 w-4 mr-2" />Volver
               </Button>
-              <Button size="sm" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Imprimir
+              <Button size="sm" onClick={() => window.print()}>
+                <Printer className="h-4 w-4 mr-2" />Imprimir
               </Button>
             </div>
-
-            {/* Boletín */}
-            <div className="max-w-[850px] mx-auto shadow-lg">
+            <div className="max-w-[950px] mx-auto shadow-lg border border-gray-200">
               <BoletinContent
                 student={selectedStudent}
                 anioEscolar={anioEscolar}
@@ -671,17 +619,9 @@ function BoletinCalificacionesSearch() {
   )
 }
 
-// ── Page Component ─────────────────────────────────────────────────────
 export default function BoletinCalificacionesPage() {
   return (
-    <Suspense fallback={
-      <AppShell>
-        <div className="py-12 text-center text-muted-foreground">
-          <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin" />
-          Cargando...
-        </div>
-      </AppShell>
-    }>
+    <Suspense fallback={<AppShell><div className="py-12 text-center text-muted-foreground"><Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin" />Cargando...</div></AppShell>}>
       <BoletinCalificacionesSearch />
     </Suspense>
   )

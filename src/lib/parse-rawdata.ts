@@ -678,7 +678,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
 
   return {
     lugar: schoolConfig.estado,
-    fechaExpedicion: currentDateDDMMYYYY(),
+    fechaExpedicion: new Date().toISOString().split('T')[0], // YYYY-MM-DD para input type="date"
     planEstudio: parsed.plan === 'derogado'
       ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
       : schoolConfig.planEstudio,

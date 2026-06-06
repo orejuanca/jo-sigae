@@ -155,7 +155,7 @@ const emptyCertData = (planTipo?: string): CertData => {
 
   return {
     lugar: schoolConfig.estado,
-    fechaExpedicion: new Date().toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    fechaExpedicion: new Date().toISOString().split('T')[0], // YYYY-MM-DD para input type="date"
     planEstudio: planTipo === 'derogado'
       ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
       : schoolConfig.planEstudio,
@@ -234,7 +234,17 @@ export default function CertificacionesPage() {
 
       if (result.certData) {
         // Si el estudiante tiene rawData parseado, usar esos datos
-        setCertData(result.certData as CertData)
+        const cd = result.certData as CertData
+        // Si la fecha de expedición está vacía, usar la fecha actual
+        if (!cd.fechaExpedicion || cd.fechaExpedicion.trim() === '') {
+          cd.fechaExpedicion = new Date().toISOString().split('T')[0]
+        }
+        // Si la fecha viene en DD/MM/YYYY, convertir a YYYY-MM-DD para el input
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cd.fechaExpedicion)) {
+          const parts = cd.fechaExpedicion.split('/')
+          cd.fechaExpedicion = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+        }
+        setCertData(cd)
         setDataLoaded(true)
 
         const planLabel = result.certData.planTipo === 'derogado' ? 'Plan Derogado (BD2)' : 'Plan Vigente (BD)'
@@ -376,6 +386,17 @@ export default function CertificacionesPage() {
   }
 
   const displayData = previewCert && loadedData ? loadedData : certData
+
+  // Convertir YYYY-MM-DD → DD/MM/YYYY para mostrar en la vista de impresión
+  const displayFechaExpedicion = (() => {
+    const f = displayData.fechaExpedicion
+    if (!f) return new Date().toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    if (/^\d{4}-\d{2}-\d{2}$/.test(f)) {
+      const [y, m, d] = f.split('-')
+      return `${d}/${m}/${y}`
+    }
+    return f
+  })()
 
   const formatDate = (dateStr: string) => {
     try { return new Date(dateStr).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' }) }
@@ -816,7 +837,7 @@ export default function CertificacionesPage() {
                       <div className="mb-3">
                         <p className="font-bold text-[9px] mb-1">I. Plan de Estudio: {displayData.planEstudio}</p>
                         <div className="flex flex-wrap gap-4 text-[9px]">
-                          <span><strong>Lugar y Fecha:</strong> {displayData.lugar}, {displayData.fechaExpedicion}</span>
+                          <span><strong>Lugar y Fecha:</strong> {displayData.lugar}, {displayFechaExpedicion}</span>
                           <span><strong>Código:</strong> {schoolConfig.planCodigo}</span>
                         </div>
                       </div>

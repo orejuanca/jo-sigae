@@ -112,14 +112,42 @@ function formatDate(fechaStr: string | null): string {
   try {
     const d = new Date(fechaStr)
     if (isNaN(d.getTime())) return fechaStr
-    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const year = d.getFullYear()
+    return `${day}/${month}/${year}`
   } catch { return fechaStr }
 }
 
-// Common table style
-const B = 'border: 1px solid #000; border-collapse: collapse;'
-const cell = { fontSize: '9px', padding: '2px 4px', border: '1px solid #000' }
-const hdr = { fontSize: '8px', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const, backgroundColor: '#e8e8e8' }
+function formatNumber(n: number): string {
+  return n.toFixed(2).replace('.', ',')
+}
+
+function getIN(lapso: string): string {
+  const v = lapso.trim().toUpperCase()
+  if (v === 'IN') return 'IN'
+  if (v === 'PE') return 'PE'
+  return ''
+}
+
+// ── Shared styles ──────────────────────────────────────────────────────
+const S = {
+  cell: {
+    fontSize: '9px',
+    padding: '3px 5px',
+    border: '1px solid #000',
+    verticalAlign: 'middle' as const,
+  },
+  hdr: {
+    fontSize: '8px',
+    padding: '3px 4px',
+    border: '1px solid #000',
+    fontWeight: 'bold' as const,
+    textAlign: 'center' as const,
+    backgroundColor: '#d9d9d9',
+    verticalAlign: 'middle' as const,
+  },
+}
 
 // ── Boletín Content Component ────────────────────────────────────────────
 function BoletinContent({
@@ -127,51 +155,65 @@ function BoletinContent({
   anioEscolar,
   grado,
   seccion,
-  position,
+  lapsoPositions,
+  finalPosition,
+  totalStudents,
   listaNum,
-  allStudentsPromedios,
 }: {
   student: StudentNota
   anioEscolar: string
   grado: string
   seccion: string
-  position: number
+  lapsoPositions: number[]
+  finalPosition: number
+  totalStudents: number
   listaNum: number
-  allStudentsPromedios: number[]
 }) {
   const materias = getMateriasForGrado(grado)
   const numericMaterias = materias.filter(m => m.tipo !== 'cualitativa')
+  const cualitativas = materias.filter(m => m.tipo === 'cualitativa')
 
+  // Build notas map
   const notasMap: Record<string, { lapso1: string; lapso2: string; lapso3: string }> = {}
   for (const nota of student.boletaNotas) {
-    notasMap[nota.materia] = { lapso1: nota.lapso1 || '', lapso2: nota.lapso2 || '', lapso3: nota.lapso3 || '' }
+    notasMap[nota.materia] = {
+      lapso1: nota.lapso1 || '',
+      lapso2: nota.lapso2 || '',
+      lapso3: nota.lapso3 || '',
+    }
   }
 
   const extra = student.boletaExtras?.[0]
   const observacion = extra?.observacion || ''
-  const promedio = calcStudentPromedio(materias, notasMap)
+  const promedioFinal = calcStudentPromedio(materias, notasMap)
 
-  const orientacionNota = notasMap['Orientación y Convivencia']
-  const participacionNota = notasMap['Participación Grupal']
-  const orientacionGrade = orientacionNota?.lapso1?.trim().toUpperCase() || ''
-  const participacionGrade = participacionNota?.lapso1?.trim().toUpperCase() || ''
+  // Cualitative grades (for highlighting reference tables)
+  const oriNota = notasMap['Orientación y Convivencia']
+  const partNota = notasMap['Participación Grupal']
+  const oriGrade = oriNota?.lapso1?.trim().toUpperCase() || ''
+  const partGrade = partNota?.lapso1?.trim().toUpperCase() || ''
+
+  // GRUPO row values from BoletaExtra
+  const grupo1 = extra?.grupo1 || ''
+  const grupo2 = extra?.grupo2 || ''
+  const grupo3 = extra?.grupo3 || ''
+  const grupo4 = extra?.grupo4 || ''
 
   // Reprobadas (Final < 10)
-  const reprobadas: { materia: string; final: number }[] = []
+  const reprobadas: { materia: string }[] = []
   for (const m of numericMaterias) {
     const n = notasMap[m.nombre]
     if (!n) continue
     const def = calcDef(n.lapso1 || null, n.lapso2 || null, n.lapso3 || null)
     const num = parseFloat(def)
-    if (!isNaN(num) && num > 0 && num < 10) reprobadas.push({ materia: m.nombre, final: num })
+    if (!isNaN(num) && num > 0 && num < 10) reprobadas.push({ materia: m.nombre })
   }
-
-  // Fill up to max rows if fewer reprobadas
-  const pendienteRows = reprobadas.length > 0 ? reprobadas : [{ materia: '', final: 0 }]
+  const pendienteRows = reprobadas.length > 0 ? reprobadas : [{ materia: '' }]
 
   const gradoLabel = GRADO_LABELS[grado] || `Año ${grado}`
   const lugarNacimiento = [student.municipio, student.estado].filter(Boolean).join(', ') || ''
 
+  // Per-lapso promedio for this student
   function calcPromLapso(lapso: number): string {
     let sum = 0, count = 0
     const key = lapso === 1 ? 'lapso1' : lapso === 2 ? 'lapso2' : 'lapso3'
@@ -184,47 +226,92 @@ function BoletinContent({
       if (!isNaN(num) && num > 0) { sum += num; count++ }
     }
     if (count === 0) return ''
-    return (sum / count).toFixed(2).replace('.', ',')
+    return formatNumber(sum / count)
   }
-
-  function getIN(lapso: string): string {
-    const v = lapso.trim().toUpperCase()
-    if (v === 'IN') return 'IN'
-    if (v === 'PE') return 'PE'
-    return ''
-  }
-
-  // Determine how many empty rows to fill in Áreas de Formación (13 total rows in Excel minus numeric subjects)
-  const totalSubjectRows = Math.max(numericMaterias.length, 7)
 
   return (
-    <div id="boletin-print-area" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.3', color: '#000', background: '#fff', padding: '20px 25px', maxWidth: '900px', margin: '0 auto' }}>
+    <div id="boletin-print-area" style={{
+      fontFamily: 'Times New Roman, Georgia, serif',
+      fontSize: '10px',
+      lineHeight: '1.3',
+      color: '#000',
+      background: '#fff',
+      padding: '15px 20px',
+      maxWidth: '850px',
+      margin: '0 auto',
+    }}>
 
       {/* ═══════════════════════════════════════════════════════════════
-          ROW 1: TÍTULO — "BOLETIN DE CALIFICACIONES"
+          1. ENCABEZADO INSTITUCIONAL
           ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '4px' }}>
+        {/* Logo/escudo placeholder */}
+        <div style={{
+          width: '65px',
+          minWidth: '65px',
+          height: '65px',
+          border: '2px solid #000',
+          borderRadius: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: '12px',
+          flexShrink: 0,
+        }}>
+          <div style={{ textAlign: 'center', fontSize: '7px', fontWeight: 'bold', lineHeight: '1.2' }}>
+            <div>U.E.N.</div>
+            <div style={{ fontSize: '6px' }}>CREACIÓN</div>
+            <div style={{ fontSize: '6px' }}>CÚA</div>
+          </div>
+        </div>
+        {/* Textos institucionales */}
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: '9px', fontWeight: 'bold', marginBottom: '1px' }}>
+            República Bolivariana de Venezuela
+          </div>
+          <div style={{ fontSize: '8px', marginBottom: '1px' }}>
+            Ministerio del Poder Popular Para La Educación
+          </div>
+          <div style={{ fontSize: '10px', fontWeight: 'bold', marginBottom: '1px' }}>
+            U.E.N. CREACIÓN CÚA
+          </div>
+          <div style={{ fontSize: '8px' }}>
+            {schoolConfig.od}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          2. TÍTULO
+          ═══════════════════════════════════════════════════════════════ */}
+      <div style={{
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: '13px',
+        letterSpacing: '2px',
+        margin: '8px 0 10px 0',
+      }}>
         BOLETIN DE CALIFICACIONES
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          ROWS 4-6: DATOS DEL ALUMNO (layout exacto del Excel)
+          3. DATOS DEL ALUMNO
           ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ marginBottom: '10px' }}>
-        {/* Row 4: Alumno: */}
-        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '55px' }}>Alumno:</span>
+      <div style={{ marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '2px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '50px' }}>Alumno:</span>
           <span style={{ fontSize: '10px' }}>{student.apellidos}, {student.nombres}</span>
         </div>
-        {/* Row 5: C.I.: | Fecha y Lugar de Nac: */}
-        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '30px' }}>C.I.:</span>
+        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '2px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '25px' }}>C.I.:</span>
           <span style={{ fontSize: '10px', marginRight: '20px' }}>{formatCedulaFinal(student.cedula)}</span>
           <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px' }}>Fecha y Lugar de Nac:</span>
-          <span style={{ fontSize: '9px' }}>{formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}</span>
+          <span style={{ fontSize: '9px' }}>
+            {formatDate(student.fechaNacimiento)}
+            {lugarNacimiento ? ` — ${lugarNacimiento}` : ''}
+          </span>
         </div>
-        {/* Row 6: Grado: | Sección: | N° de Lista: | Año Escolar: */}
-        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '2px 14px' }}>
           <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Grado:</span>
           <span style={{ fontSize: '10px' }}>{gradoLabel}</span>
           <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Sección:</span>
@@ -237,25 +324,26 @@ function BoletinContent({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          ROW 8+: ÁREAS DE FORMACIÓN (tabla con header en fila 8)
+          4. TABLA PRINCIPAL — ÁREAS DE FORMACIÓN
+          Incluye: materias numéricas + Orientación y Convivencia +
+          Participación Grupal + GRUPO + PROMEDIO + POSICIÓN
           ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
-        {/* Header Row (Row 8) */}
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Áreas de Formación</th>
-            <th style={{ ...hdr, width: '12%' }}>Primer Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Segundo Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Tercer Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Final</th>
-            <th style={{ ...hdr, width: '4%' }}>Rev.</th>
+            <th style={{ ...S.hdr, textAlign: 'left', width: '28%', paddingLeft: '5px' }}>Áreas de Formación</th>
+            <th style={{ ...S.hdr, width: '10%' }}>Primer Lapso</th>
+            <th style={{ ...S.hdr, width: '4%' }}>IN</th>
+            <th style={{ ...S.hdr, width: '10%' }}>Segundo Lapso</th>
+            <th style={{ ...S.hdr, width: '4%' }}>IN</th>
+            <th style={{ ...S.hdr, width: '10%' }}>Tercer Lapso</th>
+            <th style={{ ...S.hdr, width: '4%' }}>IN</th>
+            <th style={{ ...S.hdr, width: '10%' }}>Final</th>
+            <th style={{ ...S.hdr, width: '5%' }}>Rev.</th>
           </tr>
         </thead>
         <tbody>
-          {/* Subject rows */}
+          {/* ── Materias numéricas ── */}
           {numericMaterias.map((m) => {
             const n = notasMap[m.nombre]
             const l1 = n?.lapso1 || ''
@@ -265,115 +353,254 @@ function BoletinContent({
             const defNum = parseFloat(def)
             return (
               <tr key={m.nombre}>
-                <td style={{ ...cell, paddingLeft: '6px' }}>{m.nombre}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l1 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l1)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l2 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l2)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l3)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
-                <td style={{ ...cell, textAlign: 'center' }}></td>
+                <td style={{ ...S.cell, paddingLeft: '5px' }}>{m.nombre}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l1 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center', color: getIN(l1) ? '#c00' : 'transparent', fontSize: '7px' }}>{getIN(l1)}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l2 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center', color: getIN(l2) ? '#c00' : 'transparent', fontSize: '7px' }}>{getIN(l2)}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l3 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center', color: getIN(l3) ? '#c00' : 'transparent', fontSize: '7px' }}>{getIN(l3)}</td>
+                <td style={{
+                  ...S.cell,
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  color: (!isNaN(defNum) && defNum > 0 && defNum < 10) ? '#c00' : '#000',
+                }}>
+                  {def || ''}
+                </td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
               </tr>
             )
           })}
 
-          {/* Empty rows to fill (Excel has 13 subject slots) */}
-          {Array.from({ length: Math.max(0, totalSubjectRows - numericMaterias.length) }).map((_, i) => (
-            <tr key={`empty-${i}`}>
-              <td style={{ ...cell, height: '18px' }}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-            </tr>
-          ))}
+          {/* ── Orientación y Convivencia (fila cualitativa DENTRO de la tabla) ── */}
+          {(() => {
+            const n = notasMap['Orientación y Convivencia']
+            const l1 = n?.lapso1 || ''
+            const l2 = n?.lapso2 || ''
+            const l3 = n?.lapso3 || ''
+            return (
+              <tr>
+                <td style={{ ...S.cell, paddingLeft: '5px' }}>Orientación y Convivencia</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l1 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l2 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l3 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+                <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold' }}>{l1 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+              </tr>
+            )
+          })()}
 
-          {/* Row 22: P R O M E D I O */}
+          {/* ── Participación Grupal (fila cualitativa DENTRO de la tabla) ── */}
+          {(() => {
+            const n = notasMap['Participación Grupal']
+            const l1 = n?.lapso1 || ''
+            const l2 = n?.lapso2 || ''
+            const l3 = n?.lapso3 || ''
+            return (
+              <tr>
+                <td style={{ ...S.cell, paddingLeft: '5px' }}>Participación Grupal</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l1 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l2 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{l3 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+                <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold' }}>{l1 || ''}</td>
+                <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+              </tr>
+            )
+          })()}
+
+          {/* ── GRUPO (valores de BoletaExtra: grupo1-4) ── */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>P R O M E D I O</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(1)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(2)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(3)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={{ ...S.cell, paddingLeft: '5px', fontWeight: 'bold' }}>GRUPO</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontSize: '7px' }}>{grupo1}</td>
+            <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontSize: '7px' }}>{grupo2}</td>
+            <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontSize: '7px' }}>{grupo3}</td>
+            <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontSize: '7px' }}>{grupo4}</td>
+            <td style={{ ...S.cell, textAlign: 'center' }}>{''}</td>
           </tr>
 
-          {/* Row 23: Posición Según Prom. */}
+          {/* ── Línea separadora punteada ── */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>Posición Según Prom.</td>
-            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
-              {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
+            <td colSpan={9} style={{ border: 'none', borderBottom: '1px dotted #000', padding: '0' }}></td>
+          </tr>
+
+          {/* ── PROMEDIO (por lapso y final) ── */}
+          <tr>
+            <td style={{ ...S.cell, fontWeight: 'bold', paddingLeft: '5px', backgroundColor: '#f0f0f0' }}>
+              PROMEDIO
             </td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {calcPromLapso(1)}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {calcPromLapso(2)}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {calcPromLapso(3)}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {promedioFinal > 0 ? formatNumber(promedioFinal) : ''}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+          </tr>
+
+          {/* ── Posición Según Prom. (por lapso y final) ── */}
+          <tr>
+            <td style={{ ...S.cell, fontWeight: 'bold', paddingLeft: '5px', backgroundColor: '#f0f0f0' }}>
+              Posición Según Prom.
+            </td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {lapsoPositions[0] > 0 ? lapsoPositions[0] : ''}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {lapsoPositions[1] > 0 ? lapsoPositions[1] : ''}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {lapsoPositions[2] > 0 ? lapsoPositions[2] : ''}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
+            <td style={{ ...S.cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+              {finalPosition > 0 ? finalPosition : ''}
+            </td>
+            <td style={{ ...S.cell, backgroundColor: '#f0f0f0' }}>{''}</td>
           </tr>
         </tbody>
       </table>
 
       {/* ═══════════════════════════════════════════════════════════════
-          ROW 24: MATERIA PENDIENTE (siempre visible, con filas vacías)
+          5. MATERIA PENDIENTE
           ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
-            <th style={{ ...hdr, width: '18%' }}>Primer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Segundo Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Tercer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Cuarto Momento</th>
+            <th style={{ ...S.hdr, textAlign: 'left', width: '28%', paddingLeft: '5px' }}>Materia Pendiente</th>
+            <th style={{ ...S.hdr, width: '18%' }}>Primer Momento</th>
+            <th style={{ ...S.hdr, width: '18%' }}>Segundo Momento</th>
+            <th style={{ ...S.hdr, width: '18%' }}>Tercer Momento</th>
+            <th style={{ ...S.hdr, width: '18%' }}>Cuarto Momento</th>
           </tr>
         </thead>
         <tbody>
           {pendienteRows.map((r, i) => (
             <tr key={i}>
-              <td style={cell}>{r.materia}</td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
+              <td style={{ ...S.cell, paddingLeft: '5px' }}>{r.materia}</td>
+              <td style={{ ...S.cell }}></td>
+              <td style={{ ...S.cell }}></td>
+              <td style={{ ...S.cell }}></td>
+              <td style={{ ...S.cell }}></td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {/* ═══════════════════════════════════════════════════════════════
-          ORIENTACIÓN Y CONVIVENCIA (2 columnas: rango | descripción)
+          6. ORIENTACIÓN Y CONVIVENCIA (tabla de referencia A/B/C/D)
           ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <tbody>
-          {/* Fila con rango A y su descripción */}
           <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
+            <td rowSpan={4} style={{
+              ...S.cell,
+              width: '20%',
+              textAlign: 'center',
+              verticalAlign: 'middle',
+              fontWeight: 'bold',
+              fontSize: '8px',
+              padding: '6px 4px',
+              writingMode: 'vertical-lr',
+              transform: 'rotate(180deg)',
+              letterSpacing: '2px',
+              lineHeight: '1.4',
+            }}>
               ORIENTACIÓN Y CONVIVENCIA
             </td>
-            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
-            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              width: '20%',
+              fontWeight: 'bold',
+              backgroundColor: oriGrade === 'A' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              A: 20 a 17 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: oriGrade === 'A' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['A']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              fontWeight: 'bold',
+              backgroundColor: oriGrade === 'B' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              B: 16 a 14 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: oriGrade === 'B' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['B']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              fontWeight: 'bold',
+              backgroundColor: oriGrade === 'C' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              C: 13 a 10 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: oriGrade === 'C' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['C']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              fontWeight: 'bold',
+              backgroundColor: oriGrade === 'D' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              D: 09 a 01 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: oriGrade === 'D' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['D']}
             </td>
           </tr>
@@ -381,35 +608,99 @@ function BoletinContent({
       </table>
 
       {/* ═══════════════════════════════════════════════════════════════
-          CREACIÓN, RECREACIÓN Y PRODUCCIÓN (mismo formato 2 columnas)
+          7. CREACIÓN, RECREACIÓN Y PRODUCCIÓN (tabla de referencia A/B/C/D)
           ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <tbody>
           <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
+            <td rowSpan={4} style={{
+              ...S.cell,
+              width: '20%',
+              textAlign: 'center',
+              verticalAlign: 'middle',
+              fontWeight: 'bold',
+              fontSize: '8px',
+              padding: '6px 4px',
+              writingMode: 'vertical-lr',
+              transform: 'rotate(180deg)',
+              letterSpacing: '2px',
+              lineHeight: '1.4',
+            }}>
               CREACIÓN, RECREACIÓN Y PRODUCCIÓN
             </td>
-            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
-            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              width: '20%',
+              fontWeight: 'bold',
+              backgroundColor: partGrade === 'A' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              A: 20 a 17 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: partGrade === 'A' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['A']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              fontWeight: 'bold',
+              backgroundColor: partGrade === 'B' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              B: 16 a 14 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: partGrade === 'B' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['B']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              fontWeight: 'bold',
+              backgroundColor: partGrade === 'C' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              C: 13 a 10 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: partGrade === 'C' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['C']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{
+              ...S.cell,
+              fontWeight: 'bold',
+              backgroundColor: partGrade === 'D' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+            }}>
+              D: 09 a 01 pts
+            </td>
+            <td style={{
+              ...S.cell,
+              fontSize: '8px',
+              backgroundColor: partGrade === 'D' ? '#d4edda' : '#fff',
+              padding: '3px 5px',
+              lineHeight: '1.4',
+            }}>
               {CUALITATIVA_DESCRIPTIONS['D']}
             </td>
           </tr>
@@ -417,13 +708,15 @@ function BoletinContent({
       </table>
 
       {/* ═══════════════════════════════════════════════════════════════
-          OBSERVACIONES (fila 45 + filas 46-48 mergeadas)
+          8. OBSERVACIONES
           ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <tbody>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', fontSize: '9px', width: '15%' }}>Observaciones</td>
-            <td colSpan={8} style={{ ...cell, minHeight: '45px', fontSize: '9px' }}>
+            <td style={{ ...S.cell, fontWeight: 'bold', fontSize: '9px', width: '15%', paddingLeft: '5px' }}>
+              Observaciones
+            </td>
+            <td style={{ ...S.cell, minHeight: '40px', fontSize: '9px', padding: '5px' }}>
               {observacion || '\u00A0'}
             </td>
           </tr>
@@ -431,24 +724,28 @@ function BoletinContent({
       </table>
 
       {/* ═══════════════════════════════════════════════════════════════
-          FOOTER: Firmas y fecha
+          9. FIRMAS
           ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ marginTop: '20px' }}>
-        <div style={{ textAlign: 'center', fontSize: '9px', marginBottom: '30px' }}>
-          Miranda, {getFechaActual()}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
+      <div style={{ marginTop: '25px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 30px' }}>
           <div style={{ textAlign: 'center', width: '40%' }}>
-            <div style={{ borderTop: '1px solid #000', paddingTop: '4px' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '4px', marginBottom: '2px' }}>
               <span style={{ fontWeight: 'bold', fontSize: '9px' }}>DIRECTOR(A)</span>
             </div>
           </div>
           <div style={{ textAlign: 'center', width: '40%' }}>
-            <div style={{ borderTop: '1px solid #000', paddingTop: '4px' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '4px', marginBottom: '2px' }}>
               <span style={{ fontWeight: 'bold', fontSize: '9px' }}>COORDINADOR(A)</span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          10. FECHA Y LUGAR DE EMISIÓN (debajo de las firmas)
+          ═══════════════════════════════════════════════════════════════ */}
+      <div style={{ textAlign: 'center', fontSize: '9px', marginTop: '5px' }}>
+        {schoolConfig.estado}, {getFechaActual()}
       </div>
     </div>
   )
@@ -508,21 +805,70 @@ function BoletinCalificacionesSearch() {
     loadData(anioEscolar, grado, seccion)
   }, [anioEscolar, grado, seccion, loadData, toast])
 
-  const { position, allPromedios, listaNum } = useMemo(() => {
-    if (!selectedStudent || students.length === 0) return { position: 0, allPromedios: [], listaNum: 0 }
+  // Calculate positions PER LAPSO + final position
+  const { lapsoPositions, finalPosition, totalStudents, listaNum } = useMemo(() => {
+    if (!selectedStudent || students.length === 0) {
+      return { lapsoPositions: [0, 0, 0], finalPosition: 0, totalStudents: 0, listaNum: 0 }
+    }
+
     const materias = getMateriasForGrado(grado)
-    const promedios: { studentId: string; promedio: number }[] = []
+    const numericMaterias = materias.filter(m => m.tipo !== 'cualitativa')
+
+    // Build per-student per-lapso promedios
+    interface StudentProms {
+      studentId: string
+      p1: number
+      p2: number
+      p3: number
+      pFinal: number
+    }
+
+    const proms: StudentProms[] = []
     for (const s of students) {
       const nm: Record<string, { lapso1: string; lapso2: string; lapso3: string }> = {}
       for (const nota of s.boletaNotas) {
-        nm[nota.materia] = { lapso1: nota.lapso1 || '', lapso2: nota.lapso2 || '', lapso3: nota.lapso3 || '' }
+        nm[nota.materia] = {
+          lapso1: nota.lapso1 || '',
+          lapso2: nota.lapso2 || '',
+          lapso3: nota.lapso3 || '',
+        }
       }
-      promedios.push({ studentId: s.id, promedio: calcStudentPromedio(materias, nm) })
+
+      function calcLapso(key: 'lapso1' | 'lapso2' | 'lapso3'): number {
+        let sum = 0, count = 0
+        for (const m of numericMaterias) {
+          const n = nm[m.nombre]
+          if (!n) continue
+          const val = (n[key] || '').trim()
+          if (val === '' || val === 'IN' || val === 'PE') continue
+          const num = parseFloat(val)
+          if (!isNaN(num) && num > 0) { sum += num; count++ }
+        }
+        return count > 0 ? sum / count : 0
+      }
+
+      proms.push({
+        studentId: s.id,
+        p1: calcLapso('lapso1'),
+        p2: calcLapso('lapso2'),
+        p3: calcLapso('lapso3'),
+        pFinal: calcStudentPromedio(materias, nm),
+      })
     }
-    promedios.sort((a, b) => b.promedio - a.promedio)
-    const allP = promedios.map(p => p.promedio)
-    const pos = promedios.findIndex(p => p.studentId === selectedStudent.id) + 1
-    return { position: pos, allPromedios: allP, listaNum: pos }
+
+    // Position for each metric
+    function getPosition(key: 'p1' | 'p2' | 'p3' | 'pFinal'): number {
+      const sorted = [...proms].sort((a, b) => b[key] - a[key])
+      return sorted.findIndex(p => p.studentId === selectedStudent.id) + 1
+    }
+
+    const fp = getPosition('pFinal')
+    return {
+      lapsoPositions: [getPosition('p1'), getPosition('p2'), getPosition('p3')],
+      finalPosition: fp,
+      totalStudents: students.length,
+      listaNum: fp,
+    }
   }, [selectedStudent, students, grado])
 
   return (
@@ -601,15 +947,16 @@ function BoletinCalificacionesSearch() {
                 <Printer className="h-4 w-4 mr-2" />Imprimir
               </Button>
             </div>
-            <div className="max-w-[950px] mx-auto shadow-lg border border-gray-200">
+            <div className="max-w-[900px] mx-auto shadow-lg border border-gray-200 rounded">
               <BoletinContent
                 student={selectedStudent}
                 anioEscolar={anioEscolar}
                 grado={grado}
                 seccion={seccion || selectedStudent.seccion}
-                position={position}
+                lapsoPositions={lapsoPositions}
+                finalPosition={finalPosition}
+                totalStudents={totalStudents}
                 listaNum={listaNum}
-                allStudentsPromedios={allPromedios}
               />
             </div>
           </>

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Search, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { formatCedulaFinal } from '@/lib/school-config';
 
 interface StudentData {
   id: string;
@@ -96,7 +97,7 @@ export default function ValidarForm() {
                   className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer border border-border/50">
                   <div>
                     <p className="text-sm font-medium">{s.apellidos}, {s.nombres}</p>
-                    <p className="text-xs text-muted-foreground">{s.cedula}</p>
+                    <p className="text-xs text-muted-foreground">{formatCedulaFinal(s.cedula)}</p>
                   </div>
                 </div>
               ))}
@@ -111,7 +112,7 @@ export default function ValidarForm() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">{selectedStudent.apellidos}, {selectedStudent.nombres}</p>
-                <p className="text-xs text-muted-foreground">{selectedStudent.cedula}</p>
+                <p className="text-xs text-muted-foreground">{formatCedulaFinal(selectedStudent.cedula)}</p>
               </div>
               <Button onClick={validate} disabled={validating} className="gap-2">
                 {validating ? 'Validando...' : <><CheckCircle className="w-4 h-4" /> Validar Notas</>}
@@ -131,7 +132,7 @@ export default function ValidarForm() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">{result.student.apellidos}, {result.student.nombres}</p>
-                <p className="text-xs text-muted-foreground">{result.student.cedula}</p>
+                <p className="text-xs text-muted-foreground">{formatCedulaFinal(result.student.cedula)}</p>
               </div>
               <Badge variant={result.isValid ? 'default' : 'destructive'}>
                 {result.isValid ? 'Válido' : 'Problemas encontrados'}

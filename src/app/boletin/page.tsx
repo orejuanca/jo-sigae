@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { StudentSearch } from '@/components/student-search'
 import { BookOpen, Printer, Loader2, Save } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { schoolConfig } from '@/lib/school-config'
+import { schoolConfig, formatCedulaFinal } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -139,7 +139,7 @@ export default function BoletinPage() {
           <>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres} — C.I.: {selectedStudent.cedula}</CardTitle>
+                <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres} — C.I.: {formatCedulaFinal(selectedStudent.cedula)}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 mb-6">
@@ -217,7 +217,7 @@ export default function BoletinPage() {
 
                   <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                     <div><span className="font-medium">Estudiante:</span> {selectedStudent.nombres} {selectedStudent.apellidos}</div>
-                    <div><span className="font-medium">C.I.:</span> {selectedStudent.cedula}</div>
+                    <div><span className="font-medium">C.I.:</span> {formatCedulaFinal(selectedStudent.cedula)}</div>
                     <div><span className="font-medium">Grado:</span> {grado} — Seccion {seccion}</div>
                   </div>
 

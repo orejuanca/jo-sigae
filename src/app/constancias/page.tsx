@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { StudentSearch } from '@/components/student-search'
 import { ScrollText, Printer, Loader2, Eye } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { schoolConfig } from '@/lib/school-config'
+import { schoolConfig, formatCedulaFinal } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -70,7 +70,7 @@ export default function ConstanciasPage() {
         planEstudio: schoolConfig.planEstudio,
         director: schoolConfig.director,
         estudiante: {
-          cedula: selectedStudent.cedula,
+          cedula: formatCedulaFinal(selectedStudent.cedula),
           apellidos: selectedStudent.apellidos,
           nombres: selectedStudent.nombres,
           fechaNacimiento: selectedStudent.fechaNacimiento,
@@ -126,7 +126,7 @@ export default function ConstanciasPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres}</CardTitle>
-                  <p className="text-sm text-muted-foreground">C.I.: {selectedStudent.cedula}</p>
+                  <p className="text-sm text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</p>
                 </div>
                 <Button onClick={handleGenerate} disabled={generating}>
                   {generating ? (
@@ -198,7 +198,7 @@ export default function ConstanciasPage() {
 
                 <div className="bg-emerald-50 p-4 rounded-lg my-6 max-w-lg mx-auto text-center">
                   <p className="font-bold text-lg">{certData.estudiante.nombres} {certData.estudiante.apellidos}</p>
-                  <p className="text-sm">Cedula de Identidad: {certData.estudiante.cedula}</p>
+                  <p className="text-sm">Cedula de Identidad: {formatCedulaFinal(certData.estudiante.cedula)}</p>
                   <p className="text-sm">Fecha de Nacimiento: {certData.estudiante.fechaNacimiento || 'No registrada'}</p>
                   {certData.estudiante.estado && <p className="text-sm">Estado: {certData.estudiante.estado}</p>}
                   {certData.estudiante.municipio && <p className="text-sm">Municipio: {certData.estudiante.municipio}</p>}

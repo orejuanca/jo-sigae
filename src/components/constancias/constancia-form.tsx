@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Search, Award, Printer } from 'lucide-react';
+import { formatCedulaFinal } from '@/lib/school-config';
 
 interface StudentData {
   id: string;
@@ -120,7 +121,7 @@ export default function ConstanciaForm() {
                   className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer border border-border/50">
                   <div>
                     <p className="text-sm font-medium">{s.apellidos}, {s.nombres}</p>
-                    <p className="text-xs text-muted-foreground">{s.cedula}</p>
+                    <p className="text-xs text-muted-foreground">{formatCedulaFinal(s.cedula)}</p>
                   </div>
                 </div>
               ))}
@@ -143,7 +144,7 @@ export default function ConstanciaForm() {
               <div>
                 <p className="text-sm text-muted-foreground">Alumno</p>
                 <p className="font-medium">{selectedStudent.apellidos}, {selectedStudent.nombres}</p>
-                <p className="text-xs text-muted-foreground">{selectedStudent.cedula}</p>
+                <p className="text-xs text-muted-foreground">{formatCedulaFinal(selectedStudent.cedula)}</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Fecha de Egreso</label>
@@ -191,7 +192,7 @@ export default function ConstanciaForm() {
 
               <div className="text-justify text-xs space-y-2 leading-relaxed">
                 <p>Quien suscribe, <strong>Director(a)</strong> del Plantel <strong>{SCHOOL_INFO.nombre}</strong>, código <strong>{SCHOOL_INFO.codigo}</strong>, ubicado en <strong>{SCHOOL_INFO.direccion}</strong>, Municipio {SCHOOL_INFO.municipio}, Estado {SCHOOL_INFO.entidad}, por medio de la presente hace constar que:</p>
-                <p className="font-semibold">El/La estudiante {selectedStudent.apellidos}, {selectedStudent.nombres}, titular de la cédula de identidad {selectedStudent.cedula}, cursó estudios en esta institución y egresó el día {fechaEgreso || 'N/D'} por la razón: <strong>{razon}</strong>.</p>
+                <p className="font-semibold">El/La estudiante {selectedStudent.apellidos}, {selectedStudent.nombres}, titular de la cédula de identidad {formatCedulaFinal(selectedStudent.cedula)}, cursó estudios en esta institución y egresó el día {fechaEgreso || 'N/D'} por la razón: <strong>{razon}</strong>.</p>
                 <p>Se extiende la presente constancia a solicitud de parte interesada, en la ciudad de Nueva Cúa, a los {today}.</p>
               </div>
 

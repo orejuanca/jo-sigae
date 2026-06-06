@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { StudentSearch } from '@/components/student-search'
+import { formatCedulaFinal } from '@/lib/school-config'
 import {
   Users,
   FileText,
@@ -175,7 +176,7 @@ export default function DashboardPage() {
                     <TableBody>
                       {students.map((student) => (
                         <TableRow key={student.id}>
-                          <TableCell className="font-mono text-xs">{student.cedula}</TableCell>
+                          <TableCell className="font-mono text-xs">{formatCedulaFinal(student.cedula)}</TableCell>
                           <TableCell className="font-medium">{student.apellidos}</TableCell>
                           <TableCell>{student.nombres}</TableCell>
                           <TableCell>

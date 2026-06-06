@@ -22,6 +22,7 @@ import {
   Search,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { formatCedulaFinal } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -146,7 +147,7 @@ export default function ValidarPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
                   {selectedStudent.apellidos}, {selectedStudent.nombres}
-                  <span className="font-normal text-muted-foreground ml-2">C.I.: {selectedStudent.cedula}</span>
+                  <span className="font-normal text-muted-foreground ml-2">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>

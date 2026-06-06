@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { formatCedulaFinal } from '@/lib/school-config';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -43,23 +44,11 @@ async function seedStudents(filePath: string, plan: string) {
     return trimmed;
   }
 
-  // Normalizar cédula: garantizar formato "X NNNNNNN" (letra + espacio + número)
-  // Ejemplo: "E84607347" → "E 84607347", "V-12345" → "V 12345", "E 84607347" → "E 84607347"
-  function formatCedula(raw: string): string {
-    const trimmed = raw.trim().toUpperCase();
-    // Si ya tiene formato "X NNNN" con espacio, devolver tal cual
-    if (/^[VE]\s\d/.test(trimmed)) return trimmed;
-    // Si es "XNNNN" o "X-NNNN" o "X.NNNN" sin espacio correcto, normalizar
-    const match = trimmed.match(/^([VE])[^\d]*(\d.+)$/);
-    if (match) return `${match[1]} ${match[2]}`;
-    return trimmed;
-  }
-
   let count = 0;
   for (const record of records) {
     if (!record.CEDULA || record.CEDULA.trim() === '') continue;
 
-    const cedula = formatCedula(record.CEDULA);
+    const cedula = formatCedulaFinal(record.CEDULA);
     const apellidos = (record.APELLIDOS || '').trim();
     const nombres = (record.NOMBRES || '').trim();
     if (!apellidos && !nombres) continue;

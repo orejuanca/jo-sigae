@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, BookOpen, Printer } from 'lucide-react';
+import { formatCedulaFinal } from '@/lib/school-config';
 
 interface StudentData {
   id: string;
@@ -95,7 +96,7 @@ export default function BoletinView() {
                   className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer border border-border/50">
                   <div>
                     <p className="text-sm font-medium">{s.apellidos}, {s.nombres}</p>
-                    <p className="text-xs text-muted-foreground">{s.cedula}</p>
+                    <p className="text-xs text-muted-foreground">{formatCedulaFinal(s.cedula)}</p>
                   </div>
                 </div>
               ))}
@@ -119,7 +120,7 @@ export default function BoletinView() {
                   <BookOpen className="w-5 h-5" />
                   Boletín — {selectedStudent.apellidos}, {selectedStudent.nombres}
                 </CardTitle>
-                <p className="text-xs text-muted-foreground">{selectedStudent.cedula}</p>
+                <p className="text-xs text-muted-foreground">{formatCedulaFinal(selectedStudent.cedula)}</p>
               </div>
               <div className="flex gap-2 no-print">
                 <Select value={selectedYear} onValueChange={setSelectedYear}>

@@ -31,6 +31,7 @@ import {
   ChevronRight,
   UserPlus,
 } from 'lucide-react';
+import { formatCedulaFinal } from '@/lib/school-config';
 
 interface Student {
   id: string;
@@ -252,7 +253,7 @@ export default function StudentList() {
                 ) : (
                   students.map((s) => (
                     <TableRow key={s.id}>
-                      <TableCell className="font-mono text-xs">{s.cedula}</TableCell>
+                      <TableCell className="font-mono text-xs">{formatCedulaFinal(s.cedula)}</TableCell>
                       <TableCell className="font-medium">{s.apellidos}</TableCell>
                       <TableCell>{s.nombres}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm">{s.pais}</TableCell>

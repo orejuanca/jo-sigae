@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { StudentSearch } from '@/components/student-search'
 import { Award, Printer, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { schoolConfig } from '@/lib/school-config'
+import { schoolConfig, formatCedulaFinal } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -54,7 +54,7 @@ export default function TitulosPage() {
         planEstudio: schoolConfig.planEstudio,
         director: schoolConfig.director,
         estudiante: {
-          cedula: selectedStudent.cedula,
+          cedula: formatCedulaFinal(selectedStudent.cedula),
           apellidos: selectedStudent.apellidos,
           nombres: selectedStudent.nombres,
           fechaNacimiento: selectedStudent.fechaNacimiento,
@@ -105,7 +105,7 @@ export default function TitulosPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres}</CardTitle>
-              <p className="text-sm text-muted-foreground">C.I.: {selectedStudent.cedula}</p>
+              <p className="text-sm text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -168,7 +168,7 @@ export default function TitulosPage() {
                   <p className="text-sm">Se hace constar que el(la) ciudadano(a):</p>
                   <div className="bg-emerald-50 p-6 rounded-lg border border-emerald-200 max-w-lg mx-auto">
                     <p className="text-xl font-bold">{selectedStudent.nombres} {selectedStudent.apellidos}</p>
-                    <p className="text-sm mt-1">Cedula de Identidad: {selectedStudent.cedula}</p>
+                    <p className="text-sm mt-1">Cedula de Identidad: {formatCedulaFinal(selectedStudent.cedula)}</p>
                     {selectedStudent.fechaNacimiento && <p className="text-sm">Fecha de Nacimiento: {selectedStudent.fechaNacimiento}</p>}
                     {selectedStudent.estado && <p className="text-sm">Estado: {selectedStudent.estado}</p>}
                     {selectedStudent.municipio && <p className="text-sm">Municipio: {selectedStudent.municipio}</p>}

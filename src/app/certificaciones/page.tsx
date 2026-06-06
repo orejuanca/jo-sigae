@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StudentSearch } from '@/components/student-search'
 import { FileText, Printer, Loader2, Eye, Database, AlertCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { schoolConfig, planEMG, notaEnLetras, tiposEvaluacion } from '@/lib/school-config'
+import { schoolConfig, planEMG, notaEnLetras, tiposEvaluacion, formatCedulaFinal } from '@/lib/school-config'
 import type { PlanAnio } from '@/lib/school-config'
 
 // === INTERFACES ===
@@ -289,7 +289,7 @@ export default function CertificacionesPage() {
     // Iniciar con datos vacíos pero del plan correcto
     const data = emptyCertData(student.plan === 'derogado' ? 'derogado' : 'vigente')
     data.estudiante = {
-      cedula: student.cedula,
+      cedula: formatCedulaFinal(student.cedula),
       fechaNacimiento: normalizeFecha(student.fechaNacimiento),
       apellidos: student.apellidos,
       nombres: student.nombres,
@@ -422,7 +422,7 @@ export default function CertificacionesPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres}</CardTitle>
-                    <p className="text-sm text-muted-foreground">C.I.: {selectedStudent.cedula}</p>
+                    <p className="text-sm text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</p>
                   </div>
                   <div className="flex gap-2">
                     <Badge variant={selectedStudent.plan === 'derogado' ? 'destructive' : 'default'}>
@@ -1035,7 +1035,7 @@ export default function CertificacionesPage() {
                   <CardContent className="space-y-4">
                     <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
                       <p><strong>Estudiante:</strong> {selectedStudent.apellidos}, {selectedStudent.nombres}</p>
-                      <p><strong>C.I.:</strong> {selectedStudent.cedula}</p>
+                      <p><strong>C.I.:</strong> {formatCedulaFinal(selectedStudent.cedula)}</p>
                       <p><strong>Plan:</strong> {certData.planEstudio}</p>
                       <p><strong>Calificaciones cargadas:</strong> {countGrades()}</p>
                       {certData.acta && <p><strong>Acta:</strong> {certData.acta}</p>}

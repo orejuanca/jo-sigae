@@ -43,6 +43,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { formatCedulaFinal } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -240,7 +241,7 @@ export default function AlumnosPage() {
                     <TableBody>
                       {students.map((student) => (
                         <TableRow key={student.id}>
-                          <TableCell className="font-mono text-xs">{student.cedula}</TableCell>
+                          <TableCell className="font-mono text-xs">{formatCedulaFinal(student.cedula)}</TableCell>
                           <TableCell className="font-medium">{student.apellidos}</TableCell>
                           <TableCell>{student.nombres}</TableCell>
                           <TableCell className="hidden sm:table-cell text-sm">{student.fechaNacimiento || '—'}</TableCell>

@@ -25,7 +25,7 @@ export const schoolConfig = {
   // Director(a) - Sección VII
   director: {
     apellidosNombres: 'PAREDES HURTADO, RAQUEL',
-    cedula: 'V-6419439',
+    cedula: 'V 6419439',
   },
 
   // Director(a) CDCCE - Sección VIII
@@ -170,3 +170,21 @@ export function notaEnLetras(nota: number | string): string {
 
 // Tipos de evaluación
 export const tiposEvaluacion = ['AC', 'PR', 'AP', 'EF', 'EQ'] as const
+
+// Formatear cédula según regla oficial:
+// - Máximo 10 caracteres INCLUYENDO el espacio → lleva espacio: "V 12345678" (10 chars)
+// - Más de 10 caracteres → SIN espacio: "V1234567890" (11+ chars)
+export function formatCedulaFinal(raw: string): string {
+  const trimmed = raw.trim().toUpperCase()
+  // Separar letra del número
+  const match = trimmed.match(/^([VEP])[^\d]*(\d.+)$/)
+  if (!match) return trimmed
+  const letter = match[1]
+  const number = match[2]
+  // Si letra + espacio + número <= 10 caracteres, incluir espacio
+  if (letter.length + 1 + number.length <= 10) {
+    return `${letter} ${number}`
+  }
+  // Si excede 10 caracteres, sin espacio
+  return `${letter}${number}`
+}

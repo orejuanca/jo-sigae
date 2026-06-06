@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Search, X, Loader2 } from 'lucide-react'
+import { formatCedulaFinal } from '@/lib/school-config'
 
 interface Student {
   id: string
@@ -117,7 +118,7 @@ export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, ape
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="font-medium text-sm">{student.apellidos}, {student.nombres}</p>
-                  <p className="text-xs text-muted-foreground">C.I.: {student.cedula}</p>
+                  <p className="text-xs text-muted-foreground">C.I.: {formatCedulaFinal(student.cedula)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {student.plan === 'derogado' && (

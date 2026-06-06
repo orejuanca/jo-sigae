@@ -218,7 +218,15 @@ export default function CertificacionesPage() {
     try {
       const res = await fetch(`/api/students/${student.id}/cert-data`)
       if (!res.ok) {
-        toast({ title: 'Sin datos de calificaciones', description: 'No se encontraron datos en la base de datos para este alumno.', variant: 'destructive' })
+        const errorData = await res.json().catch(() => ({}))
+        console.error('cert-data API error:', res.status, errorData)
+        const reason = errorData.reason || ''
+        const detailMsg = reason === 'empty_rawData'
+          ? `El alumno ${student.cedula} no tiene rawData (datos de calificaciones) en la base de datos. Se requiere re-importar los datos.`
+          : reason === 'parse_error'
+            ? `Error al parsear rawData del alumno ${student.cedula} (longitud: ${errorData.rawDataLength || '?'}).`
+            : `No se encontraron datos de calificaciones para ${student.cedula}.`
+        toast({ title: 'Sin datos de calificaciones', description: detailMsg, variant: 'destructive' })
         setLoadingData(false)
         return
       }
@@ -230,7 +238,7 @@ export default function CertificacionesPage() {
         setDataLoaded(true)
 
         const planLabel = result.certData.planTipo === 'derogado' ? 'Plan Derogado (BD2)' : 'Plan Vigente (BD)'
-        const gradeCount = Object.values(result.certData.calificaciones || {})
+        const gradeCount = result.gradeCount || Object.values(result.certData.calificaciones || {})
           .flat()
           .filter((c: CalificacionRow) => c.nota && c.nota !== '').length
 
@@ -242,7 +250,7 @@ export default function CertificacionesPage() {
       }
     } catch (err) {
       console.error('Error fetching cert data:', err)
-      toast({ title: 'Error', description: 'Error al cargar datos de calificaciones', variant: 'destructive' })
+      toast({ title: 'Error', description: 'Error al cargar datos de calificaciones. Verifique su conexión e intente de nuevo.', variant: 'destructive' })
     } finally {
       setLoadingData(false)
     }

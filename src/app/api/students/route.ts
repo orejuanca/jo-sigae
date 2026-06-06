@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Normalize cedula: remove spaces, dashes, dots for flexible search
+function normalizeCedula(c: string): string {
+  return c.replace(/[\s.\-]/g, '').toUpperCase()
+}
+
 // GET /api/students?q=...&page=1&limit=20
 export async function GET(request: NextRequest) {
   try {
@@ -9,20 +14,26 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
-    const term = q.toUpperCase()
+    if (!q) {
+      const [students, total] = await Promise.all([
+        prisma.student.findMany({ take: limit, skip: (page - 1) * limit, orderBy: { apellidos: 'asc' } }),
+        prisma.student.count(),
+      ])
+      return NextResponse.json({ students, total, page, limit, totalPages: Math.ceil(total / limit) })
+    }
 
-    const where = q
-      ? {
-          OR: [
-            { cedula: { contains: term } },
-            { apellidos: { contains: term } },
-            { nombres: { contains: term } },
-            { cedula: { contains: q } },
-            { apellidos: { contains: q } },
-            { nombres: { contains: q } },
-          ],
-        }
-      : {}
+    const normalized = normalizeCedula(q)
+
+    const where = {
+      OR: [
+        // Exact/contains on cedula with original format
+        { cedula: { contains: q } },
+        { cedula: { contains: q.toUpperCase() } },
+        // Contains on name fields
+        { apellidos: { contains: q, mode: 'insensitive' as const } },
+        { nombres: { contains: q, mode: 'insensitive' as const } },
+      ],
+    }
 
     const [students, total] = await Promise.all([
       prisma.student.findMany({
@@ -33,6 +44,40 @@ export async function GET(request: NextRequest) {
       }),
       prisma.student.count({ where }),
     ])
+
+    // If no results with strict search, try normalized cedula matching
+    if (students.length === 0 && normalized.length >= 4) {
+      // Get all students and filter by normalized cedula on the app side
+      // This is a fallback for when the user types "V12345678" but DB has "V 12345678"
+      const allStudents = await prisma.student.findMany({
+        where: {
+          OR: [
+            { cedula: { contains: normalized.substring(0, 3) } },
+            { cedula: { contains: q.substring(0, 3) } },
+          ],
+        },
+        take: limit * 5,
+        orderBy: { apellidos: 'asc' },
+      })
+
+      const filtered = allStudents.filter(s =>
+        normalizeCedula(s.cedula).includes(normalized)
+      )
+
+      if (filtered.length > 0) {
+        const totalFiltered = await prisma.student.count({
+          where: { id: { in: filtered.map(s => s.id) } },
+        })
+
+        return NextResponse.json({
+          students: filtered.slice(0, limit),
+          total: totalFiltered,
+          page,
+          limit,
+          totalPages: Math.ceil(totalFiltered / limit),
+        })
+      }
+    }
 
     return NextResponse.json({
       students,

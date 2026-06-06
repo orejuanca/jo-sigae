@@ -47,3 +47,26 @@ Stage Summary:
 - System is exclusively for Educación Media General (secondary, 1ro-5to año)
 - Parser correctly handles asterisk blocks in raw data from .xlsm files
 - Institutions, Orientación, Grupos, Observaciones, Acta all extracted properly
+
+---
+Task ID: 3
+Agent: main
+Task: Verify rawData in DB, fix certificaciones data display, remove primary education refs
+
+Work Log:
+- Investigated why certifications showed no grades: rawData was already populated for all 2,175 students
+- Verified parser works correctly: NAVARRO CAÑATE → 41 grades (7+7+8+9+10 across 5 years), with nota/literal/T-E/mes/año
+- Verified BELLO RAMOS → 22 grades across 5 years (some years partial)
+- Verified URBANO SANTA MARIA → 31 grades across 4 years
+- Root cause: Vercel deploy was using OLD code before rawData seed; code was already correct
+- Fixed emptyCertData() to include planTipo and aniosEscolares (was missing, could cause type issues)
+- Fixed boletin page: changed default grado from '6to Grado' to '1er Año' (EMG only, no primary)
+- Verified no primary education references remain in src/ (only boletin had '6to Grado', now fixed)
+- Build passed cleanly, pushed to GitHub (commit c61077b), Vercel auto-deploying
+
+Stage Summary:
+- All 2,175 students have rawData with grades in Neon PostgreSQL
+- Certificaciones page auto-loads and displays: NOTA, LETRAS, T-E, MES, AÑO for all years
+- Both BD (plan vigente) and BD2 (plan derogado) fully supported
+- System is exclusively Educación Media General (secondary education only)
+- Vercel deployment triggered via GitHub push

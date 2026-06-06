@@ -18,6 +18,31 @@ async function seedStudents(filePath: string, plan: string) {
   const rawData = readFileSync(filePath, 'utf-8');
   const records: StudentRecord[] = JSON.parse(rawData);
 
+  // Normalizar fecha a DD/MM/YYYY
+  function normalizeFecha(fecha: string): string {
+    if (!fecha) return '';
+    const trimmed = fecha.trim();
+    if (!trimmed) return '';
+    // Ya en DD/MM/YYYY
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+      const parts = trimmed.split('/');
+      return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+    }
+    // ISO format
+    if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      try {
+        const d = new Date(trimmed);
+        if (!isNaN(d.getTime())) {
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+        }
+      } catch { /* ignore */ }
+    }
+    return trimmed;
+  }
+
   let count = 0;
   for (const record of records) {
     if (!record.CEDULA || record.CEDULA.trim() === '') continue;
@@ -32,7 +57,7 @@ async function seedStudents(filePath: string, plan: string) {
         where: { cedula },
         create: {
           cedula,
-          fechaNacimiento: record.FECHA || null,
+          fechaNacimiento: normalizeFecha(record.FECHA || ''),
           apellidos,
           nombres,
           pais: (record.PAIS || 'VENEZUELA').trim(),
@@ -42,7 +67,7 @@ async function seedStudents(filePath: string, plan: string) {
           rawData: JSON.stringify(record),
         },
         update: {
-          fechaNacimiento: record.FECHA || null,
+          fechaNacimiento: normalizeFecha(record.FECHA || ''),
           apellidos,
           nombres,
           pais: (record.PAIS || 'VENEZUELA').trim(),

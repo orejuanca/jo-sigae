@@ -149,13 +149,13 @@ const emptyCertData = (planTipo?: string): CertData => {
   activePlan.forEach(plan => {
     calificaciones[plan.anio] = plan.materias.map(m => ({
       materia: m.nombre, numero: m.numero, nota: '', literal: '',
-      tipoEvaluacion: 'EF', fechaMes: '', fechaAnio: '',
+      tipoEvaluacion: '', fechaMes: '', fechaAnio: '',
     }))
   })
 
   return {
     lugar: schoolConfig.estado,
-    fechaExpedicion: new Date().toLocaleDateString('es-VE'),
+    fechaExpedicion: new Date().toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
     planEstudio: planTipo === 'derogado'
       ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
       : schoolConfig.planEstudio,
@@ -263,11 +263,34 @@ export default function CertificacionesPage() {
     setDataLoaded(false)
     fetchCertifications(student.id)
 
+    // Normalizar fecha de nacimiento a DD/MM/YYYY
+    const normalizeFecha = (f: string | null | undefined): string => {
+      if (!f) return ''
+      const trimmed = String(f).trim()
+      if (!trimmed) return ''
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+        const parts = trimmed.split('/')
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
+      }
+      if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+        try {
+          const d = new Date(trimmed)
+          if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0')
+            const month = String(d.getMonth() + 1).padStart(2, '0')
+            const year = d.getFullYear()
+            return `${day}/${month}/${year}`
+          }
+        } catch { /* ignore */ }
+      }
+      return trimmed
+    }
+
     // Iniciar con datos vacíos pero del plan correcto
     const data = emptyCertData(student.plan === 'derogado' ? 'derogado' : 'vigente')
     data.estudiante = {
       cedula: student.cedula,
-      fechaNacimiento: student.fechaNacimiento || '',
+      fechaNacimiento: normalizeFecha(student.fechaNacimiento),
       apellidos: student.apellidos,
       nombres: student.nombres,
       pais: student.pais || 'VENEZUELA',

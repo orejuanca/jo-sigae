@@ -569,13 +569,25 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
   }
 }
 
-// Helper para formatear fechas
+// Helper para formatear fechas a DD/MM/YYYY
 function formatDateVal(dateStr: string): string {
   if (!dateStr) return ''
-  // Handle ISO format: "2018-07-19T00:00:00"
-  if (dateStr.includes('T')) {
+  const trimmed = String(dateStr).trim()
+  if (!trimmed) return ''
+  
+  // Ya está en formato DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('/')
+    const day = parts[0].padStart(2, '0')
+    const month = parts[1].padStart(2, '0')
+    const year = parts[2]
+    return `${day}/${month}/${year}`
+  }
+  
+  // Handle ISO format: "2018-07-19T00:00:00" o "2001-10-29"
+  if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
     try {
-      const d = new Date(dateStr)
+      const d = new Date(trimmed)
       if (!isNaN(d.getTime())) {
         const day = String(d.getDate()).padStart(2, '0')
         const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -584,7 +596,16 @@ function formatDateVal(dateStr: string): string {
       }
     } catch { /* ignore */ }
   }
-  return dateStr
+  return trimmed
+}
+
+// Obtener fecha actual en formato DD/MM/YYYY
+function currentDateDDMMYYYY(): string {
+  const now = new Date()
+  const day = String(now.getDate()).padStart(2, '0')
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const year = now.getFullYear()
+  return `${day}/${month}/${year}`
 }
 
 // Convert parsed data to the format expected by the certificaciones page
@@ -609,7 +630,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
       numero: g.numero,
       nota: g.nota,
       literal: g.literal,
-      tipoEvaluacion: g.tipoEvaluacion || 'EF',
+      tipoEvaluacion: g.tipoEvaluacion || '',
       fechaMes: g.fechaMes,
       fechaAnio: g.fechaAnio,
     }))
@@ -624,7 +645,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
         numero: m.numero,
         nota: '',
         literal: '',
-        tipoEvaluacion: 'EF',
+        tipoEvaluacion: '',
         fechaMes: '',
         fechaAnio: '',
       }))
@@ -657,7 +678,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
 
   return {
     lugar: schoolConfig.estado,
-    fechaExpedicion: new Date().toLocaleDateString('es-VE'),
+    fechaExpedicion: currentDateDDMMYYYY(),
     planEstudio: parsed.plan === 'derogado'
       ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
       : schoolConfig.planEstudio,
@@ -670,7 +691,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
     cdcce: schoolConfig.cdcceEstado,
     estudiante: {
       cedula: student.cedula || '',
-      fechaNacimiento: student.fechaNacimiento || '',
+      fechaNacimiento: formatDateVal(student.fechaNacimiento || ''),
       apellidos: student.apellidos || '',
       nombres: student.nombres || '',
       pais: student.pais || 'VENEZUELA',

@@ -16,6 +16,7 @@ model Student {
   pais            String   @default("VENEZUELA")
   estado          String   @default("")
   municipio       String   @default("")
+  seccion         String   @default("")
   plan            String   @default("vigente")
   rawData         String   @default("{}")
   createdAt       DateTime @default(now())

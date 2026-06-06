@@ -1,80 +1,127 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
+// POST /api/boletas/migrate — one-time migration of BOLETAS Excel data
 export async function POST() {
   try {
-    const filePath = join(process.cwd(), 'db', 'boletas_data.json');
-    const data = JSON.parse(readFileSync(filePath, 'utf-8'));
-    const { anioEscolar, grado, estudiantes } = data;
+    const filePath = join(process.cwd(), 'upload', 'boletas_data.json')
+    const fileContent = readFileSync(filePath, 'utf-8')
+    const data = JSON.parse(fileContent)
 
-    // Get student IDs
-    const cedulas = [...new Set(estudiantes.map((e: { cedula: string }) => e.cedula))];
-    const students = await prisma.student.findMany({
-      where: { cedula: { in: cedulas } },
-      select: { id: true, cedula: true, seccion: true },
-    });
-    const cedulaMap = new Map<string, { id: string; seccion: string }>();
-    students.forEach((s) => cedulaMap.set(s.cedula, { id: s.id, seccion: s.seccion }));
-
-    // Update sections where empty
-    let updatedSections = 0;
-    for (const est of estudiantes) {
-      const s = cedulaMap.get(est.cedula);
-      if (s && !s.seccion && est.seccion) {
-        await prisma.student.update({ where: { id: s.id }, data: { seccion: est.seccion } });
-        updatedSections++;
-      }
+    // Build cedula -> studentId map
+    const allStudents = await prisma.student.findMany({ select: { id: true, cedula: true } })
+    const cedulaMap = new Map<string, string>()
+    for (const s of allStudents) {
+      const normalized = s.cedula.replace(/[\s.\-]/g, '').toUpperCase()
+      cedulaMap.set(normalized, s.id)
+      cedulaMap.set(s.cedula.toUpperCase(), s.id)
     }
 
-    // Clear existing notas for this period
-    await prisma.boletaNota.deleteMany({ where: { anioEscolar, grado } });
+    let matched = 0
+    let notMatched = 0
+    let notasInserted = 0
+    let extrasInserted = 0
+    const notFound: string[] = []
 
-    // Insert all notas
-    let createdNotas = 0;
-    let notFound = 0;
+    for (const record of data) {
+      const cedulaNormalized = record.cedula.replace(/[\s.\-]/g, '').toUpperCase()
+      const studentId = cedulaMap.get(cedulaNormalized)
 
-    for (const est of estudiantes) {
-      const s = cedulaMap.get(est.cedula);
-      if (!s) { notFound++; continue; }
+      if (!studentId) {
+        notMatched++
+        if (notFound.length < 10) notFound.push(record.cedula)
+        continue
+      }
 
-      for (const [materia, notas] of Object.entries(est.notas as Record<string, Record<string, string>>)) {
-        await prisma.boletaNota.create({
-          data: {
-            studentId: s.id,
+      matched++
+      const seccion = record.seccion || ''
+      const anioEscolar = record.anio_escolar
+      const grado = record.grado
+
+      // Insert notas
+      for (const nota of record.notas) {
+        try {
+          await prisma.boletaNota.upsert({
+            where: {
+              studentId_anioEscolar_grado_seccion_materia: {
+                studentId,
+                anioEscolar,
+                grado,
+                seccion,
+                materia: nota.materia,
+              },
+            },
+            create: {
+              studentId,
+              anioEscolar,
+              grado,
+              seccion,
+              materia: nota.materia,
+              lapso1: nota.lapso1 || null,
+              lapso2: nota.lapso2 || null,
+              lapso3: nota.lapso3 || null,
+            },
+            update: {
+              lapso1: nota.lapso1 || null,
+              lapso2: nota.lapso2 || null,
+              lapso3: nota.lapso3 || null,
+            },
+          })
+          notasInserted++
+        } catch (e) {
+          // skip duplicates
+        }
+      }
+
+      // Insert extras (GRUPO + OBS)
+      try {
+        await prisma.boletaExtra.upsert({
+          where: {
+            studentId_anioEscolar_grado_seccion: {
+              studentId,
+              anioEscolar,
+              grado,
+              seccion,
+            },
+          },
+          create: {
+            studentId,
             anioEscolar,
             grado,
-            seccion: est.seccion,
-            materia,
-            lapso1: notas.lapso1 || null,
-            lapso2: notas.lapso2 || null,
-            lapso3: notas.lapso3 || null,
+            seccion,
+            grupo1: record.grupo1 || null,
+            grupo2: record.grupo2 || null,
+            grupo3: record.grupo3 || null,
+            grupo4: record.grupo4 || null,
+            observacion: record.observacion || null,
           },
-        });
-        createdNotas++;
+          update: {
+            grupo1: record.grupo1 || null,
+            grupo2: record.grupo2 || null,
+            grupo3: record.grupo3 || null,
+            grupo4: record.grupo4 || null,
+            observacion: record.observacion || null,
+          },
+        })
+        extrasInserted++
+      } catch (e) {
+        // skip
       }
     }
-
-    // Summary
-    const summary = await prisma.boletaNota.groupBy({
-      by: ['seccion'],
-      _count: true,
-      where: { anioEscolar, grado },
-    });
 
     return NextResponse.json({
       success: true,
-      anioEscolar,
-      grado,
-      matchedStudents: cedulaMap.size,
-      updatedSections,
-      createdNotas,
+      totalRecords: data.length,
+      matched,
+      notMatched,
+      notasInserted,
+      extrasInserted,
       notFound,
-      bySection: summary.map((s) => ({ seccion: s.seccion, count: s._count })),
-    });
+    })
   } catch (error) {
-    console.error('Migrate error:', error);
-    return NextResponse.json({ error: 'Error en migración' }, { status: 500 });
+    console.error('Migration error:', error)
+    return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

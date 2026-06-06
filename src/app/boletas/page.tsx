@@ -6,7 +6,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table2, Save, Printer, Search, Loader2, FileSpreadsheet } from 'lucide-react'
+import { Table2, Save, Printer, Search, Loader2, FileSpreadsheet, Eye } from 'lucide-react'
+import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 import { planEMG, formatCedulaFinal, type PlanAnio, type MateriaAnio } from '@/lib/school-config'
 
@@ -478,10 +479,11 @@ export default function BoletasPage() {
                       {/* Row 1: Main headers */}
                       <tr>
                         {/* Fixed identity columns */}
-                        <th className="sticky left-0 z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-7 text-[10px]">N°</th>
-                        <th className="sticky left-[28px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[95px] text-[10px]">CEDULA</th>
-                        <th className="sticky left-[123px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[170px] text-[10px]">APELLNOMB</th>
-                        <th className="sticky left-[293px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-8 text-[10px]">S</th>
+                        <th className="sticky left-0 z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-0.5 py-2 text-center font-semibold w-7 text-[10px]"></th>
+                        <th className="sticky left-[28px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-7 text-[10px]">N°</th>
+                        <th className="sticky left-[56px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[95px] text-[10px]">CEDULA</th>
+                        <th className="sticky left-[151px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[170px] text-[10px]">APELLNOMB</th>
+                        <th className="sticky left-[321px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-8 text-[10px]">S</th>
 
                         {/* Subject columns */}
                         {materias.map((m) => (
@@ -513,10 +515,11 @@ export default function BoletasPage() {
 
                       {/* Row 2: Sub-headers */}
                       <tr>
-                        <th className="sticky left-0 z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
-                        <th className="sticky left-[28px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
-                        <th className="sticky left-[123px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
-                        <th className="sticky left-[293px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+                        <th className="sticky left-0 z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-0.5" />
+                        <th className="sticky left-[28px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+                        <th className="sticky left-[56px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
+                        <th className="sticky left-[151px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
+                        <th className="sticky left-[321px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
 
                         {/* Subject sub-columns: 1er, 2do, 3er, DEF */}
                         {materias.map((m) => (
@@ -556,16 +559,25 @@ export default function BoletasPage() {
                         return (
                           <tr key={student.id} className="hover:bg-muted/30 transition-colors">
                             {/* Fixed identity columns */}
-                            <td className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center text-muted-foreground font-mono text-[10px]">
+                            <td className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-0.5 py-1 text-center text-[10px]">
+                              <Link
+                                href={`/boletin-calificaciones?studentId=${student.id}&anioEscolar=${encodeURIComponent(anioEscolar)}&grado=${encodeURIComponent(grado)}&seccion=${encodeURIComponent(seccion)}`}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-emerald-100 text-emerald-700 transition"
+                                title="Ver Boletín"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Link>
+                            </td>
+                            <td className="sticky left-[28px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center text-muted-foreground font-mono text-[10px]">
                               {studentIdx + 1}
                             </td>
-                            <td className="sticky left-[28px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-mono text-[10px] whitespace-nowrap">
+                            <td className="sticky left-[56px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-mono text-[10px] whitespace-nowrap">
                               {formatCedulaFinal(student.cedula)}
                             </td>
-                            <td className="sticky left-[123px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-medium whitespace-nowrap text-[10px]">
+                            <td className="sticky left-[151px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-medium whitespace-nowrap text-[10px]">
                               {student.apellidos}, {student.nombres}
                             </td>
-                            <td className="sticky left-[293px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center font-semibold text-[10px]">
+                            <td className="sticky left-[321px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center font-semibold text-[10px]">
                               {student.seccion || seccion}
                             </td>
 

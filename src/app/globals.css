@@ -120,3 +120,47 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Print styles for Boletín de Calificaciones ── */
+@media print {
+  /* Hide everything except the boletín */
+  body * {
+    visibility: hidden;
+  }
+
+  #boletin-print-area,
+  #boletin-print-area * {
+    visibility: visible !important;
+  }
+
+  #boletin-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 5mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset background and margins for print */
+  html, body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure borders print correctly */
+  #boletin-print-area table,
+  #boletin-print-area td,
+  #boletin-print-area th {
+    border-color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

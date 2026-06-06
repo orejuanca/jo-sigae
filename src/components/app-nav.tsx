@@ -16,6 +16,8 @@ import {
   GraduationCap,
   Menu,
   X,
+  ClipboardList,
+  Table2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -26,6 +28,8 @@ const navItems = [
   { href: '/certificaciones', label: 'Certificaciones', icon: FileText },
   { href: '/constancias', label: 'Constancias', icon: ScrollText },
   { href: '/boletin', label: 'Boletín', icon: BookOpen },
+  { href: '/boletas', label: 'Boletas', icon: Table2 },
+  { href: '/boletin-calificaciones', label: 'Boletín Calificaciones', icon: ClipboardList },
   { href: '/titulos', label: 'Títulos', icon: Award },
   { href: '/validar', label: 'Validar', icon: CheckCircle },
 ]

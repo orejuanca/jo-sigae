@@ -163,9 +163,12 @@ const NOTAS_EN_LETRAS: Record<number, string> = {
 }
 
 export function notaEnLetras(nota: number | string): string {
-  const n = typeof nota === 'string' ? parseInt(nota, 10) : nota
+  const raw = typeof nota === 'string' ? nota.trim() : String(nota)
+  if (raw === 'IN') return 'INASISTENTE'
+  if (raw === 'PE') return 'PENDIENTE'
+  const n = parseInt(raw, 10)
   if (isNaN(n) || n < 1 || n > 20) return ''
-  return NOTAS_EN_LETRAS[n] || String(nota)
+  return NOTAS_EN_LETRAS[n] || raw
 }
 
 // Tipos de evaluación

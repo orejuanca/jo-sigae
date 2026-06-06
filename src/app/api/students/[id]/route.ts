@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Convertir fecha de cualquier formato a DD/MM/YYYY
+function normalizeFecha(fecha: string): string {
+  if (!fecha) return ''
+  const trimmed = fecha.trim()
+  if (!trimmed) return ''
+  // Ya en DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('/')
+    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
+  }
+  // Formato YYYY-MM-DD (de input type="date") → DD/MM/YYYY
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [year, month, day] = trimmed.split('-')
+    return `${day}/${month}/${year}`
+  }
+  return trimmed
+}
+
 // GET /api/students/[id]
 export async function GET(
   request: NextRequest,
@@ -40,7 +58,7 @@ export async function PUT(
         ...(cedula && { cedula: cedula.trim() }),
         ...(apellidos && { apellidos: apellidos.trim() }),
         ...(nombres && { nombres: nombres.trim() }),
-        ...(fechaNacimiento !== undefined && { fechaNacimiento: fechaNacimiento?.trim() || null }),
+        ...(fechaNacimiento !== undefined && { fechaNacimiento: normalizeFecha(fechaNacimiento) || null }),
         ...(pais !== undefined && { pais: pais?.trim() || 'VENEZUELA' }),
         ...(estado !== undefined && { estado: estado?.trim() || '' }),
         ...(municipio !== undefined && { municipio: municipio?.trim() || '' }),

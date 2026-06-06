@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Convertir fecha de cualquier formato a DD/MM/YYYY
+function normalizeFecha(fecha: string): string {
+  if (!fecha) return ''
+  const trimmed = fecha.trim()
+  if (!trimmed) return ''
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('/')
+    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [year, month, day] = trimmed.split('-')
+    return `${day}/${month}/${year}`
+  }
+  return trimmed
+}
+
 // Normalize cedula: remove spaces, dashes, dots for flexible search
 function normalizeCedula(c: string): string {
   return c.replace(/[\s.\-]/g, '').toUpperCase()
@@ -110,7 +126,7 @@ export async function POST(request: NextRequest) {
         cedula: cedula.trim(),
         apellidos: apellidos.trim(),
         nombres: nombres.trim(),
-        fechaNacimiento: fechaNacimiento?.trim() || null,
+        fechaNacimiento: normalizeFecha(fechaNacimiento) || null,
         pais: pais?.trim() || 'VENEZUELA',
         estado: estado?.trim() || '',
         municipio: municipio?.trim() || '',

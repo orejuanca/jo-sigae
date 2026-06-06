@@ -45,6 +45,20 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { formatCedulaFinal } from '@/lib/school-config'
 
+// Convertir DD/MM/YYYY → YYYY-MM-DD para el input type="date"
+function toInputDate(date: string): string {
+  if (!date) return ''
+  const trimmed = date.trim()
+  // Si ya es YYYY-MM-DD, devolver tal cual
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  // Si es DD/MM/YYYY, convertir
+  const parts = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (parts) {
+    return `${parts[3]}-${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}`
+  }
+  return trimmed
+}
+
 interface Student {
   id: string
   cedula: string
@@ -116,7 +130,7 @@ export default function AlumnosPage() {
     setFormCedula(student.cedula)
     setFormApellidos(student.apellidos)
     setFormNombres(student.nombres)
-    setFormFecha(student.fechaNacimiento || '')
+    setFormFecha(toInputDate(student.fechaNacimiento || ''))
     setFormPais(student.pais || 'VENEZUELA')
     setFormEstado(student.estado || '')
     setFormMunicipio(student.municipio || '')

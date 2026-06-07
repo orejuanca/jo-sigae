@@ -411,26 +411,26 @@ function BoletinContent({
             <td rowSpan={4} style={{ ...cell, width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
               ORIENTACIÓN Y CONVIVENCIA
             </td>
-            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['A']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['B']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['C']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['D']}
             </td>
           </tr>
@@ -449,26 +449,26 @@ function BoletinContent({
             <td rowSpan={4} style={{ ...cell, width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
               CREACIÓN, RECREACIÓN Y PRODUCCIÓN
             </td>
-            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['A']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['B']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['C']}
             </td>
           </tr>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
+            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
+            <td style={{ ...cell, fontSize: '8px', backgroundColor: '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['D']}
             </td>
           </tr>

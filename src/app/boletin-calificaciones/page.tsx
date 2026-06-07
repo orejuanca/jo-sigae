@@ -472,14 +472,16 @@ function BoletinContent({
       {/* ═══════════════════════════════════════════════════════════════
           OBSERVACIONES (fila 45 + filas 46-48 mergeadas)
           ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', marginTop: '0' }}>
-        <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '6px', whiteSpace: 'nowrap', lineHeight: '18px' }}>Observaciones</span>
-        <div style={{ flex: 1, border: '1px solid #000', padding: '0', fontSize: '9px', lineHeight: '18px' }}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} style={{ borderBottom: '1px solid #ccc', height: '18px' }}></div>
-          ))}
-        </div>
-      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+        <tbody>
+          <tr>
+            <td style={{ ...cell, fontWeight: 'bold', fontSize: '9px', width: '15%' }}>Observaciones</td>
+            <td colSpan={8} style={{ ...cell, minHeight: '45px', fontSize: '9px' }}>
+              {observacion || '\u00A0'}
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* ═══════════════════════════════════════════════════════════════
           FOOTER: Firmas y fecha

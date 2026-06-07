@@ -399,11 +399,11 @@ export default function BoletasPage() {
                     {/* BN: PAIS */}
                     <th className="bg-stone-600 text-white border-b border-l border-r border-stone-500 px-1 py-1.5 text-center font-semibold text-[9px]">PAIS</th>
                     {/* BO-BS: PL1-PL5 */}
-                    <th colSpan={5} className="bg-orange-700 text-white border-b border-l border-r border-orange-600 px-1 py-1.5 text-center font-semibold text-[9px]">PENDIENTE LAPSO</th>
+                    <th colSpan={5} className="bg-orange-700 text-white border-b border-l border-r border-orange-600 px-1 py-1.5 text-center font-semibold text-[9px]">PLANTELES</th>
                     {/* BT: OBS */}
                     <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[100px]">OBS</th>
                     {/* BU-CA: CA, ILE, MA, EF, AP, CN, GHC */}
-                    <th colSpan={7} className="bg-indigo-700 text-white border-b border-l border-r border-indigo-600 px-1 py-1.5 text-center font-semibold text-[9px]">NOTAS ASIGNATURA</th>
+                    <th colSpan={7} className="bg-indigo-700 text-white border-b border-l border-r border-indigo-600 px-1 py-1.5 text-center font-semibold text-[9px]">NOTAS REVISION</th>
                     {/* DP: OBSBOLETIN */}
                     <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[100px]">OBSBOLETIN</th>
                   </tr>
@@ -475,7 +475,7 @@ export default function BoletasPage() {
 
                     {/* OBS */}
                     <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
-                    {/* NOTAS ASIGNATURA */}
+                    {/* NOTAS REVISION */}
                     {scoreMaterias.map(sm => (
                       <th key={sm.key} className="bg-indigo-800 text-indigo-300 border-b border-l border-r border-indigo-600 py-1 px-0.5 w-[40px] text-center text-[8px] font-bold">{sm.label}</th>
                     ))}

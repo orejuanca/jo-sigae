@@ -398,8 +398,21 @@ function BoletinContent({
         </tbody>
       </table>
 
+      {/* Fila con mismo formato de Materia Pendiente (guion) */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+        <thead>
+          <tr>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>—</th>
+            <th style={{ ...hdr, width: '18%' }}>—</th>
+            <th style={{ ...hdr, width: '18%' }}>—</th>
+            <th style={{ ...hdr, width: '18%' }}>—</th>
+            <th style={{ ...hdr, width: '18%' }}>—</th>
+          </tr>
+        </thead>
+      </table>
+
       {/* Fila en blanco sin bordes sobre Orientación y Convivencia */}
-      <div style={{ width: '100%', height: '36px' }}></div>
+      <div style={{ width: '100%', height: '18px' }}></div>
 
       {/* ═══════════════════════════════════════════════════════════════
           ORIENTACIÓN Y CONVIVENCIA (2 columnas: rango | descripción)

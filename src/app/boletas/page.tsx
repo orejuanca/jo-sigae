@@ -122,6 +122,28 @@ function calcProm(materias: MateriaAnio[], notas: Record<string, { lapso1: strin
   return (sum / count).toFixed(2).replace('.', ',')
 }
 
+// Mapping de nombres completos → abreviaturas exactas del Excel BOLETAS
+const EXCEL_SUBJECT_NAMES: Record<string, string> = {
+  'Castellano': 'CASTELLANO',
+  'Inglés y otras Lenguas Extranjeras': 'INGLES',
+  'Matemáticas': 'MATEMATICA',
+  'Educación Física': 'ED. FISICA',
+  'Arte y Patrimonio': 'ARTE Y PATR.',
+  'Ciencias Naturales': 'CS. NATURAL.',
+  'Geografía, Historia y Ciudadanía': 'GEO. HIST.',
+  'Orientación y Convivencia': 'ORI.CONV.',
+  'Participación Grupal': 'PART.GRUP.',
+  'Física': 'FISICA',
+  'Química': 'QUIMICA',
+  'Biología': 'BIOLOGIA',
+  'Formación para la Soberanía Nacional': 'FORM. SOBERANIA',
+  'Ciencias de la Tierra': 'CS. DE LA TIERRA',
+}
+
+function getExcelSubjectName(nombre: string): string {
+  return EXCEL_SUBJECT_NAMES[nombre] || nombre.toUpperCase()
+}
+
 function getNotaColorClass(value: string): string {
   const v = value.trim().toUpperCase()
   if (v === 'IN' || v === 'PE') return 'text-red-600 font-semibold'
@@ -358,7 +380,7 @@ export default function BoletasPage() {
                     {/* E-AN: 9 subjects × 4 cols */}
                     {materias.map((m) => (
                       <th key={m.nombre} colSpan={4} className={`border-b border-l border-r border-emerald-600 px-1 py-1.5 text-center font-semibold text-[9px] ${m.tipo === 'cualitativa' ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white'}`}>
-                        <span className="block truncate max-w-[110px]" title={m.nombre}>{m.nombre.toUpperCase()}</span>
+                        <span className="block truncate max-w-[110px]" title={m.nombre}>{getExcelSubjectName(m.nombre)}</span>
                       </th>
                     ))}
 
@@ -405,16 +427,16 @@ export default function BoletasPage() {
                     ))}
 
                     {/* GRUPO sub: GRUPO21-24 */}
-                    <th className="bg-slate-800 text-slate-300 border-b border-l border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">G21</th>
-                    <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">G22</th>
-                    <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">G23</th>
-                    <th className="bg-slate-800 text-slate-200 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-bold">G24</th>
+                    <th className="bg-slate-800 text-slate-300 border-b border-l border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">GRUPO21</th>
+                    <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">GRUPO22</th>
+                    <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">GRUPO23</th>
+                    <th className="bg-slate-800 text-slate-200 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-bold">GRUPO24</th>
 
                     {/* PROM sub: PROM21-24 */}
-                    <th className="bg-slate-700 text-slate-300 border-b border-l border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">P21</th>
-                    <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">P22</th>
-                    <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">P23</th>
-                    <th className="bg-slate-700 text-slate-200 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-bold">P24</th>
+                    <th className="bg-slate-700 text-slate-300 border-b border-l border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">PROM21</th>
+                    <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">PROM22</th>
+                    <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">PROM23</th>
+                    <th className="bg-slate-700 text-slate-200 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-bold">PROM24</th>
 
                     {/* POSICIÓN sub: P1-P4 */}
                     <th className="bg-teal-800 text-teal-300 border-b border-l border-r border-teal-600 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">P1</th>

@@ -315,13 +315,17 @@ function BoletinContent({
             )
           })}
 
-          {/* GRUPO row */}
+          {/* GRUPO row — una celda por columna, igual que las materias */}
           <tr>
             <td style={{ ...cell, paddingLeft: '6px', fontWeight: '500' }}>GRUPO</td>
-            <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo1 || ''}</td>
-            <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo2 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo1 || ''}</td>
+            <td style={cell}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo2 || ''}</td>
+            <td style={cell}></td>
             <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo3 || ''}</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{extra?.grupo4 || ''}</td>
+            <td style={cell}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo4 || ''}</td>
+            <td style={cell}></td>
           </tr>
 
           {/* Empty rows to fill — for segundo año: 3 blank rows after last subject */}

@@ -71,6 +71,11 @@ const GRADO_LABELS: Record<string, string> = {
   '5': 'Quinto Año',
 }
 
+const ANIO_ESCOLAR_OPTIONS = Array.from({ length: 2026 - 2017 + 1 }, (_, i) => {
+  const y = 2017 + i
+  return `${y}-${y + 1}`
+})
+
 // ── Helpers ────────────────────────────────────────────────────────────
 function getMateriasForGrado(grado: string): MateriaAnio[] {
   const idx = parseInt(grado, 10) - 1
@@ -567,7 +572,10 @@ function BoletinCalificacionesSearch() {
               <div className="flex flex-col sm:flex-row items-end gap-3">
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-medium">Año Escolar</Label>
-                  <Input value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 w-36" placeholder="2025-2026" />
+                  <select value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-36">
+                    <option value="">Seleccionar...</option>
+                    {ANIO_ESCOLAR_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
                 </div>
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-medium">Grado</Label>

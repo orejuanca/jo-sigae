@@ -83,6 +83,11 @@ const GRADO_OPTIONS = [
   { label: '5to Año', value: '5' },
 ]
 
+const ANIO_ESCOLAR_OPTIONS = Array.from({ length: 2026 - 2017 + 1 }, (_, i) => {
+  const y = 2017 + i
+  return `${y}-${y + 1}`
+})
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 function getMateriasForGrado(grado: string): MateriaAnio[] {
   const idx = parseInt(grado, 10) - 1
@@ -368,7 +373,7 @@ export default function BoletasPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row items-end gap-3">
-              <div className="grid gap-1.5"><Label className="text-xs font-medium">Año Escolar</Label><Input value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 w-36" placeholder="2025-2026" /></div>
+              <div className="grid gap-1.5"><Label className="text-xs font-medium">Año Escolar</Label><select value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-36">{ANIO_ESCOLAR_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
               <div className="grid gap-1.5"><Label className="text-xs font-medium">Grado</Label><select value={grado} onChange={(e) => setGrado(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-32">{GRADO_OPTIONS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}</select></div>
               <div className="grid gap-1.5"><Label className="text-xs font-medium">Sección</Label><Input value={seccion} onChange={(e) => setSeccion(e.target.value.toUpperCase())} className="h-9 w-16 text-center" maxLength={2} /></div>
               <Button onClick={handleSearch} disabled={loading} className="h-9">{loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando...</> : <><Search className="h-4 w-4 mr-2" />Buscar Alumnos</>}</Button>

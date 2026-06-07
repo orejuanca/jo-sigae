@@ -272,18 +272,18 @@ function BoletinContent({
           ROW 8+: ÁREAS DE FORMACIÓN (tabla con header en fila 8)
           ═══════════════════════════════════════════════════════════════ */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
-        {/* Header Row (Row 8) */}
+        {/* Header Row (Row 8) — marco sin divisiones internas */}
         <thead>
           <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Áreas de Formación</th>
-            <th style={{ ...hdr, width: '12%' }}>Primer Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Segundo Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Tercer Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Final</th>
-            <th style={{ ...hdr, width: '4%' }}>Rev.</th>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%', borderRight: 'none' }}>Áreas de Formación</th>
+            <th style={{ ...hdr, width: '12%', borderLeft: 'none', borderRight: 'none' }}>Primer Lapso</th>
+            <th style={{ ...hdr, width: '4%', borderLeft: 'none', borderRight: 'none' }}>IN</th>
+            <th style={{ ...hdr, width: '12%', borderLeft: 'none', borderRight: 'none' }}>Segundo Lapso</th>
+            <th style={{ ...hdr, width: '4%', borderLeft: 'none', borderRight: 'none' }}>IN</th>
+            <th style={{ ...hdr, width: '12%', borderLeft: 'none', borderRight: 'none' }}>Tercer Lapso</th>
+            <th style={{ ...hdr, width: '4%', borderLeft: 'none', borderRight: 'none' }}>IN</th>
+            <th style={{ ...hdr, width: '12%', borderLeft: 'none', borderRight: 'none' }}>Final</th>
+            <th style={{ ...hdr, width: '4%', borderLeft: 'none' }}>Rev.</th>
           </tr>
         </thead>
         <tbody>

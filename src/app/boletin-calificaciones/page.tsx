@@ -257,8 +257,8 @@ function BoletinContent({
         </div>
         {/* Row 6: Grado: | Sección: | N° de Lista: | Año Escolar: */}
         <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 16px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Grado:</span>
-          <span style={{ fontSize: '10px' }}>{gradoLabel}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>Grado:</span>
+          <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>{gradoLabel}</span>
           <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Sección:</span>
           <span style={{ fontSize: '10px' }}>{seccion}</span>
           <span style={{ fontWeight: 'bold', fontSize: '9px' }}>N° de Lista:</span>

@@ -252,8 +252,8 @@ function BoletinContent({
         <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
           <span style={{ fontWeight: 'bold', fontSize: '10pt', fontFamily: 'Arial, sans-serif', marginRight: '4px', minWidth: '30px' }}>C.I.:</span>
           <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif', marginRight: '20px' }}>{formatCedulaFinal(student.cedula)}</span>
-          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px' }}>Fecha y Lugar de Nac:</span>
-          <span style={{ fontSize: '9px' }}>{formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10pt', fontFamily: 'Arial, sans-serif', marginRight: '4px' }}>Fecha y Lugar de Nac:</span>
+          <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>{formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}</span>
         </div>
         {/* Row 6: Grado: | Sección: | N° de Lista: | Año Escolar: */}
         <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 16px' }}>

@@ -160,6 +160,7 @@ function BoletinContent({
 }) {
   const materias = getMateriasForGrado(grado)
   const numericMaterias = materias.filter(m => m.tipo !== 'cualitativa')
+  const cualitativas = materias.filter(m => m.tipo === 'cualitativa')
 
   const notasMap: Record<string, { lapso1: string; lapso2: string; lapso3: string; revision: string }> = {}
   for (const nota of student.boletaNotas) {
@@ -226,8 +227,9 @@ function BoletinContent({
     return ''
   }
 
-  // Determine how many empty rows to fill in Áreas de Formación (13 total rows in Excel minus numeric subjects)
-  const totalSubjectRows = Math.max(numericMaterias.length, 7)
+  // Determine how many empty rows to fill in Áreas de Formación
+  // Total rows = todas las materias (numéricas + cualitativas) + GRUPO
+  const totalSubjectRows = Math.max(materias.length + 1, 7) // +1 for GRUPO row
 
   return (
     <div id="boletin-print-area" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.3', color: '#000', background: '#fff', padding: '20px 25px', maxWidth: '900px', margin: '0 auto' }}>
@@ -287,31 +289,43 @@ function BoletinContent({
           </tr>
         </thead>
         <tbody>
-          {/* Subject rows */}
-          {numericMaterias.map((m) => {
+          {/* Subject rows - ALL subjects including qualitative */}
+          {materias.map((m) => {
             const n = notasMap[m.nombre]
             const l1 = n?.lapso1 || ''
             const l2 = n?.lapso2 || ''
             const l3 = n?.lapso3 || ''
-            const def = calcDef(l1 || null, l2 || null, l3 || null)
+            const isCualitativa = m.tipo === 'cualitativa'
+            // Para cualitativas: la nota es la literal (A, B, C, EX, etc.) — same in all lapsos
+            const cualitativaDef = isCualitativa ? (l1 || '') : ''
+            const def = isCualitativa ? cualitativaDef : calcDef(l1 || null, l2 || null, l3 || null)
             const defNum = parseFloat(def)
             return (
               <tr key={m.nombre}>
-                <td style={{ ...cell, paddingLeft: '6px' }}>{m.nombre}</td>
+                <td style={{ ...cell, paddingLeft: '6px', fontWeight: isCualitativa ? '500' : 'normal' }}>{m.nombre}</td>
                 <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l1 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l1)}</td>
+                <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l1)}</td>
                 <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l2 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l2)}</td>
+                <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l2)}</td>
                 <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l3)}</td>
+                <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l3)}</td>
                 <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{REVISION_SCORE_MAP[m.nombre] || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{isCualitativa ? '' : (REVISION_SCORE_MAP[m.nombre] || '')}</td>
               </tr>
             )
           })}
 
-          {/* Empty rows to fill (Excel has 13 subject slots) */}
-          {Array.from({ length: Math.max(0, totalSubjectRows - numericMaterias.length) }).map((_, i) => (
+          {/* GRUPO row */}
+          <tr>
+            <td style={{ ...cell, paddingLeft: '6px', fontWeight: '500' }}>GRUPO</td>
+            <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo1 || ''}</td>
+            <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo2 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo3 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{extra?.grupo4 || ''}</td>
+          </tr>
+
+          {/* Empty rows to fill — for segundo año: 3 blank rows after last subject */}
+          {Array.from({ length: Math.max(0, totalSubjectRows - materias.length - 1) }).map((_, i) => (
             <tr key={`empty-${i}`}>
               <td style={{ ...cell, height: '18px' }}></td>
               <td style={cell}></td>

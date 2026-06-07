@@ -227,9 +227,7 @@ function BoletinContent({
     return ''
   }
 
-  // Determine how many empty rows to fill in Áreas de Formación
-  // Total rows = todas las materias (numéricas + cualitativas) + GRUPO
-  const totalSubjectRows = Math.max(materias.length + 1, 7) // +1 for GRUPO row
+  // Siempre 3 filas en blanco después de GRUPO, como en el formato Excel
 
   return (
     <div id="boletin-print-area" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.3', color: '#000', background: '#fff', padding: '20px 25px', maxWidth: '900px', margin: '0 auto' }}>
@@ -328,8 +326,8 @@ function BoletinContent({
             <td style={cell}></td>
           </tr>
 
-          {/* Empty rows to fill — for segundo año: 3 blank rows after last subject */}
-          {Array.from({ length: Math.max(0, totalSubjectRows - materias.length - 1) }).map((_, i) => (
+          {/* 3 filas en blanco después de GRUPO — formato Excel */}
+          {Array.from({ length: 3 }).map((_, i) => (
             <tr key={`empty-${i}`}>
               <td style={{ ...cell, height: '18px' }}></td>
               <td style={cell}></td>

@@ -399,7 +399,7 @@ function BoletinContent({
       </table>
 
       {/* Fila en blanco sin bordes sobre Orientación y Convivencia */}
-      <div style={{ width: '100%', height: '18px' }}></div>
+      <div style={{ width: '100%', height: '36px' }}></div>
 
       {/* ═══════════════════════════════════════════════════════════════
           ORIENTACIÓN Y CONVIVENCIA (2 columnas: rango | descripción)

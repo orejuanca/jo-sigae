@@ -137,8 +137,10 @@ function formatDate(fechaStr: string | null): string {
 
 // Common table style
 const B = 'border: 1px solid #000; border-collapse: collapse;'
-const cell = { fontSize: '9px', padding: '2px 4px', border: '1px solid #000' }
-const hdr = { fontSize: '8px', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const, backgroundColor: '#e8e8e8' }
+// Estilos base replicando exactamente el formato Excel BOLETIN
+const cell: React.CSSProperties = { fontSize: '10px', padding: '1.5px 3px', border: 'thin solid #000', lineHeight: '1.25' }
+const hdr: React.CSSProperties = { fontSize: '10px', padding: '2px 3px', border: 'thin solid #000', fontWeight: 'bold', textAlign: 'center' as const }
+const outerBorder: React.CSSProperties = { borderLeft: '1px solid #000', borderRight: '1px solid #000' }
 
 // ── Boletín Content Component ────────────────────────────────────────────
 function BoletinContent({
@@ -229,280 +231,222 @@ function BoletinContent({
 
   // Siempre 3 filas en blanco después de GRUPO, como en el formato Excel
 
+  // Tabla única con bordes delgados negros — replica exacta del Excel BOLETIN
+  // Todas las secciones comparten la misma tabla para líneas continuas
   return (
-    <div id="boletin-print-area" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.3', color: '#000', background: '#fff', padding: '20px 25px', maxWidth: '900px', margin: '0 auto' }}>
+    <div id="boletin-print-area" style={{ fontFamily: 'Times New Roman, Georgia, serif', fontSize: '10px', lineHeight: '1.25', color: '#000', background: '#fff', padding: '15px 20px', maxWidth: '920px', margin: '0 auto' }}>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          ROW 1: TÍTULO — "BOLETIN DE CALIFICACIONES"
-          ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', marginBottom: '16px' }}>
+      {/* ═══ ROW 1: TÍTULO ═══ */}
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12px', letterSpacing: '2px', padding: '4px 0', borderBottom: 'thin solid #000' }}>
         BOLETIN DE CALIFICACIONES
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          ROWS 4-6: DATOS DEL ALUMNO (layout exacto del Excel)
-          ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ marginBottom: '10px' }}>
-        {/* Row 4: Alumno: */}
-        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '55px' }}>Alumno:</span>
+      {/* ═══ ROWS 4-6: DATOS DEL ALUMNO ═══ */}
+      <div style={{ padding: '4px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '2px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '10px', minWidth: '55px' }}>Alumno:</span>
           <span style={{ fontSize: '10px' }}>{student.apellidos}, {student.nombres}</span>
         </div>
-        {/* Row 5: C.I.: | Fecha y Lugar de Nac: */}
-        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px', minWidth: '30px' }}>C.I.:</span>
+        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '2px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '10px', minWidth: '30px' }}>C.I.:</span>
           <span style={{ fontSize: '10px', marginRight: '20px' }}>{formatCedulaFinal(student.cedula)}</span>
-          <span style={{ fontWeight: 'bold', fontSize: '9px', marginRight: '4px' }}>Fecha y Lugar de Nac:</span>
-          <span style={{ fontSize: '9px' }}>{formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}>Fecha y Lugar de Nac:</span>
+          <span style={{ fontSize: '10px' }}>{formatDate(student.fechaNacimiento)}{lugarNacimiento ? ` — ${lugarNacimiento}` : ''}</span>
         </div>
-        {/* Row 6: Grado: | Sección: | N° de Lista: | Año Escolar: */}
-        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 16px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Grado:</span>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px 16px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}>Grado:</span>
           <span style={{ fontSize: '10px' }}>{gradoLabel}</span>
-          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Sección:</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}>Sección:</span>
           <span style={{ fontSize: '10px' }}>{seccion}</span>
-          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>N° de Lista:</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}>N° de Lista:</span>
           <span style={{ fontSize: '10px' }}>{listaNum}</span>
-          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Año Escolar:</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}>Año Escolar:</span>
           <span style={{ fontSize: '10px' }}>{anioEscolar}</span>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          ROW 8+: ÁREAS DE FORMACIÓN (tabla con header en fila 8)
-          ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
-        {/* Header Row (Row 8) */}
-        <thead>
-          <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Áreas de Formación</th>
-            <th style={{ ...hdr, width: '12%' }}>Primer Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Segundo Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Tercer Lapso</th>
-            <th style={{ ...hdr, width: '4%' }}>IN</th>
-            <th style={{ ...hdr, width: '12%' }}>Final</th>
-            <th style={{ ...hdr, width: '4%' }}>Rev.</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Subject rows - ALL subjects including qualitative */}
-          {materias.map((m) => {
-            const n = notasMap[m.nombre]
-            const l1 = n?.lapso1 || ''
-            const l2 = n?.lapso2 || ''
-            const l3 = n?.lapso3 || ''
-            const isCualitativa = m.tipo === 'cualitativa'
-            // Para cualitativas: la nota es la literal (A, B, C, EX, etc.) — same in all lapsos
-            const cualitativaDef = isCualitativa ? (l1 || '') : ''
-            const def = isCualitativa ? cualitativaDef : calcDef(l1 || null, l2 || null, l3 || null)
-            const defNum = parseFloat(def)
-            return (
-              <tr key={m.nombre}>
-                <td style={{ ...cell, paddingLeft: '6px', fontWeight: isCualitativa ? '500' : 'normal' }}>{m.nombre}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l1 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l1)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l2 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l2)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l3)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{isCualitativa ? '' : (REVISION_SCORE_MAP[m.nombre] || '')}</td>
-              </tr>
-            )
-          })}
+      {/* ═══ TABLA PRINCIPAL — filas 8 a 48 conectadas con bordes continuos ═══ */}
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        {/* ROW 8: Encabezado Áreas de Formación */}
+        <tr>
+          <th style={{ ...hdr, textAlign: 'left' }}>Áreas de Formación</th>
+          <th colSpan={3} style={hdr}>Primer Lapso</th>
+          <th style={{ ...hdr, width: '14px' }}>IN</th>
+          <th colSpan={3} style={hdr}>Segundo Lapso</th>
+          <th style={{ ...hdr, width: '14px' }}>IN</th>
+          <th colSpan={3} style={hdr}>Tercer Lapso</th>
+          <th style={{ ...hdr, width: '14px' }}>IN</th>
+          <th colSpan={3} style={hdr}>Final</th>
+          <th style={{ ...hdr, width: '18px' }}>Rev.</th>
+        </tr>
 
-          {/* GRUPO row — una celda por columna, igual que las materias */}
-          <tr>
-            <td style={{ ...cell, paddingLeft: '6px', fontWeight: '500' }}>GRUPO</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo1 || ''}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo2 || ''}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo3 || ''}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo4 || ''}</td>
-            <td style={cell}></td>
-          </tr>
-
-          {/* 3 filas en blanco después de GRUPO — formato Excel */}
-          {Array.from({ length: 3 }).map((_, i) => (
-            <tr key={`empty-${i}`}>
-              <td style={{ ...cell, height: '18px' }}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
+        {/* ROWS 9-21: Materias + GRUPO + 3 vacías */}
+        {materias.map((m) => {
+          const n = notasMap[m.nombre]
+          const l1 = n?.lapso1 || ''
+          const l2 = n?.lapso2 || ''
+          const l3 = n?.lapso3 || ''
+          const isC = m.tipo === 'cualitativa'
+          const def = isC ? (l1 || '') : calcDef(l1 || null, l2 || null, l3 || null)
+          const defNum = parseFloat(def)
+          return (
+            <tr key={m.nombre}>
+              <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px' }}>{m.nombre}</td>
+              <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{l1 || ''}</td>
+              <td style={{ ...cell, textAlign: 'center', fontSize: '8px', color: getIN(l1) === 'IN' ? '#c00' : '#999' }}>{isC ? '' : getIN(l1)}</td>
+              <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{l2 || ''}</td>
+              <td style={{ ...cell, textAlign: 'center', fontSize: '8px', color: getIN(l2) === 'IN' ? '#c00' : '#999' }}>{isC ? '' : getIN(l2)}</td>
+              <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{l3 || ''}</td>
+              <td style={{ ...cell, textAlign: 'center', fontSize: '8px', color: getIN(l3) === 'IN' ? '#c00' : '#999' }}>{isC ? '' : getIN(l3)}</td>
+              <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
+              <td style={{ ...cell, textAlign: 'center', fontSize: '8px' }}>{isC ? '' : (REVISION_SCORE_MAP[m.nombre] || '')}</td>
             </tr>
-          ))}
+          )
+        })}
 
-          {/* Row 22: P R O M E D I O */}
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>P R O M E D I O</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(1)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(2)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(3)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-          </tr>
+        {/* GRUPO row */}
+        <tr>
+          <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px', fontWeight: '500' }}>GRUPO</td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{extra?.grupo1 || ''}</td>
+          <td style={cell}></td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{extra?.grupo2 || ''}</td>
+          <td style={cell}></td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{extra?.grupo3 || ''}</td>
+          <td style={cell}></td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{extra?.grupo4 || ''}</td>
+          <td style={cell}></td>
+        </tr>
 
-          {/* Row 23: Posición Según Prom. */}
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>Posición Según Prom.</td>
-            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
-              {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
-            </td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+        {/* 3 filas en blanco */}
+        {Array.from({ length: 3 }).map((_, i) => (
+          <tr key={`empty-${i}`}><td colSpan={14} style={{ ...cell, height: '16px' }}></td></tr>
+        ))}
+
+        {/* ROW 22: P R O M E D I O */}
+        <tr>
+          <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px', fontWeight: 'bold', letterSpacing: '1px' }}>P R O M E D I O</td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(1)}</td>
+          <td style={cell}></td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(2)}</td>
+          <td style={cell}></td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(3)}</td>
+          <td style={cell}></td>
+          <td colSpan={3} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
+          <td style={cell}></td>
+        </tr>
+
+        {/* ROW 23: Posición Según Prom. */}
+        <tr>
+          <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px', fontWeight: 'bold' }}>Posición Según Prom.</td>
+          <td colSpan={13} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>
+            {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
+          </td>
+        </tr>
+
+        {/* ROW 24: Materia Pendiente header */}
+        <tr>
+          <th style={{ ...hdr, textAlign: 'left' }}>Materia Pendiente</th>
+          <th colSpan={3} style={hdr}>Primer Momento</th>
+          <td style={cell}></td>
+          <th colSpan={3} style={hdr}>Segundo Momento</th>
+          <td style={cell}></td>
+          <th colSpan={3} style={hdr}>Tercer Momento</th>
+          <td style={cell}></td>
+          <th colSpan={3} style={hdr}>Cuarto Momento</th>
+          <td style={cell}></td>
+        </tr>
+
+        {/* ROWS 25-27: Materias Pendientes + vacías */}
+        {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
+          <tr key={`mp-${i}`}>
+            <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px' }}>{r.materia}</td>
+            <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{r.momentos[0]}</td>
+            <td style={cell}></td>
+            <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{r.momentos[1]}</td>
+            <td style={cell}></td>
+            <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{r.momentos[2]}</td>
+            <td style={cell}></td>
+            <td colSpan={3} style={{ ...cell, textAlign: 'center' }}>{r.momentos[3]}</td>
+            <td style={cell}></td>
           </tr>
-        </tbody>
+        )) : (
+          <tr><td colSpan={14} style={cell}>{'—'}</td></tr>
+        )}
+        {Array.from({ length: Math.max(0, 3 - pendienteRows.length) }).map((_, i) => (
+          <tr key={`mp-empty-${i}`}><td colSpan={14} style={{ ...cell, height: '16px' }}></td></tr>
+        ))}
+
+        {/* ROWS 28-35: ORIENTACIÓN Y CONVIVENCIA */}
+        <tr>
+          <td rowSpan={8} style={{ ...cell, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '8px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '1.5px', padding: '2px 3px' }}>
+            ORIENTACIÓN Y CONVIVENCIA
+          </td>
+          <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px', fontWeight: 'bold', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff' }}>A: 20 a 17 pts</td>
+          <td colSpan={12} rowSpan={2} style={{ ...cell, fontSize: '8px', lineHeight: '1.3', padding: '2px 4px', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff' }}>
+            {CUALITATIVA_DESCRIPTIONS['A']}
+          </td>
+        </tr>
+        <tr><td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff' }}>B: 16 a 14 pts</td></tr>
+        <tr>
+          <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff' }}>C: 13 a 10 pts</td>
+          <td colSpan={12} rowSpan={2} style={{ ...cell, fontSize: '8px', lineHeight: '1.3', padding: '2px 4px', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff' }}>
+            {CUALITATIVA_DESCRIPTIONS['C']}
+          </td>
+        </tr>
+        <tr><td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff' }}>D: 09 a 01 pts</td></tr>
+        {/* Fila vacía separadora */}
+        <tr><td colSpan={13} style={cell}></td></tr>
+        <tr><td colSpan={13} style={cell}></td></tr>
+        <tr><td colSpan={13} style={cell}></td></tr>
+        <tr><td colSpan={13} style={cell}></td></tr>
+
+        {/* ROWS 37-44: CREACIÓN, RECREACIÓN Y PRODUCCIÓN */}
+        <tr>
+          <td rowSpan={8} style={{ ...cell, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '8px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '1.5px', padding: '2px 3px' }}>
+            CREACIÓN, RECREACIÓN Y PRODUCCIÓN
+          </td>
+          <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px', fontWeight: 'bold', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff' }}>A: 20 a 17 pts</td>
+          <td colSpan={12} rowSpan={2} style={{ ...cell, fontSize: '8px', lineHeight: '1.3', padding: '2px 4px', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff' }}>
+            {CUALITATIVA_DESCRIPTIONS['A']}
+          </td>
+        </tr>
+        <tr><td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff' }}>B: 16 a 14 pts</td></tr>
+        <tr>
+          <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff' }}>C: 13 a 10 pts</td>
+          <td colSpan={12} rowSpan={2} style={{ ...cell, fontSize: '8px', lineHeight: '1.3', padding: '2px 4px', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff' }}>
+            {CUALITATIVA_DESCRIPTIONS['C']}
+          </td>
+        </tr>
+        <tr><td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff' }}>D: 09 a 01 pts</td></tr>
+        {/* Filas vacías separadoras */}
+        <tr><td colSpan={13} style={cell}></td></tr>
+        <tr><td colSpan={13} style={cell}></td></tr>
+        <tr><td colSpan={13} style={cell}></td></tr>
+        <tr><td colSpan={13} style={cell}></td></tr>
+
+        {/* ROW 45: Observaciones header + ROWS 46-48 mergeadas */}
+        <tr>
+          <td style={{ ...cell, textAlign: 'left', paddingLeft: '4px', fontWeight: 'bold' }}>Observaciones</td>
+          <td colSpan={13} rowSpan={3} style={{ ...cell, fontSize: '9px', verticalAlign: 'top', padding: '4px' }}>
+            {observacion || '\u00A0'}
+          </td>
+        </tr>
+        <tr><td style={cell}></td></tr>
+        <tr><td style={cell}></td></tr>
       </table>
 
-      {/* ═══════════════════════════════════════════════════════════════
-          ROW 24: MATERIA PENDIENTE (siempre visible, con filas vacías)
-          ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
-        <thead>
-          <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
-            <th style={{ ...hdr, width: '18%' }}>Primer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Segundo Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Tercer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Cuarto Momento</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
-            <tr key={i}>
-              <td style={cell}>{r.materia}</td>
-              {r.momentos.map((m, j) => (
-                <td key={j} style={{ ...cell, textAlign: 'center' }}>{m}</td>
-              ))}
-            </tr>
-          )) : (
-            <tr>
-              <td style={cell}>{'—'}</td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          ORIENTACIÓN Y CONVIVENCIA (2 columnas: rango | descripción)
-          ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
-        <tbody>
-          {/* Fila con rango A y su descripción */}
-          <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
-              ORIENTACIÓN Y CONVIVENCIA
-            </td>
-            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
-            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['A']}
-            </td>
-          </tr>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['B']}
-            </td>
-          </tr>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['C']}
-            </td>
-          </tr>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['D']}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          CREACIÓN, RECREACIÓN Y PRODUCCIÓN (mismo formato 2 columnas)
-          ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
-        <tbody>
-          <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
-              CREACIÓN, RECREACIÓN Y PRODUCCIÓN
-            </td>
-            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
-            <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['A']}
-            </td>
-          </tr>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px' }}>B: 16 a 14 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'B' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['B']}
-            </td>
-          </tr>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px' }}>C: 13 a 10 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'C' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['C']}
-            </td>
-          </tr>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px' }}>D: 09 a 01 pts</td>
-            <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'D' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
-              {CUALITATIVA_DESCRIPTIONS['D']}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          OBSERVACIONES (fila 45 + filas 46-48 mergeadas)
-          ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
-        <tbody>
-          <tr>
-            <td style={{ ...cell, fontWeight: 'bold', fontSize: '9px', width: '15%' }}>Observaciones</td>
-            <td colSpan={8} style={{ ...cell, minHeight: '45px', fontSize: '9px' }}>
-              {observacion || '\u00A0'}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          FOOTER: Firmas y fecha
-          ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ marginTop: '20px' }}>
-        <div style={{ textAlign: 'center', fontSize: '9px', marginBottom: '30px' }}>
-          Miranda, {getFechaActual()}
+      {/* ═══ FOOTER: Fecha + Firmas ═══ */}
+      <div style={{ textAlign: 'center', fontSize: '10px', padding: '6px 0' }}>
+        Miranda, {getFechaActual()}.
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-around', padding: '0 40px', marginTop: '20px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ borderBottom: 'thin solid #000', paddingBottom: '3px', marginBottom: '3px' }}></div>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}> Directo(a)</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
-          <div style={{ textAlign: 'center', width: '40%' }}>
-            <div style={{ borderTop: '1px solid #000', paddingTop: '4px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '9px' }}>DIRECTOR(A)</span>
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', width: '40%' }}>
-            <div style={{ borderTop: '1px solid #000', paddingTop: '4px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '9px' }}>COORDINADOR(A)</span>
-            </div>
-          </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ borderBottom: 'thin solid #000', paddingBottom: '3px', marginBottom: '3px' }}></div>
+          <span style={{ fontWeight: 'bold', fontSize: '10px' }}>COORDINADOR(A)</span>
         </div>
       </div>
     </div>

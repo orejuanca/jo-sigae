@@ -475,7 +475,7 @@ function BoletinContent({
       <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
         <tbody>
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', fontSize: '9px', width: '15%', borderLeft: 'none', borderBottom: 'none' }}>Observaciones</td>
+            <td style={{ ...cell, fontWeight: 'bold', fontSize: '9px', width: '15%', borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>Observaciones</td>
             <td colSpan={8} style={{ ...cell, minHeight: '45px', fontSize: '9px', borderRight: 'none', borderBottom: 'none' }}>
               {observacion || '\u00A0'}
             </td>

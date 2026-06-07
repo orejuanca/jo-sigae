@@ -382,29 +382,38 @@ function BoletinContent({
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
         <thead>
           <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%', borderRight: 'none' }}>Materia Pendiente</th>
-            <th style={{ ...hdr, width: '18%', borderLeft: 'none', borderRight: 'none' }}>Primer Momento</th>
-            <th style={{ ...hdr, width: '18%', borderLeft: 'none', borderRight: 'none' }}>Segundo Momento</th>
-            <th style={{ ...hdr, width: '18%', borderLeft: 'none', borderRight: 'none' }}>Tercer Momento</th>
-            <th style={{ ...hdr, width: '18%', borderLeft: 'none' }}>Cuarto Momento</th>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%', border: 'none' }}>Materia Pendiente</th>
+            <th style={{ ...hdr, width: '18%', border: 'none', borderRight: '1px dotted #000' }}>Primer Momento</th>
+            <th style={{ ...hdr, width: '18%', border: 'none', borderRight: '1px dotted #000' }}>Segundo Momento</th>
+            <th style={{ ...hdr, width: '18%', border: 'none', borderRight: '1px dotted #000' }}>Tercer Momento</th>
+            <th style={{ ...hdr, width: '18%', border: 'none' }}>Cuarto Momento</th>
           </tr>
         </thead>
         <tbody>
           {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
             <tr key={i}>
-              <td style={{ ...cell, borderRight: 'none' }}>{r.materia}</td>
+              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}>{r.materia}</td>
               {r.momentos.map((m, j) => (
-                <td key={j} style={{ ...cell, textAlign: 'center', borderLeft: 'none', borderRight: j < r.momentos.length - 1 ? 'none' : undefined }}>{fmtNota(m)}</td>
+                <td key={j} style={{ ...cell, textAlign: 'center', border: 'none', borderRight: j < r.momentos.length - 1 ? '1px dotted #000' : undefined, borderBottom: i === pendienteRows.length - 1 ? '1px dotted #000' : undefined }}>{fmtNota(m)}</td>
               ))}
             </tr>
           )) : (
+            <>
             <tr>
-              <td style={{ ...cell, borderRight: 'none' }}>{'—'}</td>
-              <td style={{ ...cell, borderLeft: 'none', borderRight: 'none' }}></td>
-              <td style={{ ...cell, borderLeft: 'none', borderRight: 'none' }}></td>
-              <td style={{ ...cell, borderLeft: 'none', borderRight: 'none' }}></td>
-              <td style={{ ...cell, borderLeft: 'none' }}></td>
+              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}>{'—'}</td>
+              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none' }}></td>
             </tr>
+            <tr>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000' }}></td>
+            </tr>
+            </>
           )}
         </tbody>
       </table>

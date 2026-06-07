@@ -343,24 +343,24 @@ function BoletinContent({
 
           {/* Row 22: P R O M E D I O */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>P R O M E D I O</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(1)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(2)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{calcPromLapso(3)}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={{ ...cell, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px' }}>P R O M E D I O</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(1)}</td>
+            <td style={cell}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(2)}</td>
+            <td style={cell}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(3)}</td>
+            <td style={cell}></td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
+            <td style={cell}></td>
           </tr>
 
           {/* Row 23: Posición Según Prom. */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px', backgroundColor: '#f0f0f0' }}>Posición Según Prom.</td>
-            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
+            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>
               {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
             </td>
-            <td style={{ ...cell, backgroundColor: '#f0f0f0' }}></td>
+            <td style={cell}></td>
           </tr>
         </tbody>
       </table>

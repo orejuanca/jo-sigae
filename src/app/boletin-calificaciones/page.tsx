@@ -140,6 +140,15 @@ const B = 'border: 1px solid #000; border-collapse: collapse;'
 const cell = { fontSize: '10pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: '1px solid #000' }
 const hdr = { fontSize: '10pt', fontFamily: 'Calibri, sans-serif', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const }
 
+// Format numeric grade: add leading zero for values > 0 and < 10
+function fmtNota(val: string): string {
+  const trimmed = val.trim()
+  if (trimmed === '' || trimmed === 'IN' || trimmed === 'PE') return trimmed
+  const num = parseFloat(trimmed)
+  if (isNaN(num) || num <= 0 || num >= 10) return trimmed
+  return num < 10 ? `0${Math.round(num)}` : trimmed
+}
+
 // ── Boletín Content Component ────────────────────────────────────────────
 function BoletinContent({
   student,
@@ -301,14 +310,14 @@ function BoletinContent({
             return (
               <tr key={m.nombre}>
                 <td style={{ ...cell, paddingLeft: '6px', fontWeight: isCualitativa ? '500' : 'normal' }}>{m.nombre}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l1 || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l1 : fmtNota(l1) || ''}</td>
                 <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l1)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l2 || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l2 : fmtNota(l2) || ''}</td>
                 <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l2)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l3 : fmtNota(l3) || ''}</td>
                 <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l3)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{isCualitativa ? '' : (REVISION_SCORE_MAP[m.nombre] || '')}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{isCualitativa ? cualitativaDef : fmtNota(def) || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{isCualitativa ? '' : fmtNota(REVISION_SCORE_MAP[m.nombre] || '')}</td>
               </tr>
             )
           })}
@@ -316,13 +325,13 @@ function BoletinContent({
           {/* GRUPO row — una celda por columna, igual que las materias */}
           <tr>
             <td style={{ ...cell, paddingLeft: '6px', fontWeight: '500' }}>GRUPO</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo1 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo1 || '')}</td>
             <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo2 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo2 || '')}</td>
             <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo3 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo3 || '')}</td>
             <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{extra?.grupo4 || ''}</td>
+            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo4 || '')}</td>
             <td style={cell}></td>
           </tr>
 
@@ -383,7 +392,7 @@ function BoletinContent({
             <tr key={i}>
               <td style={cell}>{r.materia}</td>
               {r.momentos.map((m, j) => (
-                <td key={j} style={{ ...cell, textAlign: 'center' }}>{m}</td>
+                <td key={j} style={{ ...cell, textAlign: 'center' }}>{fmtNota(m)}</td>
               ))}
             </tr>
           )) : (

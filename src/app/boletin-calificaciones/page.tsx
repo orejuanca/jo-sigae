@@ -354,15 +354,15 @@ function BoletinContent({
 
           {/* Row 22: P R O M E D I O */}
           <tr>
-            <td style={{ ...cellDot, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px' }}>P R O M E D I O</td>
-            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(1)}</td>
-            <td style={cellDot}></td>
-            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(2)}</td>
-            <td style={cellDot}></td>
-            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(3)}</td>
-            <td style={cellDot}></td>
-            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
-            <td style={cellDot}></td>
+            <td style={{ ...cellDot, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px', borderRight: 'none' }}>P R O M E D I O</td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold', borderLeft: 'none', borderRight: 'none' }}>{calcPromLapso(1)}</td>
+            <td style={{ ...cellDot, borderLeft: 'none', borderRight: 'none' }}></td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold', borderLeft: 'none', borderRight: 'none' }}>{calcPromLapso(2)}</td>
+            <td style={{ ...cellDot, borderLeft: 'none', borderRight: 'none' }}></td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold', borderLeft: 'none', borderRight: 'none' }}>{calcPromLapso(3)}</td>
+            <td style={{ ...cellDot, borderLeft: 'none', borderRight: 'none' }}></td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold', borderLeft: 'none', borderRight: 'none' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
+            <td style={{ ...cellDot, borderLeft: 'none' }}></td>
           </tr>
 
           {/* Row 23: Posición Según Prom. */}

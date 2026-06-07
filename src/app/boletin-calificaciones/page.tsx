@@ -379,31 +379,31 @@ function BoletinContent({
       {/* ═══════════════════════════════════════════════════════════════
           ROW 24: MATERIA PENDIENTE (siempre visible, con filas vacías)
           ═══════════════════════════════════════════════════════════════ */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
         <thead>
           <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
-            <th style={{ ...hdr, width: '18%' }}>Primer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Segundo Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Tercer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Cuarto Momento</th>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%', borderRight: 'none' }}>Materia Pendiente</th>
+            <th style={{ ...hdr, width: '18%', borderLeft: 'none', borderRight: 'none' }}>Primer Momento</th>
+            <th style={{ ...hdr, width: '18%', borderLeft: 'none', borderRight: 'none' }}>Segundo Momento</th>
+            <th style={{ ...hdr, width: '18%', borderLeft: 'none', borderRight: 'none' }}>Tercer Momento</th>
+            <th style={{ ...hdr, width: '18%', borderLeft: 'none' }}>Cuarto Momento</th>
           </tr>
         </thead>
         <tbody>
           {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
             <tr key={i}>
-              <td style={cell}>{r.materia}</td>
+              <td style={{ ...cell, borderRight: 'none' }}>{r.materia}</td>
               {r.momentos.map((m, j) => (
-                <td key={j} style={{ ...cell, textAlign: 'center' }}>{fmtNota(m)}</td>
+                <td key={j} style={{ ...cell, textAlign: 'center', borderLeft: 'none', borderRight: j < r.momentos.length - 1 ? 'none' : undefined }}>{fmtNota(m)}</td>
               ))}
             </tr>
           )) : (
             <tr>
-              <td style={cell}>{'—'}</td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
+              <td style={{ ...cell, borderRight: 'none' }}>{'—'}</td>
+              <td style={{ ...cell, borderLeft: 'none', borderRight: 'none' }}></td>
+              <td style={{ ...cell, borderLeft: 'none', borderRight: 'none' }}></td>
+              <td style={{ ...cell, borderLeft: 'none', borderRight: 'none' }}></td>
+              <td style={{ ...cell, borderLeft: 'none' }}></td>
             </tr>
           )}
         </tbody>

@@ -138,6 +138,7 @@ function formatDate(fechaStr: string | null): string {
 // Common table style
 const B = 'border: 1px solid #000; border-collapse: collapse;'
 const cell = { fontSize: '9pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: '1px solid #000' }
+const cellNB = { fontSize: '9pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: 'none' }
 const hdr = { fontSize: '10pt', fontFamily: 'Calibri, sans-serif', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const }
 
 // Format numeric grade: add leading zero for values > 0 and < 10
@@ -309,44 +310,44 @@ function BoletinContent({
             const defNum = parseFloat(def)
             return (
               <tr key={m.nombre}>
-                <td style={{ ...cell, paddingLeft: '6px', fontWeight: isCualitativa ? '500' : 'normal' }}>{m.nombre}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l1 : fmtNota(l1) || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l1)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l2 : fmtNota(l2) || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l2)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l3 : fmtNota(l3) || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l3)}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{isCualitativa ? cualitativaDef : fmtNota(def) || ''}</td>
-                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{isCualitativa ? '' : fmtNota(REVISION_SCORE_MAP[m.nombre] || '')}</td>
+                <td style={{ ...cellNB, paddingLeft: '6px', fontWeight: isCualitativa ? '500' : 'normal' }}>{m.nombre}</td>
+                <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l1 : fmtNota(l1) || ''}</td>
+                <td style={{ ...cellNB, textAlign: 'center', color: getIN(l1) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l1)}</td>
+                <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l2 : fmtNota(l2) || ''}</td>
+                <td style={{ ...cellNB, textAlign: 'center', color: getIN(l2) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l2)}</td>
+                <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{isCualitativa ? l3 : fmtNota(l3) || ''}</td>
+                <td style={{ ...cellNB, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{isCualitativa ? '' : getIN(l3)}</td>
+                <td style={{ ...cellNB, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{isCualitativa ? cualitativaDef : fmtNota(def) || ''}</td>
+                <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{isCualitativa ? '' : fmtNota(REVISION_SCORE_MAP[m.nombre] || '')}</td>
               </tr>
             )
           })}
 
           {/* GRUPO row — una celda por columna, igual que las materias */}
           <tr>
-            <td style={{ ...cell, paddingLeft: '6px', fontWeight: '500' }}>GRUPO</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo1 || '')}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo2 || '')}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo3 || '')}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo4 || '')}</td>
-            <td style={cell}></td>
+            <td style={{ ...cellNB, paddingLeft: '6px', fontWeight: '500' }}>GRUPO</td>
+            <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo1 || '')}</td>
+            <td style={cellNB}></td>
+            <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo2 || '')}</td>
+            <td style={cellNB}></td>
+            <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo3 || '')}</td>
+            <td style={cellNB}></td>
+            <td style={{ ...cellNB, textAlign: 'center', fontWeight: '500' }}>{fmtNota(extra?.grupo4 || '')}</td>
+            <td style={cellNB}></td>
           </tr>
 
           {/* 3 filas en blanco después de GRUPO — formato Excel */}
           {Array.from({ length: 3 }).map((_, i) => (
             <tr key={`empty-${i}`}>
-              <td style={{ ...cell, height: '18px' }}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
+              <td style={{ ...cellNB, height: '18px' }}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
+              <td style={cellNB}></td>
             </tr>
           ))}
 

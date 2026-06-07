@@ -400,11 +400,11 @@ function BoletinContent({
           )) : (
             <>
             <tr>
-              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}>{'—'}</td>
-              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}></td>
-              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}></td>
-              <td style={{ ...cell, border: 'none', borderRight: '1px dotted #000' }}></td>
-              <td style={{ ...cell, border: 'none' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}>{'—'}</td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>
+              <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000' }}></td>
             </tr>
             <tr>
               <td style={{ ...cell, border: 'none', borderBottom: '1px dotted #000', borderRight: '1px dotted #000' }}></td>

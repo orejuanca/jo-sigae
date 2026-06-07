@@ -483,6 +483,13 @@ function BoletinContent({
         </tbody>
       </table>
 
+      {/* 3 filas en blanco con marco, sin líneas internas */}
+      <div style={{ width: '100%', border: '1px solid #000', marginTop: '0', marginBottom: '0' }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} style={{ height: '20px' }}></div>
+        ))}
+      </div>
+
       {/* ═══════════════════════════════════════════════════════════════
           FOOTER: Firmas y fecha
           ═══════════════════════════════════════════════════════════════ */}

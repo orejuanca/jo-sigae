@@ -421,9 +421,6 @@ export default function BoletasPage() {
                       </th>
                     ))}
 
-                    {/* REVISION: una columna por materia */}
-                    <th colSpan={materias.length} className="bg-purple-700 text-white border-b border-l border-r border-purple-600 px-1 py-1.5 text-center font-semibold text-[9px]">REVISION</th>
-
                     {/* AO-AR: GRUPO */}
                     <th colSpan={4} className="bg-slate-700 text-white border-b border-l border-r border-slate-600 px-1 py-1.5 text-center font-semibold text-[9px]">GRUPO</th>
                     {/* AS-AV: PROM */}
@@ -464,11 +461,6 @@ export default function BoletasPage() {
                         ))}
                         <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-bold ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-200' : 'bg-emerald-900 text-emerald-200'}`}>DEF</th>
                       </React.Fragment>
-                    ))}
-
-                    {/* REVISION sub: una por materia */}
-                    {materias.map((m, idx) => (
-                      <th key={`rev-sub-${m.nombre}`} className={`border-b ${idx === 0 ? 'border-l' : ''} border-r border-purple-700 py-1 px-0.5 w-[40px] text-center text-[8px] font-bold ${m.tipo === 'cualitativa' ? 'bg-purple-900 text-purple-200' : 'bg-purple-900 text-purple-200'}`}>R{idx + 1}</th>
                     ))}
 
                     {/* GRUPO sub: GRUPO21-24 */}
@@ -562,17 +554,6 @@ export default function BoletasPage() {
                               })}
                               <td className={`border-b border-r border-gray-200 py-1 px-0.5 text-center font-bold text-[10px] ${isC ? (def ? 'text-blue-700 bg-blue-50/50' : 'text-muted-foreground') : getNotaColorClass(def) + ' ' + getNotaBgClass(def)}`}>{def || '—'}</td>
                             </React.Fragment>
-                          )
-                        })}
-
-                        {/* REVISION: una input por materia */}
-                        {materias.map((m) => {
-                          const notas = sn[m.nombre] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }
-                          const revVal = notas.revision || ''
-                          return (
-                            <td key={`${student.id}-rev-${m.nombre}`} className="border-b border-r border-gray-200 py-0 px-0 bg-purple-50/40">
-                              <input type="text" value={revVal} onChange={(e) => updateRevision(student.id, m.nombre, e.target.value.toUpperCase())} className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-400 rounded text-purple-700 font-medium" placeholder="—" maxLength={3} />
-                            </td>
                           )
                         })}
 

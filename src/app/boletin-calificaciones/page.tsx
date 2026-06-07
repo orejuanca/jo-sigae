@@ -405,7 +405,7 @@ function BoletinContent({
         <tbody>
           {/* Fila con rango A y su descripción */}
           <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
+            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
               ORIENTACIÓN Y CONVIVENCIA
             </td>
             <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
@@ -441,7 +441,7 @@ function BoletinContent({
       <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
         <tbody>
           <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px', writingMode: 'vertical-lr', transform: 'rotate(180deg)', letterSpacing: '2px' }}>
+            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
               CREACIÓN, RECREACIÓN Y PRODUCCIÓN
             </td>
             <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>

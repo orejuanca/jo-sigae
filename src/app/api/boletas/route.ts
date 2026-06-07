@@ -116,6 +116,8 @@ export async function PUT(request: NextRequest) {
           materiaPendiente1, materiaPendiente2,
           mp1m1, mp1m2, mp1m3, mp1m4,
           mp2m1, mp2m2, mp2m3, mp2m4,
+          pl1, pl2, pl3, pl4, pl5,
+          scoreCA, scoreILE, scoreMA, scoreEF, scoreAP, scoreCN, scoreGHC,
         } = extra
         if (!studentId) continue
 
@@ -149,6 +151,18 @@ export async function PUT(request: NextRequest) {
             mp2m2: mp2m2 || null,
             mp2m3: mp2m3 || null,
             mp2m4: mp2m4 || null,
+            pl1: pl1 || null,
+            pl2: pl2 || null,
+            pl3: pl3 || null,
+            pl4: pl4 || null,
+            pl5: pl5 || null,
+            scoreCA: scoreCA || null,
+            scoreILE: scoreILE || null,
+            scoreMA: scoreMA || null,
+            scoreEF: scoreEF || null,
+            scoreAP: scoreAP || null,
+            scoreCN: scoreCN || null,
+            scoreGHC: scoreGHC || null,
           },
           update: {
             grupo1: grupo1 || null,
@@ -167,6 +181,18 @@ export async function PUT(request: NextRequest) {
             mp2m2: mp2m2 || null,
             mp2m3: mp2m3 || null,
             mp2m4: mp2m4 || null,
+            pl1: pl1 || null,
+            pl2: pl2 || null,
+            pl3: pl3 || null,
+            pl4: pl4 || null,
+            pl5: pl5 || null,
+            scoreCA: scoreCA || null,
+            scoreILE: scoreILE || null,
+            scoreMA: scoreMA || null,
+            scoreEF: scoreEF || null,
+            scoreAP: scoreAP || null,
+            scoreCN: scoreCN || null,
+            scoreGHC: scoreGHC || null,
           },
         })
       }

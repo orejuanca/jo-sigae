@@ -41,6 +41,18 @@ interface BoletaExtraRecord {
   mp2m2: string | null
   mp2m3: string | null
   mp2m4: string | null
+  pl1: string | null
+  pl2: string | null
+  pl3: string | null
+  pl4: string | null
+  pl5: string | null
+  scoreCA: string | null
+  scoreILE: string | null
+  scoreMA: string | null
+  scoreEF: string | null
+  scoreAP: string | null
+  scoreCN: string | null
+  scoreGHC: string | null
 }
 
 interface StudentNota {
@@ -52,19 +64,15 @@ interface StudentNota {
   fechaNacimiento: string | null
   municipio: string
   estado: string
+  pais: string
   boletaNotas: BoletaNotaRecord[]
   boletaExtras: BoletaExtraRecord[]
 }
 
-// Local editable structures
 type NotasMap = Record<string, Record<string, { lapso1: string; lapso2: string; lapso3: string; revision: string }>>
-type ExtrasMap = Record<string, {
-  grupo1: string; grupo2: string; grupo3: string; grupo4: string;
-  observacion: string; obsBoletin: string;
-  materiaPendiente1: string; materiaPendiente2: string;
-  mp1m1: string; mp1m2: string; mp1m3: string; mp1m4: string;
-  mp2m1: string; mp2m2: string; mp2m3: string; mp2m4: string;
-}>
+type ExtrasMap = Record<string, Record<string, string>>
+
+const EXTRAS_DEFAULT: Record<string, string> = {}
 
 // ── Grado options ────────────────────────────────────────────────────────
 const GRADO_OPTIONS = [
@@ -83,18 +91,14 @@ function getMateriasForGrado(grado: string): MateriaAnio[] {
 }
 
 function calcDef(materia: MateriaAnio, l1: string, l2: string, l3: string): string {
-  // For qualitative subjects, just use the first non-empty value (all lapsos are the same)
   if (materia.tipo === 'cualitativa') {
     const vals = [l1, l2, l3].filter(v => v.trim() !== '')
     if (vals.length === 0) return ''
     return vals[0].trim()
   }
-  // For numeric subjects, calculate average
   const vals = [l1, l2, l3]
   for (const v of vals) {
-    if (v.trim().toUpperCase() === 'IN' || v.trim().toUpperCase() === 'PE') {
-      return v.trim().toUpperCase()
-    }
+    if (v.trim().toUpperCase() === 'IN' || v.trim().toUpperCase() === 'PE') return v.trim().toUpperCase()
   }
   const nums = vals.map(v => parseFloat(v))
   const valid = nums.filter(n => !isNaN(n) && n > 0)
@@ -104,24 +108,18 @@ function calcDef(materia: MateriaAnio, l1: string, l2: string, l3: string): stri
 }
 
 function calcProm(materias: MateriaAnio[], notas: Record<string, { lapso1: string; lapso2: string; lapso3: string }>, lapso: number): string {
-  let sum = 0
-  let count = 0
+  let sum = 0, count = 0
   const lapsoKey = lapso === 1 ? 'lapso1' : lapso === 2 ? 'lapso2' : 'lapso3'
-
   for (const m of materias) {
-    if (m.tipo === 'cualitativa') continue // Skip qualitative subjects for average
+    if (m.tipo === 'cualitativa') continue
     const val = notas[m.nombre]?.[lapsoKey] || ''
     const trimmed = val.trim()
     if (trimmed === '' || trimmed === 'IN' || trimmed === 'PE') continue
     const n = parseFloat(trimmed)
-    if (!isNaN(n) && n > 0) {
-      sum += n
-      count++
-    }
+    if (!isNaN(n) && n > 0) { sum += n; count++ }
   }
   if (count === 0) return ''
-  const avg = sum / count
-  return avg.toFixed(2).replace('.', ',')
+  return (sum / count).toFixed(2).replace('.', ',')
 }
 
 function getNotaColorClass(value: string): string {
@@ -146,14 +144,6 @@ function getNotaBgClass(value: string): string {
   return 'bg-red-50'
 }
 
-const emptyExtras = (): typeof ExtrasMap[string] => ({
-  grupo1: '', grupo2: '', grupo3: '', grupo4: '',
-  observacion: '', obsBoletin: '',
-  materiaPendiente1: '', materiaPendiente2: '',
-  mp1m1: '', mp1m2: '', mp1m3: '', mp1m4: '',
-  mp2m1: '', mp2m2: '', mp2m3: '', mp2m4: '',
-})
-
 // ── Page Component ─────────────────────────────────────────────────────
 export default function BoletasPage() {
   const [anioEscolar, setAnioEscolar] = useState('2025-2026')
@@ -169,6 +159,16 @@ export default function BoletasPage() {
   const tableRef = useRef<HTMLDivElement>(null)
 
   const materias = getMateriasForGrado(grado)
+  // Subject score columns: CA, ILE, MA, EF, AP, CN, GHC (cols 73-79)
+  const scoreMaterias = [
+    { key: 'scoreCA', label: 'CA' },
+    { key: 'scoreILE', label: 'ILE' },
+    { key: 'scoreMA', label: 'MA' },
+    { key: 'scoreEF', label: 'EF' },
+    { key: 'scoreAP', label: 'AP' },
+    { key: 'scoreCN', label: 'CN' },
+    { key: 'scoreGHC', label: 'GHC' },
+  ]
 
   // ── Load students ────────────────────────────────────────────────────
   const handleSearch = useCallback(async () => {
@@ -180,13 +180,10 @@ export default function BoletasPage() {
       if (!res.ok) throw new Error('Error en la búsqueda')
       const data = await res.json()
       const loaded: StudentNota[] = data.students || []
-
       setStudents(loaded)
 
-      // Build notasMap from loaded data
       const nMap: NotasMap = {}
       const eMap: ExtrasMap = {}
-
       for (const s of loaded) {
         nMap[s.id] = {}
         for (const m of getMateriasForGrado(grado)) {
@@ -198,74 +195,72 @@ export default function BoletasPage() {
             revision: nota?.revision || '',
           }
         }
-
-        // Load extras (GRUPO, OBS, MP)
         const extra = s.boletaExtras?.[0]
         eMap[s.id] = {
-          grupo1: extra?.grupo1 || '',
-          grupo2: extra?.grupo2 || '',
-          grupo3: extra?.grupo3 || '',
-          grupo4: extra?.grupo4 || '',
-          observacion: extra?.observacion || '',
-          obsBoletin: extra?.obsBoletin || '',
-          materiaPendiente1: extra?.materiaPendiente1 || '',
-          materiaPendiente2: extra?.materiaPendiente2 || '',
-          mp1m1: extra?.mp1m1 || '',
-          mp1m2: extra?.mp1m2 || '',
-          mp1m3: extra?.mp1m3 || '',
-          mp1m4: extra?.mp1m4 || '',
-          mp2m1: extra?.mp2m1 || '',
-          mp2m2: extra?.mp2m2 || '',
-          mp2m3: extra?.mp2m3 || '',
-          mp2m4: extra?.mp2m4 || '',
+          grupo1: extra?.grupo1 || '', grupo2: extra?.grupo2 || '', grupo3: extra?.grupo3 || '', grupo4: extra?.grupo4 || '',
+          observacion: extra?.observacion || '', obsBoletin: extra?.obsBoletin || '',
+          materiaPendiente1: extra?.materiaPendiente1 || '', materiaPendiente2: extra?.materiaPendiente2 || '',
+          mp1m1: extra?.mp1m1 || '', mp1m2: extra?.mp1m2 || '', mp1m3: extra?.mp1m3 || '', mp1m4: extra?.mp1m4 || '',
+          mp2m1: extra?.mp2m1 || '', mp2m2: extra?.mp2m2 || '', mp2m3: extra?.mp2m3 || '', mp2m4: extra?.mp2m4 || '',
+          pl1: extra?.pl1 || '', pl2: extra?.pl2 || '', pl3: extra?.pl3 || '', pl4: extra?.pl4 || '', pl5: extra?.pl5 || '',
+          scoreCA: extra?.scoreCA || '', scoreILE: extra?.scoreILE || '', scoreMA: extra?.scoreMA || '',
+          scoreEF: extra?.scoreEF || '', scoreAP: extra?.scoreAP || '', scoreCN: extra?.scoreCN || '', scoreGHC: extra?.scoreGHC || '',
         }
       }
-
       setNotasMap(nMap)
       setExtrasMap(eMap)
     } catch {
       toast({ title: 'Error', description: 'Error al buscar alumnos', variant: 'destructive' })
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }, [anioEscolar, grado, seccion, toast])
 
-  // ── Update a single nota cell ────────────────────────────────────────
+  // ── Update helpers ──────────────────────────────────────────────────
   const updateNota = useCallback((studentId: string, materia: string, lapso: 'lapso1' | 'lapso2' | 'lapso3', value: string) => {
     setNotasMap(prev => {
       const copy = { ...prev }
-      const studentNotas = { ...(copy[studentId] || {}) }
-      const current = { ...(studentNotas[materia] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }) }
-      current[lapso] = value
-      studentNotas[materia] = current
-      copy[studentId] = studentNotas
+      const sn = { ...(copy[studentId] || {}) }
+      const cur = { ...(sn[materia] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }) }
+      cur[lapso] = value
+      sn[materia] = cur
+      copy[studentId] = sn
       return copy
     })
   }, [])
 
-  // ── Update REVISION cell ─────────────────────────────────────────────
   const updateRevision = useCallback((studentId: string, materia: string, value: string) => {
     setNotasMap(prev => {
       const copy = { ...prev }
-      const studentNotas = { ...(copy[studentId] || {}) }
-      const current = { ...(studentNotas[materia] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }) }
-      current.revision = value
-      studentNotas[materia] = current
-      copy[studentId] = studentNotas
+      const sn = { ...(copy[studentId] || {}) }
+      const cur = { ...(sn[materia] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }) }
+      cur.revision = value
+      sn[materia] = cur
+      copy[studentId] = sn
       return copy
     })
   }, [])
 
-  // ── Update an extra field ────────────────────────────────────────────
   const updateExtraField = useCallback((studentId: string, field: string, value: string) => {
     setExtrasMap(prev => {
       const copy = { ...prev }
-      const current = { ...(copy[studentId] || emptyExtras()) }
-      ;(current as Record<string, string>)[field] = value
-      copy[studentId] = current
+      const cur = { ...(copy[studentId] || EXTRAS_DEFAULT) }
+      cur[field] = value
+      copy[studentId] = cur
       return copy
     })
   }, [])
+
+  // ── Arrow key navigation ─────────────────────────────────────────────
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, studentIdx: number, materiaIdx: number, lapsoIdx: number) => {
+    let tS = studentIdx, tM = materiaIdx, tL = lapsoIdx
+    if (e.key === 'ArrowDown') { e.preventDefault(); tS = Math.min(studentIdx + 1, students.length - 1) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); tS = Math.max(studentIdx - 1, 0) }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); tL < 2 ? tL++ : (tM < materias.length - 1 ? (tM++, tL = 0) : 0) }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); tL > 0 ? tL-- : (tM > 0 ? (tM--, tL = 2) : 0) }
+    else return
+    const keys = ['lapso1', 'lapso2', 'lapso3'] as const
+    const el = document.getElementById(`nota-${tS}-${tM}-${keys[tL]}`) as HTMLInputElement
+    if (el) { el.focus(); el.select() }
+  }, [students.length, materias.length])
 
   // ── Save all ────────────────────────────────────────────────────────
   const handleSave = useCallback(async () => {
@@ -274,562 +269,316 @@ export default function BoletasPage() {
     try {
       const notasPayload: { studentId: string; materia: string; lapso1: string; lapso2: string; lapso3: string; revision: string }[] = []
       const extrasPayload: Record<string, string>[] = []
-
       for (const student of students) {
         for (const m of materias) {
           const n = notasMap[student.id]?.[m.nombre]
-          notasPayload.push({
-            studentId: student.id,
-            materia: m.nombre,
-            lapso1: n?.lapso1 || '',
-            lapso2: n?.lapso2 || '',
-            lapso3: n?.lapso3 || '',
-            revision: n?.revision || '',
-          })
+          notasPayload.push({ studentId: student.id, materia: m.nombre, lapso1: n?.lapso1 || '', lapso2: n?.lapso2 || '', lapso3: n?.lapso3 || '', revision: n?.revision || '' })
         }
-
-        const e = extrasMap[student.id] || emptyExtras()
-        extrasPayload.push({
-          studentId: student.id,
-          ...e,
-        })
+        extrasPayload.push({ studentId: student.id, ...(extrasMap[student.id] || EXTRAS_DEFAULT) })
       }
-
-      const res = await fetch('/api/boletas', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ anioEscolar, grado, seccion, notas: notasPayload, extras: extrasPayload }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Error al guardar')
-      }
-
-      toast({
-        title: 'Notas Guardadas',
-        description: `Se guardaron las notas de ${students.length} alumno(s) correctamente.`,
-      })
+      const res = await fetch('/api/boletas', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ anioEscolar, grado, seccion, notas: notasPayload, extras: extrasPayload }) })
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Error al guardar') }
+      toast({ title: 'Notas Guardadas', description: `Se guardaron las notas de ${students.length} alumno(s) correctamente.` })
     } catch (e: unknown) {
-      toast({
-        title: 'Error',
-        description: (e as Error).message || 'Error al guardar las notas',
-        variant: 'destructive',
-      })
-    } finally {
-      setSaving(false)
-    }
+      toast({ title: 'Error', description: (e as Error).message || 'Error al guardar las notas', variant: 'destructive' })
+    } finally { setSaving(false) }
   }, [students, notasMap, extrasMap, materias, anioEscolar, grado, seccion, toast])
 
-  // ── Arrow key navigation ─────────────────────────────────────────────
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, studentIdx: number, materiaIdx: number, lapsoIdx: number) => {
-    let targetStudent = studentIdx
-    let targetMateria = materiaIdx
-    let targetLapso = lapsoIdx
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      targetStudent = Math.min(studentIdx + 1, students.length - 1)
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      targetStudent = Math.max(studentIdx - 1, 0)
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault()
-      if (lapsoIdx < 2) {
-        targetLapso = lapsoIdx + 1
-      } else if (materiaIdx < materias.length - 1) {
-        targetMateria = materiaIdx + 1
-        targetLapso = 0
-      }
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault()
-      if (lapsoIdx > 0) {
-        targetLapso = lapsoIdx - 1
-      } else if (materiaIdx > 0) {
-        targetMateria = materiaIdx - 1
-        targetLapso = 2
-      }
-    } else {
-      return
-    }
-
-    const lapsoKeys = ['lapso1', 'lapso2', 'lapso3'] as const
-    const inputId = `nota-${targetStudent}-${targetMateria}-${lapsoKeys[targetLapso]}`
-    const el = document.getElementById(inputId) as HTMLInputElement
-    if (el) { el.focus(); el.select() }
-  }, [students.length, materias.length])
-
   const gradoLabel = GRADO_OPTIONS.find(g => g.value === grado)?.label || grado
+
+  // ── Excel column order: ────────────────────────────────────────────
+  // A-D: Nº, CEDULA, APELLNOMB, S
+  // E-AN: 9 subjects × 4 cols (L1, L2, L3, DEF)
+  // AO-AR: GRUPO21-24
+  // AS-AV: PROM21-24
+  // AW-AZ: P1-P4
+  // BA-BC: FN, LN, EN
+  // BD-BE: MP1, MP2
+  // BF-BI: 1M,2M,3M,4M (MP1 momentos)
+  // BJ-BM: 1M,2M,3M,4M (MP2 momentos)
+  // BN: PAIS
+  // BO-BS: PL1-PL5
+  // BT: OBS
+  // BU-CA: CA, ILE, MA, EF, AP, CN, GHC
+  // DP: OBSBOLETIN
 
   return (
     <AppShell>
       <div className="space-y-4">
-        {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Table2 className="h-6 w-6" />
-              Boletas de Calificaciones
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Registro masivo de notas por lapso — Plan EMG — {gradoLabel}
-            </p>
+            <h1 className="text-2xl font-bold flex items-center gap-2"><Table2 className="h-6 w-6" />Boletas de Calificaciones</h1>
+            <p className="text-muted-foreground text-sm">Registro masivo — Plan EMG — {gradoLabel}</p>
           </div>
-          {students.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {students.length} alumno{students.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
+          {students.length > 0 && <span className="text-sm text-muted-foreground">{students.length} alumno{students.length !== 1 ? 's' : ''}</span>}
         </div>
 
-        {/* Filter card */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row items-end gap-3">
-              <div className="grid gap-1.5">
-                <Label className="text-xs font-medium">Año Escolar</Label>
-                <Input
-                  value={anioEscolar}
-                  onChange={(e) => setAnioEscolar(e.target.value)}
-                  className="h-9 w-36"
-                  placeholder="2025-2026"
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label className="text-xs font-medium">Grado</Label>
-                <select
-                  value={grado}
-                  onChange={(e) => setGrado(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm w-32"
-                >
-                  {GRADO_OPTIONS.map(g => (
-                    <option key={g.value} value={g.value}>{g.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label className="text-xs font-medium">Sección</Label>
-                <Input
-                  value={seccion}
-                  onChange={(e) => setSeccion(e.target.value.toUpperCase())}
-                  className="h-9 w-16 text-center"
-                  maxLength={2}
-                />
-              </div>
-              <Button onClick={handleSearch} disabled={loading} className="h-9">
-                {loading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Buscando...</>
-                ) : (
-                  <><Search className="h-4 w-4 mr-2" /> Buscar Alumnos</>
-                )}
-              </Button>
+              <div className="grid gap-1.5"><Label className="text-xs font-medium">Año Escolar</Label><Input value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 w-36" placeholder="2025-2026" /></div>
+              <div className="grid gap-1.5"><Label className="text-xs font-medium">Grado</Label><select value={grado} onChange={(e) => setGrado(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-32">{GRADO_OPTIONS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}</select></div>
+              <div className="grid gap-1.5"><Label className="text-xs font-medium">Sección</Label><Input value={seccion} onChange={(e) => setSeccion(e.target.value.toUpperCase())} className="h-9 w-16 text-center" maxLength={2} /></div>
+              <Button onClick={handleSearch} disabled={loading} className="h-9">{loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando...</> : <><Search className="h-4 w-4 mr-2" />Buscar Alumnos</>}</Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Empty state */}
-        {!searched && (
-          <Card>
-            <CardContent className="py-16">
-              <div className="text-center">
-                <FileSpreadsheet className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                  Ingrese los filtros y presione &quot;Buscar Alumnos&quot;
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Seleccione el Año Escolar, Grado y Sección para cargar la lista de alumnos
-                  y registrar sus calificaciones por lapso.
-                </p>
+        {!searched && (<Card><CardContent className="py-16"><div className="text-center"><FileSpreadsheet className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" /><h3 className="text-lg font-semibold text-muted-foreground mb-2">Ingrese los filtros y presione &quot;Buscar Alumnos&quot;</h3></div></CardContent></Card>)}
+        {searched && !loading && students.length === 0 && (<Card><CardContent className="py-16"><div className="text-center"><FileSpreadsheet className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" /><h3 className="text-lg font-semibold text-muted-foreground mb-2">No se encontraron alumnos</h3></div></CardContent></Card>)}
+
+        {students.length > 0 && (<>
+          <Card><CardContent className="p-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button onClick={handleSave} disabled={saving} size="sm">{saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Guardando...</> : <><Save className="h-4 w-4 mr-2" />Guardar Todo</>}</Button>
+              <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Imprimir</Button>
+              <div className="ml-auto text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-200 inline-block" />18-20</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-200 inline-block" />15-17</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-200 inline-block" />12-14</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-200 inline-block" />01-11</span>
+                <span className="flex items-center gap-1 text-red-600 font-semibold">IN/PE</span>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent></Card>
 
-        {/* No results */}
-        {searched && !loading && students.length === 0 && (
-          <Card>
-            <CardContent className="py-16">
-              <div className="text-center">
-                <FileSpreadsheet className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                  No se encontraron alumnos
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  No hay alumnos registrados con notas para {gradoLabel} — Sección {seccion}
-                  en el año escolar {anioEscolar}.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          <Card><CardContent className="p-0">
+            <div ref={tableRef} className="overflow-x-auto max-h-[75vh] overflow-y-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead className="sticky top-0 z-10">
+                  {/* ═══ ROW 1: Main group headers (Excel order) ═══ */}
+                  <tr>
+                    {/* A-D: Identity */}
+                    <th className="sticky left-0 z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-0.5 py-2 text-center font-semibold w-7 text-[10px]"></th>
+                    <th className="sticky left-[28px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-7 text-[10px]">Nº</th>
+                    <th className="sticky left-[56px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[95px] text-[10px]">CEDULA</th>
+                    <th className="sticky left-[151px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[170px] text-[10px]">APELLNOMB</th>
+                    <th className="sticky left-[321px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-8 text-[10px]">S</th>
 
-        {/* Spreadsheet table */}
-        {students.length > 0 && (
-          <>
-            {/* Action bar */}
-            <Card>
-              <CardContent className="p-3">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <Button onClick={handleSave} disabled={saving} size="sm">
-                    {saving ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando...</>
-                    ) : (
-                      <><Save className="h-4 w-4 mr-2" /> Guardar Todo</>
-                    )}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.print()}>
-                    <Printer className="h-4 w-4 mr-2" />
-                    Imprimir
-                  </Button>
-                  <div className="ml-auto text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded bg-emerald-200 inline-block" /> 18-20
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded bg-amber-200 inline-block" /> 15-17
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded bg-orange-200 inline-block" /> 12-14
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded bg-red-200 inline-block" /> 01-11
-                    </span>
-                    <span className="flex items-center gap-1 text-red-600 font-semibold">IN/PE</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    {/* E-AN: 9 subjects × 4 cols */}
+                    {materias.map((m) => (
+                      <th key={m.nombre} colSpan={4} className={`border-b border-l border-r border-emerald-600 px-1 py-1.5 text-center font-semibold text-[9px] ${m.tipo === 'cualitativa' ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white'}`}>
+                        <span className="block truncate max-w-[110px]" title={m.nombre}>{m.nombre.toUpperCase()}</span>
+                      </th>
+                    ))}
 
-            {/* Table */}
-            <Card>
-              <CardContent className="p-0">
-                <div ref={tableRef} className="overflow-x-auto max-h-[75vh] overflow-y-auto">
-                  <table className="w-full text-xs border-collapse">
-                    <thead className="sticky top-0 z-10">
-                      {/* Row 1: Main headers */}
-                      <tr>
-                        {/* Fixed identity columns */}
-                        <th className="sticky left-0 z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-0.5 py-2 text-center font-semibold w-7 text-[10px]"></th>
-                        <th className="sticky left-[28px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-7 text-[10px]">N°</th>
-                        <th className="sticky left-[56px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[95px] text-[10px]">CEDULA</th>
-                        <th className="sticky left-[151px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-2 py-2 text-left font-semibold min-w-[170px] text-[10px]">APELLNOMB</th>
-                        <th className="sticky left-[321px] z-20 bg-emerald-800 text-white border-b border-r border-emerald-700 px-1.5 py-2 text-center font-semibold w-8 text-[10px]">S</th>
+                    {/* AO-AR: GRUPO */}
+                    <th colSpan={4} className="bg-slate-700 text-white border-b border-l border-r border-slate-600 px-1 py-1.5 text-center font-semibold text-[9px]">GRUPO</th>
+                    {/* AS-AV: PROM */}
+                    <th colSpan={4} className="bg-slate-600 text-white border-b border-l border-r border-slate-500 px-1 py-1.5 text-center font-semibold text-[9px]">PROM</th>
+                    {/* AW-AZ: P1-P4 */}
+                    <th colSpan={4} className="bg-teal-700 text-white border-b border-l border-r border-teal-600 px-1 py-1.5 text-center font-semibold text-[9px]">POSICIÓN</th>
+                    {/* BA-BC: FN, LN, EN */}
+                    <th colSpan={3} className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">DATOS</th>
+                    {/* BD-BE: MP1, MP2 */}
+                    <th colSpan={2} className="bg-red-800 text-white border-b border-l border-r border-red-700 px-1 py-1.5 text-center font-semibold text-[9px]">MATERIA PENDIENTE</th>
+                    {/* BF-BM: Momentos */}
+                    <th colSpan={8} className="bg-red-700 text-white border-b border-l border-r border-red-600 px-1 py-1.5 text-center font-semibold text-[9px]">MOMENTOS</th>
+                    {/* BN: PAIS */}
+                    <th className="bg-stone-600 text-white border-b border-l border-r border-stone-500 px-1 py-1.5 text-center font-semibold text-[9px]">PAIS</th>
+                    {/* BO-BS: PL1-PL5 */}
+                    <th colSpan={5} className="bg-orange-700 text-white border-b border-l border-r border-orange-600 px-1 py-1.5 text-center font-semibold text-[9px]">PENDIENTE LAPSO</th>
+                    {/* BT: OBS */}
+                    <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[100px]">OBS</th>
+                    {/* BU-CA: CA, ILE, MA, EF, AP, CN, GHC */}
+                    <th colSpan={7} className="bg-indigo-700 text-white border-b border-l border-r border-indigo-600 px-1 py-1.5 text-center font-semibold text-[9px]">NOTAS ASIGNATURA</th>
+                    {/* DP: OBSBOLETIN */}
+                    <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[100px]">OBSBOLETIN</th>
+                  </tr>
 
-                        {/* Subject columns (1er, 2do, 3er, DEF — sin REV) */}
-                        {materias.map((m) => (
-                          <th
-                            key={m.nombre}
-                            colSpan={4}
-                            className={`border-b border-l border-r border-emerald-600 px-1 py-1.5 text-center font-semibold text-[9px] ${m.tipo === 'cualitativa' ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white'}`}
-                          >
-                            <span className="block truncate max-w-[110px]" title={m.nombre}>
-                              {m.nombre.toUpperCase()}
-                            </span>
-                          </th>
+                  {/* ═══ ROW 2: Sub-headers (Excel order) ═══ */}
+                  <tr>
+                    <th className="sticky left-0 z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-0.5" />
+                    <th className="sticky left-[28px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+                    <th className="sticky left-[56px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
+                    <th className="sticky left-[151px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
+                    <th className="sticky left-[321px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+
+                    {/* Subject sub-columns: 1er, 2do, 3er, DEF */}
+                    {materias.map((m) => (
+                      <React.Fragment key={`sub-${m.nombre}`}>
+                        {['1er','2do','3er'].map(label => (
+                          <th key={label} className={`border-b border-l border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>{label}</th>
                         ))}
+                        <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-bold ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-200' : 'bg-emerald-900 text-emerald-200'}`}>DEF</th>
+                      </React.Fragment>
+                    ))}
 
-                        {/* REV. column group — separado después de las materias */}
-                        <th colSpan={materias.length} className="bg-purple-700 text-white border-b border-l border-r border-purple-600 px-1 py-1.5 text-center font-semibold text-[9px]">REV.</th>
+                    {/* GRUPO sub: GRUPO21-24 */}
+                    <th className="bg-slate-800 text-slate-300 border-b border-l border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">G21</th>
+                    <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">G22</th>
+                    <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-medium">G23</th>
+                    <th className="bg-slate-800 text-slate-200 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[8px] font-bold">G24</th>
 
-                        {/* GRUPO columns */}
-                        <th colSpan={4} className="bg-slate-700 text-white border-b border-l border-r border-slate-600 px-1 py-1.5 text-center font-semibold text-[9px]">GRUPO</th>
+                    {/* PROM sub: PROM21-24 */}
+                    <th className="bg-slate-700 text-slate-300 border-b border-l border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">P21</th>
+                    <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">P22</th>
+                    <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-medium">P23</th>
+                    <th className="bg-slate-700 text-slate-200 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[8px] font-bold">P24</th>
 
-                        {/* PROM columns */}
-                        <th colSpan={4} className="bg-slate-600 text-white border-b border-l border-r border-slate-500 px-1 py-1.5 text-center font-semibold text-[9px]">PROM</th>
+                    {/* POSICIÓN sub: P1-P4 */}
+                    <th className="bg-teal-800 text-teal-300 border-b border-l border-r border-teal-600 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">P1</th>
+                    <th className="bg-teal-800 text-teal-300 border-b border-r border-teal-600 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">P2</th>
+                    <th className="bg-teal-800 text-teal-300 border-b border-r border-teal-600 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">P3</th>
+                    <th className="bg-teal-800 text-teal-200 border-b border-r border-teal-600 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">P4</th>
 
-                        {/* Biographic columns */}
-                        <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">FN</th>
-                        <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">LN</th>
-                        <th className="bg-stone-700 text-white border-b border-l border-r border-stone-600 px-1.5 py-1.5 text-center font-semibold text-[9px]">EN</th>
+                    {/* DATOS sub: FN, LN, EN */}
+                    <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-0.5 w-[70px] text-center text-[8px] font-medium">FN</th>
+                    <th className="bg-stone-800 text-stone-300 border-b border-r border-stone-600 py-1 px-0.5 w-[70px] text-center text-[8px] font-medium">LN</th>
+                    <th className="bg-stone-800 text-stone-300 border-b border-r border-stone-600 py-1 px-0.5 w-[55px] text-center text-[8px] font-medium">EN</th>
 
-                        {/* MATERIA PENDIENTE */}
-                        <th colSpan={10} className="bg-red-800 text-white border-b border-l border-r border-red-700 px-1 py-1.5 text-center font-semibold text-[9px]">MATERIA PENDIENTE</th>
+                    {/* MP sub: MP1, MP2 */}
+                    <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[65px] text-center text-[8px] font-medium">MP1</th>
+                    <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[65px] text-center text-[8px] font-medium">MP2</th>
 
-                        {/* OBS */}
-                        <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[120px]">OBS</th>
+                    {/* Momentos sub: 1M,2M,3M,4M × 2 */}
+                    <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">1M</th>
+                    <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">2M</th>
+                    <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">3M</th>
+                    <th className="bg-red-900 text-red-200 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">4M</th>
+                    <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">1M</th>
+                    <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">2M</th>
+                    <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">3M</th>
+                    <th className="bg-red-900 text-red-200 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">4M</th>
 
-                        {/* OBSBOLETIN */}
-                        <th className="bg-amber-800 text-white border-b border-l border-r border-amber-700 px-2 py-1.5 text-center font-semibold text-[9px] min-w-[120px]">OBSBOLETIN</th>
-                      </tr>
+                    {/* PAIS */}
+                    <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-500 py-1 px-0.5 w-[60px] text-center text-[8px] font-medium">PAIS</th>
 
-                      {/* Row 2: Sub-headers */}
-                      <tr>
-                        <th className="sticky left-0 z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-0.5" />
-                        <th className="sticky left-[28px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
-                        <th className="sticky left-[56px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
-                        <th className="sticky left-[151px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-2" />
-                        <th className="sticky left-[321px] z-20 bg-emerald-900 text-emerald-300 border-b border-r border-emerald-700 py-1 px-1" />
+                    {/* PL sub: PL1-PL5 */}
+                    <th className="bg-orange-800 text-orange-300 border-b border-l border-r border-orange-600 py-1 px-0.5 w-[45px] text-center text-[8px] font-medium">PL1</th>
+                    <th className="bg-orange-800 text-orange-300 border-b border-r border-orange-600 py-1 px-0.5 w-[45px] text-center text-[8px] font-medium">PL2</th>
+                    <th className="bg-orange-800 text-orange-300 border-b border-r border-orange-600 py-1 px-0.5 w-[45px] text-center text-[8px] font-medium">PL3</th>
+                    <th className="bg-orange-800 text-orange-300 border-b border-r border-orange-600 py-1 px-0.5 w-[45px] text-center text-[8px] font-medium">PL4</th>
+                    <th className="bg-orange-800 text-orange-200 border-b border-r border-orange-600 py-1 px-0.5 w-[45px] text-center text-[8px] font-bold">PL5</th>
 
-                        {/* Subject sub-columns: 1er, 2do, 3er, DEF (sin REV) */}
-                        {materias.map((m) => (
-                          <React.Fragment key={`sub-${m.nombre}`}>
-                            <th className={`border-b border-l border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>1er</th>
-                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>2do</th>
-                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-medium ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-300' : 'bg-emerald-900 text-emerald-300'}`}>3er</th>
-                            <th className={`border-b border-r border-emerald-700 py-1 px-0.5 w-[46px] text-center text-[9px] font-bold ${m.tipo === 'cualitativa' ? 'bg-blue-900 text-blue-200' : 'bg-emerald-900 text-emerald-200'}`}>DEF</th>
-                          </React.Fragment>
-                        ))}
+                    {/* OBS */}
+                    <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
+                    {/* NOTAS ASIGNATURA */}
+                    {scoreMaterias.map(sm => (
+                      <th key={sm.key} className="bg-indigo-800 text-indigo-300 border-b border-l border-r border-indigo-600 py-1 px-0.5 w-[40px] text-center text-[8px] font-bold">{sm.label}</th>
+                    ))}
+                    {/* OBSBOLETIN */}
+                    <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
+                  </tr>
+                </thead>
 
-                        {/* REV. sub-columns (una por materia, separadas del grupo de materias) */}
-                        {materias.map((m) => (
-                          <th
-                            key={`rev-sub-${m.nombre}`}
-                            className={`border-b border-l border-r border-purple-700 py-1 px-0.5 w-[42px] text-center text-[8px] font-bold ${m.tipo === 'cualitativa' ? 'bg-purple-900 text-purple-200' : 'bg-purple-900 text-purple-200'}`}
-                            title={`Rev. ${m.nombre}`}
-                          >
-                            {m.nombre.substring(0, 3).toUpperCase()}
-                          </th>
-                        ))}
+                <tbody>
+                  {students.map((student, studentIdx) => {
+                    const sn = notasMap[student.id] || {}
+                    const se = extrasMap[student.id] || EXTRAS_DEFAULT
+                    return (
+                      <tr key={student.id} className="hover:bg-muted/30 transition-colors">
+                        {/* A-D: Identity */}
+                        <td className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-0.5 py-1 text-center text-[10px]">
+                          <Link href={`/boletin-calificaciones?studentId=${student.id}&anioEscolar=${encodeURIComponent(anioEscolar)}&grado=${encodeURIComponent(grado)}&seccion=${encodeURIComponent(seccion)}`} className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-emerald-100 text-emerald-700 transition" title="Ver Boletín"><Eye className="w-3.5 h-3.5" /></Link>
+                        </td>
+                        <td className="sticky left-[28px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center text-muted-foreground font-mono text-[10px]">{studentIdx + 1}</td>
+                        <td className="sticky left-[56px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-mono text-[10px] whitespace-nowrap">{formatCedulaFinal(student.cedula)}</td>
+                        <td className="sticky left-[151px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-medium whitespace-nowrap text-[10px]">{student.apellidos}, {student.nombres}</td>
+                        <td className="sticky left-[321px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center font-semibold text-[10px]">{student.seccion || seccion}</td>
 
-                        {/* GRUPO sub-columns */}
-                        <th className="bg-slate-800 text-slate-300 border-b border-l border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-medium">G1</th>
-                        <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-medium">G2</th>
-                        <th className="bg-slate-800 text-slate-300 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-medium">G3</th>
-                        <th className="bg-slate-800 text-slate-200 border-b border-r border-slate-600 py-1 px-0.5 w-[52px] text-center text-[9px] font-bold">G4</th>
-
-                        {/* PROM sub-columns */}
-                        <th className="bg-slate-700 text-slate-300 border-b border-l border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-medium">P1</th>
-                        <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-medium">P2</th>
-                        <th className="bg-slate-700 text-slate-300 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-medium">P3</th>
-                        <th className="bg-slate-700 text-slate-200 border-b border-r border-slate-500 py-1 px-0.5 w-[50px] text-center text-[9px] font-bold">P4</th>
-
-                        {/* Bio sub-headers */}
-                        <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
-                        <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
-                        <th className="bg-stone-800 text-stone-300 border-b border-l border-r border-stone-600 py-1 px-1" />
-
-                        {/* MATERIA PENDIENTE sub-columns */}
-                        <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[65px] text-center text-[8px] font-medium">MP1</th>
-                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">1M</th>
-                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">2M</th>
-                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">3M</th>
-                        <th className="bg-red-900 text-red-200 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">4M</th>
-                        <th className="bg-red-900 text-red-300 border-b border-l border-r border-red-700 py-1 px-0.5 w-[65px] text-center text-[8px] font-medium">MP2</th>
-                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">1M</th>
-                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">2M</th>
-                        <th className="bg-red-900 text-red-300 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-medium">3M</th>
-                        <th className="bg-red-900 text-red-200 border-b border-r border-red-700 py-1 px-0.5 w-[35px] text-center text-[8px] font-bold">4M</th>
-
-                        {/* OBS sub-headers */}
-                        <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
-                        <th className="bg-amber-900 text-amber-300 border-b border-l border-r border-amber-700 py-1 px-1" />
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {students.map((student, studentIdx) => {
-                        const studentNotas = notasMap[student.id] || {}
-                        const studentExtras = extrasMap[student.id] || emptyExtras()
-
-                        return (
-                          <tr key={student.id} className="hover:bg-muted/30 transition-colors">
-                            {/* Fixed identity columns */}
-                            <td className="sticky left-0 z-10 bg-white border-b border-r border-gray-200 px-0.5 py-1 text-center text-[10px]">
-                              <Link
-                                href={`/boletin-calificaciones?studentId=${student.id}&anioEscolar=${encodeURIComponent(anioEscolar)}&grado=${encodeURIComponent(grado)}&seccion=${encodeURIComponent(seccion)}`}
-                                className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-emerald-100 text-emerald-700 transition"
-                                title="Ver Boletín"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                              </Link>
-                            </td>
-                            <td className="sticky left-[28px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center text-muted-foreground font-mono text-[10px]">
-                              {studentIdx + 1}
-                            </td>
-                            <td className="sticky left-[56px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-mono text-[10px] whitespace-nowrap">
-                              {formatCedulaFinal(student.cedula)}
-                            </td>
-                            <td className="sticky left-[151px] z-10 bg-white border-b border-r border-gray-200 px-2 py-1 font-medium whitespace-nowrap text-[10px]">
-                              {student.apellidos}, {student.nombres}
-                            </td>
-                            <td className="sticky left-[321px] z-10 bg-white border-b border-r border-gray-200 px-1.5 py-1 text-center font-semibold text-[10px]">
-                              {student.seccion || seccion}
-                            </td>
-
-                            {/* Subject nota cells (1er, 2do, 3er, DEF — sin REV) */}
-                            {materias.map((m, materiaIdx) => {
-                              const notas = studentNotas[m.nombre] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }
-                              const def = calcDef(m, notas.lapso1, notas.lapso2, notas.lapso3)
-                              const lapsoKeys = ['lapso1', 'lapso2', 'lapso3'] as const
-                              const isCualitativa = m.tipo === 'cualitativa'
-
-                              return (
-                                <React.Fragment key={`${student.id}-${m.nombre}`}>
-                                  {lapsoKeys.map((lapso, lapsoIdx) => {
-                                    const val = notas[lapso]
-                                    return (
-                                      <td
-                                        key={`${student.id}-${m.nombre}-${lapso}`}
-                                        className={`border-b border-r border-gray-200 py-0 px-0 ${isCualitativa ? 'bg-blue-50/30' : getNotaBgClass(val)}`}
-                                      >
-                                        <input
-                                          id={`nota-${studentIdx}-${materiaIdx}-${lapsoIdx}`}
-                                          type="text"
-                                          value={val}
-                                          onChange={(e) => updateNota(student.id, m.nombre, lapso, isCualitativa ? e.target.value.toUpperCase() : e.target.value.toUpperCase())}
-                                          onKeyDown={(e) => handleKeyDown(e, studentIdx, materiaIdx, lapsoIdx)}
-                                          className={`h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 ${isCualitativa ? 'focus:ring-blue-400' : 'focus:ring-emerald-500'} rounded ${isCualitativa ? 'text-blue-700 font-medium' : getNotaColorClass(val)}`}
-                                          maxLength={isCualitativa ? 12 : 3}
-                                        />
-                                      </td>
-                                    )
-                                  })}
-                                  {/* Definitiva */}
-                                  <td className={`border-b border-r border-gray-200 py-1 px-0.5 text-center font-bold text-[10px] ${isCualitativa ? (def ? 'text-blue-700 bg-blue-50/50' : 'text-muted-foreground') : getNotaColorClass(def) + ' ' + getNotaBgClass(def)}`}>
-                                    {def || '—'}
+                        {/* E-AN: 9 subjects × 4 cols (1er, 2do, 3er, DEF) */}
+                        {materias.map((m, materiaIdx) => {
+                          const notas = sn[m.nombre] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }
+                          const def = calcDef(m, notas.lapso1, notas.lapso2, notas.lapso3)
+                          const lapsoKeys = ['lapso1', 'lapso2', 'lapso3'] as const
+                          const isC = m.tipo === 'cualitativa'
+                          return (
+                            <React.Fragment key={`${student.id}-${m.nombre}`}>
+                              {lapsoKeys.map((lapso, lapsoIdx) => {
+                                const val = notas[lapso]
+                                return (
+                                  <td key={`${student.id}-${m.nombre}-${lapso}`} className={`border-b border-r border-gray-200 py-0 px-0 ${isC ? 'bg-blue-50/30' : getNotaBgClass(val)}`}>
+                                    <input id={`nota-${studentIdx}-${materiaIdx}-${lapsoIdx}`} type="text" value={val} onChange={(e) => updateNota(student.id, m.nombre, lapso, e.target.value.toUpperCase())} onKeyDown={(e) => handleKeyDown(e, studentIdx, materiaIdx, lapsoIdx)} className={`h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 ${isC ? 'focus:ring-blue-400' : 'focus:ring-emerald-500'} rounded ${isC ? 'text-blue-700 font-medium' : getNotaColorClass(val)}`} maxLength={isC ? 12 : 3} />
                                   </td>
-                                </React.Fragment>
-                              )
-                            })}
+                                )
+                              })}
+                              <td className={`border-b border-r border-gray-200 py-1 px-0.5 text-center font-bold text-[10px] ${isC ? (def ? 'text-blue-700 bg-blue-50/50' : 'text-muted-foreground') : getNotaColorClass(def) + ' ' + getNotaBgClass(def)}`}>{def || '—'}</td>
+                            </React.Fragment>
+                          )
+                        })}
 
-                            {/* REV. cells — grupo separado después de todas las materias */}
-                            {materias.map((m) => {
-                              const notas = studentNotas[m.nombre] || { lapso1: '', lapso2: '', lapso3: '', revision: '' }
-                              const isCualitativa = m.tipo === 'cualitativa'
-                              return (
-                                <td
-                                  key={`rev-${student.id}-${m.nombre}`}
-                                  className={`border-b border-r border-gray-200 py-0 px-0 bg-purple-50/40`}
-                                >
-                                  <input
-                                    type="text"
-                                    value={notas.revision || ''}
-                                    onChange={(e) => updateRevision(student.id, m.nombre, e.target.value.toUpperCase())}
-                                    className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-purple-600 font-medium"
-                                    placeholder="—"
-                                    maxLength={3}
-                                  />
-                                </td>
-                              )
-                            })}
+                        {/* AO-AR: GRUPO21-24 */}
+                        {(['grupo1','grupo2','grupo3','grupo4'] as const).map((gKey) => (
+                          <td key={`${student.id}-${gKey}`} className="border-b border-r border-gray-200 py-0 px-0 bg-slate-50/50">
+                            <input type="text" value={se[gKey] || ''} onChange={(e) => updateExtraField(student.id, gKey, e.target.value.toUpperCase())} className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 rounded text-slate-600 font-medium" placeholder="—" maxLength={12} />
+                          </td>
+                        ))}
 
-                            {/* GRUPO cells (editable) */}
-                            {(['grupo1', 'grupo2', 'grupo3', 'grupo4'] as const).map((gKey) => {
-                              const val = studentExtras[gKey] || ''
-                              return (
-                                <td key={`${student.id}-${gKey}`} className="border-b border-r border-gray-200 py-0 px-0 bg-slate-50/50">
-                                  <input
-                                    type="text"
-                                    value={val}
-                                    onChange={(e) => updateExtraField(student.id, gKey, e.target.value.toUpperCase())}
-                                    className="h-7 w-full text-center text-[10px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 rounded text-slate-600 font-medium"
-                                    placeholder="—"
-                                    maxLength={12}
-                                  />
-                                </td>
-                              )
-                            })}
+                        {/* AS-AV: PROM21-24 */}
+                        {[1,2,3,4].map((ln) => {
+                          const prom = calcProm(materias, sn, ln)
+                          const n = parseFloat(prom.replace(',', '.'))
+                          const clr = !prom ? 'text-muted-foreground' : n >= 18 ? 'text-emerald-700 font-bold' : n >= 15 ? 'text-amber-600 font-semibold' : n >= 12 ? 'text-orange-500 font-medium' : n > 0 ? 'text-red-600 font-bold' : 'text-muted-foreground'
+                          return <td key={`${student.id}-prom${ln}`} className="border-b border-r border-gray-200 py-1 px-0.5 text-center text-[10px] bg-slate-50/30"><span className={clr}>{prom || '—'}</span></td>
+                        })}
 
-                            {/* PROM cells (calculated) */}
-                            {[1, 2, 3, 4].map((lapsoNum) => {
-                              const prom = calcProm(materias, studentNotas, lapsoNum)
-                              const n = parseFloat(prom.replace(',', '.'))
-                              const promColor = !prom ? 'text-muted-foreground' : n >= 18 ? 'text-emerald-700 font-bold' : n >= 15 ? 'text-amber-600 font-semibold' : n >= 12 ? 'text-orange-500 font-medium' : n > 0 ? 'text-red-600 font-bold' : 'text-muted-foreground'
-                              return (
-                                <td key={`${student.id}-prom${lapsoNum}`} className="border-b border-r border-gray-200 py-1 px-0.5 text-center text-[10px] bg-slate-50/30">
-                                  <span className={promColor}>{prom || '—'}</span>
-                                </td>
-                              )
-                            })}
+                        {/* AW-AZ: P1-P4 (Posición por lapso) */}
+                        {[1,2,3,4].map(ln => (
+                          <td key={`${student.id}-pos${ln}`} className="border-b border-r border-gray-200 py-1 px-0.5 text-center text-[10px] bg-teal-50/30 text-teal-700">—</td>
+                        ))}
 
-                            {/* FN - Fecha de Nacimiento */}
-                            <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">
-                              {student.fechaNacimiento || '—'}
-                            </td>
+                        {/* BA-BC: FN, LN, EN */}
+                        <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">{student.fechaNacimiento || '—'}</td>
+                        <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap max-w-[80px] truncate" title={student.municipio}>{student.municipio || '—'}</td>
+                        <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">{student.estado || '—'}</td>
 
-                            {/* LN - Lugar de Nacimiento (municipio) */}
-                            <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap max-w-[80px] truncate" title={student.municipio}>
-                              {student.municipio || '—'}
-                            </td>
+                        {/* BD-BE: MP1, MP2 */}
+                        <td className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/40">
+                          <input type="text" value={se.materiaPendiente1 || ''} onChange={(e) => updateExtraField(student.id, 'materiaPendiente1', e.target.value)} className="h-7 w-full text-left text-[8px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded px-0.5 text-stone-600" placeholder="—" maxLength={25} />
+                        </td>
+                        <td className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/40">
+                          <input type="text" value={se.materiaPendiente2 || ''} onChange={(e) => updateExtraField(student.id, 'materiaPendiente2', e.target.value)} className="h-7 w-full text-left text-[8px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded px-0.5 text-stone-600" placeholder="—" maxLength={25} />
+                        </td>
 
-                            {/* EN - Entidad Federal (estado) */}
-                            <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">
-                              {student.estado || '—'}
-                            </td>
+                        {/* BF-BI: Momentos MP1 */}
+                        {(['mp1m1','mp1m2','mp1m3','mp1m4'] as const).map(key => (
+                          <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/30">
+                            <input type="text" value={se[key] || ''} onChange={(e) => updateExtraField(student.id, key, e.target.value)} className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded text-stone-600" placeholder="—" maxLength={3} />
+                          </td>
+                        ))}
 
-                            {/* MATERIA PENDIENTE: MP1 + momentos */}
-                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/40">
-                              <input
-                                type="text"
-                                value={studentExtras.materiaPendiente1 || ''}
-                                onChange={(e) => updateExtraField(student.id, 'materiaPendiente1', e.target.value)}
-                                className="h-7 w-full text-left text-[8px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded px-0.5 text-stone-600"
-                                placeholder="—"
-                                maxLength={25}
-                              />
-                            </td>
-                            {(['mp1m1', 'mp1m2', 'mp1m3', 'mp1m4'] as const).map((key) => (
-                              <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/30">
-                                <input
-                                  type="text"
-                                  value={studentExtras[key] || ''}
-                                  onChange={(e) => updateExtraField(student.id, key, e.target.value)}
-                                  className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded text-stone-600"
-                                  placeholder="—"
-                                  maxLength={3}
-                                />
-                              </td>
-                            ))}
+                        {/* BJ-BM: Momentos MP2 */}
+                        {(['mp2m1','mp2m2','mp2m3','mp2m4'] as const).map(key => (
+                          <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/30">
+                            <input type="text" value={se[key] || ''} onChange={(e) => updateExtraField(student.id, key, e.target.value)} className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded text-stone-600" placeholder="—" maxLength={3} />
+                          </td>
+                        ))}
 
-                            {/* MATERIA PENDIENTE: MP2 + momentos */}
-                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/40">
-                              <input
-                                type="text"
-                                value={studentExtras.materiaPendiente2 || ''}
-                                onChange={(e) => updateExtraField(student.id, 'materiaPendiente2', e.target.value)}
-                                className="h-7 w-full text-left text-[8px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded px-0.5 text-stone-600"
-                                placeholder="—"
-                                maxLength={25}
-                              />
-                            </td>
-                            {(['mp2m1', 'mp2m2', 'mp2m3', 'mp2m4'] as const).map((key) => (
-                              <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-red-50/30">
-                                <input
-                                  type="text"
-                                  value={studentExtras[key] || ''}
-                                  onChange={(e) => updateExtraField(student.id, key, e.target.value)}
-                                  className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-red-400 rounded text-stone-600"
-                                  placeholder="—"
-                                  maxLength={3}
-                                />
-                              </td>
-                            ))}
+                        {/* BN: PAIS */}
+                        <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">{student.pais || '—'}</td>
 
-                            {/* OBS - Observaciones (editable) */}
-                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-amber-50/30">
-                              <input
-                                type="text"
-                                value={studentExtras.observacion || ''}
-                                onChange={(e) => updateExtraField(student.id, 'observacion', e.target.value)}
-                                className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600"
-                                placeholder="—"
-                                maxLength={100}
-                              />
-                            </td>
+                        {/* BO-BS: PL1-PL5 */}
+                        {(['pl1','pl2','pl3','pl4','pl5'] as const).map(key => (
+                          <td key={`${student.id}-${key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-orange-50/30">
+                            <input type="text" value={se[key] || ''} onChange={(e) => updateExtraField(student.id, key, e.target.value)} className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-orange-400 rounded text-stone-600" placeholder="—" maxLength={20} />
+                          </td>
+                        ))}
 
-                            {/* OBSBOLETIN - Observación del Boletín (editable) */}
-                            <td className="border-b border-r border-gray-200 py-0 px-0 bg-amber-50/30">
-                              <input
-                                type="text"
-                                value={studentExtras.obsBoletin || ''}
-                                onChange={(e) => updateExtraField(student.id, 'obsBoletin', e.target.value)}
-                                className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600"
-                                placeholder="—"
-                                maxLength={100}
-                              />
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+                        {/* BT: OBS */}
+                        <td className="border-b border-r border-gray-200 py-0 px-0 bg-amber-50/30">
+                          <input type="text" value={se.observacion || ''} onChange={(e) => updateExtraField(student.id, 'observacion', e.target.value)} className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600" placeholder="—" maxLength={100} />
+                        </td>
+
+                        {/* BU-CA: CA, ILE, MA, EF, AP, CN, GHC */}
+                        {scoreMaterias.map(sm => (
+                          <td key={`${student.id}-${sm.key}`} className="border-b border-r border-gray-200 py-0 px-0 bg-indigo-50/30">
+                            <input type="text" value={se[sm.key] || ''} onChange={(e) => updateExtraField(student.id, sm.key, e.target.value)} className="h-7 w-full text-center text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded text-stone-600" placeholder="—" maxLength={5} />
+                          </td>
+                        ))}
+
+                        {/* DP: OBSBOLETIN */}
+                        <td className="border-b border-r border-gray-200 py-0 px-0 bg-amber-50/30">
+                          <input type="text" value={se.obsBoletin || ''} onChange={(e) => updateExtraField(student.id, 'obsBoletin', e.target.value)} className="h-7 w-full text-left text-[9px] border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1 text-stone-600" placeholder="—" maxLength={100} />
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent></Card>
+        </>)}
       </div>
     </AppShell>
   )

@@ -92,6 +92,20 @@ model BoletaExtra {
   mp2m2 String?  // Materia Pendiente 2, Momento 2 (col 2M segundo set)
   mp2m3 String?  // Materia Pendiente 2, Momento 3 (col 3M segundo set)
   mp2m4 String?  // Materia Pendiente 2, Momento 4 (col 4M segundo set)
+  // Pendiente Lapso (cols BO-BS del Excel)
+  pl1 String?   // Pendiente Lapso 1
+  pl2 String?   // Pendiente Lapso 2
+  pl3 String?   // Pendiente Lapso 3
+  pl4 String?   // Pendiente Lapso 4
+  pl5 String?   // Pendiente Lapso 5
+  // Notas por asignatura definitive (cols BU-CA del Excel: CA, ILE, MA, EF, AP, CN, GHC)
+  scoreCA  String?  // Castellano
+  scoreILE String?  // Inglés
+  scoreMA  String?  // Matemática
+  scoreEF  String?  // Ed. Física
+  scoreAP  String?  // Arte y Patrimonio
+  scoreCN  String?  // Cs. Naturales
+  scoreGHC String?  // Geo. Hist. y Ciudadanía
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -88,6 +88,8 @@ const ANIO_ESCOLAR_OPTIONS = Array.from({ length: 2026 - 2017 + 1 }, (_, i) => {
   return `${y}-${y + 1}`
 })
 
+const SECCION_OPTIONS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 function getMateriasForGrado(grado: string): MateriaAnio[] {
   const idx = parseInt(grado, 10) - 1
@@ -375,7 +377,7 @@ export default function BoletasPage() {
             <div className="flex flex-col sm:flex-row items-end gap-3">
               <div className="grid gap-1.5"><Label className="text-xs font-medium">Año Escolar</Label><select value={anioEscolar} onChange={(e) => setAnioEscolar(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-36">{ANIO_ESCOLAR_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
               <div className="grid gap-1.5"><Label className="text-xs font-medium">Grado</Label><select value={grado} onChange={(e) => setGrado(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-32">{GRADO_OPTIONS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}</select></div>
-              <div className="grid gap-1.5"><Label className="text-xs font-medium">Sección</Label><Input value={seccion} onChange={(e) => setSeccion(e.target.value.toUpperCase())} className="h-9 w-16 text-center" maxLength={2} /></div>
+              <div className="grid gap-1.5"><Label className="text-xs font-medium">Sección</Label><select value={seccion} onChange={(e) => setSeccion(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm w-16 text-center">{SECCION_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
               <Button onClick={handleSearch} disabled={loading} className="h-9">{loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando...</> : <><Search className="h-4 w-4 mr-2" />Buscar Alumnos</>}</Button>
             </div>
           </CardContent>

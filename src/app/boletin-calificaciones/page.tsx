@@ -405,10 +405,9 @@ function BoletinContent({
         <tbody>
           {/* Fila con rango A y su descripción */}
           <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
+            <td rowSpan={4} style={{ ...cell, width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
               ORIENTACIÓN Y CONVIVENCIA
             </td>
-            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
             <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
             <td style={{ ...cell, fontSize: '8px', backgroundColor: orientacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['A']}
@@ -441,10 +440,9 @@ function BoletinContent({
       <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
         <tbody>
           <tr>
-            <td rowSpan={4} style={{ ...cell, width: '18%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
+            <td rowSpan={4} style={{ ...cell, width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9px', padding: '4px' }}>
               CREACIÓN, RECREACIÓN Y PRODUCCIÓN
             </td>
-            <td rowSpan={4} style={{ ...cell, width: '3%', backgroundColor: '#fff' }}></td>
             <td style={{ ...cell, width: '22%', fontWeight: 'bold', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px' }}>A: 20 a 17 pts</td>
             <td style={{ ...cell, fontSize: '8px', backgroundColor: participacionGrade === 'A' ? '#d4edda' : '#fff', padding: '3px 5px', lineHeight: '1.4' }}>
               {CUALITATIVA_DESCRIPTIONS['A']}

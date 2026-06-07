@@ -246,7 +246,7 @@ function BoletinContent({
         {/* Row 4: Alumno: */}
         <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>
           <span style={{ fontWeight: 'bold', fontSize: '10pt', fontFamily: 'Arial, sans-serif', marginRight: '4px', minWidth: '55px' }}>Alumno:</span>
-          <span style={{ fontSize: '10px' }}>{student.apellidos}, {student.nombres}</span>
+          <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>{student.apellidos}, {student.nombres}</span>
         </div>
         {/* Row 5: C.I.: | Fecha y Lugar de Nac: */}
         <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '3px' }}>

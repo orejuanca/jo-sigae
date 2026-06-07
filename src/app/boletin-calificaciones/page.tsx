@@ -137,7 +137,7 @@ function formatDate(fechaStr: string | null): string {
 
 // Common table style
 const B = 'border: 1px solid #000; border-collapse: collapse;'
-const cell = { fontSize: '10pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: '1px solid #000' }
+const cell = { fontSize: '9pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: '1px solid #000' }
 const hdr = { fontSize: '10pt', fontFamily: 'Calibri, sans-serif', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const }
 
 // Format numeric grade: add leading zero for values > 0 and < 10

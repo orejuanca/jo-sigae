@@ -139,6 +139,7 @@ function formatDate(fechaStr: string | null): string {
 const B = 'border: 1px solid #000; border-collapse: collapse;'
 const cell = { fontSize: '9pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: '1px solid #000' }
 const cellNB = { fontSize: '9pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: 'none' }
+const cellDot = { fontSize: '9pt', fontFamily: 'Calibri, sans-serif', padding: '2px 4px', border: '1px dotted #000' }
 const hdr = { fontSize: '10pt', fontFamily: 'Calibri, sans-serif', padding: '2px 3px', border: '1px solid #000', fontWeight: 'bold', textAlign: 'center' as const }
 
 // Format numeric grade: add leading zero for values > 0 and < 10
@@ -353,24 +354,24 @@ function BoletinContent({
 
           {/* Row 22: P R O M E D I O */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px' }}>P R O M E D I O</td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(1)}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(2)}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(3)}</td>
-            <td style={cell}></td>
-            <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
-            <td style={cell}></td>
+            <td style={{ ...cellDot, fontWeight: 'bold', letterSpacing: '1px', paddingLeft: '6px' }}>P R O M E D I O</td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(1)}</td>
+            <td style={cellDot}></td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(2)}</td>
+            <td style={cellDot}></td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{calcPromLapso(3)}</td>
+            <td style={cellDot}></td>
+            <td style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>{promedio > 0 ? promedio.toFixed(2).replace('.', ',') : ''}</td>
+            <td style={cellDot}></td>
           </tr>
 
           {/* Row 23: Posición Según Prom. */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
-            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>
+            <td style={{ ...cellDot, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
+            <td colSpan={7} style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>
               {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
             </td>
-            <td style={cell}></td>
+            <td style={cellDot}></td>
           </tr>
         </tbody>
       </table>
@@ -381,28 +382,28 @@ function BoletinContent({
       <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
         <thead>
           <tr>
-            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
-            <th style={{ ...hdr, width: '18%' }}>Primer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Segundo Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Tercer Momento</th>
-            <th style={{ ...hdr, width: '18%' }}>Cuarto Momento</th>
+            <th style={{ ...cellDot, fontWeight: 'bold', textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
+            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Primer Momento</th>
+            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Segundo Momento</th>
+            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Tercer Momento</th>
+            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Cuarto Momento</th>
           </tr>
         </thead>
         <tbody>
           {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
             <tr key={i}>
-              <td style={cell}>{r.materia}</td>
+              <td style={cellDot}>{r.materia}</td>
               {r.momentos.map((m, j) => (
-                <td key={j} style={{ ...cell, textAlign: 'center' }}>{fmtNota(m)}</td>
+                <td key={j} style={{ ...cellDot, textAlign: 'center' }}>{fmtNota(m)}</td>
               ))}
             </tr>
           )) : (
             <tr>
-              <td style={cell}>{'—'}</td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
-              <td style={cell}></td>
+              <td style={cellDot}>{'—'}</td>
+              <td style={cellDot}></td>
+              <td style={cellDot}></td>
+              <td style={cellDot}></td>
+              <td style={cellDot}></td>
             </tr>
           )}
         </tbody>

@@ -434,6 +434,9 @@ function BoletinContent({
         </tbody>
       </table>
 
+      {/* Fila en blanco sin bordes entre Orientación y Participación */}
+      <div style={{ width: '100%', height: '18px' }}></div>
+
       {/* ═══════════════════════════════════════════════════════════════
           CREACIÓN, RECREACIÓN Y PRODUCCIÓN (mismo formato 2 columnas)
           ═══════════════════════════════════════════════════════════════ */}

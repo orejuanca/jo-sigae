@@ -367,11 +367,11 @@ function BoletinContent({
 
           {/* Row 23: Posición Según Prom. */}
           <tr>
-            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
-            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>
+            <td style={{ ...cellNB, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
+            <td colSpan={7} style={{ ...cellNB, textAlign: 'center', fontWeight: 'bold' }}>
               {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
             </td>
-            <td style={cell}></td>
+            <td style={cellNB}></td>
           </tr>
         </tbody>
       </table>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useMemo } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -181,6 +181,36 @@ export default function BoletasPage() {
   const tableRef = useRef<HTMLDivElement>(null)
 
   const materias = getMateriasForGrado(grado)
+
+  // ── Calcular posiciones P1-P4 según promedio de cada lapso ───────────
+  const posicionesMap = useMemo(() => {
+    if (students.length === 0) return {} as Record<string, Record<number, number>>
+    const posMap: Record<string, Record<number, number>> = {}
+    for (let ln = 1; ln <= 4; ln++) {
+      // Calcular promedio numérico para cada alumno en este lapso
+      const ranking = students.map(s => {
+        const sn = notasMap[s.id] || {}
+        const promStr = calcProm(materias, sn, ln)
+        const n = parseFloat(promStr.replace(',', '.'))
+        return { studentId: s.id, avg: isNaN(n) ? -1 : n }
+      })
+      // Ordenar descendente por promedio
+      ranking.sort((a, b) => b.avg - a.avg)
+      // Asignar posiciones (empates comparten posición)
+      let pos = 1
+      for (let i = 0; i < ranking.length; i++) {
+        if (i > 0 && ranking[i].avg !== ranking[i - 1].avg) {
+          pos = i + 1
+        }
+        if (!posMap[ranking[i].studentId]) posMap[ranking[i].studentId] = {}
+        if (ranking[i].avg >= 0) {
+          posMap[ranking[i].studentId][ln] = pos
+        }
+      }
+    }
+    return posMap
+  }, [students, notasMap, materias])
+
   // Subject score columns: CA, ILE, MA, EF, AP, CN, GHC (cols 73-79)
   const scoreMaterias = [
     { key: 'scoreCA', label: 'CA' },
@@ -536,9 +566,14 @@ export default function BoletasPage() {
                         })}
 
                         {/* AW-AZ: P1-P4 (Posición por lapso) */}
-                        {[1,2,3,4].map(ln => (
-                          <td key={`${student.id}-pos${ln}`} className="border-b border-r border-gray-200 py-1 px-0.5 text-center text-[10px] bg-teal-50/30 text-teal-700">—</td>
-                        ))}
+                        {[1,2,3,4].map(ln => {
+                          const pos = posicionesMap[student.id]?.[ln]
+                          return (
+                            <td key={`${student.id}-pos${ln}`} className="border-b border-r border-gray-200 py-1 px-0.5 text-center text-[10px] bg-teal-50/30 text-teal-700 font-semibold">
+                              {pos || '—'}
+                            </td>
+                          )
+                        })}
 
                         {/* BA-BC: FN, LN, EN */}
                         <td className="border-b border-r border-gray-200 py-1 px-1 text-center text-[9px] text-muted-foreground bg-stone-50/50 whitespace-nowrap">{student.fechaNacimiento || '—'}</td>

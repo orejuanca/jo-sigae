@@ -235,7 +235,7 @@ function BoletinContent({
       {/* ═══════════════════════════════════════════════════════════════
           ROW 1: TÍTULO — "BOLETIN DE CALIFICACIONES"
           ═══════════════════════════════════════════════════════════════ */}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', letterSpacing: '2px', marginBottom: '16px' }}>
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14pt', fontFamily: 'Arial, sans-serif', letterSpacing: '2px', marginBottom: '16px' }}>
         BOLETIN DE CALIFICACIONES
       </div>
 

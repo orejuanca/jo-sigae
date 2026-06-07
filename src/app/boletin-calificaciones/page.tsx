@@ -261,8 +261,8 @@ function BoletinContent({
           <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>{gradoLabel}</span>
           <span style={{ fontWeight: 'bold', fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>Sección:</span>
           <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>{seccion}</span>
-          <span style={{ fontWeight: 'bold', fontSize: '9px' }}>N° de Lista:</span>
-          <span style={{ fontSize: '10px' }}>{listaNum}</span>
+          <span style={{ fontWeight: 'bold', fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>N° de Lista:</span>
+          <span style={{ fontSize: '10pt', fontFamily: 'Arial, sans-serif' }}>{listaNum}</span>
           <span style={{ fontWeight: 'bold', fontSize: '9px' }}>Año Escolar:</span>
           <span style={{ fontSize: '10px' }}>{anioEscolar}</span>
         </div>

@@ -168,6 +168,17 @@ function BoletinContent({
 
   const extra = student.boletaExtras?.[0]
   const observacion = extra?.obsBoletin || extra?.observacion || ''
+
+  // Mapping de notas de revisión: subject name → BoletaExtra score field
+  const REVISION_SCORE_MAP: Record<string, string> = {
+    'Castellano': extra?.scoreCA || '',
+    'Inglés y otras Lenguas Extranjeras': extra?.scoreILE || '',
+    'Matemáticas': extra?.scoreMA || '',
+    'Educación Física': extra?.scoreEF || '',
+    'Arte y Patrimonio': extra?.scoreAP || '',
+    'Ciencias Naturales': extra?.scoreCN || '',
+    'Geografía, Historia y Ciudadanía': extra?.scoreGHC || '',
+  }
   const promedio = calcStudentPromedio(materias, notasMap)
 
   const orientacionNota = notasMap['Orientación y Convivencia']
@@ -294,7 +305,7 @@ function BoletinContent({
                 <td style={{ ...cell, textAlign: 'center', fontWeight: '500' }}>{l3 || ''}</td>
                 <td style={{ ...cell, textAlign: 'center', color: getIN(l3) === 'IN' ? '#c00' : '#999', fontSize: '8px' }}>{getIN(l3)}</td>
                 <td style={{ ...cell, textAlign: 'center', fontWeight: 'bold', color: !isNaN(defNum) && defNum > 0 && defNum < 10 ? '#c00' : '#000' }}>{def || ''}</td>
-                <td style={{ ...cell, textAlign: 'center' }}>{n?.revision || ''}</td>
+                <td style={{ ...cell, textAlign: 'center', fontWeight: '500', color: '#6d28d9' }}>{REVISION_SCORE_MAP[m.nombre] || ''}</td>
               </tr>
             )
           })}

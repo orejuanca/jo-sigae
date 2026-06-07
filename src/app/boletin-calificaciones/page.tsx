@@ -367,11 +367,11 @@ function BoletinContent({
 
           {/* Row 23: Posición Según Prom. */}
           <tr>
-            <td style={{ ...cellDot, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
-            <td colSpan={7} style={{ ...cellDot, textAlign: 'center', fontWeight: 'bold' }}>
+            <td style={{ ...cell, fontWeight: 'bold', paddingLeft: '6px' }}>Posición Según Prom.</td>
+            <td colSpan={7} style={{ ...cell, textAlign: 'center', fontWeight: 'bold' }}>
               {position > 0 ? `${position}° de ${allStudentsPromedios.length}` : '—'}
             </td>
-            <td style={cellDot}></td>
+            <td style={cell}></td>
           </tr>
         </tbody>
       </table>
@@ -382,28 +382,28 @@ function BoletinContent({
       <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: 'none', marginBottom: '0' }}>
         <thead>
           <tr>
-            <th style={{ ...cellDot, fontWeight: 'bold', textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
-            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Primer Momento</th>
-            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Segundo Momento</th>
-            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Tercer Momento</th>
-            <th style={{ ...cellDot, fontWeight: 'bold', width: '18%' }}>Cuarto Momento</th>
+            <th style={{ ...hdr, textAlign: 'left', width: '28%' }}>Materia Pendiente</th>
+            <th style={{ ...hdr, width: '18%' }}>Primer Momento</th>
+            <th style={{ ...hdr, width: '18%' }}>Segundo Momento</th>
+            <th style={{ ...hdr, width: '18%' }}>Tercer Momento</th>
+            <th style={{ ...hdr, width: '18%' }}>Cuarto Momento</th>
           </tr>
         </thead>
         <tbody>
           {pendienteRows.length > 0 ? pendienteRows.map((r, i) => (
             <tr key={i}>
-              <td style={cellDot}>{r.materia}</td>
+              <td style={cell}>{r.materia}</td>
               {r.momentos.map((m, j) => (
-                <td key={j} style={{ ...cellDot, textAlign: 'center' }}>{fmtNota(m)}</td>
+                <td key={j} style={{ ...cell, textAlign: 'center' }}>{fmtNota(m)}</td>
               ))}
             </tr>
           )) : (
             <tr>
-              <td style={cellDot}>{'—'}</td>
-              <td style={cellDot}></td>
-              <td style={cellDot}></td>
-              <td style={cellDot}></td>
-              <td style={cellDot}></td>
+              <td style={cell}>{'—'}</td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
+              <td style={cell}></td>
             </tr>
           )}
         </tbody>

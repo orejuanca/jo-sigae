@@ -428,52 +428,6 @@ export default function CertificacionesPage() {
     return Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && c.nota !== 'PE').length
   }
 
-  // Helper styles for cert preview tables
-  const tbS: React.CSSProperties = { borderCollapse: 'collapse', fontSize: '7pt', lineHeight: '1.3' }
-  const bd: React.CSSProperties = { border: '1px solid #000', padding: '1px 2px' }
-  const bdB: React.CSSProperties = { ...bd, fontWeight: 'bold' }
-  const bdH: React.CSSProperties = { ...bd, fontWeight: 'bold', backgroundColor: '#f5f5f5' }
-  const bdC: React.CSSProperties = { ...bd, textAlign: 'center' }
-  const bdCh: React.CSSProperties = { ...bd, fontWeight: 'bold', backgroundColor: '#f0f0f0', textAlign: 'center', fontSize: '6pt' }
-
-  const renderYearTable = (plan: PlanAnio, planIdx: number) => {
-    const grades = displayData.calificaciones[plan.anio] || []
-    const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
-    return (
-      <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
-        <tbody>
-          <tr>
-            <td colSpan={13} style={{ ...bdH, textAlign: 'center' }}>{plan.anio}{yearLabel ? ` (${yearLabel})` : ''}</td>
-          </tr>
-          <tr>
-            <td colSpan={4} rowSpan={2} style={bdCh}>ÁREAS DE FORMACIÓN</td>
-            <td colSpan={5} style={bdCh}>CALIFICACIÓN</td>
-            <td colSpan={1} rowSpan={2} style={bdCh}>T-E</td>
-            <td colSpan={2} style={bdCh}>FECHA</td>
-            <td colSpan={1} rowSpan={2} style={bdCh}>Inst. Educ.</td>
-          </tr>
-          <tr>
-            <td style={bdCh}>N°</td>
-            <td colSpan={4} style={bdCh}>LETRAS</td>
-            <td style={bdCh}>Mes</td>
-            <td style={bdCh}>Año</td>
-          </tr>
-          {grades.map((cal, idx) => (
-            <tr key={idx}>
-              <td colSpan={4} style={bd}>{cal.numero}. {cal.materia}</td>
-              <td style={{ ...bdC, fontWeight: 'bold' }}>{cal.nota || '—'}</td>
-              <td colSpan={4} style={{ ...bdC, fontWeight: 'bold' }}>{cal.literal || '—'}</td>
-              <td style={bdC}>{cal.tipoEvaluacion || '—'}</td>
-              <td style={bdC}>{cal.fechaMes || '—'}</td>
-              <td style={bdC}>{cal.fechaAnio || '—'}</td>
-              <td style={{ ...bdC, fontSize: '6pt' }}>{displayData.denominacion || '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    )
-  }
-
   return (
     <AppShell>
       <div className="space-y-6">
@@ -877,102 +831,55 @@ export default function CertificacionesPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="border-2 border-black bg-white text-black mx-auto" id="cert-preview" style={{ fontFamily: 'Arial, sans-serif', fontSize: '7pt', lineHeight: '1.3', maxWidth: '210mm', padding: '8px' }}>
-                      {/* ====== ENCABEZADO (Rows 1-3) ====== */}
-                      <table width="100%" cellPadding={2} cellSpacing={0} style={{ ...tbS, marginBottom: '4px' }}>
-                        <tbody>
-                          <tr>
-                            <td style={{ width: '35%', verticalAlign: 'top', padding: '4px', border: 'none' }}>
-                              <div style={{ fontWeight: 'bold' }}>REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
-                              <div style={{ fontWeight: 'bold' }}>MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</div>
-                              <div style={{ fontWeight: 'bold', fontSize: '6pt' }}>ZONA EDUCATIVA {displayData.estado.toUpperCase()}</div>
-                            </td>
-                            <td style={{ verticalAlign: 'middle', textAlign: 'center', padding: '4px', border: 'none' }}>
-                              <div style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                CERTIFICACIÓN DE CALIFICACIONES {certData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    <div className="border-2 border-black p-6 bg-white text-black rounded-sm max-w-4xl mx-auto text-[10px] leading-tight" id="cert-preview" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      {/* ENCABEZADO */}
+                      <div className="text-center space-y-1 mb-3">
+                        <p className="font-bold text-xs uppercase">Gobierno Bolivariano de Venezuela</p>
+                        <p className="font-bold text-xs uppercase">Ministerio del Poder Popular para la Educación</p>
+                      </div>
+                      <div className="text-center my-3">
+                        <h2 className="font-bold text-sm uppercase">
+                          Certificación de Calificaciones {certData.planTipo === 'derogado' ? '(Plan Derogado)' : 'EMG'}
+                        </h2>
+                        <div className="w-24 h-px bg-black mx-auto mt-1" />
+                      </div>
 
-                      {/* ====== SECCIÓN I: Plan de Estudio (Rows 2-3) ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
-                        <tbody>
-                          <tr>
-                            <td colSpan={10} style={{ border: 'none', padding: '1px 2px' }}>I. Plan de Estudio: <b>{displayData.planEstudio}</b></td>
-                            <td colSpan={5} style={{ border: 'none', padding: '1px 2px', textAlign: 'right' }}>Código: <b>{schoolConfig.planCodigo}</b></td>
-                          </tr>
-                          <tr>
-                            <td colSpan={7} style={{ border: 'none', padding: '1px 2px' }}>Lugar y Fecha de Expedición: <b>{displayData.lugar}</b></td>
-                            <td colSpan={8} style={{ border: 'none', padding: '1px 2px' }}>{displayFechaExpedicion}</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      {/* SECCIÓN I */}
+                      <div className="mb-3">
+                        <p className="font-bold text-[9px] mb-1">I. Plan de Estudio: {displayData.planEstudio}</p>
+                        <div className="flex flex-wrap gap-4 text-[9px]">
+                          <span><strong>Lugar y Fecha:</strong> {displayData.lugar}, {displayFechaExpedicion}</span>
+                          <span><strong>Código:</strong> {schoolConfig.planCodigo}</span>
+                        </div>
+                      </div>
 
-                      {/* ====== SECCIÓN II: Datos de la Institución (Rows 5-8) — 27 cols ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
-                        <tbody>
-                          <tr>
-                            <td colSpan={27} style={bdH}>II. Datos de la Institución Emisora</td>
-                          </tr>
-                          {/* Row 6: 3+5+5+14=27 (N folded into school name) */}
-                          <tr>
-                            <td colSpan={3} style={bdB}>Código:</td>
-                            <td colSpan={5} style={bd}>{displayData.od}</td>
-                            <td colSpan={5} style={bdB}>Denominación y Epónimo:</td>
-                            <td colSpan={14} style={bd}>{displayData.denominacion}</td>
-                          </tr>
-                          {/* Row 7: 3+15+3+6=27 */}
-                          <tr>
-                            <td colSpan={3} style={bdB}>Dirección:</td>
-                            <td colSpan={15} style={bd}>{displayData.direccion}</td>
-                            <td colSpan={3} style={bdB}>Teléfono:</td>
-                            <td colSpan={6} style={bd}>{displayData.telefono}</td>
-                          </tr>
-                          {/* Row 8: 3+4+3+8+4+5=27 */}
-                          <tr>
-                            <td colSpan={3} style={bdB}>Municipio:</td>
-                            <td colSpan={4} style={bd}>{displayData.municipio}</td>
-                            <td colSpan={3} style={bdB}>Estado:</td>
-                            <td colSpan={8} style={bd}>{displayData.estado}</td>
-                            <td colSpan={4} style={bdB}>CDCEE:</td>
-                            <td colSpan={5} style={bd}>{displayData.cdcce}</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      {/* SECCIÓN II */}
+                      <div className="mb-3 border-t border-black pt-2">
+                        <p className="font-bold text-[9px] mb-1">II. Institución Emisora</p>
+                        <div className="grid grid-cols-2 gap-1 text-[9px]">
+                          <span><strong>Código:</strong> {displayData.od}</span>
+                          <span><strong>Teléfono:</strong> {displayData.telefono}</span>
+                          <span className="col-span-2"><strong>Denominación:</strong> {displayData.denominacion}</span>
+                          <span className="col-span-2"><strong>Dirección:</strong> {displayData.direccion}</span>
+                          <span><strong>Municipio:</strong> {displayData.municipio}</span>
+                          <span><strong>Estado:</strong> {displayData.estado}</span>
+                          <span><strong>CDCCE:</strong> {displayData.cdcce}</span>
+                        </div>
+                      </div>
 
-                      {/* ====== SECCIÓN III: Datos del Estudiante (Rows 9-12) — 27 cols ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
-                        <tbody>
-                          <tr>
-                            <td colSpan={27} style={bdH}>III. Datos de Identificación del Estudiante:</td>
-                          </tr>
-                          {/* Row 10: 4+5+6+12=27 */}
-                          <tr>
-                            <td colSpan={4} style={bdB}>Cédula:</td>
-                            <td colSpan={5} style={bd}>{displayData.estudiante.cedula}</td>
-                            <td colSpan={6} style={bdB}>Fecha de Nacimiento:</td>
-                            <td colSpan={12} style={bd}>{displayData.estudiante.fechaNacimiento || '—'}</td>
-                          </tr>
-                          {/* Row 11: 3+8+4+12=27 */}
-                          <tr>
-                            <td colSpan={3} style={bdB}>Apellidos:</td>
-                            <td colSpan={8} style={bd}>{displayData.estudiante.apellidos}</td>
-                            <td colSpan={4} style={bdB}>Nombres:</td>
-                            <td colSpan={12} style={bd}>{displayData.estudiante.nombres}</td>
-                          </tr>
-                          {/* Row 12: 5+6+2+7+2+5=27 */}
-                          <tr>
-                            <td colSpan={5} style={bdB}>Lugar Nacimiento País:</td>
-                            <td colSpan={6} style={bd}>{displayData.estudiante.pais}</td>
-                            <td colSpan={2} style={bdB}>Estado:</td>
-                            <td colSpan={7} style={bd}>{displayData.estudiante.estado || '—'}</td>
-                            <td colSpan={2} style={bdB}>Municipio:</td>
-                            <td colSpan={5} style={bd}>{displayData.estudiante.municipio || '—'}</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      {/* SECCIÓN III */}
+                      <div className="mb-3 border-t border-black pt-2">
+                        <p className="font-bold text-[9px] mb-1">III. Datos del Estudiante</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-[9px]">
+                          <span><strong>Cédula:</strong> {displayData.estudiante.cedula}</span>
+                          <span><strong>Fecha de Nacimiento:</strong> {displayData.estudiante.fechaNacimiento || '—'}</span>
+                          <span><strong>País:</strong> {displayData.estudiante.pais}</span>
+                          <span><strong>Apellidos:</strong> {displayData.estudiante.apellidos}</span>
+                          <span><strong>Nombres:</strong> {displayData.estudiante.nombres}</span>
+                          <span><strong>Estado:</strong> {displayData.estudiante.estado || '—'}</span>
+                          <span><strong>Municipio:</strong> {displayData.estudiante.municipio || '—'}</span>
+                        </div>
+                      </div>
 
                       {/* SECCIÓN IV */}
                       <div className="mb-3 border-t border-black pt-2">
@@ -999,62 +906,89 @@ export default function CertificacionesPage() {
                         </table>
                       </div>
 
-                      {/* ====== SECCIÓN V: Plan de Estudio — Calificaciones (side-by-side year tables) ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '2px' }}>
-                        <tbody><tr><td colSpan={27} style={bdH}>V. Plan de Estudio — Calificaciones</td></tr></tbody>
-                      </table>
+                      {/* SECCIÓN V: Calificaciones */}
+                      <div className="mb-3 border-t border-black pt-2">
+                        <p className="font-bold text-[9px] mb-2">V. Plan de Estudio</p>
+                        {activePlan.map((plan, planIdx) => {
+                          const grades = displayData.calificaciones[plan.anio] || []
+                          const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
+                          return (
+                            <div key={plan.anio} className="mb-3">
+                              <p className="font-semibold text-[9px] mb-1 text-center">
+                                {plan.anio} {yearLabel && <span className="font-normal">({yearLabel})</span>}
+                              </p>
+                              <table className="w-full border-collapse text-[8px]">
+                                <thead>
+                                  <tr className="border border-black bg-gray-100">
+                                    <th className="border border-black p-0.5 w-6">N°</th>
+                                    <th className="border border-black p-0.5 text-left">Área de Formación</th>
+                                    <th className="border border-black p-0.5 w-10">NOTA</th>
+                                    <th className="border border-black p-0.5 w-10">LETRAS</th>
+                                    <th className="border border-black p-0.5 w-8">T-E</th>
+                                    <th className="border border-black p-0.5 w-8">MES</th>
+                                    <th className="border border-black p-0.5 w-10">AÑO</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {grades.map((cal, idx) => (
+                                    <tr key={idx} className="border border-black">
+                                      <td className="border border-black p-0.5 text-center">{cal.numero}</td>
+                                      <td className="border border-black p-0.5">{cal.materia}</td>
+                                      <td className={`border border-black p-0.5 text-center font-bold ${getNotaColor(cal.nota)}`}>{cal.nota || '—'}</td>
+                                      <td className={`border border-black p-0.5 text-center font-bold ${getNotaColor(cal.nota)}`}>{cal.literal || '—'}</td>
+                                      <td className="border border-black p-0.5 text-center">{cal.tipoEvaluacion || '—'}</td>
+                                      <td className="border border-black p-0.5 text-center">{cal.fechaMes || '—'}</td>
+                                      <td className="border border-black p-0.5 text-center">{cal.fechaAnio || '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )
+                        })}
 
-                      {/* Primer Año (left) + Segundo Año (right) — side by side */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[0], 0)}</div>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[1], 1)}</div>
-                      </div>
-
-                      {/* Tercer Año (left) + Cuarto Año (right) — side by side */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[2], 2)}</div>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[3], 3)}</div>
-                      </div>
-
-                      {/* Quinto Año (left) + Orientación y Grupos (right) — side by side */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[4], 4)}</div>
-                        <div style={{ flex: '1 1 0' }}>
-                          {/* Orientación y Convivencia — 13 cols */}
-                          <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
+                        {/* Orientación y Convivencia */}
+                        <div className="mt-2">
+                          <p className="text-[8px] font-semibold mb-1">Orientación y Convivencia</p>
+                          <table className="w-full border-collapse text-[8px]">
+                            <thead>
+                              <tr className="border border-black bg-gray-100">
+                                <th className="border border-black p-0.5 w-6">N°</th>
+                                <th className="border border-black p-0.5">AÑO</th>
+                                <th className="border border-black p-0.5">LITERAL</th>
+                              </tr>
+                            </thead>
                             <tbody>
-                              <tr>
-                                <td colSpan={13} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>Orientación y Convivencia</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={7} style={bdCh}>AÑO</td>
-                                <td colSpan={6} style={bdCh}>LITERAL</td>
-                              </tr>
                               {displayData.orientacion.map((row, i) => (
-                                <tr key={i}>
-                                  <td colSpan={7} style={bdC}>{row.anio || '—'}</td>
-                                  <td colSpan={6} style={bdC}>{row.literal || '—'}</td>
+                                <tr key={i} className="border border-black">
+                                  <td className="border border-black p-0.5 text-center">{i + 1}</td>
+                                  <td className="border border-black p-0.5 text-center">{row.anio || '—'}</td>
+                                  <td className="border border-black p-0.5 text-center">{row.literal || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
+                        </div>
 
-                          {/* Participación en Grupos — 13 cols */}
-                          <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginTop: '2px' }}>
+                        {/* Participación en Grupos */}
+                        <div className="mt-2">
+                          <p className="text-[8px] font-semibold mb-1">Participación en Grupos de Creación, Recreación y Producción</p>
+                          <table className="w-full border-collapse text-[8px]">
+                            <thead>
+                              <tr className="border border-black bg-gray-100">
+                                <th className="border border-black p-0.5 w-6">N°</th>
+                                <th className="border border-black p-0.5">AÑO</th>
+                                <th className="border border-black p-0.5">GRUPO</th>
+                                <th className="border border-black p-0.5">LITERAL</th>
+                              </tr>
+                            </thead>
                             <tbody>
-                              <tr>
-                                <td colSpan={13} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>Participación en Grupos</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={4} style={bdCh}>AÑO</td>
-                                <td colSpan={5} style={bdCh}>GRUPO</td>
-                                <td colSpan={4} style={bdCh}>LITERAL</td>
-                              </tr>
                               {displayData.grupos.map((row, i) => (
-                                <tr key={i}>
-                                  <td colSpan={4} style={bdC}>{row.anio || '—'}</td>
-                                  <td colSpan={5} style={bdC}>{row.grupo || '—'}</td>
-                                  <td colSpan={4} style={bdC}>{row.literal || '—'}</td>
+                                <tr key={i} className="border border-black">
+                                  <td className="border border-black p-0.5 text-center">{i + 1}</td>
+                                  <td className="border border-black p-0.5 text-center">{row.anio || '—'}</td>
+                                  <td className="border border-black p-0.5 text-center">{row.grupo || '—'}</td>
+                                  <td className="border border-black p-0.5 text-center">{row.literal || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -1062,75 +996,48 @@ export default function CertificacionesPage() {
                         </div>
                       </div>
 
-                      {/* ====== SECCIÓN VI: Observaciones (Row 53-54) — 27 cols ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
-                        <tbody>
-                          {/* Row 53: 4+3+20=27 */}
-                          <tr>
-                            <td colSpan={4} style={bdB}>VI. Observaciones:</td>
-                            <td colSpan={3} style={bdB}>P.A.:</td>
-                            <td colSpan={20} style={bd}>{displayData.promedioAcumulado || '—'}</td>
-                          </tr>
-                          {/* Row 54: full width */}
-                          <tr>
-                            <td colSpan={27} style={bd}>{displayData.observaciones || '—'}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      {/* ====== SECCIONES VII + VIII: Director y CDCCE — side by side ====== */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
-                        {/* VII — left half (A-M equivalent, 13 cols) */}
-                        <div style={{ flex: '1 1 0' }}>
-                          <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
-                            <tbody>
-                              <tr>
-                                <td colSpan={13} style={bdH}>VII. Institución Educativa</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={4} style={bdB}>Director(a):</td>
-                                <td colSpan={9} style={bd}>Apellidos y Nombres: {displayData.director.apellidosNombres || '—'}</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={4} style={bdB}>Cédula de Identidad:</td>
-                                <td colSpan={9} style={bd}>{displayData.director.cedula || '—'}</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={13} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                  <div style={{ height: '40px', borderBottom: '1px solid #000' }}></div>
-                                  <div style={{ fontSize: '6pt', marginTop: '2px' }}>Firma</div>
-                                  <div style={{ fontSize: '6pt', fontStyle: 'italic' }}>Para efectos de su Validez Nacional</div>
-                                  <div style={{ marginTop: '4px', border: '1px dashed #ccc', width: '40px', height: '40px', margin: '4px auto 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5pt', color: '#aaa' }}>Sello</div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                      {/* SECCIÓN VI: Observaciones */}
+                      <div className="mb-3 border-t border-black pt-2">
+                        <p className="font-bold text-[9px] mb-1">VI. Observaciones</p>
+                        <div className="grid grid-cols-2 gap-1 text-[9px]">
+                          <span><strong>P.A.:</strong> {displayData.promedioAcumulado || '—'}</span>
+                          <span>{displayData.observaciones || '—'}</span>
                         </div>
-                        {/* VIII — right half (O-AA equivalent, 13 cols) */}
-                        <div style={{ flex: '1 1 0' }}>
-                          <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
-                            <tbody>
-                              <tr>
-                                <td colSpan={13} style={bdH}>VIII. CDCCE Estatal</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={4} style={bdB}>Director(a):</td>
-                                <td colSpan={9} style={bd}>Apellidos y Nombres: {displayData.directorCdcce.apellidosNombres || '—'}</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={4} style={bdB}>Cédula de Identidad:</td>
-                                <td colSpan={9} style={bd}>{displayData.directorCdcce.cedula || '—'}</td>
-                              </tr>
-                              <tr>
-                                <td colSpan={13} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                  <div style={{ height: '40px', borderBottom: '1px solid #000' }}></div>
-                                  <div style={{ fontSize: '6pt', marginTop: '2px' }}>Firma</div>
-                                  <div style={{ fontSize: '6pt', fontStyle: 'italic' }}>Para efectos de su Validez Internacional</div>
-                                  <div style={{ marginTop: '4px', border: '1px dashed #ccc', width: '40px', height: '40px', margin: '4px auto 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5pt', color: '#aaa' }}>Sello CDCCE</div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                      </div>
+
+                      {/* SECCIÓN VII: Director */}
+                      <div className="mb-3 border-t border-black pt-2">
+                        <p className="font-bold text-[9px] mb-1">VII. Institución Educativa</p>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[9px]">
+                          <div>
+                            <p><strong>Director(a):</strong></p>
+                            <p>Apellidos y Nombres: {displayData.director.apellidosNombres || '—'}</p>
+                            <p>Cédula de Identidad: {displayData.director.cedula || '—'}</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="border-b border-black w-48 mx-auto mb-1" style={{ height: '40px' }}></div>
+                            <p className="text-[8px]">Firma</p>
+                            <p className="text-[8px] italic">Para efectos de su Validez Nacional</p>
+                            <div className="mt-2 border border-dashed border-gray-400 w-20 h-20 mx-auto flex items-center justify-center text-[7px] text-gray-400">Sello</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* SECCIÓN VIII: CDCCE */}
+                      <div className="mb-3 border-t border-black pt-2">
+                        <p className="font-bold text-[9px] mb-1">VIII. Centro de Desarrollo de la Calidad Educativa Estatal</p>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[9px]">
+                          <div>
+                            <p><strong>Director(a):</strong></p>
+                            <p>Apellidos y Nombres: {displayData.directorCdcce.apellidosNombres || '—'}</p>
+                            <p>Cédula de Identidad: {displayData.directorCdcce.cedula || '—'}</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="border-b border-black w-48 mx-auto mb-1" style={{ height: '40px' }}></div>
+                            <p className="text-[8px]">Firma</p>
+                            <p className="text-[8px] italic">Para efectos de su Validez Internacional</p>
+                            <div className="mt-2 border border-dashed border-gray-400 w-20 h-20 mx-auto flex items-center justify-center text-[7px] text-gray-400">Sello CDCCE</div>
+                          </div>
                         </div>
                       </div>
 

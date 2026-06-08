@@ -879,33 +879,29 @@ export default function CertificacionesPage() {
                   <CardContent>
                     <div className="border-2 border-black bg-white text-black mx-auto" id="cert-preview" style={{ fontFamily: 'Arial, sans-serif', fontSize: '7pt', lineHeight: '1.3', maxWidth: '210mm', padding: '8px' }}>
                       {/* ====== ENCABEZADO (Rows 1-3) ====== */}
-                      <table width="100%" cellPadding={2} cellSpacing={0} style={{ ...tbS, marginBottom: '4px' }}>
+                      {/* 3 columnas: Logo (A-L) | Texto izq (M-V) | Texto der (W-AA) */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '0' }}>
+                        <colgroup>
+                          <col style={{ width: '55%' }} />
+                          <col style={{ width: '30%' }} />
+                          <col style={{ width: '15%' }} />
+                        </colgroup>
                         <tbody>
                           <tr>
-                            <td style={{ width: '35%', verticalAlign: 'top', padding: '4px', border: 'none' }}>
-                              <div style={{ fontWeight: 'bold' }}>REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
-                              <div style={{ fontWeight: 'bold' }}>MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</div>
-                              <div style={{ fontWeight: 'bold', fontSize: '6pt' }}>ZONA EDUCATIVA {displayData.estado.toUpperCase()}</div>
+                            <td rowSpan={3} style={{ ...bd, verticalAlign: 'middle', padding: '4px 6px' }}>
+                              <img src="/cemg-logo.png" alt="Gobierno Bolivariano de Venezuela - MPPE" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
                             </td>
-                            <td style={{ verticalAlign: 'middle', textAlign: 'center', padding: '4px', border: 'none' }}>
-                              <div style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                CERTIFICACIÓN DE CALIFICACIONES {certData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}
-                              </div>
+                            <td colSpan={2} style={{ ...bdCh, verticalAlign: 'middle' }}>
+                              CERTIFICACIÓN DE CALIFICACIONES&nbsp;&nbsp;EMG
                             </td>
                           </tr>
-                        </tbody>
-                      </table>
-
-                      {/* ====== SECCIÓN I: Plan de Estudio (Rows 2-3) ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
-                        <tbody>
                           <tr>
-                            <td colSpan={10} style={{ border: 'none', padding: '1px 2px' }}>I. Plan de Estudio: <b>{displayData.planEstudio}</b></td>
-                            <td colSpan={5} style={{ border: 'none', padding: '1px 2px', textAlign: 'right' }}>Código: <b>{schoolConfig.planCodigo}</b></td>
+                            <td style={{ ...bdB }}>I. Plan de Estudio:&nbsp;&nbsp;{displayData.planEstudio}</td>
+                            <td style={{ ...bd }}>Código&nbsp;&nbsp;{schoolConfig.planCodigo}</td>
                           </tr>
                           <tr>
-                            <td colSpan={7} style={{ border: 'none', padding: '1px 2px' }}>Lugar y Fecha de Expedición: <b>{displayData.lugar}</b></td>
-                            <td colSpan={8} style={{ border: 'none', padding: '1px 2px' }}>{displayFechaExpedicion}</td>
+                            <td style={{ ...bdB }}>Lugar y Fecha de Expedición:</td>
+                            <td style={{ ...bd }}>{displayData.lugar},&nbsp;{displayFechaExpedicion}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -974,30 +970,54 @@ export default function CertificacionesPage() {
                         </tbody>
                       </table>
 
-                      {/* SECCIÓN IV */}
-                      <div className="mb-3 border-t border-black pt-2">
-                        <p className="font-bold text-[9px] mb-1">IV. Instituciones Educativas</p>
-                        <table className="w-full border-collapse text-[9px]">
-                          <thead>
-                            <tr className="border border-black">
-                              <th className="border border-black p-1 w-8">N°</th>
-                              <th className="border border-black p-1">Denominación y Epónimo</th>
-                              <th className="border border-black p-1">Localidad</th>
-                              <th className="border border-black p-1 w-10">E.F.</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {displayData.instituciones.map((inst, i) => (
-                              <tr key={i} className="border border-black">
-                                <td className="border border-black p-1 text-center">{inst.numero}</td>
-                                <td className="border border-black p-1">{inst.denominacion || '—'}</td>
-                                <td className="border border-black p-1">{inst.localidad || '—'}</td>
-                                <td className="border border-black p-1 text-center">{inst.ef || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      {/* ====== SECCIÓN IV: Instituciones Educativas — Una sola tabla 8 columnas ====== */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '3px' }}>
+                        <colgroup>
+                          <col style={{ width: '4%' }} /><col style={{ width: '21%' }} />
+                          <col style={{ width: '12%' }} /><col style={{ width: '4%' }} />
+                          <col style={{ width: '4%' }} /><col style={{ width: '21%' }} />
+                          <col style={{ width: '12%' }} /><col style={{ width: '4%' }} />
+                        </colgroup>
+                        <tbody>
+                          <tr>
+                            <td colSpan={4} style={{ ...bdB, fontSize: '8pt' }}>IV. Instituciones Educativas donde Cursó Estudios</td>
+                            <td style={bdCh}>N°</td>
+                            <td style={bdCh}>Denominación y Epónimo</td>
+                            <td style={bdCh}>Localidad</td>
+                            <td style={bdCh}>E.F.</td>
+                          </tr>
+                          <tr>
+                            <td style={bdCh}>N°</td>
+                            <td style={bdCh}>Denominación y Epónimo</td>
+                            <td style={bdCh}>Localidad</td>
+                            <td style={bdCh}>E.F.</td>
+                            <td style={bdC}>{displayData.instituciones[2]?.numero ?? '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[2]?.denominacion || '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[2]?.localidad || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[2]?.ef || '\u00A0'}</td>
+                          </tr>
+                          <tr>
+                            <td style={bdC}>{displayData.instituciones[0]?.numero ?? '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[0]?.denominacion || '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[0]?.localidad || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[0]?.ef || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[3]?.numero ?? '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[3]?.denominacion || '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[3]?.localidad || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[3]?.ef || '\u00A0'}</td>
+                          </tr>
+                          <tr>
+                            <td style={bdC}>{displayData.instituciones[1]?.numero ?? '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[1]?.denominacion || '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[1]?.localidad || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[1]?.ef || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[4]?.numero ?? '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[4]?.denominacion || '\u00A0'}</td>
+                            <td style={bd}>{displayData.instituciones[4]?.localidad || '\u00A0'}</td>
+                            <td style={bdC}>{displayData.instituciones[4]?.ef || '\u00A0'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
 
                       {/* ====== SECCIÓN V: Plan de Estudio — Calificaciones (side-by-side year tables) ====== */}
                       <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '2px' }}>

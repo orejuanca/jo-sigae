@@ -436,21 +436,32 @@ export default function CertificacionesPage() {
   const bdC: React.CSSProperties = { ...bd, textAlign: 'center' }
   const bdCh: React.CSSProperties = { ...bd, fontWeight: 'bold', backgroundColor: '#f0f0f0', textAlign: 'center', fontSize: '6pt' }
 
-  const renderYearTable = (plan: PlanAnio, planIdx: number) => {
+  // Render one half of a year table (left=A-M or right=O-AA), 13 cols each
+  // Excel columns per half: A-D(4), E(1), F-I(4), J(1), K(1), L(1), M(1) = 13
+  const renderYearHalf = (plan: PlanAnio, planIdx: number) => {
     const grades = displayData.calificaciones[plan.anio] || []
     const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
     return (
       <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
+        <colgroup>
+          <col style={{ width: '30%' }} />{/* A-D areas */}
+          <col style={{ width: '6%' }} />{/* E nota */}
+          <col style={{ width: '24%' }} />{/* F-I letras */}
+          <col style={{ width: '6%' }} />{/* J T-E */}
+          <col style={{ width: '8%' }} />{/* K mes */}
+          <col style={{ width: '8%' }} />{/* L año */}
+          <col style={{ width: '18%' }} />{/* M inst */}
+        </colgroup>
         <tbody>
           <tr>
-            <td colSpan={13} style={{ ...bdH, textAlign: 'center' }}>{plan.anio}{yearLabel ? ` (${yearLabel})` : ''}</td>
+            <td colSpan={13} style={{ ...bdH, textAlign: 'center' }}>{plan.anio.toUpperCase()}{yearLabel ? ` (${yearLabel})` : ''}</td>
           </tr>
           <tr>
             <td colSpan={4} rowSpan={2} style={bdCh}>ÁREAS DE FORMACIÓN</td>
             <td colSpan={5} style={bdCh}>CALIFICACIÓN</td>
-            <td colSpan={1} rowSpan={2} style={bdCh}>T-E</td>
+            <td rowSpan={2} style={bdCh}>T-E</td>
             <td colSpan={2} style={bdCh}>FECHA</td>
-            <td colSpan={1} rowSpan={2} style={bdCh}>Inst. Educ.</td>
+            <td rowSpan={2} style={bdCh}>Inst. Educ.</td>
           </tr>
           <tr>
             <td style={bdCh}>N°</td>
@@ -460,13 +471,13 @@ export default function CertificacionesPage() {
           </tr>
           {grades.map((cal, idx) => (
             <tr key={idx}>
-              <td colSpan={4} style={bd}>{cal.numero}. {cal.materia}</td>
-              <td style={{ ...bdC, fontWeight: 'bold' }}>{cal.nota || '—'}</td>
-              <td colSpan={4} style={{ ...bdC, fontWeight: 'bold' }}>{cal.literal || '—'}</td>
-              <td style={bdC}>{cal.tipoEvaluacion || '—'}</td>
-              <td style={bdC}>{cal.fechaMes || '—'}</td>
-              <td style={bdC}>{cal.fechaAnio || '—'}</td>
-              <td style={{ ...bdC, fontSize: '6pt' }}>{displayData.denominacion || '—'}</td>
+              <td colSpan={4} style={bd}>{cal.materia}</td>
+              <td style={{ ...bdC, fontWeight: 'bold' }}>{cal.nota || ''}</td>
+              <td colSpan={4} style={{ ...bdC }}>{cal.literal || ''}</td>
+              <td style={bdC}>{cal.tipoEvaluacion || ''}</td>
+              <td style={bdC}>{cal.fechaMes || ''}</td>
+              <td style={bdC}>{cal.fechaAnio || ''}</td>
+              <td style={{ ...bdC, fontSize: '5pt' }}>{displayData.denominacion || ''}</td>
             </tr>
           ))}
         </tbody>
@@ -877,60 +888,76 @@ export default function CertificacionesPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="border-2 border-black bg-white text-black mx-auto" id="cert-preview" style={{ fontFamily: 'Arial, sans-serif', fontSize: '7pt', lineHeight: '1.3', maxWidth: '210mm', padding: '8px' }}>
+                    <div className="border-2 border-black bg-white text-black mx-auto" id="cert-preview" style={{ fontFamily: 'Arial, sans-serif', fontSize: '7pt', lineHeight: '1.2', maxWidth: '210mm', padding: '4px' }}>
+
                       {/* ====== ENCABEZADO (Rows 1-3) ====== */}
-                      <table width="100%" cellPadding={2} cellSpacing={0} style={{ ...tbS, marginBottom: '4px' }}>
+                      {/* Excel: Row 1-3 cols A-L=logo, M1:AA1=title, M2:V2=plan, W2:AA2=codigo, M3:S3=lugar, T3:V3=comma, W3:AA3=fecha */}
+                      <table width="100%" cellPadding={0} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', borderCollapse: 'collapse', marginBottom: '0' }}>
+                        <colgroup>
+                          <col style={{ width: '48%' }} />{/* A-L: logo */}
+                          <col style={{ width: '34%' }} />{/* M-V: texto izq */}
+                          <col style={{ width: '18%' }} />{/* W-AA: texto der */}
+                        </colgroup>
                         <tbody>
+                          {/* Row 1 */}
                           <tr>
-                            <td style={{ width: '35%', verticalAlign: 'top', padding: '4px', border: 'none' }}>
-                              <div style={{ fontWeight: 'bold' }}>REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
-                              <div style={{ fontWeight: 'bold' }}>MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</div>
-                              <div style={{ fontWeight: 'bold', fontSize: '6pt' }}>ZONA EDUCATIVA {displayData.estado.toUpperCase()}</div>
+                            <td rowSpan={3} style={{ ...bd, verticalAlign: 'middle', padding: '2px', height: '40px' }}>
+                              <img src="/cemg-logo.png" alt="Logo" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
                             </td>
-                            <td style={{ verticalAlign: 'middle', textAlign: 'center', padding: '4px', border: 'none' }}>
-                              <div style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                CERTIFICACIÓN DE CALIFICACIONES {certData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}
-                              </div>
+                            <td colSpan={2} style={{ ...bd, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9pt', padding: '2px 4px' }}>
+                              CERTIFICACIÓN DE CALIFICACIONES&nbsp;&nbsp;{certData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}
                             </td>
+                          </tr>
+                          {/* Row 2 */}
+                          <tr>
+                            <td style={{ ...bd, padding: '1px 3px' }}>I. Plan de Estudio:&nbsp;&nbsp;{displayData.planEstudio}</td>
+                            <td style={{ ...bd, padding: '1px 3px', textAlign: 'right' }}>Código&nbsp;&nbsp;{schoolConfig.planCodigo}</td>
+                          </tr>
+                          {/* Row 3 */}
+                          <tr>
+                            <td style={{ ...bd, padding: '1px 3px' }}>Lugar y Fecha de Expedición:</td>
+                            <td style={{ ...bd, padding: '1px 3px' }}>{displayData.lugar},&nbsp;&nbsp;{displayFechaExpedicion}</td>
                           </tr>
                         </tbody>
                       </table>
 
-                      {/* ====== SECCIÓN I: Plan de Estudio (Rows 2-3) ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
+                      {/* ====== SECCIÓN II: Datos de la Institución (Rows 5-8) — 27 cols (A to AA, N is separator) ====== */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '0' }}>
+                        <colgroup>
+                          <col style={{ width: '3.2%' }} />{/* A */}
+                          <col style={{ width: '8.4%' }} />{/* B */}
+                          <col style={{ width: '8.4%' }} />{/* C */}
+                          <col style={{ width: '8.4%' }} />{/* D */}
+                          <col style={{ width: '8.4%' }} />{/* E */}
+                          <col style={{ width: '8.4%' }} />{/* F */}
+                          <col style={{ width: '8.4%' }} />{/* G */}
+                          <col style={{ width: '8.4%' }} />{/* H */}
+                          <col style={{ width: '4.5%' }} />{/* I */}
+                          <col style={{ width: '8.4%' }} />{/* J */}
+                          <col style={{ width: '8.4%' }} />{/* K */}
+                          <col style={{ width: '8.4%' }} />{/* L */}
+                          <col style={{ width: '4.5%' }} />{/* M */}
+                          {/* N = separator column - zero width but creates the gap */}
+                        </colgroup>
                         <tbody>
                           <tr>
-                            <td colSpan={10} style={{ border: 'none', padding: '1px 2px' }}>I. Plan de Estudio: <b>{displayData.planEstudio}</b></td>
-                            <td colSpan={5} style={{ border: 'none', padding: '1px 2px', textAlign: 'right' }}>Código: <b>{schoolConfig.planCodigo}</b></td>
+                            <td colSpan={27} style={bdH}>II. Datos de la Institución Educativa o Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:</td>
                           </tr>
-                          <tr>
-                            <td colSpan={7} style={{ border: 'none', padding: '1px 2px' }}>Lugar y Fecha de Expedición: <b>{displayData.lugar}</b></td>
-                            <td colSpan={8} style={{ border: 'none', padding: '1px 2px' }}>{displayFechaExpedicion}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      {/* ====== SECCIÓN II: Datos de la Institución (Rows 5-8) — 27 cols ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
-                        <tbody>
-                          <tr>
-                            <td colSpan={27} style={bdH}>II. Datos de la Institución Emisora</td>
-                          </tr>
-                          {/* Row 6: 3+5+5+14=27 (N folded into school name) */}
+                          {/* Row 6: A6:C6=Código, D6:H6=OD, I6:M6=Denominación, O6:AA6=Nombre */}
                           <tr>
                             <td colSpan={3} style={bdB}>Código:</td>
                             <td colSpan={5} style={bd}>{displayData.od}</td>
                             <td colSpan={5} style={bdB}>Denominación y Epónimo:</td>
                             <td colSpan={14} style={bd}>{displayData.denominacion}</td>
                           </tr>
-                          {/* Row 7: 3+15+3+6=27 */}
+                          {/* Row 7: A7:C7=Dirección, D7:R7=dirección, S7:U7=Teléfono, V7:AA7=tel */}
                           <tr>
                             <td colSpan={3} style={bdB}>Dirección:</td>
                             <td colSpan={15} style={bd}>{displayData.direccion}</td>
                             <td colSpan={3} style={bdB}>Teléfono:</td>
                             <td colSpan={6} style={bd}>{displayData.telefono}</td>
                           </tr>
-                          {/* Row 8: 3+4+3+8+4+5=27 */}
+                          {/* Row 8: A8:C8=Municipio, D8:G8=mun, H8:J8=Estado, K8:R8=est, S8:V8=CDCEE, W8:AA8=cdcce */}
                           <tr>
                             <td colSpan={3} style={bdB}>Municipio:</td>
                             <td colSpan={4} style={bd}>{displayData.municipio}</td>
@@ -942,119 +969,137 @@ export default function CertificacionesPage() {
                         </tbody>
                       </table>
 
-                      {/* ====== SECCIÓN III: Datos del Estudiante (Rows 9-12) — 27 cols ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
+                      {/* ====== SECCIÓN III: Datos del Estudiante (Rows 9-12) ====== */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '0' }}>
                         <tbody>
                           <tr>
                             <td colSpan={27} style={bdH}>III. Datos de Identificación del Estudiante:</td>
                           </tr>
-                          {/* Row 10: 4+5+6+12=27 */}
+                          {/* Row 10: A10:D10=Cédula, E10:I10=cedula, J10:O10=Fecha Nac, P10:AA10=fecha */}
                           <tr>
-                            <td colSpan={4} style={bdB}>Cédula:</td>
+                            <td colSpan={4} style={bdB}>Cédula de Identidad:</td>
                             <td colSpan={5} style={bd}>{displayData.estudiante.cedula}</td>
                             <td colSpan={6} style={bdB}>Fecha de Nacimiento:</td>
-                            <td colSpan={12} style={bd}>{displayData.estudiante.fechaNacimiento || '—'}</td>
+                            <td colSpan={12} style={bd}>{displayData.estudiante.fechaNacimiento || ''}</td>
                           </tr>
-                          {/* Row 11: 3+8+4+12=27 */}
+                          {/* Row 11: A11:C11=Apellidos, D11:K11=apellidos, L11:O11=Nombres, P11:AA11=nombres */}
                           <tr>
                             <td colSpan={3} style={bdB}>Apellidos:</td>
                             <td colSpan={8} style={bd}>{displayData.estudiante.apellidos}</td>
                             <td colSpan={4} style={bdB}>Nombres:</td>
                             <td colSpan={12} style={bd}>{displayData.estudiante.nombres}</td>
                           </tr>
-                          {/* Row 12: 5+6+2+7+2+5=27 */}
+                          {/* Row 12: A12:E12=Lugar País, F12:K12=pais, L12:M12=Estado, N12:R12=est, S12:U12=Municipio, V12:AA12=mun */}
                           <tr>
-                            <td colSpan={5} style={bdB}>Lugar Nacimiento País:</td>
+                            <td colSpan={5} style={bdB}>Lugar de Nacimiento País:</td>
                             <td colSpan={6} style={bd}>{displayData.estudiante.pais}</td>
                             <td colSpan={2} style={bdB}>Estado:</td>
-                            <td colSpan={7} style={bd}>{displayData.estudiante.estado || '—'}</td>
+                            <td colSpan={7} style={bd}>{displayData.estudiante.estado || ''}</td>
                             <td colSpan={2} style={bdB}>Municipio:</td>
-                            <td colSpan={5} style={bd}>{displayData.estudiante.municipio || '—'}</td>
+                            <td colSpan={5} style={bd}>{displayData.estudiante.municipio || ''}</td>
                           </tr>
                         </tbody>
                       </table>
 
-                      {/* SECCIÓN IV */}
-                      <div className="mb-3 border-t border-black pt-2">
-                        <p className="font-bold text-[9px] mb-1">IV. Instituciones Educativas</p>
-                        <table className="w-full border-collapse text-[9px]">
-                          <thead>
-                            <tr className="border border-black">
-                              <th className="border border-black p-1 w-8">N°</th>
-                              <th className="border border-black p-1">Denominación y Epónimo</th>
-                              <th className="border border-black p-1">Localidad</th>
-                              <th className="border border-black p-1 w-10">E.F.</th>
+                      {/* ====== SECCIÓN IV: Instituciones Educativas (Rows 13-16) ====== */}
+                      {/* Excel: 2 tables side by side, left cols A-M, right cols O-AA, N=separator */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '0' }}>
+                        <colgroup>
+                          <col style={{ width: '3.2%' }} />{/* A */}
+                          <col style={{ width: '8.4%' }} />{/* B */}
+                          <col style={{ width: '6%' }} />{/* C */}
+                          <col style={{ width: '6%' }} />{/* D */}
+                          <col style={{ width: '8.4%' }} />{/* E */}
+                          <col style={{ width: '8.4%' }} />{/* F */}
+                          <col style={{ width: '8.4%' }} />{/* G */}
+                          <col style={{ width: '8.4%' }} />{/* H */}
+                          <col style={{ width: '4.5%' }} />{/* I */}
+                          <col style={{ width: '8.4%' }} />{/* J */}
+                          <col style={{ width: '8.4%' }} />{/* K */}
+                          <col style={{ width: '8.4%' }} />{/* L */}
+                          <col style={{ width: '4.5%' }} />{/* M */}
+                        </colgroup>
+                        <tbody>
+                          {/* Row 13 header */}
+                          <tr>
+                            <td colSpan={13} style={bdH}>IV. Instituciones Educativas donde Cursó Estudios</td>
+                          </tr>
+                          {/* Row 14: sub-headers */}
+                          <tr>
+                            <td style={bdCh}>N°</td>
+                            <td colSpan={6} style={bdCh}>Denominación y Epónimo</td>
+                            <td colSpan={4} style={bdCh}>Localidad</td>
+                            <td style={bdCh}>E.F.</td>
+                          </tr>
+                          {/* Data rows 15-16 */}
+                          {displayData.instituciones.slice(0, 3).map((inst, i) => (
+                            <tr key={`l${i}`}>
+                              <td style={bdC}>{i + 1}</td>
+                              <td colSpan={6} style={bd}>{inst.denominacion || ''}</td>
+                              <td colSpan={4} style={bd}>{inst.localidad || ''}</td>
+                              <td style={bdC}>{inst.ef || ''}</td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {displayData.instituciones.map((inst, i) => (
-                              <tr key={i} className="border border-black">
-                                <td className="border border-black p-1 text-center">{inst.numero}</td>
-                                <td className="border border-black p-1">{inst.denominacion || '—'}</td>
-                                <td className="border border-black p-1">{inst.localidad || '—'}</td>
-                                <td className="border border-black p-1 text-center">{inst.ef || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* ====== SECCIÓN V: Plan de Estudio — Calificaciones (side-by-side year tables) ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '2px' }}>
-                        <tbody><tr><td colSpan={27} style={bdH}>V. Plan de Estudio — Calificaciones</td></tr></tbody>
+                          ))}
+                        </tbody>
                       </table>
 
-                      {/* Primer Año (left) + Segundo Año (right) — side by side */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[0], 0)}</div>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[1], 1)}</div>
+                      {/* ====== SECCIÓN V: Plan de Estudio (Rows 17-52) ====== */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '0' }}>
+                        <tbody><tr><td colSpan={27} style={bdH}>V. Plan de Estudio:</td></tr></tbody>
+                      </table>
+
+                      {/* PRIMER AÑO (left A-M) + SEGUNDO AÑO (right O-AA) */}
+                      <div style={{ display: 'flex', gap: '1px', marginBottom: '1px' }}>
+                        <div style={{ flex: '1 1 49.5%' }}>{renderYearHalf(activePlan[0], 0)}</div>
+                        <div style={{ flex: '1 1 49.5%' }}>{renderYearHalf(activePlan[1], 1)}</div>
                       </div>
 
-                      {/* Tercer Año (left) + Cuarto Año (right) — side by side */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[2], 2)}</div>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[3], 3)}</div>
+                      {/* TERCER AÑO (left) + CUARTO AÑO (right) */}
+                      <div style={{ display: 'flex', gap: '1px', marginBottom: '1px' }}>
+                        <div style={{ flex: '1 1 49.5%' }}>{renderYearHalf(activePlan[2], 2)}</div>
+                        <div style={{ flex: '1 1 49.5%' }}>{renderYearHalf(activePlan[3], 3)}</div>
                       </div>
 
-                      {/* Quinto Año (left) + Orientación y Grupos (right) — side by side */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
-                        <div style={{ flex: '1 1 0' }}>{renderYearTable(activePlan[4], 4)}</div>
-                        <div style={{ flex: '1 1 0' }}>
-                          {/* Orientación y Convivencia — 13 cols */}
+                      {/* QUINTO AÑO (left) + Orientación/Grupos (right) */}
+                      <div style={{ display: 'flex', gap: '1px', marginBottom: '1px' }}>
+                        <div style={{ flex: '1 1 49.5%' }}>{renderYearHalf(activePlan[4], 4)}</div>
+                        <div style={{ flex: '1 1 49.5%' }}>
+                          {/* Orientación y Convivencia */}
                           <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
                             <tbody>
                               <tr>
-                                <td colSpan={13} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>Orientación y Convivencia</td>
+                                <td colSpan={13} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>ÁREA DE FORMACIÓN</td>
                               </tr>
                               <tr>
-                                <td colSpan={7} style={bdCh}>AÑO</td>
-                                <td colSpan={6} style={bdCh}>LITERAL</td>
+                                <td colSpan={7} style={bdCh}>Orientación y Convivencia</td>
+                                <td colSpan={6} style={bdCh}>AÑO</td>
                               </tr>
                               {displayData.orientacion.map((row, i) => (
-                                <tr key={i}>
-                                  <td colSpan={7} style={bdC}>{row.anio || '—'}</td>
-                                  <td colSpan={6} style={bdC}>{row.literal || '—'}</td>
+                                <tr key={`o${i}`}>
+                                  <td colSpan={7} style={bdCh}>{row.anio || ''}</td>
+                                  <td colSpan={6} style={bdC}>{row.literal || ''}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
 
-                          {/* Participación en Grupos — 13 cols */}
-                          <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginTop: '2px' }}>
+                          {/* Participación en Grupos */}
+                          <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginTop: '1px' }}>
                             <tbody>
                               <tr>
-                                <td colSpan={13} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>Participación en Grupos</td>
+                                <td colSpan={7} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>Participación en Grupos de Creación, Recreación y Producción</td>
+                                <td colSpan={6} style={{ ...bdH, textAlign: 'center', fontSize: '6pt' }}>AÑO</td>
                               </tr>
                               <tr>
-                                <td colSpan={4} style={bdCh}>AÑO</td>
-                                <td colSpan={5} style={bdCh}>GRUPO</td>
-                                <td colSpan={4} style={bdCh}>LITERAL</td>
+                                <td colSpan={4} style={bdCh}>GRUPO</td>
+                                <td colSpan={3} style={bdCh}>LITERAL</td>
+                                <td colSpan={6} style={bdCh}>AÑO</td>
                               </tr>
                               {displayData.grupos.map((row, i) => (
-                                <tr key={i}>
-                                  <td colSpan={4} style={bdC}>{row.anio || '—'}</td>
-                                  <td colSpan={5} style={bdC}>{row.grupo || '—'}</td>
-                                  <td colSpan={4} style={bdC}>{row.literal || '—'}</td>
+                                <tr key={`g${i}`}>
+                                  <td colSpan={4} style={bdC}>{row.grupo || ''}</td>
+                                  <td colSpan={3} style={bdC}>{row.anio || ''}</td>
+                                  <td colSpan={6} style={bdC}>{row.literal || ''}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -1062,86 +1107,95 @@ export default function CertificacionesPage() {
                         </div>
                       </div>
 
-                      {/* ====== SECCIÓN VI: Observaciones (Row 53-54) — 27 cols ====== */}
-                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginBottom: '3px' }}>
+                      {/* ====== SECCIÓN VI: Observaciones (Rows 53-54) ====== */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, tableLayout: 'fixed', marginBottom: '0' }}>
                         <tbody>
-                          {/* Row 53: 4+3+20=27 */}
                           <tr>
                             <td colSpan={4} style={bdB}>VI. Observaciones:</td>
                             <td colSpan={3} style={bdB}>P.A.:</td>
-                            <td colSpan={20} style={bd}>{displayData.promedioAcumulado || '—'}</td>
-                          </tr>
-                          {/* Row 54: full width */}
-                          <tr>
-                            <td colSpan={27} style={bd}>{displayData.observaciones || '—'}</td>
+                            <td colSpan={4} style={bd}>{displayData.promedioAcumulado || ''}</td>
+                            <td colSpan={16} style={bd}>{displayData.observaciones || ''}</td>
                           </tr>
                         </tbody>
                       </table>
 
-                      {/* ====== SECCIONES VII + VIII: Director y CDCCE — side by side ====== */}
-                      <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
-                        {/* VII — left half (A-M equivalent, 13 cols) */}
-                        <div style={{ flex: '1 1 0' }}>
+                      {/* ====== SECCIONES VII + VIII: Director y CDCCE (Rows 57-64) side by side ====== */}
+                      <div style={{ display: 'flex', gap: '1px', marginBottom: '0' }}>
+                        {/* VII — left half */}
+                        <div style={{ flex: '1 1 49.5%' }}>
                           <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
                             <tbody>
                               <tr>
-                                <td colSpan={13} style={bdH}>VII. Institución Educativa</td>
+                                <td colSpan={7} style={bdH}>VII. Institución Educativa</td>
                               </tr>
                               <tr>
-                                <td colSpan={4} style={bdB}>Director(a):</td>
-                                <td colSpan={9} style={bd}>Apellidos y Nombres: {displayData.director.apellidosNombres || '—'}</td>
+                                <td colSpan={7} style={{ ...bdH, textAlign: 'center' }}>SELLO DE LA INSTITUCIÓN EDUCATIVA</td>
                               </tr>
                               <tr>
-                                <td colSpan={4} style={bdB}>Cédula de Identidad:</td>
-                                <td colSpan={9} style={bd}>{displayData.director.cedula || '—'}</td>
+                                <td colSpan={3} style={bdB}>Director(a)</td>
+                                <td colSpan={4} style={bdB}>Apellidos y Nombres:</td>
                               </tr>
                               <tr>
-                                <td colSpan={13} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                  <div style={{ height: '40px', borderBottom: '1px solid #000' }}></div>
-                                  <div style={{ fontSize: '6pt', marginTop: '2px' }}>Firma</div>
-                                  <div style={{ fontSize: '6pt', fontStyle: 'italic' }}>Para efectos de su Validez Nacional</div>
-                                  <div style={{ marginTop: '4px', border: '1px dashed #ccc', width: '40px', height: '40px', margin: '4px auto 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5pt', color: '#aaa' }}>Sello</div>
-                                </td>
+                                <td colSpan={7} style={bd}>{displayData.director.apellidosNombres || ''}</td>
+                              </tr>
+                              <tr>
+                                <td colSpan={3} style={bdB}>Cédula de Identidad:</td>
+                                <td colSpan={4} style={bd}>{displayData.director.cedula || ''}</td>
+                              </tr>
+                              <tr>
+                                <td colSpan={3} style={bdB}>Firma:</td>
+                                <td colSpan={4} style={{ ...bd, minHeight: '30px' }}></td>
+                              </tr>
+                              <tr>
+                                <td colSpan={7} style={{ ...bd, fontStyle: 'italic', textAlign: 'center' }}>Para efectos de su Validez Nacional</td>
                               </tr>
                             </tbody>
                           </table>
                         </div>
-                        {/* VIII — right half (O-AA equivalent, 13 cols) */}
-                        <div style={{ flex: '1 1 0' }}>
+                        {/* VIII — right half */}
+                        <div style={{ flex: '1 1 49.5%' }}>
                           <table width="100%" cellPadding={1} cellSpacing={0} style={tbS}>
                             <tbody>
                               <tr>
-                                <td colSpan={13} style={bdH}>VIII. CDCCE Estatal</td>
+                                <td colSpan={7} style={bdH}>VIII. Centro de Desarrollo de la Calidad Educativa Estadal</td>
                               </tr>
                               <tr>
-                                <td colSpan={4} style={bdB}>Director(a):</td>
-                                <td colSpan={9} style={bd}>Apellidos y Nombres: {displayData.directorCdcce.apellidosNombres || '—'}</td>
+                                <td colSpan={7} style={{ ...bdH, textAlign: 'center' }}>SELLO DEL CENTRO DE DESARROLLO DE LA CALIDAD EDUCATIVA ESTADAL</td>
                               </tr>
                               <tr>
-                                <td colSpan={4} style={bdB}>Cédula de Identidad:</td>
-                                <td colSpan={9} style={bd}>{displayData.directorCdcce.cedula || '—'}</td>
+                                <td colSpan={3} style={bdB}>Director(a)</td>
+                                <td colSpan={4} style={bdB}>Apellidos y Nombres:</td>
                               </tr>
                               <tr>
-                                <td colSpan={13} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                  <div style={{ height: '40px', borderBottom: '1px solid #000' }}></div>
-                                  <div style={{ fontSize: '6pt', marginTop: '2px' }}>Firma</div>
-                                  <div style={{ fontSize: '6pt', fontStyle: 'italic' }}>Para efectos de su Validez Internacional</div>
-                                  <div style={{ marginTop: '4px', border: '1px dashed #ccc', width: '40px', height: '40px', margin: '4px auto 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5pt', color: '#aaa' }}>Sello CDCCE</div>
-                                </td>
+                                <td colSpan={7} style={bd}>{displayData.directorCdcce.apellidosNombres || ''}</td>
+                              </tr>
+                              <tr>
+                                <td colSpan={3} style={bdB}>Cédula de Identidad:</td>
+                                <td colSpan={4} style={bd}>{displayData.directorCdcce.cedula || ''}</td>
+                              </tr>
+                              <tr>
+                                <td colSpan={3} style={bdB}>Firma:</td>
+                                <td colSpan={4} style={{ ...bd, minHeight: '30px' }}></td>
+                              </tr>
+                              <tr>
+                                <td colSpan={7} style={{ ...bd, fontStyle: 'italic', textAlign: 'center' }}>Para efectos de su Validez Internacional</td>
                               </tr>
                             </tbody>
                           </table>
                         </div>
                       </div>
 
-                      {/* VALOR FISCAL */}
-                      <div className="border-t-2 border-black pt-2 mt-4">
-                        <p className="text-[8px] text-center font-semibold">Valor Fiscal: {schoolConfig.valorFiscal}</p>
-                        <p className="text-[8px] text-center mt-1">{schoolConfig.valorFiscalTexto}</p>
-                      </div>
+                      {/* VALOR FISCAL (Row 65) */}
+                      <table width="100%" cellPadding={1} cellSpacing={0} style={{ ...tbS, marginTop: '2px' }}>
+                        <tbody>
+                          <tr>
+                            <td colSpan={27} style={{ ...bd, fontWeight: 'bold', textAlign: 'center', fontSize: '6pt' }}>VALOR FISCAL: Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres décimas de la Unidad Tributaria (0,3 U.T.)</td>
+                          </tr>
+                        </tbody>
+                      </table>
 
                       {previewCert && (
-                        <div className="text-right mt-2 text-[8px]">
+                        <div style={{ textAlign: 'right', marginTop: '2px', fontSize: '6pt' }}>
                           <p><strong>Número:</strong> {previewCert.numero}</p>
                           <p><strong>Fecha de Emisión:</strong> {formatDate(previewCert.fechaEmision)}</p>
                         </div>

@@ -20,6 +20,7 @@ export interface ParsedCalificacion {
   tipoEvaluacion: string // F=Final, R=Reprobado, M=Mejorada, PE=Pre-Militar
   fechaMes: string
   fechaAnio: string
+  instEduc: string // N° de institución educativa (1-5)
 }
 
 export interface ParsedOrientacion {
@@ -312,6 +313,7 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
         tipoEvaluacion: g.tipo || '',
         fechaMes: parseMes(g.mes),
         fechaAnio: g.anio,
+        instEduc: g.lapso && !isAsterisk(g.lapso) ? String(g.lapso).trim() : '',
       }
     })
 
@@ -485,6 +487,7 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
         tipoEvaluacion: g.tipo || '',
         fechaMes: parseMes(g.mes),
         fechaAnio: g.anio,
+        instEduc: g.lapso && !isAsterisk(g.lapso) ? String(g.lapso).trim() : '',
       }
     })
 
@@ -621,7 +624,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
   // Build calificaciones in the page format
   const calificaciones: Record<string, Array<{
     materia: string; numero: number; nota: string; literal: string;
-    tipoEvaluacion: string; fechaMes: string; fechaAnio: string
+    tipoEvaluacion: string; fechaMes: string; fechaAnio: string; instEduc: string
   }>> = {}
 
   Object.entries(parsed.calificaciones).forEach(([yearName, grades]) => {
@@ -633,6 +636,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
       tipoEvaluacion: g.tipoEvaluacion || '',
       fechaMes: g.fechaMes,
       fechaAnio: g.fechaAnio,
+      instEduc: g.instEduc || '',
     }))
   })
 
@@ -648,6 +652,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
         tipoEvaluacion: '',
         fechaMes: '',
         fechaAnio: '',
+        instEduc: '',
       }))
     }
   })

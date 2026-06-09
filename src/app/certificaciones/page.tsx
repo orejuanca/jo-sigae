@@ -45,6 +45,7 @@ interface CalificacionRow {
   tipoEvaluacion: string
   fechaMes: string
   fechaAnio: string
+  instEduc: string
 }
 
 interface InstitucionEducativa {
@@ -149,7 +150,7 @@ const emptyCertData = (planTipo?: string): CertData => {
   activePlan.forEach(plan => {
     calificaciones[plan.anio] = plan.materias.map(m => ({
       materia: m.nombre, numero: m.numero, nota: '', literal: '',
-      tipoEvaluacion: '', fechaMes: '', fechaAnio: '',
+      tipoEvaluacion: '', fechaMes: '', fechaAnio: '', instEduc: '',
     }))
   })
 
@@ -456,7 +457,6 @@ export default function CertificacionesPage() {
       return m && m.tipo !== 'cualitativa'
     })
     const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
-    const instName = displayData.denominacion || ''
     // Excel column widths: A=4.57, B-K=13 each, L=5.0, M=4.57 → total=144.14
     // Proportions: Areas 30.2%, N° 9.0%, Letras 36.1%, T-E 9.0%, Mes 9.0%, Año 3.5%, Inst 3.2%
     return (
@@ -503,7 +503,7 @@ export default function CertificacionesPage() {
               <td style={bdC}>{cal.tipoEvaluacion || ''}</td>
               <td style={bdC}>{cal.fechaMes || ''}</td>
               <td style={{ ...bdC, fontSize: '7pt' }}>{cal.fechaAnio || ''}</td>
-              <td style={{ ...bdC, fontSize: '5pt', padding: '0 1px', overflow: 'hidden', whiteSpace: 'nowrap' }}>{instName}</td>
+              <td style={{ ...bdC, fontSize: '5pt', padding: '0 1px', overflow: 'hidden', whiteSpace: 'nowrap' }}>{cal.instEduc || ''}</td>
             </tr>
           ))}
         </tbody>

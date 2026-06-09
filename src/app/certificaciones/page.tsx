@@ -438,8 +438,16 @@ export default function CertificacionesPage() {
 
   // Render one half of a year table (left=A-M or right=O-AA)
   // Excel columns per half: A-D(4), E(1), F-I(4), J(1), K(1), L(1), M(1) = 13
-  // Logical columns rendered as 7 <td>: Areas(colSpan=4), N°(1), Letras(colSpan=4), T-E(1), Mes(1), Año(1), Inst(1)
+  // Logical columns rendered as 7 <td>: Areas(1), N°(1), Letras(1), T-E(1), Mes(1), Año(1), Inst(1)
   const bdH9: React.CSSProperties = { ...bd, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle' }
+  // Vertical text style for Inst. Educ. header (Excel: rotation=88, Arial 7pt bold)
+  const instVertStyle: React.CSSProperties = {
+    ...bd,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    padding: '0 1px',
+  }
   const renderYearHalf = (plan: PlanAnio, planIdx: number) => {
     const allGrades = displayData.calificaciones[plan.anio] || []
     // Filter only quantitative subjects (exclude cualitativas)
@@ -449,17 +457,18 @@ export default function CertificacionesPage() {
     })
     const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
     const instName = displayData.denominacion || ''
-    // Excel column proportions (A-M = 13 cols): 4,1,4,1,1,1,1
+    // Excel column widths: A=4.57, B-K=13 each, L=5.0, M=4.57 → total=144.14
+    // Proportions: Areas 30.2%, N° 9.0%, Letras 36.1%, T-E 9.0%, Mes 9.0%, Año 3.5%, Inst 3.2%
     return (
       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
         <colgroup>
-          <col style={{ width: '30.8%' }} />{/* A-D: ÁREAS DE FORMACIÓN (4) */}
-          <col style={{ width: '7.7%' }} />{/* E: N° (1) */}
-          <col style={{ width: '30.8%' }} />{/* F-I: LETRAS (4) */}
-          <col style={{ width: '7.7%' }} />{/* J: T-E (1) */}
-          <col style={{ width: '7.6%' }} />{/* K: Mes (1) */}
-          <col style={{ width: '7.6%' }} />{/* L: Año (1) */}
-          <col style={{ width: '7.8%' }} />{/* M: Inst. Educ. (1) */}
+          <col style={{ width: '30.2%' }} />{/* A-D: ÁREAS DE FORMACIÓN */}
+          <col style={{ width: '9.0%' }} />{/* E: N° */}
+          <col style={{ width: '36.1%' }} />{/* F-I: LETRAS */}
+          <col style={{ width: '9.0%' }} />{/* J: T-E */}
+          <col style={{ width: '9.0%' }} />{/* K: Mes */}
+          <col style={{ width: '3.5%' }} />{/* L: Año */}
+          <col style={{ width: '3.2%' }} />{/* M: Inst. Educ. */}
         </colgroup>
         <tbody>
           {/* Year header row */}
@@ -472,7 +481,11 @@ export default function CertificacionesPage() {
             <td colSpan={2} style={bdH9}>CALIFICACIÓN</td>
             <td rowSpan={2} style={bdH9}>T-E</td>
             <td colSpan={2} style={bdH9}>FECHA</td>
-            <td rowSpan={2} style={{ ...bdH9, fontSize: '7pt' }}>Inst. Educ.</td>
+            <td rowSpan={2} style={instVertStyle}>
+              <span style={{ display: 'inline-block', writingMode: 'vertical-rl' as const, transform: 'rotate(180deg)', fontSize: '7pt', whiteSpace: 'nowrap', lineHeight: '1' }}>
+                Inst. Educ.
+              </span>
+            </td>
           </tr>
           {/* Sub-header row 2 */}
           <tr>
@@ -489,8 +502,8 @@ export default function CertificacionesPage() {
               <td style={{ ...bdC, textAlign: 'left' }}>{cal.literal || ''}</td>
               <td style={bdC}>{cal.tipoEvaluacion || ''}</td>
               <td style={bdC}>{cal.fechaMes || ''}</td>
-              <td style={bdC}>{cal.fechaAnio || ''}</td>
-              <td style={{ ...bdC, fontSize: '7pt' }}>{instName}</td>
+              <td style={{ ...bdC, fontSize: '7pt' }}>{cal.fechaAnio || ''}</td>
+              <td style={{ ...bdC, fontSize: '5pt', padding: '0 1px', overflow: 'hidden', whiteSpace: 'nowrap' }}>{instName}</td>
             </tr>
           ))}
         </tbody>
@@ -1125,9 +1138,9 @@ export default function CertificacionesPage() {
                           {/* Orientación y Convivencia — Excel: O-S(5) ÁREA + T(1) AÑO + U-AA(7) LITERAL */}
                           <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                             <colgroup>
-                              <col style={{ width: '38.5%' }} />{/* O-S (5/13) */}
-                              <col style={{ width: '7.7%' }} />{/* T (1/13) */}
-                              <col style={{ width: '53.8%' }} />{/* U-AA (7/13) */}
+                              <col style={{ width: '39.3%' }} />{/* O-S: 56.57/144.14 */}
+                              <col style={{ width: '9.0%' }} />{/* T: 13/144.14 */}
+                              <col style={{ width: '51.7%' }} />{/* U-AA: 74.57/144.14 */}
                             </colgroup>
                             <tbody>
                               <tr>
@@ -1151,10 +1164,10 @@ export default function CertificacionesPage() {
                           {/* Participación en Grupos — Excel: O-S(5) ÁREA + T(1) AÑO + U-Y(5) GRUPO + Z-AA(2) LITERAL */}
                           <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                             <colgroup>
-                              <col style={{ width: '38.5%' }} />{/* O-S (5/13) */}
-                              <col style={{ width: '7.7%' }} />{/* T (1/13) */}
-                              <col style={{ width: '38.5%' }} />{/* U-Y (5/13) */}
-                              <col style={{ width: '15.3%' }} />{/* Z-AA (2/13) */}
+                              <col style={{ width: '39.3%' }} />{/* O-S: 56.57/144.14 */}
+                              <col style={{ width: '9.0%' }} />{/* T: 13/144.14 */}
+                              <col style={{ width: '45.1%' }} />{/* U-Y: 65/144.14 */}
+                              <col style={{ width: '6.6%' }} />{/* Z-AA: 9.57/144.14 */}
                             </colgroup>
                             <tbody>
                               <tr>

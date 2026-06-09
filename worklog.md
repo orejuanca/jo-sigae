@@ -1,66 +1,68 @@
-# Worklog — Certificación Preview Fix
+# Worklog — Certificación Preview
 
-## Date: 2025-07-11
+## Date: 2025-07-12
 
-## Task: Fix CertificacionPreview component to EXACTLY match the Excel format
+## Task: Rewrite "Vista Previa" preview section to match Excel format exactly (Formato Nuevo CEMG.xlsm)
 
 ### Summary
-Rewrote the HTML preview section of `/src/app/certificaciones/page.tsx` to use proper HTML tables with exact colspan patterns matching the Excel (CEMG certification document). Previously, the preview used CSS grid/flex layouts which didn't match the Excel's table structure.
+Rewrote the preview style variables, `renderYearHalf` function, and the entire `TabsContent value="vista"` section of `/src/app/certificaciones/page.tsx` to match the Excel file "Formato Nuevo CEMG.xlsm" sheet "Hoja1" exactly.
 
-### Changes Made
+### Key Changes
 
-#### 1. Added helper styles and renderYearTable function (lines 431-475)
-- `tbS`: Table base style (borderCollapse, fontSize 7pt, lineHeight 1.3)
-- `bd`: Basic bordered cell style
-- `bdB`: Bold bordered cell (for labels)
-- `bdH`: Header row style (bold + gray background)
-- `bdC`: Centered bordered cell
-- `bdCh`: Centered header cell (bold + gray bg + 6pt font)
-- `renderYearTable()`: Generates a 13-column year table matching the Excel's A-M column pattern
+#### 1. Style Variables (lines 431-437) — Excel Format Compliance
+- **Font**: Changed from `7pt` to `9pt` (Arial, matching Excel's standard 9pt)
+- **Removed ALL background colors**: Deleted `backgroundColor: '#f5f5f5'` from `bdH` and `backgroundColor: '#f0f0f0'` from `bdCh`
+- **Headers**: `bdCh` changed to 7pt bold centered (Excel Inst. Educ. headers are 7pt bold)
+- **`tbS`**: Added `fontFamily: 'Arial, sans-serif'` for Excel font compliance
+- All cells use `border: '1px solid #000'` (thin Excel borders on all sides)
 
-#### 2. Section II — Datos de la Institución (27 columns)
-Fixed colspan patterns to match Excel exactly:
-- Row 6: Código(3) + OD(5) + Denominación label(5) + Denominación value(14) = **27**
-- Row 7: Dirección(3) + address(15) + Teléfono(3) + phone(6) = **27**
-- Row 8: Municipio(3) + value(4) + Estado(3) + value(8) + CDCEE(4) + value(5) = **27**
+#### 2. `renderYearHalf` Function (lines 439-497) — Corrected Structure
+- Changed from 7-`<td>` per row with inconsistent colSpan to clean 7-`<td>` matching Excel logical columns:
+  - ÁREAS DE FORMACIÓN (1 col, rowspan 2 with `<br/>` wrap)
+  - N° (1 col)
+  - LETRAS (1 col)
+  - T-E (1 col, rowspan 2)
+  - Mes (1 col)
+  - Año (1 col)
+  - Inst. Educ. (1 col, rowspan 2)
+- **Filters out qualitative subjects** (Orientación, Participación Grupal) — only quantitative grades shown
+- Subject names use `verticalAlign: 'top'` and `whiteSpace: 'normal'` matching Excel
+- Grade column is `fontWeight: 'bold'`, LETRAS is `textAlign: 'left'`
+- Inst. Educ. uses abbreviated `instName` at 6pt
 
-#### 3. Section III — Datos del Estudiante (27 columns)
-Fixed colspan patterns:
-- Row 10: Cédula(4) + value(5) + Fecha Nacimiento(6) + value(12) = **27**
-- Row 11: Apellidos(3) + value(8) + Nombres(4) + value(12) = **27**
-- Row 12: Lugar País(5) + value(6) + Estado(2) + value(7) + Municipio(2) + value(5) = **27**
+#### 3. TabsContent Vista Section (lines 890-1249) — Full Excel Layout
 
-#### 4. Section V — Calificaciones (side-by-side year tables)
-- **Primer Año + Segundo Año**: Flex container with two 13-column tables side-by-side (2px gap = Excel's column N separator)
-- **Tercer Año + Cuarto Año**: Same side-by-side layout
-- **Quinto Año + Orientación/Grupos**: Quinto subjects on left, Orientación y Convivencia table + Participación en Grupos table on right
-- Each year table has proper structure: ÁREAS DE FORMACIÓN (colspan 4, rowspan 2), CALIFICACIÓN header, N° + LETRAS sub-headers, T-E (rowspan 2), FECHA (Mes+Año), Inst. Educ. (rowspan 2)
+**Container**: `maxWidth: '260mm'`, `fontFamily: 'Arial, sans-serif'`, `fontSize: '9pt'`, `padding: '0'`, `border border-black` (single 1px border)
 
-#### 5. Section VI — Observaciones (27 columns)
-- Row: Observaciones label(4) + P.A. label(3) + promedio value(20) = **27**
-- Full width row: observaciones text(27)
+**Rows 1-3 (Header)**:
+- Row 1: Logo (left A-L) + Title "CERTIFICACIÓN DE CALIFICACIONES EMG" centered bold 11pt (M-AA merged)
+- Row 2: "I. Plan de Estudio: EDUCACIÓN MEDIA GENERAL" (left) + "Código 31059" (right-aligned)
+- Row 3: "Lugar y Fecha de Expedición:" + lugar/fecha right-aligned
 
-#### 6. Sections VII + VIII — Director y CDCCE (side-by-side)
-- Left half (VII): 13-column table with director info + firma/sello
-- Right half (VIII): 13-column table with CDCCE director info + firma/sello
-- Side-by-side with 2px gap matching Excel's column N separator
+**Row 4**: Empty spacer row (6px height, just borders)
 
-#### 7. Container styling
-- Changed to `maxWidth: 210mm` (A4 width) for proper print preview
-- Set `fontSize: 7pt, lineHeight: 1.3` to match Excel cell density
-- Changed padding from `p-6` to `8px`
+**Section II (Rows 5-8)**: Institution data — Código, Denominación, Dirección, Teléfono, Municipio, Estado, CDCEE
 
-### Commit
-- `fix: certificacion preview - colspan exactos del Excel para todas las secciones`
-- 1 file changed, 253 insertions(+), 160 deletions(-)
-- Force-pushed to `main` branch
+**Section III (Rows 9-12)**: Student data — Cédula, Fecha Nacimiento, Apellidos, Nombres, País, Estado, Municipio
+
+**Section IV (Rows 13-16)**: Institutions tables side-by-side — Left half has section title + 2 data rows, Right half has headers + 3 data rows (5 institutions total)
+
+**Section V**: Year grade tables in pairs:
+- 1° Año (left) + 2° Año (right) side-by-side
+- 3° Año (left) + 4° Año (right) side-by-side
+- 5° Año (left) + Orientación/Grupos (right) side-by-side
+
+**Section VI**: Observaciones row with P.A. and promedio acumulado
+
+**Sections VII + VIII**: Director and CDCCE side-by-side with SELLO areas and Firma
+
+**Valor Fiscal**: Single row at bottom
 
 ### Files Modified
-- `src/app/certificaciones/page.tsx` — Preview section (lines ~880-1135)
+- `src/app/certificaciones/page.tsx` — Lines 431-437 (styles), 439-497 (renderYearHalf), 890-1249 (vista tab)
 
 ### What Was NOT Changed
-- Main component logic (form state, API calls, etc.)
-- Data entry tabs (Datos, Instituciones, Calificaciones, Adicional)
-- Generate tab functionality
-- Student search and selection logic
+- All other tabs: datos, instituciones, calificaciones, adicional, generar
+- Component interfaces, state management, API calls
 - School config or data interfaces
+- Student search and selection logic

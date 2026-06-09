@@ -938,43 +938,49 @@ export default function CertificacionesPage() {
                         </tbody>
                       </table>
 
-                      {/* ====== SECCIÓN II — Datos de la Institución ====== */}
+                      {/* ====== SECCIÓN II — Datos de la Institución (rows 5-8) ====== */}
+                      {/* Excel: 27 equal cols (A-AA). Base 10-col decomposition: 3,4,1,2,3,1,4,3,1,5 */}
                       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                         <colgroup>
-                          <col style={{ width: '10%' }} />{/* A-C labels */}
-                          <col style={{ width: '15%' }} />{/* D-H values */}
-                          <col style={{ width: '12%' }} />{/* I-N labels */}
-                          <col style={{ width: '38%' }} />{/* O-T values */}
-                          <col style={{ width: '10%' }} />{/* U-V labels */}
-                          <col style={{ width: '15%' }} />{/* W-AA values */}
+                          <col style={{ width: '11.11%' }} />{/* 1: A-C (3) */}
+                          <col style={{ width: '14.81%' }} />{/* 2: D-G (4) */}
+                          <col style={{ width: '3.70%' }} />{/* 3: H (1) */}
+                          <col style={{ width: '7.41%' }} />{/* 4: I-J (2) */}
+                          <col style={{ width: '11.11%' }} />{/* 5: K-M (3) */}
+                          <col style={{ width: '3.70%' }} />{/* 6: N (1) */}
+                          <col style={{ width: '14.81%' }} />{/* 7: O-R (4) */}
+                          <col style={{ width: '11.11%' }} />{/* 8: S-U (3) */}
+                          <col style={{ width: '3.70%' }} />{/* 9: V (1) */}
+                          <col style={{ width: '18.52%' }} />{/* 10: W-AA (5) */}
                         </colgroup>
                         <tbody>
-                          {/* Row 5: Section header */}
+                          {/* Row 5: Section header — A5:AA5 */}
                           <tr>
-                            <td colSpan={6} style={bdH}>II. Datos de la Institución Educativa o Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:</td>
+                            <td colSpan={10} style={bdH}>II. Datos de la Institución Educativa o  Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:</td>
                           </tr>
-                          {/* Row 6: Código + Denominación */}
+                          {/* Row 6: A6:C6 Código | D6:H6 value | I6:M6 Denom label | N6 gap | O6:AA6 Denom value */}
                           <tr>
-                            <td colSpan={1} style={bdB}>Código:</td>
-                            <td colSpan={1} style={bd}>{displayData.od}</td>
-                            <td colSpan={1} style={{ ...bdB, textAlign: 'center', verticalAlign: 'middle' }}>Denominación y Epónimo:</td>
-                            <td colSpan={3} style={bd}>{displayData.denominacion}</td>
+                            <td style={bd}>Código:</td>
+                            <td colSpan={2} style={bd}>{displayData.od}</td>
+                            <td colSpan={2} style={{ ...bd, textAlign: 'center' }}>Denominación y Epónimo:</td>
+                            <td style={bd}></td>
+                            <td colSpan={4} style={bd}>{displayData.denominacion}</td>
                           </tr>
-                          {/* Row 7: Dirección + Teléfono */}
+                          {/* Row 7: A7:C7 Dirección | D7:R7 value | S7:U7 Teléfono | V7:AA7 value */}
                           <tr>
-                            <td colSpan={1} style={bdB}>Dirección:</td>
-                            <td colSpan={2} style={bd}>{displayData.direccion}</td>
-                            <td colSpan={1} style={bdB}>Teléfono:</td>
+                            <td style={bd}>Dirección:</td>
+                            <td colSpan={6} style={bd}>{displayData.direccion}</td>
+                            <td style={bd}>Teléfono:</td>
                             <td colSpan={2} style={{ ...bd, textAlign: 'center' }}>{displayData.telefono}</td>
                           </tr>
-                          {/* Row 8: Municipio + Estado + CDCEE */}
+                          {/* Row 8: A8:C8 Municipio | D8:G8 value | H8:J8 Estado | K8:R8 value | S8:V8 CDCEE | W8:AA8 value */}
                           <tr>
-                            <td colSpan={1} style={bdB}>Municipio:</td>
-                            <td colSpan={1} style={{ ...bd, textAlign: 'center' }}>{displayData.municipio}</td>
-                            <td colSpan={1} style={bdB}>Estado:</td>
-                            <td colSpan={1} style={{ ...bd, textAlign: 'center' }}>{displayData.estado}</td>
-                            <td colSpan={1} style={bdB}>CDCEE:</td>
-                            <td colSpan={1} style={{ ...bd, textAlign: 'center' }}>{displayData.cdcce}</td>
+                            <td style={bd}>Municipio:</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.municipio}</td>
+                            <td colSpan={2} style={bd}>Estado:</td>
+                            <td colSpan={3} style={{ ...bd, textAlign: 'center' }}>{displayData.estado}</td>
+                            <td colSpan={2} style={bd}>CDCEE:</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.cdcce}</td>
                           </tr>
                         </tbody>
                       </table>

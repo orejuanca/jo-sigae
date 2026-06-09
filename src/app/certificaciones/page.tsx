@@ -932,8 +932,8 @@ export default function CertificacionesPage() {
                           {/* Row 3: Lugar y Fecha */}
                           <tr>
                             <td style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>Lugar y Fecha de Expedición:</td>
-                            <td style={{ ...bd, padding: '1px 3px', textAlign: 'right' }}>{displayData.lugar},</td>
-                            <td style={{ ...bd, padding: '1px 3px' }}>{displayFechaExpedicion}</td>
+                            <td style={{ ...bd, padding: '1px 3px', textAlign: 'right', borderRight: 'none' }}>{displayData.lugar},</td>
+                            <td style={{ ...bd, padding: '1px 3px', borderLeft: 'none' }}>{displayFechaExpedicion}</td>
                           </tr>
                         </tbody>
                       </table>

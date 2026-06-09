@@ -909,9 +909,10 @@ export default function CertificacionesPage() {
                       {/* Excel: Row 1: title M1:AA1, Row 2: plan M2:V2 + code W2:AA2, Row 3: lugar M3:S3 + T3:V3 + fecha W3:AA3 */}
                       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                         <colgroup>
-                          <col style={{ width: '48%' }} />{/* A-L: logo area */}
-                          <col style={{ width: '26%' }} />{/* M-S / M-V left text */}
-                          <col style={{ width: '26%' }} />{/* T-AA / W-AA right text */}
+                          <col style={{ width: '44%' }} />{/* A-L: logo area */}
+                          <col style={{ width: '24%' }} />{/* M-S: left text */}
+                          <col style={{ width: '10%' }} />{/* T-V: middle text */}
+                          <col style={{ width: '22%' }} />{/* W-AA: right text */}
                         </colgroup>
                         <tbody>
                           {/* Row 1: Title */}
@@ -919,21 +920,20 @@ export default function CertificacionesPage() {
                             <td rowSpan={3} style={{ ...bd, verticalAlign: 'middle', padding: '2px' }}>
                               <img src="/logo-mppe.png" alt="Logo" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
                             </td>
-                            <td colSpan={2} style={{ ...bd, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '11pt', padding: '4px 4px' }}>
+                            <td colSpan={3} style={{ ...bd, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9pt', padding: '4px 4px' }}>
                               CERTIFICACIÓN DE CALIFICACIONES&nbsp;&nbsp;{displayData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}
                             </td>
                           </tr>
                           {/* Row 2: Plan de Estudio + Código */}
                           <tr>
-                            <td style={{ ...bd, padding: '1px 3px' }}>I. Plan de Estudio:&nbsp;&nbsp;{displayData.planEstudio}</td>
-                            <td style={{ ...bd, padding: '1px 3px', textAlign: 'right' }}>Código&nbsp;{schoolConfig.planCodigo}</td>
+                            <td colSpan={2} style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>I. Plan de Estudio:&nbsp;&nbsp;{displayData.planEstudio}</td>
+                            <td style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>Código&nbsp;{schoolConfig.planCodigo}</td>
                           </tr>
                           {/* Row 3: Lugar y Fecha */}
                           <tr>
-                            <td colSpan={2} style={{ ...bd, padding: '1px 3px' }}>
-                              <span style={{ marginRight: '4px' }}>Lugar y Fecha de Expedición:</span>
-                              <span style={{ float: 'right' }}>{displayData.lugar},&nbsp;{displayFechaExpedicion}</span>
-                            </td>
+                            <td style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>Lugar y Fecha de Expedición:</td>
+                            <td style={{ ...bd, padding: '1px 3px', textAlign: 'right' }}>{displayData.lugar},</td>
+                            <td style={{ ...bd, padding: '1px 3px' }}>{displayFechaExpedicion}</td>
                           </tr>
                         </tbody>
                       </table>

@@ -986,42 +986,47 @@ export default function CertificacionesPage() {
                       </table>
 
                       {/* ====== ROW 9-12: SECCIÓN III — Datos del Estudiante ====== */}
+                      {/* Excel 27 cols. Base 10-col decomposition: 3,1,1,4,2,2,2,5,2,5 */}
                       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                         <colgroup>
-                          <col style={{ width: '12%' }} />{/* labels col 1 */}
-                          <col style={{ width: '20%' }} />{/* values col 1 */}
-                          <col style={{ width: '12%' }} />{/* labels col 2 */}
-                          <col style={{ width: '20%' }} />{/* values col 2 */}
-                          <col style={{ width: '12%' }} />{/* labels col 3 */}
-                          <col style={{ width: '24%' }} />{/* values col 3 */}
+                          <col style={{ width: '11.11%' }} />{/* 1: A-C (3) */}
+                          <col style={{ width: '3.70%' }} />{/* 2: D (1) */}
+                          <col style={{ width: '3.70%' }} />{/* 3: E (1) */}
+                          <col style={{ width: '14.81%' }} />{/* 4: F-I (4) */}
+                          <col style={{ width: '7.41%' }} />{/* 5: J-K (2) */}
+                          <col style={{ width: '7.41%' }} />{/* 6: L-M (2) */}
+                          <col style={{ width: '7.41%' }} />{/* 7: N-O (2) */}
+                          <col style={{ width: '18.52%' }} />{/* 8: P-T (5) */}
+                          <col style={{ width: '7.41%' }} />{/* 9: U-V (2) */}
+                          <col style={{ width: '18.52%' }} />{/* 10: W-AA (5) */}
                         </colgroup>
                         <tbody>
-                          {/* Row 9: Section header */}
+                          {/* Row 9: Section header — A9:AA9 */}
                           <tr>
-                            <td colSpan={6} style={bdH}>III. Datos de Identificación del Estudiante:</td>
+                            <td colSpan={10} style={bdH}>III. Datos de Identificación del Estudiante:</td>
                           </tr>
-                          {/* Row 10: Cédula + Fecha de Nacimiento */}
+                          {/* Row 10: A10:D10 Cédula label | E10:I10 value | J10:O10 Fecha label | P10:AA10 value */}
                           <tr>
-                            <td colSpan={1} style={bdB}>Cédula de Identidad:</td>
-                            <td colSpan={1} style={bd}>{displayData.estudiante.cedula}</td>
-                            <td colSpan={1} style={bdB}>Fecha de Nacimiento:</td>
+                            <td colSpan={2} style={bd}>Cédula de Identidad:</td>
+                            <td colSpan={2} style={bd}>{displayData.estudiante.cedula}</td>
+                            <td colSpan={3} style={bd}>Fecha de Nacimiento:</td>
                             <td colSpan={3} style={bd}>{displayData.estudiante.fechaNacimiento || ''}</td>
                           </tr>
-                          {/* Row 11: Apellidos + Nombres */}
+                          {/* Row 11: A11:C11 Apellidos | D11:K11 value | L11:O11 Nombres | P11:AA11 value */}
                           <tr>
-                            <td colSpan={1} style={bdB}>Apellidos:</td>
-                            <td colSpan={1} style={{ ...bd, verticalAlign: 'top', textAlign: 'left' }}>{displayData.estudiante.apellidos}</td>
-                            <td colSpan={1} style={bdB}>Nombres:</td>
-                            <td colSpan={3} style={{ ...bd, verticalAlign: 'top', textAlign: 'left' }}>{displayData.estudiante.nombres}</td>
+                            <td style={bd}>Apellidos:</td>
+                            <td colSpan={4} style={bd}>{displayData.estudiante.apellidos}</td>
+                            <td colSpan={2} style={bd}>Nombres:</td>
+                            <td colSpan={3} style={bd}>{displayData.estudiante.nombres}</td>
                           </tr>
-                          {/* Row 12: País + Estado + Municipio */}
+                          {/* Row 12: A12:E12 Lugar | F12:K12 value | L12:M12 Estado | N12:T12 value | U12:V12 Municipio | W12:AA12 value */}
                           <tr>
-                            <td colSpan={1} style={bdB}>Lugar de Nacimiento País:</td>
-                            <td colSpan={1} style={bd}>{displayData.estudiante.pais}</td>
-                            <td colSpan={1} style={bdB}>Estado:</td>
-                            <td colSpan={1} style={{ ...bd, textAlign: 'center' }}>{displayData.estudiante.estado || ''}</td>
-                            <td colSpan={1} style={bdB}>Municipio:</td>
-                            <td colSpan={1} style={{ ...bd, textAlign: 'center' }}>{displayData.estudiante.municipio || ''}</td>
+                            <td colSpan={3} style={bd}>Lugar de Nacimiento País:</td>
+                            <td colSpan={2} style={bd}>{displayData.estudiante.pais}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>Estado:</td>
+                            <td colSpan={2} style={bd}>{displayData.estudiante.estadoNac || ''}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>Municipio:</td>
+                            <td style={bd}>{displayData.estudiante.municipioNac || ''}</td>
                           </tr>
                         </tbody>
                       </table>

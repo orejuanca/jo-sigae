@@ -917,7 +917,7 @@ export default function CertificacionesPage() {
                           {/* Row 1: Title */}
                           <tr>
                             <td rowSpan={3} style={{ ...bd, verticalAlign: 'middle', padding: '2px' }}>
-                              <img src="/cemg-logo.png" alt="Logo" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
+                              <img src="/logo-mppe.png" alt="Logo" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
                             </td>
                             <td colSpan={2} style={{ ...bd, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '11pt', padding: '4px 4px' }}>
                               CERTIFICACIÓN DE CALIFICACIONES&nbsp;&nbsp;{displayData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}

@@ -1031,66 +1031,68 @@ export default function CertificacionesPage() {
                         </tbody>
                       </table>
 
-                      {/* ====== ROW 13-16: SECCIÓN IV — Instituciones Educativas (side-by-side) ====== */}
-                      <div style={{ display: 'flex', gap: '0' }}>
-                        {/* Left half (A-M): Section title + headers + rows 1-2 */}
-                        <div style={{ flex: '1 1 49.85%' }}>
-                          <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
-                            <colgroup>
-                              <col style={{ width: '6%' }} />{/* A: N° */}
-                              <col style={{ width: '42%' }} />{/* B-G: Denominación */}
-                              <col style={{ width: '36%' }} />{/* H-L: Localidad */}
-                              <col style={{ width: '16%' }} />{/* M: E.F. */}
-                            </colgroup>
-                            <tbody>
-                              <tr>
-                                <td colSpan={4} style={bdH}>IV. Instituciones Educativas donde Cursó Estudios</td>
-                              </tr>
-                              <tr>
-                                <td style={bdCh}>N°</td>
-                                <td style={bdCh}>Denominación y Epónimo</td>
-                                <td style={bdCh}>Localidad</td>
-                                <td style={bdCh}>E.F.</td>
-                              </tr>
-                              {displayData.instituciones.slice(0, 2).map((inst, i) => (
-                                <tr key={`l${i}`}>
-                                  <td style={bdC}>{i + 1}</td>
-                                  <td style={bd}>{inst.denominacion || ''}</td>
-                                  <td style={bd}>{inst.localidad || ''}</td>
-                                  <td style={bdC}>{inst.ef || ''}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        {/* Right half (O-AA): headers + rows 3-5 */}
-                        <div style={{ flex: '1 1 49.85%' }}>
-                          <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
-                            <colgroup>
-                              <col style={{ width: '6%' }} />{/* O: N° */}
-                              <col style={{ width: '42%' }} />{/* P-U: Denominación */}
-                              <col style={{ width: '36%' }} />{/* V-Z: Localidad */}
-                              <col style={{ width: '16%' }} />{/* AA: E.F. */}
-                            </colgroup>
-                            <tbody>
-                              <tr>
-                                <td style={bdCh}>N°</td>
-                                <td style={bdCh}>Denominación y Epónimo</td>
-                                <td style={bdCh}>Localidad</td>
-                                <td style={bdCh}>E.F.</td>
-                              </tr>
-                              {displayData.instituciones.slice(2, 5).map((inst, i) => (
-                                <tr key={`r${i}`}>
-                                  <td style={bdC}>{i + 3}</td>
-                                  <td style={bd}>{inst.denominacion || ''}</td>
-                                  <td style={bd}>{inst.localidad || ''}</td>
-                                  <td style={bdC}>{inst.ef || ''}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+                      {/* ====== ROW 13-16: SECCIÓN IV — Instituciones Educativas (side-by-side, single table) ====== */}
+                      {/* Excel: Left A-M (13 cols) | N sep (1) | Right O-AA (13 cols). Base 9 cols: 1,6,5,1,1,1,6,5,1 */}
+                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+                        <colgroup>
+                          <col style={{ width: '3.70%' }} />{/* 1: A (N°) */}
+                          <col style={{ width: '22.22%' }} />{/* 2: B-G (Denominación) */}
+                          <col style={{ width: '18.52%' }} />{/* 3: H-L (Localidad) */}
+                          <col style={{ width: '3.70%' }} />{/* 4: M (E.F.) */}
+                          <col style={{ width: '1.48%' }} />{/* 5: N (separator) */}
+                          <col style={{ width: '3.70%' }} />{/* 6: O (N°) */}
+                          <col style={{ width: '22.22%' }} />{/* 7: P-U (Denominación) */}
+                          <col style={{ width: '18.52%' }} />{/* 8: V-Z (Localidad) */}
+                          <col style={{ width: '3.70%' }} />{/* 9: AA (E.F.) */}
+                        </colgroup>
+                        <tbody>
+                          {/* Row 13: Title (A-M) | sep N | Right headers (O-AA) */}
+                          <tr>
+                            <td colSpan={4} style={bdH}>IV. Instituciones Educativas donde Cursó Estudios</td>
+                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>N°</td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Denominación y Epónimo de la Institución Educativa</td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Localidad</td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>E.F.</td>
+                          </tr>
+                          {/* Row 14: Left headers (A-M) | sep N | Right data row 3 (O-AA) */}
+                          <tr>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>N°</td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Denominación y Epónimo de la Institución Educativa</td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Localidad</td>
+                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>E.F.</td>
+                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[2] ? 3 : ''}</td>
+                            <td style={bd}>{displayData.instituciones[2]?.denominacion || '*'}</td>
+                            <td style={bd}>{displayData.instituciones[2]?.localidad || '*'}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[2]?.ef || '*'}</td>
+                          </tr>
+                          {/* Row 15: Left data 1 (A-M) | sep N | Right data 4 (O-AA) */}
+                          <tr>
+                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>1</td>
+                            <td style={bd}>{displayData.instituciones[0]?.denominacion || '*'}</td>
+                            <td style={bd}>{displayData.instituciones[0]?.localidad || '*'}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[0]?.ef || '*'}</td>
+                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[3] ? 4 : ''}</td>
+                            <td style={bd}>{displayData.instituciones[3]?.denominacion || '*'}</td>
+                            <td style={bd}>{displayData.instituciones[3]?.localidad || '*'}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[3]?.ef || '*'}</td>
+                          </tr>
+                          {/* Row 16: Left data 2 (A-M) | sep N | Right data 5 (O-AA) */}
+                          <tr>
+                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>2</td>
+                            <td style={bd}>{displayData.instituciones[1]?.denominacion || '*'}</td>
+                            <td style={bd}>{displayData.instituciones[1]?.localidad || '*'}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[1]?.ef || '*'}</td>
+                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[4] ? 5 : ''}</td>
+                            <td style={bd}>{displayData.instituciones[4]?.denominacion || '*'}</td>
+                            <td style={bd}>{displayData.instituciones[4]?.localidad || '*'}</td>
+                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[4]?.ef || '*'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
 
                       {/* ====== ROW 17+: SECCIÓN V — Plan de Estudio: Calificaciones ====== */}
                       {/* Row 17: Section V header */}

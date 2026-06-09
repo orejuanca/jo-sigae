@@ -439,6 +439,7 @@ export default function CertificacionesPage() {
   // Render one half of a year table (left=A-M or right=O-AA)
   // Excel columns per half: A-D(4), E(1), F-I(4), J(1), K(1), L(1), M(1) = 13
   // Logical columns rendered as 7 <td>: Areas(colSpan=4), N°(1), Letras(colSpan=4), T-E(1), Mes(1), Año(1), Inst(1)
+  const bdH9: React.CSSProperties = { ...bd, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle' }
   const renderYearHalf = (plan: PlanAnio, planIdx: number) => {
     const allGrades = displayData.calificaciones[plan.anio] || []
     // Filter only quantitative subjects (exclude cualitativas)
@@ -448,36 +449,37 @@ export default function CertificacionesPage() {
     })
     const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
     const instName = displayData.denominacion || ''
+    // Excel column proportions (A-M = 13 cols): 4,1,4,1,1,1,1
     return (
       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
         <colgroup>
-          <col style={{ width: '28%' }} />{/* A-D areas */}
-          <col style={{ width: '6%' }} />{/* E nota */}
-          <col style={{ width: '28%' }} />{/* F-I letras */}
-          <col style={{ width: '6%' }} />{/* J T-E */}
-          <col style={{ width: '8%' }} />{/* K mes */}
-          <col style={{ width: '8%' }} />{/* L año */}
-          <col style={{ width: '16%' }} />{/* M inst */}
+          <col style={{ width: '30.8%' }} />{/* A-D: ÁREAS DE FORMACIÓN (4) */}
+          <col style={{ width: '7.7%' }} />{/* E: N° (1) */}
+          <col style={{ width: '30.8%' }} />{/* F-I: LETRAS (4) */}
+          <col style={{ width: '7.7%' }} />{/* J: T-E (1) */}
+          <col style={{ width: '7.6%' }} />{/* K: Mes (1) */}
+          <col style={{ width: '7.6%' }} />{/* L: Año (1) */}
+          <col style={{ width: '7.8%' }} />{/* M: Inst. Educ. (1) */}
         </colgroup>
         <tbody>
           {/* Year header row */}
           <tr>
-            <td colSpan={7} style={{ ...bdH, textAlign: 'center' }}>{plan.anio.toUpperCase()}{yearLabel ? ` (${yearLabel})` : ''}</td>
+            <td colSpan={7} style={bdH}>{plan.anio.toUpperCase()}{yearLabel ? ` (${yearLabel})` : ''}</td>
           </tr>
           {/* Sub-header row 1 */}
           <tr>
-            <td colSpan={1} rowSpan={2} style={bdCh}>ÁREAS DE<br />FORMACIÓN</td>
-            <td colSpan={2} style={bdCh}>CALIFICACIÓN</td>
-            <td rowSpan={2} style={bdCh}>T-E</td>
-            <td colSpan={2} style={bdCh}>FECHA</td>
-            <td rowSpan={2} style={{ ...bdCh, fontSize: '6pt' }}>Inst.<br />Educ.</td>
+            <td colSpan={1} rowSpan={2} style={bdH9}>ÁREAS DE FORMACIÓN</td>
+            <td colSpan={2} style={bdH9}>CALIFICACIÓN</td>
+            <td rowSpan={2} style={bdH9}>T-E</td>
+            <td colSpan={2} style={bdH9}>FECHA</td>
+            <td rowSpan={2} style={{ ...bdH9, fontSize: '7pt' }}>Inst. Educ.</td>
           </tr>
           {/* Sub-header row 2 */}
           <tr>
-            <td style={bdCh}>N°</td>
-            <td style={bdCh}>LETRAS</td>
-            <td style={bdCh}>Mes</td>
-            <td style={bdCh}>Año</td>
+            <td style={bdH9}>N°</td>
+            <td style={bdH9}>LETRAS</td>
+            <td style={bdH9}>Mes</td>
+            <td style={bdH9}>Año</td>
           </tr>
           {/* Subject rows */}
           {grades.map((cal, idx) => (
@@ -488,7 +490,7 @@ export default function CertificacionesPage() {
               <td style={bdC}>{cal.tipoEvaluacion || ''}</td>
               <td style={bdC}>{cal.fechaMes || ''}</td>
               <td style={bdC}>{cal.fechaAnio || ''}</td>
-              <td style={{ ...bdC, fontSize: '6pt' }}>{instName}</td>
+              <td style={{ ...bdC, fontSize: '7pt' }}>{instName}</td>
             </tr>
           ))}
         </tbody>
@@ -1120,49 +1122,53 @@ export default function CertificacionesPage() {
                       <div style={{ display: 'flex', gap: '0' }}>
                         <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[4], 4)}</div>
                         <div style={{ flex: '1 1 49.85%' }}>
-                          {/* Orientación y Convivencia */}
+                          {/* Orientación y Convivencia — Excel: O-S(5) ÁREA + T(1) AÑO + U-AA(7) LITERAL */}
                           <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                             <colgroup>
-                              <col style={{ width: '55%' }} />
-                              <col style={{ width: '45%' }} />
+                              <col style={{ width: '38.5%' }} />{/* O-S (5/13) */}
+                              <col style={{ width: '7.7%' }} />{/* T (1/13) */}
+                              <col style={{ width: '53.8%' }} />{/* U-AA (7/13) */}
                             </colgroup>
                             <tbody>
                               <tr>
-                                <td colSpan={2} style={{ ...bdH, textAlign: 'center', fontSize: '7pt' }}>ÁREA DE FORMACIÓN</td>
+                                <td style={bdH9}>ÁREA DE FORMACIÓN</td>
+                                <td style={bdH9}>AÑO</td>
+                                <td style={bdH9}>LITERAL</td>
                               </tr>
                               <tr>
-                                <td style={bdCh}>Orientación y Convivencia</td>
-                                <td style={bdCh}>AÑO</td>
+                                <td rowSpan={5} style={bd}>Orientación y Convivencia</td>
+                                <td style={bdC}>1°</td>
+                                <td style={bdC}>{displayData.orientacion[0]?.literal || '*'}</td>
                               </tr>
-                              {displayData.orientacion.map((row, i) => (
+                              {[1,2,3,4].map(i => (
                                 <tr key={`o${i}`}>
-                                  <td style={{ ...bdC, fontSize: '8pt' }}>{row.anio || ''}</td>
-                                  <td style={{ ...bdC, fontSize: '8pt' }}>{row.literal || ''}</td>
+                                  <td style={bdC}>{i + 1}°</td>
+                                  <td style={bdC}>{displayData.orientacion[i]?.literal || '*'}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
-                          {/* Participación en Grupos */}
+                          {/* Participación en Grupos — Excel: O-S(5) ÁREA + T(1) AÑO + U-Y(5) GRUPO + Z-AA(2) LITERAL */}
                           <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                             <colgroup>
-                              <col style={{ width: '35%' }} />
-                              <col style={{ width: '20%' }} />
-                              <col style={{ width: '45%' }} />
+                              <col style={{ width: '38.5%' }} />{/* O-S (5/13) */}
+                              <col style={{ width: '7.7%' }} />{/* T (1/13) */}
+                              <col style={{ width: '38.5%' }} />{/* U-Y (5/13) */}
+                              <col style={{ width: '15.3%' }} />{/* Z-AA (2/13) */}
                             </colgroup>
                             <tbody>
                               <tr>
-                                <td colSpan={3} style={{ ...bdH, textAlign: 'center', fontSize: '7pt' }}>Participación en Grupos de Creación, Recreación y Producción</td>
+                                <td style={bdH9}>ÁREA DE FORMACIÓN</td>
+                                <td style={bdH9}>AÑO</td>
+                                <td style={bdH9}>GRUPO</td>
+                                <td style={bdH9}>LITERAL</td>
                               </tr>
-                              <tr>
-                                <td style={bdCh}>GRUPO</td>
-                                <td style={bdCh}>LITERAL</td>
-                                <td style={bdCh}>AÑO</td>
-                              </tr>
-                              {displayData.grupos.map((row, i) => (
+                              {[0,1,2,3,4].map(i => (
                                 <tr key={`g${i}`}>
-                                  <td style={{ ...bdC, fontSize: '8pt' }}>{row.grupo || ''}</td>
-                                  <td style={{ ...bdC, fontSize: '8pt' }}>{row.anio || ''}</td>
-                                  <td style={{ ...bdC, fontSize: '8pt' }}>{row.literal || ''}</td>
+                                  {i === 0 && <td rowSpan={5} style={bd}>Participación en Grupos de Creación, Recreación y Producción</td>}
+                                  <td style={bdC}>{i + 1}°</td>
+                                  <td style={bdC}>{displayData.grupos[i]?.grupo || '*'}</td>
+                                  <td style={bdC}>{displayData.grupos[i]?.literal || '*'}</td>
                                 </tr>
                               ))}
                             </tbody>

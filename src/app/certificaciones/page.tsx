@@ -449,14 +449,18 @@ export default function CertificacionesPage() {
     verticalAlign: 'middle',
     padding: '0 1px',
   }
-  const renderYearHalf = (plan: PlanAnio, planIdx: number) => {
+  // Vertical separator column (like Section IV's N column)
+  const sepCol: React.CSSProperties = { borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }
+
+  const renderYearHalf = (plan: PlanAnio, planIdx: number, minRows?: number) => {
     const allGrades = displayData.calificaciones[plan.anio] || []
     // Filter only quantitative subjects (exclude cualitativas)
     const grades = allGrades.filter((_g, idx) => {
       const m = plan.materias[idx]
       return m && m.tipo !== 'cualitativa'
     })
-    const yearLabel = displayData.aniosEscolares?.[planIdx] || ''
+    // Filler rows for paired years with different subject counts
+    const fillerCount = minRows ? Math.max(0, minRows - grades.length) : 0
     // Excel column widths: A=4.57, B-K=13 each, L=5.0, M=4.57 → total=144.14
     // Proportions: Areas 30.2%, N° 9.0%, Letras 36.1%, T-E 9.0%, Mes 9.0%, Año 3.5%, Inst 3.2%
     return (
@@ -471,9 +475,9 @@ export default function CertificacionesPage() {
           <col style={{ width: '3.2%' }} />{/* M: Inst. Educ. */}
         </colgroup>
         <tbody>
-          {/* Year header row */}
+          {/* Year header row - just the year name, centered, no year label */}
           <tr>
-            <td colSpan={7} style={bdH}>{plan.anio.toUpperCase()}{yearLabel ? ` (${yearLabel})` : ''}</td>
+            <td colSpan={7} style={bdH}>{plan.anio.toUpperCase()}</td>
           </tr>
           {/* Sub-header row 1 */}
           <tr>
@@ -504,6 +508,18 @@ export default function CertificacionesPage() {
               <td style={bdC}>{cal.fechaMes || ''}</td>
               <td style={{ ...bdC, fontSize: '7pt' }}>{cal.fechaAnio || ''}</td>
               <td style={{ ...bdC, fontSize: '5pt', padding: '0 1px', overflow: 'hidden', whiteSpace: 'nowrap' }}>{cal.instEduc || ''}</td>
+            </tr>
+          ))}
+          {/* Filler rows (asterisks) for paired years with different subject counts */}
+          {Array.from({ length: fillerCount }).map((_, idx) => (
+            <tr key={`fill-${idx}`}>
+              <td style={bd}>{'**********************'}</td>
+              <td style={bdC}>{'*'}</td>
+              <td style={bdC}>{'**********************'}</td>
+              <td style={bdC}>{'*'}</td>
+              <td style={bdC}>{'*'}</td>
+              <td style={bdC}>{'*'}</td>
+              <td style={bdC}>{'*'}</td>
             </tr>
           ))}
         </tbody>
@@ -1110,30 +1126,43 @@ export default function CertificacionesPage() {
                       </table>
 
                       {/* ====== ROW 17+: SECCIÓN V — Plan de Estudio: Calificaciones ====== */}
-                      {/* Row 17: Section V header */}
+                      {/* Row 17: Section V header — no bottom border (directly adjacent to year headers) */}
                       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                         <tbody>
                           <tr>
-                            <td colSpan={2} style={bdH}>V. Plan de Estudio:</td>
+                            <td style={{ ...bdH, borderBottom: 'none' }}>V. Plan de Estudio:</td>
                           </tr>
                         </tbody>
                       </table>
 
+                      {/* Helper: count quantitative subjects for a plan */}
+                      {(() => {
+                        const countQuant = (p: PlanAnio) =>
+                          p.materias.filter(m => m.tipo !== 'cualitativa').length
+                        const c1 = countQuant(activePlan[0]), c2 = countQuant(activePlan[1])
+                        const c3 = countQuant(activePlan[2]), c4 = countQuant(activePlan[3])
+                        const max12 = Math.max(c1, c2)
+                        const max34 = Math.max(c3, c4)
+
+                        return (<>
                       {/* 1° AÑO (left A-M) + 2° AÑO (right O-AA) */}
                       <div style={{ display: 'flex', gap: '0' }}>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[0], 0)}</div>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[1], 1)}</div>
+                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[0], 0, max12)}</div>
+                        <div style={{ ...sepCol, flexShrink: 0, width: '3px' }} />
+                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[1], 1, max12)}</div>
                       </div>
 
                       {/* 3° AÑO (left) + 4° AÑO (right) */}
                       <div style={{ display: 'flex', gap: '0' }}>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[2], 2)}</div>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[3], 3)}</div>
+                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[2], 2, max34)}</div>
+                        <div style={{ ...sepCol, flexShrink: 0, width: '3px' }} />
+                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[3], 3, max34)}</div>
                       </div>
 
                       {/* 5° AÑO (left) + Orientación / Grupos (right) */}
                       <div style={{ display: 'flex', gap: '0' }}>
                         <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[4], 4)}</div>
+                        <div style={{ ...sepCol, flexShrink: 0, width: '3px' }} />
                         <div style={{ flex: '1 1 49.85%' }}>
                           {/* Orientación y Convivencia — Excel: O-S(5) ÁREA + T(1) AÑO + U-AA(7) LITERAL */}
                           <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
@@ -1188,6 +1217,8 @@ export default function CertificacionesPage() {
                           </table>
                         </div>
                       </div>
+                      </>)
+                      })()}
 
                       {/* ====== SECCIÓN VI: Observaciones ====== */}
                       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>

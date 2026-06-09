@@ -938,12 +938,7 @@ export default function CertificacionesPage() {
                         </tbody>
                       </table>
 
-                      {/* ====== ROW 4: Empty spacer ====== */}
-                      <table width="100%" cellPadding={0} cellSpacing={0} style={{ ...tbS, height: '6px' }}>
-                        <tbody><tr><td style={{ ...bd, height: '6px' }}></td></tr></tbody>
-                      </table>
-
-                      {/* ====== ROW 5-8: SECCIÓN II — Datos de la Institución ====== */}
+                      {/* ====== SECCIÓN II — Datos de la Institución ====== */}
                       <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                         <colgroup>
                           <col style={{ width: '10%' }} />{/* A-C labels */}

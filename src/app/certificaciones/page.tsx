@@ -450,7 +450,7 @@ export default function CertificacionesPage() {
     padding: '0 1px',
   }
   // Vertical separator column (like Section IV's N column)
-  const sepCol: React.CSSProperties = { borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }
+  const sepCol: React.CSSProperties = { border: 'none' }
 
   const renderYearHalf = (plan: PlanAnio, planIdx: number, minRows?: number) => {
     const allGrades = displayData.calificaciones[plan.anio] || []
@@ -1070,7 +1070,7 @@ export default function CertificacionesPage() {
                           <col style={{ width: '22.22%' }} />{/* 2: B-G (Denominación) */}
                           <col style={{ width: '18.52%' }} />{/* 3: H-L (Localidad) */}
                           <col style={{ width: '3.70%' }} />{/* 4: M (E.F.) */}
-                          <col style={{ width: '1.48%' }} />{/* 5: N (separator) */}
+                          <col style={{ width: '0.8%' }} />{/* 5: N (separator — no borders) */}
                           <col style={{ width: '3.70%' }} />{/* 6: O (N°) */}
                           <col style={{ width: '22.22%' }} />{/* 7: P-U (Denominación) */}
                           <col style={{ width: '18.52%' }} />{/* 8: V-Z (Localidad) */}
@@ -1080,7 +1080,7 @@ export default function CertificacionesPage() {
                           {/* Row 13: Title (A-M) | sep N | Right headers (O-AA) */}
                           <tr>
                             <td colSpan={4} style={bdH}>IV. Instituciones Educativas donde Cursó Estudios</td>
-                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ border: 'none' }}></td>
                             <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>N°</td>
                             <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Denominación y Epónimo de la Institución Educativa</td>
                             <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Localidad</td>
@@ -1092,7 +1092,7 @@ export default function CertificacionesPage() {
                             <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Denominación y Epónimo de la Institución Educativa</td>
                             <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Localidad</td>
                             <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>E.F.</td>
-                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ border: 'none' }}></td>
                             <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[2] ? 3 : ''}</td>
                             <td style={bd}>{displayData.instituciones[2]?.denominacion || '*'}</td>
                             <td style={bd}>{displayData.instituciones[2]?.localidad || '*'}</td>
@@ -1104,7 +1104,7 @@ export default function CertificacionesPage() {
                             <td style={bd}>{displayData.instituciones[0]?.denominacion || '*'}</td>
                             <td style={bd}>{displayData.instituciones[0]?.localidad || '*'}</td>
                             <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[0]?.ef || '*'}</td>
-                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ border: 'none' }}></td>
                             <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[3] ? 4 : ''}</td>
                             <td style={bd}>{displayData.instituciones[3]?.denominacion || '*'}</td>
                             <td style={bd}>{displayData.instituciones[3]?.localidad || '*'}</td>
@@ -1116,7 +1116,7 @@ export default function CertificacionesPage() {
                             <td style={bd}>{displayData.instituciones[1]?.denominacion || '*'}</td>
                             <td style={bd}>{displayData.instituciones[1]?.localidad || '*'}</td>
                             <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[1]?.ef || '*'}</td>
-                            <td style={{ borderLeft: '1px solid #000', borderRight: '1px solid #000', borderTop: 'none', borderBottom: 'none' }}></td>
+                            <td style={{ border: 'none' }}></td>
                             <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[4] ? 5 : ''}</td>
                             <td style={bd}>{displayData.instituciones[4]?.denominacion || '*'}</td>
                             <td style={bd}>{displayData.instituciones[4]?.localidad || '*'}</td>
@@ -1147,23 +1147,23 @@ export default function CertificacionesPage() {
                         return (<>
                       {/* 1° AÑO (left A-M) + 2° AÑO (right O-AA) */}
                       <div style={{ display: 'flex', gap: '0' }}>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[0], 0, max12)}</div>
-                        <div style={{ ...sepCol, flexShrink: 0, width: '3px' }} />
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[1], 1, max12)}</div>
+                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[0], 0, max12)}</div>
+                        <div style={{ ...sepCol, flexShrink: 0, width: '0.8%' }} />
+                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[1], 1, max12)}</div>
                       </div>
 
                       {/* 3° AÑO (left) + 4° AÑO (right) */}
                       <div style={{ display: 'flex', gap: '0' }}>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[2], 2, max34)}</div>
-                        <div style={{ ...sepCol, flexShrink: 0, width: '3px' }} />
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[3], 3, max34)}</div>
+                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[2], 2, max34)}</div>
+                        <div style={{ ...sepCol, flexShrink: 0, width: '0.8%' }} />
+                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[3], 3, max34)}</div>
                       </div>
 
                       {/* 5° AÑO (left) + Orientación / Grupos (right) */}
                       <div style={{ display: 'flex', gap: '0' }}>
-                        <div style={{ flex: '1 1 49.85%' }}>{renderYearHalf(activePlan[4], 4)}</div>
-                        <div style={{ ...sepCol, flexShrink: 0, width: '3px' }} />
-                        <div style={{ flex: '1 1 49.85%' }}>
+                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[4], 4)}</div>
+                        <div style={{ ...sepCol, flexShrink: 0, width: '0.8%' }} />
+                        <div style={{ flex: '1 1 49.6%' }}>
                           {/* Orientación y Convivencia — Excel: O-S(5) ÁREA + T(1) AÑO + U-AA(7) LITERAL */}
                           <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
                             <colgroup>

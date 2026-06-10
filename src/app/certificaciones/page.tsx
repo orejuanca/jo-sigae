@@ -498,10 +498,10 @@ export default function CertificacionesPage() {
             <td style={bdH9}>Mes</td>
             <td style={bdH9}>Año</td>
           </tr>
-          {/* Subject rows */}
+          {/* Subject rows — fixed height for uniform row sizing */}
           {grades.map((cal, idx) => (
-            <tr key={idx}>
-              <td style={{ ...bd, verticalAlign: 'top', whiteSpace: 'normal', lineHeight: '1.1' }}>{cal.materia}</td>
+            <tr key={idx} style={{ height: '16px' }}>
+              <td style={{ ...bd, verticalAlign: 'top', whiteSpace: 'normal', lineHeight: '1.1', overflow: 'hidden' }}>{cal.materia}</td>
               <td style={{ ...bdC, fontWeight: 'bold' }}>{cal.nota || ''}</td>
               <td style={{ ...bdC, textAlign: 'left' }}>{cal.literal || ''}</td>
               <td style={bdC}>{cal.tipoEvaluacion || ''}</td>
@@ -512,7 +512,7 @@ export default function CertificacionesPage() {
           ))}
           {/* Filler rows (asterisks) for paired years with different subject counts */}
           {Array.from({ length: fillerCount }).map((_, idx) => (
-            <tr key={`fill-${idx}`}>
+            <tr key={`fill-${idx}`} style={{ height: '16px' }}>
               <td style={bd}>{'**********************'}</td>
               <td style={bdC}>{'*'}</td>
               <td style={bdC}>{'**********************'}</td>

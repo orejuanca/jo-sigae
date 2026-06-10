@@ -475,9 +475,9 @@ export default function CertificacionesPage() {
           <col style={{ width: '3.2%' }} />{/* M: Inst. Educ. */}
         </colgroup>
         <tbody>
-          {/* Year header row - just the year name, centered, no year label */}
+          {/* Year header row - centered, no top/internal lines, only bottom border */}
           <tr>
-            <td colSpan={7} style={bdH}>{plan.anio.toUpperCase()}</td>
+            <td colSpan={7} style={{ ...bdH, borderTop: 'none', borderLeft: 'none', borderRight: 'none', textAlign: 'center' }}>{plan.anio.toUpperCase()}</td>
           </tr>
           {/* Sub-header row 1 */}
           <tr>

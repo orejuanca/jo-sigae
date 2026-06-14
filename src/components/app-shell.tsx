@@ -32,6 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <NavLink href="/boletin-calificaciones">Boletín Cal.</NavLink>
               <NavLink href="/titulos">Títulos</NavLink>
               <NavLink href="/validar">Validar</NavLink>
+              <NavLink href="/certificaciones-visual">Cert. Visual</NavLink>
             </div>
             <button onClick={logout} className="px-4 py-2 text-sm bg-emerald-700 hover:bg-emerald-600 rounded-lg transition">
               Cerrar Sesión
@@ -47,6 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink href="/boletin-calificaciones" small>Bol. Cal.</NavLink>
             <NavLink href="/titulos" small>Títulos</NavLink>
             <NavLink href="/validar" small>Validar</NavLink>
+              <NavLink href="/certificaciones-visual" small>Cert. Visual</NavLink>
           </div>
         </div>
       </nav>

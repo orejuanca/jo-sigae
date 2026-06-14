@@ -26,7 +26,7 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  MergeHorizontal, MergeVertical, SplitSquareHorizontal,
+  MergeHorizontal, MergeVertical, SplitSquareHorizontal, Group,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -98,20 +98,42 @@ function updateCellInConfig(
 function GridTable({
   config,
   selectedCell,
-  onCellClick,
+  selectionRange,
+  onCellMouseDown,
+  onCellMouseEnter,
+  onCellMouseUp,
   isPreview,
   displayData,
 }: {
   config: GridConfig
   selectedCell: { row: number; col: number } | null
-  onCellClick: (row: number, col: number) => void
+  selectionRange: { r1: number; c1: number; r2: number; c2: number } | null
+  onCellMouseDown: (row: number, col: number) => void
+  onCellMouseEnter: (row: number, col: number) => void
+  onCellMouseUp: () => void
   isPreview: boolean
   displayData: DisplayData | null
 }) {
   const occupied = useMemo(() => new Set<string>(), [])
 
+  const inRange = (r: number, c: number) => {
+    if (!selectionRange) return false
+    const minR = Math.min(selectionRange.r1, selectionRange.r2)
+    const maxR = Math.max(selectionRange.r1, selectionRange.r2)
+    const minC = Math.min(selectionRange.c1, selectionRange.c2)
+    const maxC = Math.max(selectionRange.c1, selectionRange.c2)
+    return r >= minR && r <= maxR && c >= minC && c <= maxC
+  }
+
+  const isRangeActive = selectionRange !== null
+  const isSingleSelected = selectedCell && !isRangeActive
+
   return (
-    <div className="overflow-auto flex-1 bg-white p-2 rounded border" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+    <div
+      className="overflow-auto flex-1 bg-white p-2 rounded border"
+      style={{ maxHeight: 'calc(100vh - 200px)' }}
+      onMouseUp={() => !isPreview && onCellMouseUp()}
+    >
       <div style={{ width: '800px', maxWidth: '100%', margin: '0 auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2' }}>
           <colgroup>
@@ -128,14 +150,12 @@ function GridTable({
 
                 const cell = gridRow.cells[c] || emptyCell()
 
-                // Mark cells consumed by rowspan
                 if (cell.rowspan > 1) {
                   for (let dr = 1; dr < cell.rowspan; dr++) {
                     occupied.add(`${r + dr}-${c}`)
                   }
                 }
 
-                // Resolve content for preview
                 let displayContent = cell.content
                 if (isPreview && cell.dataBinding && displayData) {
                   displayContent = resolveBinding(cell.dataBinding, displayData)
@@ -144,7 +164,8 @@ function GridTable({
                 const borderStyle = (enabled: boolean) =>
                   enabled ? `1px solid ${cell.borderColor}` : 'none'
 
-                const isSelected = selectedCell?.row === r && selectedCell?.col === c
+                const cellIsSelected = isSingleSelected && selectedCell?.row === r && selectedCell?.col === c
+                const cellInRange = isRangeActive && inRange(r, c)
                 const hasContent = cell.content || cell.dataBinding
 
                 cells.push(
@@ -164,17 +185,22 @@ function GridTable({
                       fontStyle: cell.fontStyle,
                       textAlign: cell.textAlign,
                       verticalAlign: cell.verticalAlign,
-                      backgroundColor: cell.bgColor || undefined,
                       color: cell.color || undefined,
                       whiteSpace: cell.whiteSpace,
                       padding: cell.padding,
-                      cursor: isPreview ? 'default' : 'pointer',
-                      outline: isSelected ? '2px solid #3b82f6' : undefined,
+                      cursor: isPreview ? 'default' : 'cell',
+                      outline: cellIsSelected ? '2px solid #3b82f6' : undefined,
                       outlineOffset: '-2px',
                       minWidth: hasContent ? undefined : '0px',
-                      background: isSelected ? 'rgba(59,130,246,0.06)' : cell.bgColor || undefined,
+                      background: cellInRange
+                        ? 'rgba(59,130,246,0.15)'
+                        : cellIsSelected
+                          ? 'rgba(59,130,246,0.06)'
+                          : cell.bgColor || undefined,
+                      userSelect: 'none',
                     }}
-                    onClick={() => !isPreview && onCellClick(r, c)}
+                    onMouseDown={() => !isPreview && onCellMouseDown(r, c)}
+                    onMouseEnter={() => !isPreview && onCellMouseEnter(r, c)}
                     title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
                   >
                     {isPreview && cell.dataBinding && !displayContent ? (
@@ -339,6 +365,17 @@ export default function CertificacionesVisualPage() {
   const [gridInitialized, setGridInitialized] = useState(false)
   const [colInput, setColInput] = useState('27')
 
+  // Range selection state (drag to select multiple cells)
+  const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
+  const [selEnd, setSelEnd] = useState<{ row: number; col: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Computed selection range
+  const selectionRange = useMemo(() => {
+    if (!selAnchor || !selEnd) return null
+    return { r1: selAnchor.row, c1: selAnchor.col, r2: selEnd.row, c2: selEnd.col }
+  }, [selAnchor, selEnd])
+
   // Student / data state
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certData, setCertData] = useState<CertData | null>(null)
@@ -442,10 +479,27 @@ export default function CertificacionesVisualPage() {
   }, [certData])
 
   // === Grid Operations ===
-  const handleCellClick = useCallback((r: number, c: number) => {
-    setSelectedCell((prev) =>
-      prev?.row === r && prev?.col === c ? null : { row: r, col: c }
-    )
+  // Mouse handlers for range selection
+  const handleCellMouseDown = useCallback((r: number, c: number) => {
+    setIsDragging(true)
+    setSelAnchor({ row: r, col: c })
+    setSelEnd({ row: r, col: c })
+    setSelectedCell({ row: r, col: c })
+  }, [])
+
+  const handleCellMouseEnter = useCallback((r: number, c: number) => {
+    if (!isDragging) return
+    setSelEnd({ row: r, col: c })
+  }, [isDragging])
+
+  const handleCellMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  const clearRangeSelection = useCallback(() => {
+    setSelAnchor(null)
+    setSelEnd(null)
+    setIsDragging(false)
   }, [])
 
   const handleCellUpdate = useCallback((updates: Partial<CellConfig>) => {
@@ -600,6 +654,43 @@ export default function CertificacionesVisualPage() {
       return { ...prev, totalCols: prev.totalCols - 1, columnWidths: newWidths, rows: newRows }
     })
     setColInput(String(gridConfig.totalCols - 1))
+  }
+
+  // === Merge Selection (drag range) ===
+  const handleMergeSelection = () => {
+    if (!selectionRange) {
+      toast({ title: 'Sin selección', description: 'Selecciona varias celdas arrastrando primero.', variant: 'destructive' })
+      return
+    }
+    const minR = Math.min(selectionRange.r1, selectionRange.r2)
+    const maxR = Math.max(selectionRange.r1, selectionRange.r2)
+    const minC = Math.min(selectionRange.c1, selectionRange.c2)
+    const maxC = Math.max(selectionRange.c1, selectionRange.c2)
+    const spanCols = maxC - minC + 1
+    const spanRows = maxR - minR + 1
+    if (spanCols === 1 && spanRows === 1) {
+      toast({ title: 'Una sola celda', description: 'Selecciona al menos 2 celdas para combinar.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      const updated = updateCellInConfig(prev, minR, minC, {
+        colspan: spanCols,
+        rowspan: spanRows,
+      })
+      const newRows = updated.rows.map((row, ri) => {
+        if (ri < minR || ri > maxR) return row
+        const newCells = { ...row.cells }
+        for (let ci = minC; ci <= maxC; ci++) {
+          if (ri === minR && ci === minC) continue
+          delete newCells[ci]
+        }
+        return { cells: newCells }
+      })
+      return { ...updated, rows: newRows }
+    })
+    setSelectedCell({ row: minR, col: minC })
+    clearRangeSelection()
+    toast({ title: 'Celdas combinadas', description: `${spanCols}x${spanRows} celdas fusionadas en una.` })
   }
 
   // === Merge / Split Operations ===
@@ -885,13 +976,16 @@ export default function CertificacionesVisualPage() {
 
               {/* === COMBINAR === */}
               <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COMBINAR</Badge>
-              <Button size="sm" variant="outline" onClick={handleMergeColumns} className="h-7 text-xs" title="Elimina la columna derecha y suma su ancho. Total cols baja en 1.">
+              <Button size="sm" variant="outline" onClick={handleMergeSelection} className="h-7 text-xs" title="Arrastra sobre varias celdas, luego pulsa para combinarlas en una">
+                <Group className="h-3 w-3 mr-1" /> Selección
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeColumns() }} className="h-7 text-xs" title="Elimina la columna derecha y suma su ancho. Total cols baja en 1.">
                 <MergeHorizontal className="h-3 w-3 mr-1" /> Columnas
               </Button>
-              <Button size="sm" variant="outline" onClick={handleMergeRows} className="h-7 text-xs" title="Elimina la fila de abajo. Total filas baja en 1.">
+              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeRows() }} className="h-7 text-xs" title="Elimina la fila de abajo. Total filas baja en 1.">
                 <MergeVertical className="h-3 w-3 mr-1" /> Filas
               </Button>
-              <Button size="sm" variant="outline" onClick={handleSplitCell} className="h-7 text-xs" title="Reset colspan/rowspan a 1">
+              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleSplitCell() }} className="h-7 text-xs" title="Reset colspan/rowspan a 1">
                 <SplitSquareHorizontal className="h-3 w-3 mr-1" /> Separar
               </Button>
 
@@ -975,7 +1069,10 @@ export default function CertificacionesVisualPage() {
           <GridTable
             config={gridConfig}
             selectedCell={selectedCell}
-            onCellClick={handleCellClick}
+            selectionRange={selectionRange}
+            onCellMouseDown={handleCellMouseDown}
+            onCellMouseEnter={handleCellMouseEnter}
+            onCellMouseUp={handleCellMouseUp}
             isPreview={isPreview}
             displayData={displayData}
           />

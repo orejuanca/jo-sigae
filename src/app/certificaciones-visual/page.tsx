@@ -1,30 +1,25 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
-import { arrayMove } from '@dnd-kit/sortable'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import { StudentSearch } from '@/components/student-search'
 import { useToast } from '@/hooks/use-toast'
-import { notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
-import {
-  Eye, EyeOff, Save, Upload, RotateCcw, Printer,
-  Loader2, GripVertical,
-} from 'lucide-react'
-import { Palette } from '@/components/cert-visual/palette'
-import { Canvas } from '@/components/cert-visual/canvas'
 import { PropertiesPanel } from '@/components/cert-visual/properties-panel'
-import { renderSection } from '@/components/cert-visual/section-renderer'
 import {
-  type LayoutConfig, type BlockConfig, type BlockProps,
-  AVAILABLE_BLOCKS, DEFAULT_BLOCK_PROPS,
-  createDefaultLayout,
+  type GridConfig, type CellConfig, type DisplayData,
+  emptyCell, emptyRow, createDefaultTemplate, resolveBinding,
 } from '@/components/cert-visual/types'
+import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
+import {
+  Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
+} from 'lucide-react'
 
-// --- Types ---
+// === Student & CertData types (local to this page) ===
 interface Student {
   id: string; cedula: string; apellidos: string; nombres: string
   fechaNacimiento?: string | null; pais?: string | null
@@ -50,61 +45,228 @@ interface CertData {
   directorCdcce: { apellidosNombres: string; cedula: string }
 }
 
-const STORAGE_KEY = 'cert-visual-layout'
+const STORAGE_KEY = 'cert-grid-layout'
 
-function loadLayout(): LayoutConfig {
-  if (typeof window === 'undefined') return createDefaultLayout()
+// === Grid helpers ===
+function loadGridConfig(): GridConfig {
+  if (typeof window === 'undefined') return createDefaultTemplate()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      const parsed = JSON.parse(raw) as LayoutConfig
-      if (parsed.blocks && Array.isArray(parsed.blocks)) return parsed
+      const parsed = JSON.parse(raw) as GridConfig
+      if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) return parsed
     }
   } catch { /* ignore */ }
-  return createDefaultLayout()
+  return createDefaultTemplate()
 }
 
-function saveLayout(layout: LayoutConfig) {
+function saveGridConfig(config: GridConfig) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...layout, updatedAt: new Date().toISOString() }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
   } catch { /* ignore */ }
 }
 
-// --- Main Component ---
+function updateCellInConfig(
+  config: GridConfig,
+  rowIdx: number,
+  colIdx: number,
+  updates: Partial<CellConfig>
+): GridConfig {
+  const newRows = config.rows.map((r, i) => {
+    if (i !== rowIdx) return r
+    const cell = r.cells[colIdx] || emptyCell()
+    return { cells: { ...r.cells, [colIdx]: { ...cell, ...updates } } }
+  })
+  return { ...config, rows: newRows }
+}
+
+// === Grid Rendering Component ===
+function GridTable({
+  config,
+  selectedCell,
+  onCellClick,
+  isPreview,
+  displayData,
+}: {
+  config: GridConfig
+  selectedCell: { row: number; col: number } | null
+  onCellClick: (row: number, col: number) => void
+  isPreview: boolean
+  displayData: DisplayData | null
+}) {
+  const occupied = useMemo(() => new Set<string>(), [])
+
+  return (
+    <div className="overflow-auto flex-1 bg-white p-2 rounded border" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div style={{ width: '800px', maxWidth: '100%', margin: '0 auto' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2' }}>
+          <colgroup>
+            {config.columnWidths.map((w, i) => (
+              <col key={i} style={{ width: w || `${100 / config.totalCols}%` }} />
+            ))}
+          </colgroup>
+          <tbody>
+            {config.rows.map((gridRow, r) => {
+              const cells: React.ReactNode[] = []
+              for (let c = 0; c < config.totalCols; c++) {
+                const key = `${r}-${c}`
+                if (occupied.has(key)) continue
+
+                const cell = gridRow.cells[c] || emptyCell()
+
+                // Mark cells consumed by rowspan
+                if (cell.rowspan > 1) {
+                  for (let dr = 1; dr < cell.rowspan; dr++) {
+                    occupied.add(`${r + dr}-${c}`)
+                  }
+                }
+
+                // Resolve content for preview
+                let displayContent = cell.content
+                if (isPreview && cell.dataBinding && displayData) {
+                  displayContent = resolveBinding(cell.dataBinding, displayData)
+                }
+
+                const borderStyle = (enabled: boolean) =>
+                  enabled ? `1px solid ${cell.borderColor}` : 'none'
+
+                const isSelected = selectedCell?.row === r && selectedCell?.col === c
+                const hasContent = cell.content || cell.dataBinding
+
+                cells.push(
+                  <td
+                    key={key}
+                    colSpan={cell.colspan > 1 ? cell.colspan : undefined}
+                    rowSpan={cell.rowspan > 1 ? cell.rowspan : undefined}
+                    style={{
+                      borderTop: borderStyle(cell.borderTop),
+                      borderRight: borderStyle(cell.borderRight),
+                      borderBottom: borderStyle(cell.borderBottom),
+                      borderLeft: borderStyle(cell.borderLeft),
+                      width: cell.width || undefined,
+                      height: cell.height || undefined,
+                      fontSize: `${cell.fontSize}pt`,
+                      fontWeight: cell.fontWeight,
+                      fontStyle: cell.fontStyle,
+                      textAlign: cell.textAlign,
+                      verticalAlign: cell.verticalAlign,
+                      backgroundColor: cell.bgColor || undefined,
+                      color: cell.color || undefined,
+                      whiteSpace: cell.whiteSpace,
+                      padding: cell.padding,
+                      cursor: isPreview ? 'default' : 'pointer',
+                      outline: isSelected ? '2px solid #3b82f6' : undefined,
+                      outlineOffset: '-2px',
+                      minWidth: hasContent ? undefined : '0px',
+                      background: isSelected ? 'rgba(59,130,246,0.06)' : cell.bgColor || undefined,
+                    }}
+                    onClick={() => !isPreview && onCellClick(r, c)}
+                    title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
+                  >
+                    {isPreview && cell.dataBinding && !displayContent ? (
+                      <span style={{ color: '#ccc' }}>—</span>
+                    ) : (
+                      displayContent
+                    )}
+                  </td>
+                )
+              }
+              return <tr key={r}>{cells}</tr>
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// === Column Width Editor ===
+function ColumnWidthEditor({
+  config,
+  onUpdate,
+}: {
+  config: GridConfig
+  onUpdate: (config: GridConfig) => void
+}) {
+  const [editing, setEditing] = useState<number | null>(null)
+  const [value, setValue] = useState('')
+
+  const startEdit = (idx: number) => {
+    setEditing(idx)
+    setValue(config.columnWidths[idx] || '')
+  }
+
+  const commitEdit = () => {
+    if (editing !== null && value.trim()) {
+      const newWidths = [...config.columnWidths]
+      newWidths[editing] = value.trim()
+      onUpdate({ ...config, columnWidths: newWidths })
+    }
+    setEditing(null)
+  }
+
+  return (
+    <div className="flex gap-0.5 flex-wrap p-1">
+      {config.columnWidths.map((w, i) => (
+        <div
+          key={i}
+          className="text-center border rounded px-0.5 py-0.5 min-w-[44px]"
+          style={{ fontSize: '7pt', backgroundColor: '#f8f8f8' }}
+        >
+          <div className="text-muted-foreground" style={{ fontSize: '6pt' }}>C{i}</div>
+          {editing === i ? (
+            <input
+              autoFocus
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitEdit() }}
+              className="w-10 h-4 text-center text-[7pt] border rounded"
+              style={{ padding: '0 1px' }}
+            />
+          ) : (
+            <div
+              onClick={() => startEdit(i)}
+              className="cursor-pointer hover:bg-accent rounded"
+              title="Clic para editar"
+            >
+              {w}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// === Main Page Component ===
 export default function CertificacionesVisualPage() {
   const { toast } = useToast()
 
-  // Layout state
-  const [layout, setLayout] = useState<LayoutConfig>(createDefaultLayout)
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  // Grid state
+  const [gridConfig, setGridConfig] = useState<GridConfig>(createDefaultTemplate)
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
   const [isPreview, setIsPreview] = useState(false)
-  const [layoutInitialized, setLayoutInitialized] = useState(false)
+  const [gridInitialized, setGridInitialized] = useState(false)
+  const [colInput, setColInput] = useState('27')
 
   // Student / data state
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certData, setCertData] = useState<CertData | null>(null)
   const [loadingData, setLoadingData] = useState(false)
 
-  // Drag state
-  const [activeId, setActiveId] = useState<string | null>(null)
-
-  // Sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  )
-
-  // Load layout from localStorage on mount
+  // Load grid from localStorage on mount
   useEffect(() => {
-    setLayout(loadLayout())
-    setLayoutInitialized(true)
+    setGridConfig(loadGridConfig())
+    setGridInitialized(true)
   }, [])
 
-  // Persist layout changes
+  // Persist grid changes
   useEffect(() => {
-    if (layoutInitialized) saveLayout(layout)
-  }, [layout, layoutInitialized])
+    if (gridInitialized) saveGridConfig(gridConfig)
+  }, [gridConfig, gridInitialized])
 
-  // --- Student selection + data fetching ---
+  // === Student selection + data fetching ===
   const handleSelectStudent = useCallback(async (student: Student) => {
     setSelectedStudent(student)
     setCertData(null)
@@ -149,149 +311,188 @@ export default function CertificacionesVisualPage() {
     }
   }, [toast])
 
-  // --- DnD handlers ---
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(String(event.active.id))
-  }
+  // Convert CertData to DisplayData for the grid
+  const displayData: DisplayData | null = useMemo(() => {
+    if (!certData) return null
+    // Convert YYYY-MM-DD → DD/MM/YYYY
+    let fechaExp = certData.fechaExpedicion
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
+      const [y, m, d] = fechaExp.split('-')
+      fechaExp = `${d}/${m}/${y}`
+    }
+    return {
+      lugar: certData.lugar,
+      fechaExpedicion: fechaExp,
+      planEstudio: certData.planEstudio,
+      planCodigo: schoolConfig.planCodigo,
+      od: certData.od,
+      denominacion: certData.denominacion,
+      direccion: certData.direccion,
+      telefono: certData.telefono,
+      municipio: certData.municipio,
+      estado: certData.estado,
+      cdcce: certData.cdcce,
+      estudiante: certData.estudiante,
+      instituciones: certData.instituciones,
+      observaciones: certData.observaciones,
+      promedioAcumulado: certData.promedioAcumulado,
+      director: certData.director,
+      directorCdcce: certData.directorCdcce,
+    }
+  }, [certData])
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null)
-    const { active, over } = event
-    if (!over) return
+  // === Grid Operations ===
+  const handleCellClick = useCallback((r: number, c: number) => {
+    setSelectedCell((prev) =>
+      prev?.row === r && prev?.col === c ? null : { row: r, col: c }
+    )
+  }, [])
 
-    const activeId = String(active.id)
-    const overId = String(over.id)
+  const handleCellUpdate = useCallback((updates: Partial<CellConfig>) => {
+    if (!selectedCell) return
+    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, updates))
+  }, [selectedCell])
 
-    // Dragging from palette to canvas
-    if (activeId.startsWith('palette-')) {
-      const blockId = activeId.replace('palette-', '')
-      // Only add if not already on canvas
-      if (layout.blocks.some(b => b.id === blockId)) return
-      const blockDef = AVAILABLE_BLOCKS.find(b => b.id === blockId)
-      if (!blockDef) return
-
-      const newBlock: BlockConfig = {
-        id: blockId,
-        label: blockDef.label,
-        props: { ...DEFAULT_BLOCK_PROPS },
-      }
-
-      // Insert at position if dropped over a canvas block
-      const overIdx = layout.blocks.findIndex(b => b.id === overId)
-      if (overIdx >= 0) {
-        setLayout(prev => {
-          const blocks = [...prev.blocks]
-          blocks.splice(overIdx, 0, newBlock)
-          return { ...prev, blocks }
-        })
-      } else {
-        // Dropped on empty canvas — append
-        setLayout(prev => ({ ...prev, blocks: [...prev.blocks, newBlock] }))
-      }
+  const handleApplyColumns = () => {
+    const n = parseInt(colInput)
+    if (isNaN(n) || n < 1 || n > 100) {
+      toast({ title: 'Error', description: 'Ingrese un número válido de columnas (1-100).', variant: 'destructive' })
       return
     }
-
-    // Reordering within canvas
-    if (activeId !== overId) {
-      setLayout(prev => {
-        const oldIdx = prev.blocks.findIndex(b => b.id === activeId)
-        const newIdx = prev.blocks.findIndex(b => b.id === overId)
-        if (oldIdx === -1 || newIdx === -1) return prev
-        return { ...prev, blocks: arrayMove(prev.blocks, oldIdx, newIdx) }
-      })
+    const newConfig: GridConfig = {
+      totalCols: n,
+      columnWidths: Array(n).fill(`${(100 / n).toFixed(2)}%`),
+      rows: [emptyRow(n)],
     }
+    setGridConfig(newConfig)
+    setSelectedCell(null)
+    toast({ title: `Grilla reiniciada con ${n} columnas` })
   }
 
-  // --- Block operations ---
-  const handleRemoveBlock = useCallback((id: string) => {
-    setLayout(prev => ({ ...prev, blocks: prev.blocks.filter(b => b.id !== id) }))
-    if (selectedBlockId === id) setSelectedBlockId(null)
-  }, [selectedBlockId])
-
-  const handleUpdateProps = useCallback((blockId: string, props: Partial<BlockProps>) => {
-    setLayout(prev => ({
+  const handleAddRow = () => {
+    setGridConfig((prev) => ({
       ...prev,
-      blocks: prev.blocks.map(b =>
-        b.id === blockId ? { ...b, props: { ...b.props, ...props } } : b
-      ),
+      rows: [...prev.rows, emptyRow(prev.totalCols)],
     }))
-  }, [])
-
-  const handleResetProps = useCallback((blockId: string) => {
-    setLayout(prev => ({
-      ...prev,
-      blocks: prev.blocks.map(b =>
-        b.id === blockId ? { ...b, props: { ...DEFAULT_BLOCK_PROPS } } : b
-      ),
-    }))
-  }, [])
-
-  const handleResetLayout = () => {
-    const def = createDefaultLayout()
-    setLayout(def)
-    setSelectedBlockId(null)
-    toast({ title: 'Diseño restablecido', description: 'Se restauró el diseño por defecto.' })
   }
 
-  const handleExportLayout = () => {
-    const blob = new Blob([JSON.stringify(layout, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'cert-visual-layout.json'
-    a.click()
-    URL.revokeObjectURL(url)
-    toast({ title: 'Diseño exportado' })
-  }
-
-  const handleImportLayout = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      try {
-        const text = await file.text()
-        const parsed = JSON.parse(text) as LayoutConfig
-        if (parsed.blocks && Array.isArray(parsed.blocks)) {
-          setLayout(parsed)
-          toast({ title: 'Diseño importado' })
-        } else {
-          toast({ title: 'Error', description: 'Formato de archivo inválido.', variant: 'destructive' })
-        }
-      } catch {
-        toast({ title: 'Error', description: 'No se pudo leer el archivo.', variant: 'destructive' })
+  const handleDeleteLastRow = () => {
+    setGridConfig((prev) => {
+      if (prev.rows.length <= 1) {
+        toast({ title: 'No se puede eliminar la última fila', variant: 'destructive' })
+        return prev
       }
-    }
-    input.click()
+      const newRows = prev.rows.slice(0, -1)
+      // Clear selection if it was on the deleted row
+      if (selectedCell && selectedCell.row >= newRows.length) {
+        setSelectedCell(null)
+      }
+      return { ...prev, rows: newRows }
+    })
   }
 
-  const handlePrint = () => {
-    window.print()
+  const handleSaveLayout = () => {
+    saveGridConfig(gridConfig)
+    toast({ title: 'Diseño guardado', description: 'Se guardó en el almacenamiento local.' })
   }
 
-  // Selected block
-  const selectedBlock = layout.blocks.find(b => b.id === selectedBlockId) || null
+  const handleLoadLayout = () => {
+    const loaded = loadGridConfig()
+    setGridConfig(loaded)
+    setSelectedCell(null)
+    toast({ title: 'Diseño cargado', description: 'Se restauró desde el almacenamiento local.' })
+  }
 
-  // Active drag overlay content
-  const activeDragLabel = activeId?.startsWith('palette-')
-    ? AVAILABLE_BLOCKS.find(b => b.id === activeId.replace('palette-', ''))?.label
-    : layout.blocks.find(b => b.id === activeId)?.label
+  const handleReset = () => {
+    const def = createDefaultTemplate()
+    setGridConfig(def)
+    setSelectedCell(null)
+    setColInput('27')
+    toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
+  }
+
+  // Selected cell data
+  const selectedCellData = useMemo(() => {
+    if (!selectedCell) return null
+    const row = gridConfig.rows[selectedCell.row]
+    return row?.cells[selectedCell.col] || emptyCell()
+  }, [selectedCell, gridConfig])
 
   return (
     <AppShell>
-      <div className="space-y-4 print:hidden">
+      <div className="space-y-3 print:hidden">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Visual Builder — Certificaciones</h1>
-          <p className="text-muted-foreground">Diseñe visualmente el formato de certificación con drag-and-drop</p>
+          <h1 className="text-2xl font-bold">Editor de Grilla — Certificaciones</h1>
+          <p className="text-muted-foreground text-sm">Constructor celda por celda para el formato de certificación</p>
         </div>
+
+        {/* Toolbar Row 1: Grid controls */}
+        <Card>
+          <CardContent className="py-2 px-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Columns3 className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-xs font-medium whitespace-nowrap">Columnas:</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={colInput}
+                  onChange={(e) => setColInput(e.target.value)}
+                  className="h-7 w-16 text-xs text-center"
+                />
+                <Button size="sm" variant="outline" onClick={handleApplyColumns} className="h-7 text-xs">
+                  Aplicar Columnas
+                </Button>
+              </div>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">
+                <Plus className="h-3 w-3 mr-1" /> Agregar Fila
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
+                <Minus className="h-3 w-3 mr-1" /> Eliminar Última Fila
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button size="sm" variant="outline" onClick={handleSaveLayout} className="h-7 text-xs">
+                <Save className="h-3 w-3 mr-1" /> Guardar Layout
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleLoadLayout} className="h-7 text-xs">
+                <Upload className="h-3 w-3 mr-1" /> Cargar Layout
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleReset} className="h-7 text-xs">
+                <RotateCcw className="h-3 w-3 mr-1" /> Restablecer
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant={isPreview ? 'default' : 'outline'}
+                onClick={() => setIsPreview(!isPreview)}
+                className="h-7 text-xs"
+              >
+                {isPreview ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                {isPreview ? 'Diseñador' : 'Vista Previa'}
+              </Button>
+
+              {isPreview && (
+                <Badge variant="outline" className="text-xs">
+                  {gridConfig.rows.length} filas × {gridConfig.totalCols} columnas
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Student search */}
         <Card>
-          <CardContent className="py-3">
-            <div className="flex items-center gap-4 flex-wrap">
+          <CardContent className="py-2 px-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-[250px]">
                 <StudentSearch
                   onSelect={handleSelectStudent}
@@ -301,10 +502,10 @@ export default function CertificacionesVisualPage() {
               {selectedStudent && (
                 <div className="flex items-center gap-2">
                   <Badge variant={selectedStudent.plan === 'derogado' ? 'destructive' : 'default'}>
-                    {selectedStudent.plan === 'derogado' ? 'BD2 — Plan Derogado' : 'BD — Plan Vigente'}
+                    {selectedStudent.plan === 'derogado' ? 'BD2' : 'BD'}
                   </Badge>
                   <span className="text-sm font-medium">{selectedStudent.apellidos}, {selectedStudent.nombres}</span>
-                  <span className="text-sm text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</span>
+                  <span className="text-xs text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</span>
                 </div>
               )}
               {loadingData && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -312,103 +513,45 @@ export default function CertificacionesVisualPage() {
           </CardContent>
         </Card>
 
-        {/* Toolbar */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant={isPreview ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setIsPreview(!isPreview)}
-          >
-            {isPreview ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-            {isPreview ? 'Diseñador' : 'Vista Previa'}
-          </Button>
-
-          <div className="w-px h-6 bg-border" />
-
-          <Button variant="outline" size="sm" onClick={handleExportLayout}>
-            <Save className="h-4 w-4 mr-1" /> Guardar
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleImportLayout}>
-            <Upload className="h-4 w-4 mr-1" /> Cargar
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleResetLayout}>
-            <RotateCcw className="h-4 w-4 mr-1" /> Restablecer
-          </Button>
-
-          <div className="w-px h-6 bg-border" />
-
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!certData}>
-            <Printer className="h-4 w-4 mr-1" /> Imprimir
-          </Button>
-        </div>
+        {/* Column Widths Editor (only in designer mode) */}
+        {!isPreview && (
+          <Card>
+            <CardContent className="py-2 px-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Anchos de columna (clic para editar):</span>
+              </div>
+              <ColumnWidthEditor config={gridConfig} onUpdate={setGridConfig} />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* 3-Column Layout */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className={`flex gap-4 ${isPreview ? 'print:block' : ''}`}>
-          {/* Left: Palette (hidden in preview) */}
-          {!isPreview && (
-            <div className="w-56 shrink-0 print:hidden">
-              <Palette canvasBlockIds={layout.blocks.map(b => b.id)} />
-            </div>
-          )}
+      {/* Main Area: Grid + Properties Panel */}
+      <div className="flex gap-3 mt-3" style={{ minHeight: 'calc(100vh - 280px)' }}>
+        {/* Grid */}
+        <div className="flex-1 min-w-0">
+          <GridTable
+            config={gridConfig}
+            selectedCell={selectedCell}
+            onCellClick={handleCellClick}
+            isPreview={isPreview}
+            displayData={displayData}
+          />
+        </div>
 
-          {/* Center: Canvas */}
-          <div className="flex-1 min-w-0">
-            <Canvas
-              blocks={layout.blocks}
-              selectedBlockId={selectedBlockId}
-              onSelectBlock={setSelectedBlockId}
-              onRemoveBlock={handleRemoveBlock}
-              isPreview={isPreview}
-              certData={certData}
+        {/* Properties Panel (only in designer mode, when cell selected) */}
+        {!isPreview && selectedCell && (
+          <div className="w-[300px] shrink-0">
+            <PropertiesPanel
+              cell={selectedCellData}
+              row={selectedCell.row}
+              col={selectedCell.col}
+              onUpdate={handleCellUpdate}
             />
           </div>
-
-          {/* Right: Properties Panel (hidden in preview) */}
-          {!isPreview && (
-            <div className="w-64 shrink-0 print:hidden">
-              <PropertiesPanel
-                block={selectedBlock}
-                onUpdateProps={handleUpdateProps}
-                onResetProps={handleResetProps}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Drag Overlay */}
-        <DragOverlay>
-          {activeId && activeDragLabel && (
-            <div className="flex items-center gap-2 bg-background border rounded-lg px-3 py-2 shadow-xl opacity-80 pointer-events-none">
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{activeDragLabel}</span>
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
-
-      {/* Print-only: render full cert in A4 */}
-      {isPreview && certData && (
-        <div className="hidden print:block bg-white p-6" style={{ maxWidth: '210mm', margin: '0 auto' }}>
-          {layout.blocks.map(block => (
-            <div
-              key={block.id}
-              style={{
-                marginTop: `${block.props.marginTop}px`,
-                marginBottom: `${block.props.marginBottom}px`,
-              }}
-            >
-              {renderSection(block.id, block.props, certData)}
-            </div>
-          ))}
-        </div>
-      )}
+        )}
+      </div>
     </AppShell>
   )
 }
+

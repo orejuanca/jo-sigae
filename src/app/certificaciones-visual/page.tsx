@@ -25,7 +25,7 @@ import {
 import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
-  FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown,
+  FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -519,6 +519,88 @@ export default function CertificacionesVisualPage() {
     })
   }
 
+  // === Column Operations ===
+  const handleInsertColLeft = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar columna a la izquierda.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      const insertAt = selectedCell.col
+      // Shift cell indices >= insertAt in every row
+      const newRows = prev.rows.map((row) => {
+        const newCells: Record<number, CellConfig> = {}
+        for (const [key, cell] of Object.entries(row.cells)) {
+          const idx = Number(key)
+          if (idx >= insertAt) {
+            newCells[idx + 1] = cell
+          } else {
+            newCells[idx] = cell
+          }
+        }
+        newCells[insertAt] = emptyCell()
+        return { cells: newCells }
+      })
+      // Insert column width
+      const newWidths = [...prev.columnWidths]
+      newWidths.splice(insertAt, 0, '3%')
+      // Adjust selection
+      setSelectedCell({ row: selectedCell.row, col: selectedCell.col + 1 })
+      return { ...prev, totalCols: prev.totalCols + 1, columnWidths: newWidths, rows: newRows }
+    })
+    setColInput(String(gridConfig.totalCols + 1))
+  }
+
+  const handleInsertColRight = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar columna a la derecha.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      const insertAt = selectedCell.col + 1
+      // Shift cell indices >= insertAt in every row
+      const newRows = prev.rows.map((row) => {
+        const newCells: Record<number, CellConfig> = {}
+        for (const [key, cell] of Object.entries(row.cells)) {
+          const idx = Number(key)
+          if (idx >= insertAt) {
+            newCells[idx + 1] = cell
+          } else {
+            newCells[idx] = cell
+          }
+        }
+        newCells[insertAt] = emptyCell()
+        return { cells: newCells }
+      })
+      // Insert column width
+      const newWidths = [...prev.columnWidths]
+      newWidths.splice(insertAt, 0, '3%')
+      // Selection stays on same column
+      return { ...prev, totalCols: prev.totalCols + 1, columnWidths: newWidths, rows: newRows }
+    })
+    setColInput(String(gridConfig.totalCols + 1))
+  }
+
+  const handleDeleteLastCol = () => {
+    setGridConfig((prev) => {
+      if (prev.totalCols <= 1) {
+        toast({ title: 'No se puede eliminar la última columna', variant: 'destructive' })
+        return prev
+      }
+      const lastCol = prev.totalCols - 1
+      const newRows = prev.rows.map((row) => {
+        const { [lastCol]: _removed, ...rest } = row.cells
+        return { cells: rest }
+      })
+      const newWidths = prev.columnWidths.slice(0, -1)
+      if (selectedCell && selectedCell.col >= prev.totalCols - 1) {
+        setSelectedCell(null)
+      }
+      return { ...prev, totalCols: prev.totalCols - 1, columnWidths: newWidths, rows: newRows }
+    })
+    setColInput(String(gridConfig.totalCols - 1))
+  }
+
   // === Save to DB (opens dialog for name) ===
   const handleOpenSaveDialog = () => {
     setSaveName('')
@@ -653,36 +735,48 @@ export default function CertificacionesVisualPage() {
         <Card>
           <CardContent className="py-2 px-3">
             <div className="flex items-center gap-2 flex-wrap">
+              {/* === FILAS === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">FILAS</Badge>
+              <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">
+                <Plus className="h-3 w-3 mr-1" /> Agregar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertRowAbove} className="h-7 text-xs" title="Insertar fila arriba de la celda seleccionada">
+                <ArrowUp className="h-3 w-3 mr-1" /> Arriba
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertRowBelow} className="h-7 text-xs" title="Insertar fila abajo de la celda seleccionada">
+                <ArrowDown className="h-3 w-3 mr-1" /> Abajo
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
+                <Minus className="h-3 w-3 mr-1" /> Eliminar
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              {/* === COLUMNAS === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COLS</Badge>
+              <Button size="sm" variant="outline" onClick={handleInsertColLeft} className="h-7 text-xs" title="Insertar columna a la izquierda de la celda seleccionada">
+                <ArrowLeft className="h-3 w-3 mr-1" /> Izquierda
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertColRight} className="h-7 text-xs" title="Insertar columna a la derecha de la celda seleccionada">
+                <ArrowRight className="h-3 w-3 mr-1" /> Derecha
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDeleteLastCol} className="h-7 text-xs">
+                <Minus className="h-3 w-3 mr-1" /> Eliminar
+              </Button>
               <div className="flex items-center gap-1.5">
-                <Columns3 className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-xs font-medium whitespace-nowrap">Columnas:</Label>
+                <Label className="text-xs text-muted-foreground whitespace-nowrap">Total:</Label>
                 <Input
                   type="number"
                   min={1}
                   max={100}
                   value={colInput}
                   onChange={(e) => setColInput(e.target.value)}
-                  className="h-7 w-16 text-xs text-center"
+                  className="h-7 w-14 text-xs text-center"
                 />
                 <Button size="sm" variant="outline" onClick={handleApplyColumns} className="h-7 text-xs">
-                  Aplicar Columnas
+                  Aplicar
                 </Button>
               </div>
-
-              <div className="w-px h-5 bg-border" />
-
-              <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">
-                <Plus className="h-3 w-3 mr-1" /> Agregar Fila
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleInsertRowAbove} className="h-7 text-xs" title="Insertar fila arriba de la celda seleccionada">
-                <ArrowUp className="h-3 w-3 mr-1" /> Fila Arriba
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleInsertRowBelow} className="h-7 text-xs" title="Insertar fila abajo de la celda seleccionada">
-                <ArrowDown className="h-3 w-3 mr-1" /> Fila Abajo
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
-                <Minus className="h-3 w-3 mr-1" /> Eliminar Última Fila
-              </Button>
 
               <div className="w-px h-5 bg-border" />
 

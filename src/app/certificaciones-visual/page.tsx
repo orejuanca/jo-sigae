@@ -603,36 +603,94 @@ export default function CertificacionesVisualPage() {
   }
 
   // === Merge / Split Operations ===
-  const handleMergeRight = () => {
+  // Combina columnas: elimina la columna de la derecha y suma su ancho a la actual.
+  // El total de columnas baja (ej: 27 → 26).
+  const handleMergeColumns = () => {
     if (!selectedCell) {
       toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
       return
     }
-    const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
-    const currentColspan = cell?.colspan || 1
-    const maxCol = gridConfig.totalCols - selectedCell.col
-    if (currentColspan >= maxCol) {
-      toast({ title: 'No se puede combinar', description: 'La celda ya abarca hasta la última columna.', variant: 'destructive' })
+    if (gridConfig.totalCols <= 1) {
+      toast({ title: 'No se puede', description: 'Solo queda 1 columna.', variant: 'destructive' })
       return
     }
-    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { colspan: currentColspan + 1 }))
+    const mergeCol = selectedCell.col
+    if (mergeCol >= gridConfig.totalCols - 1) {
+      toast({ title: 'No se puede', description: 'No hay columna a la derecha para combinar.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      // Sumar ancho de la columna derecha a la actual
+      const newWidths = [...prev.columnWidths]
+      const leftW = parseFloat(newWidths[mergeCol]) || 0
+      const rightW = parseFloat(newWidths[mergeCol + 1]) || 0
+      newWidths[mergeCol] = `${leftW + rightW}%`
+      newWidths.splice(mergeCol + 1, 1)
+      // En cada fila, remover la columna mergeCol+1 y reindexar
+      const newRows = prev.rows.map((row) => {
+        const newCells: Record<number, CellConfig> = {}
+        for (const [key, cell] of Object.entries(row.cells)) {
+          const idx = Number(key)
+          if (idx === mergeCol + 1) continue // descartar columna derecha
+          if (idx > mergeCol + 1) {
+            newCells[idx - 1] = cell // reindexar
+          } else {
+            newCells[idx] = cell
+          }
+        }
+        return { cells: newCells }
+      })
+      // Ajustar seleccion si estaba mas alla de la columna eliminada
+      if (selectedCell.col > mergeCol) {
+        setSelectedCell({ row: selectedCell.row, col: Math.max(0, selectedCell.col - 1) })
+      }
+      const newTotal = prev.totalCols - 1
+      return { ...prev, totalCols: newTotal, columnWidths: newWidths, rows: newRows }
+    })
+    setColInput(String(gridConfig.totalCols - 1))
   }
 
-  const handleMergeDown = () => {
+  // Combina filas: elimina la fila de abajo y la suma a la actual.
+  // El total de filas baja en 1.
+  const handleMergeRows = () => {
     if (!selectedCell) {
       toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
       return
     }
-    const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
-    const currentRowspan = cell?.rowspan || 1
-    const maxRow = gridConfig.rows.length - selectedCell.row
-    if (currentRowspan >= maxRow) {
-      toast({ title: 'No se puede combinar', description: 'La celda ya abarca hasta la última fila.', variant: 'destructive' })
+    if (gridConfig.rows.length <= 1) {
+      toast({ title: 'No se puede', description: 'Solo queda 1 fila.', variant: 'destructive' })
       return
     }
-    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { rowspan: currentRowspan + 1 }))
+    const mergeRow = selectedCell.row
+    if (mergeRow >= gridConfig.rows.length - 1) {
+      toast({ title: 'No se puede', description: 'No hay fila debajo para combinar.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      const currentRow = prev.rows[mergeRow]
+      const nextRow = prev.rows[mergeRow + 1]
+      // Fusionar contenido de celdas: si la celda de abajo tiene contenido y la actual no, copiarlo
+      const mergedCells: Record<number, CellConfig> = { ...currentRow.cells }
+      for (const [key, cell] of Object.entries(nextRow.cells)) {
+        const idx = Number(key)
+        const existing = mergedCells[idx]
+        if (!existing || (!existing.content && !existing.dataBinding)) {
+          mergedCells[idx] = { ...cell }
+        } else if (cell.content && !existing.content) {
+          mergedCells[idx] = { ...existing, content: existing.content + ' ' + cell.content }
+        }
+      }
+      const newRows = [...prev.rows]
+      newRows[mergeRow] = { cells: mergedCells }
+      newRows.splice(mergeRow + 1, 1)
+      if (selectedCell.row >= newRows.length) {
+        setSelectedCell(null)
+      }
+      return { ...prev, rows: newRows }
+    })
   }
 
+  // Separar celda: reset colspan/rowspan a 1
   const handleSplitCell = () => {
     if (!selectedCell) {
       toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
@@ -640,7 +698,7 @@ export default function CertificacionesVisualPage() {
     }
     const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
     if (!cell || (cell.colspan === 1 && cell.rowspan === 1)) {
-      toast({ title: 'Sin combinación', description: 'Esta celda no está combinada.', variant: 'destructive' })
+      toast({ title: 'Sin combinación', description: 'Esta celda no está combinada (colspan/rowspan ya es 1).', variant: 'destructive' })
       return
     }
     setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { colspan: 1, rowspan: 1 }))
@@ -827,13 +885,13 @@ export default function CertificacionesVisualPage() {
 
               {/* === COMBINAR === */}
               <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COMBINAR</Badge>
-              <Button size="sm" variant="outline" onClick={handleMergeRight} className="h-7 text-xs" title="Combinar con la celda de la derecha (colspan +1)">
+              <Button size="sm" variant="outline" onClick={handleMergeColumns} className="h-7 text-xs" title="Elimina la columna derecha y suma su ancho. Total cols baja en 1.">
                 <MergeHorizontal className="h-3 w-3 mr-1" /> Columnas
               </Button>
-              <Button size="sm" variant="outline" onClick={handleMergeDown} className="h-7 text-xs" title="Combinar con la celda de abajo (rowspan +1)">
+              <Button size="sm" variant="outline" onClick={handleMergeRows} className="h-7 text-xs" title="Elimina la fila de abajo. Total filas baja en 1.">
                 <MergeVertical className="h-3 w-3 mr-1" /> Filas
               </Button>
-              <Button size="sm" variant="outline" onClick={handleSplitCell} className="h-7 text-xs" title="Separar celda (reset colspan/rowspan a 1)">
+              <Button size="sm" variant="outline" onClick={handleSplitCell} className="h-7 text-xs" title="Reset colspan/rowspan a 1">
                 <SplitSquareHorizontal className="h-3 w-3 mr-1" /> Separar
               </Button>
 

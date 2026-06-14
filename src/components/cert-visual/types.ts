@@ -194,7 +194,7 @@ function h(content: string, overrides?: Partial<CellConfig>): CellConfig {
 // === Default Template ===
 export function createDefaultTemplate(): GridConfig {
   const COLS = 27
-  const colWidths = Array(COLS).fill(`${(100 / COLS).toFixed(2)}%`)
+  const colWidths = ['4.6%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '4.1%', '4.1%', '4.1%', '4.1%', '0.8%', '4.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '4.1%', '4.1%', '4.1%', '4.1%']
 
   const rows: GridRow[] = []
 
@@ -430,7 +430,187 @@ export function createDefaultTemplate(): GridConfig {
     [26, c('', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
   ]))
 
-  // ==================== SECTION VI: OBSERVACIONES (Row 21) ====================
+  // === Year Pair: 3° Año (left) + 4° Año (right) ===
+  // Year name row
+  rows.push(row([
+    [0, h('TERCER AÑO', { colspan: 13, borderTop: false })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, h('CUARTO AÑO', { colspan: 13, borderTop: false })],
+  ]))
+
+  // Sub-header row 1
+  rows.push(row([
+    [0, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],
+    [4, h('CALIFICACIÓN', { colspan: 5 })],
+    [9, h('T-E', { rowspan: 2 })],
+    [10, h('FECHA', { colspan: 2 })],
+    [12, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],
+    [18, h('CALIFICACIÓN', { colspan: 5 })],
+    [23, h('T-E', { rowspan: 2 })],
+    [24, h('FECHA', { colspan: 2 })],
+    [26, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],
+  ]))
+
+  // Sub-header row 2
+  rows.push(row([
+    [4, h('N°', { colspan: 1 })],
+    [5, h('LETRAS', { colspan: 4 })],
+    [10, h('Mes', { colspan: 1 })],
+    [11, h('Año', { colspan: 1 })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [18, h('N°', { colspan: 1 })],
+    [19, h('LETRAS', { colspan: 4 })],
+    [24, h('Mes', { colspan: 1 })],
+    [25, h('Año', { colspan: 1 })],
+  ]))
+
+  // 3rd-4th year data rows with asterisks
+  rows.push(row([
+    [0, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [9, c('*', '', { textAlign: 'center' })],
+    [10, c('*', '', { textAlign: 'center' })],
+    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [18, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [19, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [23, c('*', '', { textAlign: 'center' })],
+    [24, c('*', '', { textAlign: 'center' })],
+    [25, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [26, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+  ]))
+
+  rows.push(row([
+    [0, c('Matemáticas', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [9, c('*', '', { textAlign: 'center' })],
+    [10, c('*', '', { textAlign: 'center' })],
+    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('Matemáticas', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [18, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [19, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [23, c('*', '', { textAlign: 'center' })],
+    [24, c('*', '', { textAlign: 'center' })],
+    [25, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [26, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+  ]))
+
+  rows.push(row([
+    [0, c('Educación Física', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [9, c('*', '', { textAlign: 'center' })],
+    [10, c('*', '', { textAlign: 'center' })],
+    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('Ciencias Naturales', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [18, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [19, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [23, c('*', '', { textAlign: 'center' })],
+    [24, c('*', '', { textAlign: 'center' })],
+    [25, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [26, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+  ]))
+
+  // === Year Pair: 5° Año (left) + Orientación y Convivencia / Participación en Grupos (right) ===
+  // Year name row
+  rows.push(row([
+    [0, h('QUINTO AÑO', { colspan: 13, borderTop: false })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, h('ORIENTACIÓN Y CONVIVENCIA / PARTICIPACIÓN EN GRUPOS', { colspan: 13, borderTop: false })],
+  ]))
+
+  // Sub-header row 1 (left: year columns, right: orientation header)
+  rows.push(row([
+    [0, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],
+    [4, h('CALIFICACIÓN', { colspan: 5 })],
+    [9, h('T-E', { rowspan: 2 })],
+    [10, h('FECHA', { colspan: 2 })],
+    [12, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, h('ÁREA DE FORMACIÓN', { colspan: 7 })],
+    [21, h('AÑO', { colspan: 3 })],
+    [24, h('LITERAL', { colspan: 3 })],
+  ]))
+
+  // Sub-header row 2 (left: N°/LETRAS/etc, right: orientation data 1)
+  rows.push(row([
+    [4, h('N°', { colspan: 1 })],
+    [5, h('LETRAS', { colspan: 4 })],
+    [10, h('Mes', { colspan: 1 })],
+    [11, h('Año', { colspan: 1 })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('*', '', { textAlign: 'center', colspan: 7 })],
+    [21, c('*', '', { textAlign: 'center', colspan: 3 })],
+    [24, c('*', '', { textAlign: 'center', colspan: 3 })],
+  ]))
+
+  // 5th year data row 1 + orientation data 2
+  rows.push(row([
+    [0, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [9, c('*', '', { textAlign: 'center' })],
+    [10, c('*', '', { textAlign: 'center' })],
+    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('*', '', { textAlign: 'center', colspan: 7 })],
+    [21, c('*', '', { textAlign: 'center', colspan: 3 })],
+    [24, c('*', '', { textAlign: 'center', colspan: 3 })],
+  ]))
+
+  // 5th year data row 2 + groups header
+  rows.push(row([
+    [0, c('Matemáticas', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
+    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
+    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
+    [9, c('*', '', { textAlign: 'center' })],
+    [10, c('*', '', { textAlign: 'center' })],
+    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
+    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, h('ÁREA DE FORMACIÓN', { colspan: 6 })],
+    [20, h('AÑO', { colspan: 3 })],
+    [23, h('GRUPO', { colspan: 2 })],
+    [25, h('LITERAL', { colspan: 2 })],
+  ]))
+
+  // 5th year data row 3 (rowspan 2) + groups data 1
+  rows.push(row([
+    [0, c('Educación Física', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px', rowspan: 2 })],
+    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold', rowspan: 2 })],
+    [5, c('*', '', { textAlign: 'center', colspan: 4, rowspan: 2 })],
+    [9, c('*', '', { textAlign: 'center', rowspan: 2 })],
+    [10, c('*', '', { textAlign: 'center', rowspan: 2 })],
+    [11, c('*', '', { textAlign: 'center', fontSize: 7, rowspan: 2 })],
+    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px', rowspan: 2 })],
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('*', '', { textAlign: 'center', colspan: 6 })],
+    [20, c('*', '', { textAlign: 'center', colspan: 3 })],
+    [23, c('*', '', { textAlign: 'center', colspan: 2 })],
+    [25, c('*', '', { textAlign: 'center', colspan: 2 })],
+  ]))
+
+  // (left occupied by rowspan) + groups data 2
+  rows.push(row([
+    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
+    [14, c('*', '', { textAlign: 'center', colspan: 6 })],
+    [20, c('*', '', { textAlign: 'center', colspan: 3 })],
+    [23, c('*', '', { textAlign: 'center', colspan: 2 })],
+    [25, c('*', '', { textAlign: 'center', colspan: 2 })],
+  ]))
+
+  // ==================== SECTION VI: OBSERVACIONES ====================
   rows.push(row([
     [0, b('VI. Observaciones:', '', { whiteSpace: 'nowrap' })],             // A-C (3)
     [3, b('P.A.:', '', { whiteSpace: 'nowrap' })],                          // D (1)

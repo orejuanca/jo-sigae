@@ -25,7 +25,7 @@ import {
 import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
-  FolderOpen, Trash2, CheckCircle2,
+  FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -475,6 +475,35 @@ export default function CertificacionesVisualPage() {
     }))
   }
 
+  const handleInsertRowAbove = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar fila arriba.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      const newRow = emptyRow(prev.totalCols)
+      const newRows = [...prev.rows]
+      newRows.splice(selectedCell.row, 0, newRow)
+      // Shift selection down by 1 since row was inserted above
+      setSelectedCell({ row: selectedCell.row + 1, col: selectedCell.col })
+      return { ...prev, rows: newRows }
+    })
+  }
+
+  const handleInsertRowBelow = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar fila abajo.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => {
+      const newRow = emptyRow(prev.totalCols)
+      const newRows = [...prev.rows]
+      newRows.splice(selectedCell.row + 1, 0, newRow)
+      // Selection stays on same row (the new row is below)
+      return { ...prev, rows: newRows }
+    })
+  }
+
   const handleDeleteLastRow = () => {
     setGridConfig((prev) => {
       if (prev.rows.length <= 1) {
@@ -644,6 +673,12 @@ export default function CertificacionesVisualPage() {
 
               <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">
                 <Plus className="h-3 w-3 mr-1" /> Agregar Fila
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertRowAbove} className="h-7 text-xs" title="Insertar fila arriba de la celda seleccionada">
+                <ArrowUp className="h-3 w-3 mr-1" /> Fila Arriba
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertRowBelow} className="h-7 text-xs" title="Insertar fila abajo de la celda seleccionada">
+                <ArrowDown className="h-3 w-3 mr-1" /> Fila Abajo
               </Button>
               <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
                 <Minus className="h-3 w-3 mr-1" /> Eliminar Última Fila

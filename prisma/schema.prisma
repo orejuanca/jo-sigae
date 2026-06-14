@@ -112,3 +112,15 @@ model BoletaExtra {
   @@unique([studentId, anioEscolar, grado, seccion])
   @@index([anioEscolar, grado, seccion])
 }
+
+// Layouts guardados del editor visual de certificaciones
+model CertLayout {
+  id        String   @id @default(cuid())
+  nombre    String   // Nombre descriptivo del layout
+  datos     String   // JSON string con el GridConfig completo
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nombre])
+}

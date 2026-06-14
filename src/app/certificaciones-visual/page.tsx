@@ -11,12 +11,21 @@ import { StudentSearch } from '@/components/student-search'
 import { useToast } from '@/hooks/use-toast'
 import { PropertiesPanel } from '@/components/cert-visual/properties-panel'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
   type GridConfig, type CellConfig, type DisplayData,
   emptyCell, emptyRow, createDefaultTemplate, resolveBinding,
 } from '@/components/cert-visual/types'
 import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
+  FolderOpen, Trash2, CheckCircle2,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -43,6 +52,10 @@ interface CertData {
   observaciones: string; promedioAcumulado: string
   director: { apellidosNombres: string; cedula: string }
   directorCdcce: { apellidosNombres: string; cedula: string }
+}
+
+interface SavedLayout {
+  id: string; nombre: string; createdAt: string; updatedAt: string
 }
 
 const STORAGE_KEY = 'cert-grid-layout'
@@ -239,6 +252,81 @@ function ColumnWidthEditor({
   )
 }
 
+// === Saved Layouts Dialog ===
+function SavedLayoutsDialog({
+  open,
+  onOpenChange,
+  layouts,
+  onLoad,
+  onDelete,
+  loading,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  layouts: SavedLayout[]
+  onLoad: (id: string) => void
+  onDelete: (id: string) => void
+  loading: boolean
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Layouts Guardados</DialogTitle>
+          <DialogDescription>
+            Selecciona un layout para cargarlo en el editor.
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-sm text-muted-foreground">Cargando...</span>
+          </div>
+        ) : layouts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            No hay layouts guardados.
+          </div>
+        ) : (
+          <div className="max-h-[300px] overflow-y-auto space-y-1">
+            {layouts.map((layout) => (
+              <div
+                key={layout.id}
+                className="flex items-center justify-between p-2 rounded border hover:bg-accent transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{layout.nombre}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(layout.updatedAt).toLocaleString('es-VE')}
+                  </div>
+                </div>
+                <div className="flex gap-1 ml-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => onLoad(layout.id)}
+                  >
+                    <Upload className="h-3 w-3 mr-1" /> Cargar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs text-destructive hover:text-destructive"
+                    onClick={() => onDelete(layout.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // === Main Page Component ===
 export default function CertificacionesVisualPage() {
   const { toast } = useToast()
@@ -255,13 +343,24 @@ export default function CertificacionesVisualPage() {
   const [certData, setCertData] = useState<CertData | null>(null)
   const [loadingData, setLoadingData] = useState(false)
 
+  // Save dialog state
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [saveName, setSaveName] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Saved layouts dialog state
+  const [showLayoutsDialog, setShowLayoutsDialog] = useState(false)
+  const [savedLayouts, setSavedLayouts] = useState<SavedLayout[]>([])
+  const [loadingLayouts, setLoadingLayouts] = useState(false)
+  const [loadingLayout, setLoadingLayout] = useState(false)
+
   // Load grid from localStorage on mount
   useEffect(() => {
     setGridConfig(loadGridConfig())
     setGridInitialized(true)
   }, [])
 
-  // Persist grid changes
+  // Persist grid changes to localStorage (auto-save local)
   useEffect(() => {
     if (gridInitialized) saveGridConfig(gridConfig)
   }, [gridConfig, gridInitialized])
@@ -391,12 +490,106 @@ export default function CertificacionesVisualPage() {
     })
   }
 
-  const handleSaveLayout = () => {
-    saveGridConfig(gridConfig)
-    toast({ title: 'Diseño guardado', description: 'Se guardó en el almacenamiento local.' })
+  // === Save to DB (opens dialog for name) ===
+  const handleOpenSaveDialog = () => {
+    setSaveName('')
+    setShowSaveDialog(true)
   }
 
-  const handleLoadLayout = () => {
+  const handleConfirmSave = async () => {
+    if (!saveName.trim()) {
+      toast({ title: 'Nombre requerido', description: 'Ingresa un nombre para el layout.', variant: 'destructive' })
+      return
+    }
+
+    setSaving(true)
+    try {
+      const res = await fetch('/api/cert-layouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: saveName.trim(),
+          datos: gridConfig,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Error al guardar')
+      }
+
+      setShowSaveDialog(false)
+      toast({
+        title: '¡Guardado exitoso!',
+        description: `El layout "${saveName.trim()}" se guardó correctamente en la base de datos.`,
+      })
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      toast({ title: 'Error al guardar', description: msg, variant: 'destructive' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // === Load saved layouts ===
+  const handleOpenLayoutsDialog = async () => {
+    setShowLayoutsDialog(true)
+    setLoadingLayouts(true)
+    try {
+      const res = await fetch('/api/cert-layouts')
+      if (res.ok) {
+        const data = await res.json()
+        setSavedLayouts(data)
+      }
+    } catch {
+      toast({ title: 'Error', description: 'No se pudieron cargar los layouts.', variant: 'destructive' })
+    } finally {
+      setLoadingLayouts(false)
+    }
+  }
+
+  const handleLoadLayoutFromDB = async (id: string) => {
+    setLoadingLayout(true)
+    try {
+      const res = await fetch(`/api/cert-layouts/${id}`)
+      if (!res.ok) {
+        throw new Error('Layout no encontrado')
+      }
+      const layout = await res.json()
+      const parsed: GridConfig = typeof layout.datos === 'string'
+        ? JSON.parse(layout.datos)
+        : layout.datos
+
+      if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) {
+        setGridConfig(parsed)
+        setSelectedCell(null)
+        setShowLayoutsDialog(false)
+        toast({ title: 'Layout cargado', description: `"${layout.nombre}" se cargó correctamente.` })
+      } else {
+        throw new Error('Datos de layout inválidos')
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      toast({ title: 'Error al cargar', description: msg, variant: 'destructive' })
+    } finally {
+      setLoadingLayout(false)
+    }
+  }
+
+  const handleDeleteLayout = async (id: string) => {
+    try {
+      const res = await fetch(`/api/cert-layouts/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSavedLayouts((prev) => prev.filter((l) => l.id !== id))
+        toast({ title: 'Layout eliminado' })
+      }
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo eliminar el layout.', variant: 'destructive' })
+    }
+  }
+
+  // Local save/load/reset
+  const handleLoadLocal = () => {
     const loaded = loadGridConfig()
     setGridConfig(loaded)
     setSelectedCell(null)
@@ -458,11 +651,14 @@ export default function CertificacionesVisualPage() {
 
               <div className="w-px h-5 bg-border" />
 
-              <Button size="sm" variant="outline" onClick={handleSaveLayout} className="h-7 text-xs">
-                <Save className="h-3 w-3 mr-1" /> Guardar Layout
+              <Button size="sm" variant="default" onClick={handleOpenSaveDialog} className="h-7 text-xs">
+                <Save className="h-3 w-3 mr-1" /> Guardar
               </Button>
-              <Button size="sm" variant="outline" onClick={handleLoadLayout} className="h-7 text-xs">
-                <Upload className="h-3 w-3 mr-1" /> Cargar Layout
+              <Button size="sm" variant="outline" onClick={handleOpenLayoutsDialog} className="h-7 text-xs">
+                <FolderOpen className="h-3 w-3 mr-1" /> Mis Layouts
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleLoadLocal} className="h-7 text-xs">
+                <Upload className="h-3 w-3 mr-1" /> Local
               </Button>
               <Button size="sm" variant="outline" onClick={handleReset} className="h-7 text-xs">
                 <RotateCcw className="h-3 w-3 mr-1" /> Restablecer
@@ -551,7 +747,60 @@ export default function CertificacionesVisualPage() {
           </div>
         )}
       </div>
+
+      {/* === Save Dialog (enter name) === */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Guardar Layout</DialogTitle>
+            <DialogDescription>
+              Asigna un nombre a este layout para guardarlo en la base de datos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Label htmlFor="layout-name" className="text-sm font-medium">Nombre del layout</Label>
+            <Input
+              id="layout-name"
+              placeholder="Ej: Certificación EMG 2024"
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmSave() }}
+              className="mt-1.5"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSaveDialog(false)}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmSave}
+              disabled={saving || !saveName.trim()}
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+              )}
+              {saving ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* === Saved Layouts Dialog === */}
+      <SavedLayoutsDialog
+        open={showLayoutsDialog}
+        onOpenChange={setShowLayoutsDialog}
+        layouts={savedLayouts}
+        onLoad={handleLoadLayoutFromDB}
+        onDelete={handleDeleteLayout}
+        loading={loadingLayouts || loadingLayout}
+      />
     </AppShell>
   )
 }
-

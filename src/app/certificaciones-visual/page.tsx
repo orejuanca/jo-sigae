@@ -26,6 +26,7 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+  MergeHorizontal, MergeVertical, SplitSquareHorizontal,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -601,6 +602,50 @@ export default function CertificacionesVisualPage() {
     setColInput(String(gridConfig.totalCols - 1))
   }
 
+  // === Merge / Split Operations ===
+  const handleMergeRight = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
+      return
+    }
+    const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
+    const currentColspan = cell?.colspan || 1
+    const maxCol = gridConfig.totalCols - selectedCell.col
+    if (currentColspan >= maxCol) {
+      toast({ title: 'No se puede combinar', description: 'La celda ya abarca hasta la última columna.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { colspan: currentColspan + 1 }))
+  }
+
+  const handleMergeDown = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
+      return
+    }
+    const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
+    const currentRowspan = cell?.rowspan || 1
+    const maxRow = gridConfig.rows.length - selectedCell.row
+    if (currentRowspan >= maxRow) {
+      toast({ title: 'No se puede combinar', description: 'La celda ya abarca hasta la última fila.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { rowspan: currentRowspan + 1 }))
+  }
+
+  const handleSplitCell = () => {
+    if (!selectedCell) {
+      toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
+      return
+    }
+    const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
+    if (!cell || (cell.colspan === 1 && cell.rowspan === 1)) {
+      toast({ title: 'Sin combinación', description: 'Esta celda no está combinada.', variant: 'destructive' })
+      return
+    }
+    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { colspan: 1, rowspan: 1 }))
+  }
+
   // === Save to DB (opens dialog for name) ===
   const handleOpenSaveDialog = () => {
     setSaveName('')
@@ -777,6 +822,20 @@ export default function CertificacionesVisualPage() {
                   Aplicar
                 </Button>
               </div>
+
+              <div className="w-px h-5 bg-border" />
+
+              {/* === COMBINAR === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COMBINAR</Badge>
+              <Button size="sm" variant="outline" onClick={handleMergeRight} className="h-7 text-xs" title="Combinar con la celda de la derecha (colspan +1)">
+                <MergeHorizontal className="h-3 w-3 mr-1" /> Columnas
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleMergeDown} className="h-7 text-xs" title="Combinar con la celda de abajo (rowspan +1)">
+                <MergeVertical className="h-3 w-3 mr-1" /> Filas
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleSplitCell} className="h-7 text-xs" title="Separar celda (reset colspan/rowspan a 1)">
+                <SplitSquareHorizontal className="h-3 w-3 mr-1" /> Separar
+              </Button>
 
               <div className="w-px h-5 bg-border" />
 

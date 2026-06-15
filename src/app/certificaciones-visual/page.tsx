@@ -26,7 +26,7 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  MergeHorizontal, MergeVertical, SplitSquareHorizontal, Group,
+  Combine, TableCellsMerge, TableCellsSplit, Group,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -436,9 +436,8 @@ export default function CertificacionesVisualPage() {
           }
         }
         setCertData(cd)
-        const gradeCount = Object.values(cd.calificaciones || {})
-          .flat()
-          .filter((c: CalificacionRow) => c.nota && c.nota !== '').length
+        const allCals = Object.values(cd.calificaciones || {}).flat() as CalificacionRow[]
+        const gradeCount = allCals.filter(c => c.nota && c.nota !== '').length
         toast({ title: 'Datos cargados', description: `${gradeCount} calificaciones del rawData.` })
       }
     } catch {
@@ -980,13 +979,13 @@ export default function CertificacionesVisualPage() {
                 <Group className="h-3 w-3 mr-1" /> Selección
               </Button>
               <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeColumns() }} className="h-7 text-xs" title="Elimina la columna derecha y suma su ancho. Total cols baja en 1.">
-                <MergeHorizontal className="h-3 w-3 mr-1" /> Columnas
+                <Combine className="h-3 w-3 mr-1" /> Columnas
               </Button>
               <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeRows() }} className="h-7 text-xs" title="Elimina la fila de abajo. Total filas baja en 1.">
-                <MergeVertical className="h-3 w-3 mr-1" /> Filas
+                <TableCellsMerge className="h-3 w-3 mr-1" /> Filas
               </Button>
               <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleSplitCell() }} className="h-7 text-xs" title="Reset colspan/rowspan a 1">
-                <SplitSquareHorizontal className="h-3 w-3 mr-1" /> Separar
+                <TableCellsSplit className="h-3 w-3 mr-1" /> Separar
               </Button>
 
               <div className="w-px h-5 bg-border" />

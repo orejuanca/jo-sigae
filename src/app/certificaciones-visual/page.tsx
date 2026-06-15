@@ -114,7 +114,7 @@ function GridTable({
   isPreview: boolean
   displayData: DisplayData | null
 }) {
-  // Recompute occupied set on every render to track rowspan correctly
+  // Recompute occupied set on every render to track rowspan AND colspan correctly
   const occupied = useMemo(() => {
     const occ = new Set<string>()
     for (let r = 0; r < config.rows.length; r++) {
@@ -123,9 +123,17 @@ function GridTable({
       for (const [key, cell] of Object.entries(row.cells)) {
         const c = Number(key)
         const rs = cell.rowspan || 1
+        const cs = cell.colspan || 1
+        // Mark cells consumed by rowspan (rows below)
         if (rs > 1) {
           for (let dr = 1; dr < rs; dr++) {
             occ.add(`${r + dr}-${c}`)
+          }
+        }
+        // Mark cells consumed by colspan (columns to the right, same row)
+        if (cs > 1) {
+          for (let dc = 1; dc < cs; dc++) {
+            occ.add(`${r}-${c + dc}`)
           }
         }
       }

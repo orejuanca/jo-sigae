@@ -114,7 +114,24 @@ function GridTable({
   isPreview: boolean
   displayData: DisplayData | null
 }) {
-  const occupied = useMemo(() => new Set<string>(), [])
+  // Recompute occupied set on every render to track rowspan correctly
+  const occupied = useMemo(() => {
+    const occ = new Set<string>()
+    for (let r = 0; r < config.rows.length; r++) {
+      const row = config.rows[r]
+      if (!row) continue
+      for (const [key, cell] of Object.entries(row.cells)) {
+        const c = Number(key)
+        const rs = cell.rowspan || 1
+        if (rs > 1) {
+          for (let dr = 1; dr < rs; dr++) {
+            occ.add(`${r + dr}-${c}`)
+          }
+        }
+      }
+    }
+    return occ
+  }, [config.rows])
 
   const inRange = (r: number, c: number) => {
     if (!selectionRange) return false
@@ -149,12 +166,6 @@ function GridTable({
                 if (occupied.has(key)) continue
 
                 const cell = gridRow.cells[c] || emptyCell()
-
-                if (cell.rowspan > 1) {
-                  for (let dr = 1; dr < cell.rowspan; dr++) {
-                    occupied.add(`${r + dr}-${c}`)
-                  }
-                }
 
                 let displayContent = cell.content
                 if (isPreview && cell.dataBinding && displayData) {
@@ -537,8 +548,44 @@ export default function CertificacionesVisualPage() {
     setGridConfig((prev) => {
       const newRow = emptyRow(prev.totalCols)
       const newRows = [...prev.rows]
+
+      // Adjust rowspan of cells in the row above (selectedCell.row - 1)
+      // that span across the insertion point
+      const aboveIdx = selectedCell.row - 1
+      if (aboveIdx >= 0 && aboveIdx < prev.rows.length) {
+        const aboveRow = prev.rows[aboveIdx]
+        const adjustedCells: Record<number, CellConfig> = {}
+        for (const [key, cell] of Object.entries(aboveRow.cells)) {
+          const col = Number(key)
+          const rs = cell.rowspan || 1
+          // If this cell spans to or past the insertion row, reduce rowspan
+          if (col === 0 || true) { // check all cells
+            if (rs > 1 && (aboveIdx + rs) > selectedCell.row) {
+              adjustedCells[col] = { ...cell, rowspan: rs - 1 }
+              continue
+            }
+          }
+          adjustedCells[col] = cell
+        }
+        newRows[aboveIdx] = { cells: adjustedCells }
+      }
+
+      // Also adjust rowspan of cells in the CURRENT row (selectedCell.row)
+      // since it shifts down by 1, but their rowspan origin stays the same
+      const currentRow = prev.rows[selectedCell.row]
+      if (currentRow) {
+        const adjustedCurrent: Record<number, CellConfig> = {}
+        for (const [key, cell] of Object.entries(currentRow.cells)) {
+          const col = Number(key)
+          const rs = cell.rowspan || 1
+          // Cells that started in a row above and were part of a rowspan
+          // don't need adjustment - they're already handled by the row above
+          adjustedCurrent[col] = cell
+        }
+        // Keep the current row as-is (it just moves down)
+      }
+
       newRows.splice(selectedCell.row, 0, newRow)
-      // Shift selection down by 1 since row was inserted above
       setSelectedCell({ row: selectedCell.row + 1, col: selectedCell.col })
       return { ...prev, rows: newRows }
     })
@@ -551,9 +598,26 @@ export default function CertificacionesVisualPage() {
     }
     setGridConfig((prev) => {
       const newRow = emptyRow(prev.totalCols)
+      const insertAt = selectedCell.row + 1
       const newRows = [...prev.rows]
-      newRows.splice(selectedCell.row + 1, 0, newRow)
-      // Selection stays on same row (the new row is below)
+
+      // Adjust rowspan of cells in selectedCell.row that span across insertAt
+      const currentRow = prev.rows[selectedCell.row]
+      if (currentRow) {
+        const adjustedCells: Record<number, CellConfig> = {}
+        for (const [key, cell] of Object.entries(currentRow.cells)) {
+          const col = Number(key)
+          const rs = cell.rowspan || 1
+          if (rs > 1 && (selectedCell.row + rs) > insertAt) {
+            adjustedCells[col] = { ...cell, rowspan: rs - 1 }
+            continue
+          }
+          adjustedCells[col] = cell
+        }
+        newRows[selectedCell.row] = { cells: adjustedCells }
+      }
+
+      newRows.splice(insertAt, 0, newRow)
       return { ...prev, rows: newRows }
     })
   }

@@ -191,496 +191,898 @@ function h(content: string, overrides?: Partial<CellConfig>): CellConfig {
   return emptyCell({ content, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', ...overrides })
 }
 
-// === Default Template ===
+
 export function createDefaultTemplate(): GridConfig {
-  const COLS = 27
-  const colWidths = ['4.6%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '4.1%', '4.1%', '4.1%', '4.1%', '0.8%', '4.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '7.1%', '4.1%', '4.1%', '4.1%', '4.1%']
+  const totalCols = 27
+  const columnWidths: string[] = [
+    '1.58%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '1.73%',
+    '1.58%',
+    '0.25%',
+    '1.58%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '4.5%',
+    '1.73%',
+    '1.58%',
+  ]
 
   const rows: GridRow[] = []
 
-  // ==================== SECTION I: ENCABEZADO (Rows 0-2) ====================
-  // Row 0: Logo (rowspan=3) + Title
-  rows.push(row([
-    [0, c('', '', { rowspan: 3, verticalAlign: 'middle', padding: '2px', height: '60px' })],
-    [1, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [2, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [3, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [4, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [5, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [6, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [7, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [8, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [9, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [10, c('', '', { rowspan: 3, borderTop: false, borderRight: false, borderBottom: true, borderLeft: false })],
-    [11, c('', '', { rowspan: 3, borderTop: false, borderBottom: true, borderLeft: false })],
-    [12, c('CERTIFICACIÓN DE CALIFICACIONES EMG', '', { colspan: 15, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: 9, padding: '4px 4px' })],
-  ]))
+  // Row 1
+  {
+    const c = emptyRow(totalCols)
+    c.cells[12] = emptyCell({ content: 'CERTIFICACIÓN DE CALIFICACIONES  EMG', colspan: 15, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 1: Plan de Estudio + Código
-  rows.push(row([
-    [12, b('I. Plan de Estudio:  ', 'doc.planEstudio', { colspan: 10, padding: '1px 3px' })],
-    [22, b('Código  ', 'doc.codigo', { colspan: 5, padding: '1px 3px' })],
-  ]))
+  // Row 2
+  {
+    const c = emptyRow(totalCols)
+    c.cells[12] = emptyCell({ content: 'I. Plan de Estudio:  EDUCACIÓN MEDIA GENERAL', colspan: 10, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[22] = emptyCell({ content: 'Código 31059', colspan: 5, fontWeight: 'bold', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 2: Lugar y Fecha
-  rows.push(row([
-    [12, b('Lugar y Fecha de Expedición:', '', { colspan: 7, padding: '1px 3px' })],
-    [19, c('', 'doc.lugar', { colspan: 3, textAlign: 'right', borderRight: false, padding: '1px 3px' })],
-    [22, c('', 'doc.fechaExpedicion', { colspan: 5, borderLeft: false, padding: '1px 3px' })],
-  ]))
+  // Row 3
+  {
+    const c = emptyRow(totalCols)
+    c.cells[12] = emptyCell({ content: 'Lugar y Fecha de Expedición:', colspan: 7, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 3, textAlign: 'right', verticalAlign: 'center', borderRight: false })
+    c.cells[22] = emptyCell({ colspan: 5, verticalAlign: 'center', borderLeft: false })
+    rows.push(c)
+  }
 
-  // ==================== SECTION II: DATOS DE LA INSTITUCIÓN (Rows 3-6) ====================
-  // Row 3: Section header
-  rows.push(row([
-    [0, h('II. Datos de la Institución Educativa o Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:', { colspan: 27 })],
-  ]))
+  // Row 4 (empty)
+  { const c = emptyRow(totalCols); rows.push(c) }
+  // Remove borders for spacer row
+  { const last = rows[rows.length - 1]; for (let i = 0; i < totalCols; i++) { last.cells[i].borderTop = false; last.cells[i].borderBottom = false; last.cells[i].borderLeft = false; last.cells[i].borderRight = false } }
 
-  // Row 4: Código + Denominación
-  rows.push(row([
-    [0, c('Código:', '')],                                                    // A-C (3)
-    [3, c('', 'school.codigo', { colspan: 5 })],                             // D-H (5)
-    [8, h('Denominación y Epónimo:', { colspan: 5 })],                       // I-M (5)
-    [13, c('', '', { borderTop: true, borderRight: true, borderBottom: true, borderLeft: false, borderColor: '#000000' })], // N (gap with left border off)
-    [14, c('', 'school.denominacion', { colspan: 13 })],                     // O-AA (13)
-  ]))
+  // Row 5
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'II. Datos de la Institución Educativa o  Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 5: Dirección + Teléfono
-  rows.push(row([
-    [0, c('Dirección:', '')],                                                 // A-C (3)
-    [3, c('', 'school.direccion', { colspan: 15 })],                         // D-R (15)
-    [18, c('Teléfono:', '')],                                                // S-U (3)
-    [21, c('', 'school.telefono', { colspan: 6, textAlign: 'center' })],     // V-AA (6)
-  ]))
+  // Row 6
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Código:', colspan: 3, verticalAlign: 'center' })
+    c.cells[3] = emptyCell({ content: 'OD16751520', colspan: 5, verticalAlign: 'center' })
+    c.cells[8] = emptyCell({ content: 'Denominación y Epónimo:', colspan: 5, textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[14] = emptyCell({ content: 'U E N CREACIÓN CÚA', colspan: 13, verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 6: Municipio + Estado + CDCEE
-  rows.push(row([
-    [0, c('Municipio:', '')],                                                 // A-C (3)
-    [3, c('', 'school.municipio', { colspan: 4, textAlign: 'center' })],     // D-G (4)
-    [7, c('Estado:', '', { textAlign: 'center' })],                          // H-J (3)
-    [10, c('', 'school.estado', { colspan: 8, textAlign: 'center' })],      // K-R (8)
-    [18, c('CDCEE:', '')],                                                   // S-V (4)
-    [22, c('', 'school.cdcce', { colspan: 5, textAlign: 'center' })],      // W-AA (5)
-  ]))
+  // Row 7
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Dirección:', colspan: 3, verticalAlign: 'center' })
+    c.cells[3] = emptyCell({ content: 'Urb. José de S. Martín - Sector Los Bloques - Nueva Cúa', colspan: 15, verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'Teléfono:', colspan: 3, verticalAlign: 'center' })
+    c.cells[21] = emptyCell({ content: '(0239) 7163530', colspan: 6, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // ==================== SECTION III: DATOS DEL ESTUDIANTE (Rows 7-10) ====================
-  // Row 7: Section header
-  rows.push(row([
-    [0, h('III. Datos de Identificación del Estudiante:', { colspan: 27 })],
-  ]))
+  // Row 8
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Municipio:', colspan: 3, verticalAlign: 'center' })
+    c.cells[3] = emptyCell({ content: 'Rafael Urdaneta', colspan: 4, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[7] = emptyCell({ content: 'Estado:', colspan: 3, verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ content: 'Miranda', colspan: 8, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'CDCEE:', colspan: 4, verticalAlign: 'center' })
+    c.cells[22] = emptyCell({ content: 'Miranda', colspan: 5, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 8: Cédula + Fecha de Nacimiento
-  rows.push(row([
-    [0, c('Cédula de Identidad:', '', { colspan: 4 })],                     // A-D (4)
-    [4, c('', 'student.cedula', { colspan: 5 })],                           // E-I (5)
-    [9, c('Fecha de Nacimiento:', '', { colspan: 6 })],                     // J-O (6)
-    [15, c('', 'student.fechaNacimiento', { colspan: 12 })],                // P-AA (12)
-  ]))
+  // Row 9
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'III. Datos de Identificación del Estudiante:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 9: Apellidos + Nombres
-  rows.push(row([
-    [0, c('Apellidos:', '')],                                                // A-C (3)
-    [3, c('', 'student.apellidos', { colspan: 8 })],                        // D-K (8)
-    [11, c('Nombres:', '')],                                                // L-O (4)
-    [15, c('', 'student.nombres', { colspan: 12 })],                        // P-AA (12)
-  ]))
+  // Row 10
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Cédula de Identidad:', colspan: 4, verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ content: 'V 27545879', colspan: 5, verticalAlign: 'center', bgColor: '#CCFFCC' })
+    c.cells[9] = emptyCell({ content: 'Fecha de Nacimiento:', colspan: 6, verticalAlign: 'center' })
+    c.cells[15] = emptyCell({ colspan: 12, verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 10: País + Estado + Municipio
-  rows.push(row([
-    [0, c('Lugar de Nacimiento País:', '', { colspan: 5 })],                // A-E (5)
-    [5, c('', 'student.pais', { colspan: 6 })],                             // F-K (6)
-    [11, c('Estado:', '', { textAlign: 'center' })],                        // L-M (2)
-    [13, c('', 'student.estado', { colspan: 7 })],                          // N-T (7)
-    [20, c('Municipio:', '', { textAlign: 'center' })],                     // U-V (2)
-    [22, c('', 'student.municipio', { colspan: 5 })],                       // W-AA (5)
-  ]))
+  // Row 11
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Apellidos:', colspan: 3, verticalAlign: 'center' })
+    c.cells[3] = emptyCell({ verticalAlign: 'center', borderRight: false })
+    c.cells[11] = emptyCell({ content: 'Nombres:', colspan: 4, verticalAlign: 'center' })
+    c.cells[15] = emptyCell({ verticalAlign: 'center', borderRight: false })
+    rows.push(c)
+  }
 
-  // ==================== SECTION IV: INSTITUCIONES EDUCATIVAS (Rows 11-14) ====================
-  // Row 11: Section header left + column headers right
-  rows.push(row([
-    [0, h('IV. Instituciones Educativas donde Cursó Estudios', { colspan: 13 })],  // A-M (left)
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })], // N (sep)
-    [14, h('N°', { colspan: 1 })],                                           // O (1)
-    [15, h('Denominación y Epónimo de la Institución Educativa', { colspan: 6 })], // P-U (6)
-    [21, h('Localidad', { colspan: 5 })],                                    // V-Z (5)
-    [26, h('E.F.', { colspan: 1 })],                                         // AA (1)
-  ]))
+  // Row 12
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Lugar de Nacimiento País:', colspan: 5, verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ verticalAlign: 'center', borderRight: false })
+    c.cells[11] = emptyCell({ content: 'Estado:', colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[13] = emptyCell({ verticalAlign: 'center', borderRight: false, borderLeft: false })
+    c.cells[20] = emptyCell({ content: 'Municipio:', colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[22] = emptyCell({ verticalAlign: 'center', borderRight: false })
+    rows.push(c)
+  }
 
-  // Row 12: Left column headers + Right data row 3
-  rows.push(row([
-    [0, h('N°')],                                                            // A
-    [1, h('Denominación y Epónimo de la Institución Educativa', { colspan: 6 })], // B-G (6)
-    [7, h('Localidad', { colspan: 5 })],                                     // H-L (5)
-    [12, h('E.F.')],                                                         // M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })], // N (sep)
-    [14, c('3', '', { textAlign: 'center', fontWeight: 'bold' })],           // O
-    [15, c('', 'inst.2.denominacion', { colspan: 6 })],                     // P-U (6)
-    [21, c('', 'inst.2.localidad', { colspan: 5 })],                        // V-Z (5)
-    [26, c('', 'inst.2.ef', { textAlign: 'center' })],                      // AA
-  ]))
+  // Row 13
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'IV. Instituciones Educativas donde Cursó Estudios', colspan: 13, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
+    c.cells[15] = emptyCell({ content: 'Denominación y Epónimo de la Institución Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[21] = emptyCell({ content: 'Localidad', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ content: 'E.F.', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    rows.push(c)
+  }
 
-  // Row 13: Left data 1 + Right data 4
-  rows.push(row([
-    [0, c('1', '', { textAlign: 'center', fontWeight: 'bold' })],           // A
-    [1, c('', 'inst.0.denominacion', { colspan: 6 })],                     // B-G (6)
-    [7, c('', 'inst.0.localidad', { colspan: 5 })],                        // H-L (5)
-    [12, c('', 'inst.0.ef', { textAlign: 'center' })],                     // M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })], // N (sep)
-    [14, c('4', '', { textAlign: 'center', fontWeight: 'bold' })],           // O
-    [15, c('', 'inst.3.denominacion', { colspan: 6 })],                     // P-U (6)
-    [21, c('', 'inst.3.localidad', { colspan: 5 })],                        // V-Z (5)
-    [26, c('', 'inst.3.ef', { textAlign: 'center' })],                      // AA
-  ]))
+  // Row 14
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[1] = emptyCell({ content: 'Denominación y Epónimo de la Institución Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[7] = emptyCell({ content: 'Localidad', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ content: 'E.F.', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: '3', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[15] = emptyCell({ colspan: 6, verticalAlign: 'center' })
+    c.cells[21] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 14: Left data 2 + Right data 5
-  rows.push(row([
-    [0, c('2', '', { textAlign: 'center', fontWeight: 'bold' })],           // A
-    [1, c('', 'inst.1.denominacion', { colspan: 6 })],                     // B-G (6)
-    [7, c('', 'inst.1.localidad', { colspan: 5 })],                        // H-L (5)
-    [12, c('', 'inst.1.ef', { textAlign: 'center' })],                     // M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })], // N (sep)
-    [14, c('5', '', { textAlign: 'center', fontWeight: 'bold' })],           // O
-    [15, c('', 'inst.4.denominacion', { colspan: 6 })],                     // P-U (6)
-    [21, c('', 'inst.4.localidad', { colspan: 5 })],                        // V-Z (5)
-    [26, c('', 'inst.4.ef', { textAlign: 'center' })],                      // AA
-  ]))
+  // Row 15
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: '1', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[1] = emptyCell({ colspan: 6, verticalAlign: 'center' })
+    c.cells[7] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: '4', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[15] = emptyCell({ colspan: 6, verticalAlign: 'center' })
+    c.cells[21] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    rows.push(c)
+  }
 
-  // ==================== SECTION V: PLAN DE ESTUDIO (Rows 15+) ====================
-  // Row 15: Section V header (no bottom border)
-  rows.push(row([
-    [0, h('V. Plan de Estudio:', { colspan: 27, borderBottom: false })],
-  ]))
+  // Row 16
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: '2', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[1] = emptyCell({ colspan: 6, verticalAlign: 'center' })
+    c.cells[7] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[14] = emptyCell({ content: '5', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[15] = emptyCell({ colspan: 6, verticalAlign: 'center' })
+    c.cells[21] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    rows.push(c)
+  }
 
-  // === Year Pair: 1° Año (left) + 2° Año (right) ===
-  // Row 16: Year names
-  rows.push(row([
-    [0, h('PRIMER AÑO', { colspan: 13, borderTop: false })],               // A-M (left half)
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })], // N (sep)
-    [14, h('SEGUNDO AÑO', { colspan: 13, borderTop: false })],              // O-AA (right half)
-  ]))
+  // Row 17
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'V. Plan de Estudio:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center', borderBottom: false })
+    rows.push(c)
+  }
 
-  // Row 17: Sub-header row 1
-  rows.push(row([
-    // Left half (7 logical cols from 13): Areas(4) + CALIFICACION(5) + T-E(1) + FECHA(2) + Inst(1) = 13
-    [0, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],              // A-D (4)
-    [4, h('CALIFICACIÓN', { colspan: 5 })],                                 // E-I (5)
-    [9, h('T-E', { rowspan: 2 })],                                          // J (1)
-    [10, h('FECHA', { colspan: 2 })],                                       // K-L (2)
-    [12, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],      // M (1)
-    // Separator
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    // Right half
-    [14, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],             // O-R (4)
-    [18, h('CALIFICACIÓN', { colspan: 5 })],                                // S-W (5)
-    [23, h('T-E', { rowspan: 2 })],                                         // X (1)
-    [24, h('FECHA', { colspan: 2 })],                                       // Y-Z (2)
-    [26, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],      // AA (1)
-  ]))
+  // Row 18
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'PRIMER AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false })
+    c.cells[14] = emptyCell({ content: 'SEGUNDO AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
+    rows.push(c)
+  }
 
-  // Row 18: Sub-header row 2
-  rows.push(row([
-    // Left half
-    [4, h('N°', { colspan: 1 })],                                           // E (1)
-    [5, h('LETRAS', { colspan: 4 })],                                       // F-I (4)
-    [10, h('Mes', { colspan: 1 })],                                         // K (1)
-    [11, h('Año', { colspan: 1 })],                                         // L (1)
-    // Separator
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    // Right half
-    [18, h('N°', { colspan: 1 })],                                          // S (1)
-    [19, h('LETRAS', { colspan: 4 })],                                      // T-W (4)
-    [24, h('Mes', { colspan: 1 })],                                         // Y (1)
-    [25, h('Año', { colspan: 1 })],                                         // Z (1)
-  ]))
+  // Row 19
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[4] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[10] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 19-20: Example data rows (user will add more)
-  // Data row 1 (left: subject, right: subject)
-  rows.push(row([
-    [0, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })], // A-D
-    [4, c('', '', { textAlign: 'center', fontWeight: 'bold' })],             // E
-    [5, c('', '', { textAlign: 'left', colspan: 4 })],                       // F-I
-    [9, c('', '', { textAlign: 'center' })],                                 // J
-    [10, c('', '', { textAlign: 'center' })],                                // K
-    [11, c('', '', { textAlign: 'center', fontSize: 7 })],                   // L
-    [12, c('', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],// M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [18, c('', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [19, c('', '', { textAlign: 'left', colspan: 4 })],
-    [23, c('', '', { textAlign: 'center' })],
-    [24, c('', '', { textAlign: 'center' })],
-    [25, c('', '', { textAlign: 'center', fontSize: 7 })],
-    [26, c('', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-  ]))
+  // Row 20
+  {
+    const c = emptyRow(totalCols)
+    c.cells[4] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[5] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[10] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  rows.push(row([
-    [0, c('Inglés y otras Lenguas Extranjeras', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [4, c('', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [5, c('', '', { textAlign: 'left', colspan: 4 })],
-    [9, c('', '', { textAlign: 'center' })],
-    [10, c('', '', { textAlign: 'center' })],
-    [11, c('', '', { textAlign: 'center', fontSize: 7 })],
-    [12, c('', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('Inglés y otras Lenguas Extranjeras', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [18, c('', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [19, c('', '', { textAlign: 'left', colspan: 4 })],
-    [23, c('', '', { textAlign: 'center' })],
-    [24, c('', '', { textAlign: 'center' })],
-    [25, c('', '', { textAlign: 'center', fontSize: 7 })],
-    [26, c('', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-  ]))
+  // Row 21
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Castellano', colspan: 4, verticalAlign: 'top', borderBottom: false })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Castellano', colspan: 4, verticalAlign: 'top', borderBottom: false })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // === Year Pair: 3° Año (left) + 4° Año (right) ===
-  // Year name row
-  rows.push(row([
-    [0, h('TERCER AÑO', { colspan: 13, borderTop: false })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('CUARTO AÑO', { colspan: 13, borderTop: false })],
-  ]))
+  // Row 22
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Sub-header row 1
-  rows.push(row([
-    [0, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],
-    [4, h('CALIFICACIÓN', { colspan: 5 })],
-    [9, h('T-E', { rowspan: 2 })],
-    [10, h('FECHA', { colspan: 2 })],
-    [12, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],
-    [18, h('CALIFICACIÓN', { colspan: 5 })],
-    [23, h('T-E', { rowspan: 2 })],
-    [24, h('FECHA', { colspan: 2 })],
-    [26, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],
-  ]))
+  // Row 23
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top', borderTop: false })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top', borderTop: false })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Sub-header row 2
-  rows.push(row([
-    [4, h('N°', { colspan: 1 })],
-    [5, h('LETRAS', { colspan: 4 })],
-    [10, h('Mes', { colspan: 1 })],
-    [11, h('Año', { colspan: 1 })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [18, h('N°', { colspan: 1 })],
-    [19, h('LETRAS', { colspan: 4 })],
-    [24, h('Mes', { colspan: 1 })],
-    [25, h('Año', { colspan: 1 })],
-  ]))
+  // Row 24
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // 3rd-4th year data rows with asterisks
-  rows.push(row([
-    [0, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [9, c('*', '', { textAlign: 'center' })],
-    [10, c('*', '', { textAlign: 'center' })],
-    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [18, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [19, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [23, c('*', '', { textAlign: 'center' })],
-    [24, c('*', '', { textAlign: 'center' })],
-    [25, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [26, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-  ]))
+  // Row 25
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Arte y Patrimonio', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Arte y Patrimonio', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  rows.push(row([
-    [0, c('Matemáticas', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [9, c('*', '', { textAlign: 'center' })],
-    [10, c('*', '', { textAlign: 'center' })],
-    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('Matemáticas', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [18, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [19, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [23, c('*', '', { textAlign: 'center' })],
-    [24, c('*', '', { textAlign: 'center' })],
-    [25, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [26, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-  ]))
+  // Row 26
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Ciencias Naturales', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Ciencias Naturales', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  rows.push(row([
-    [0, c('Educación Física', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [9, c('*', '', { textAlign: 'center' })],
-    [10, c('*', '', { textAlign: 'center' })],
-    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('Ciencias Naturales', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [18, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [19, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [23, c('*', '', { textAlign: 'center' })],
-    [24, c('*', '', { textAlign: 'center' })],
-    [25, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [26, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-  ]))
+  // Row 27
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[25] = emptyCell({ verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // === Year Pair: 5° Año (left) + Orientación y Convivencia / Participación en Grupos (right) ===
-  // Year name row
-  rows.push(row([
-    [0, h('QUINTO AÑO', { colspan: 13, borderTop: false })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('ORIENTACIÓN Y CONVIVENCIA / PARTICIPACIÓN EN GRUPOS', { colspan: 13, borderTop: false })],
-  ]))
+  // Row 28
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'TERCER AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'CUARTO AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderBottom: false, borderLeft: false })
+    rows.push(c)
+  }
 
-  // Sub-header row 1 (left: year columns, right: orientation header)
-  rows.push(row([
-    [0, h('ÁREAS DE FORMACIÓN', { colspan: 4, rowspan: 2 })],
-    [4, h('CALIFICACIÓN', { colspan: 5 })],
-    [9, h('T-E', { rowspan: 2 })],
-    [10, h('FECHA', { colspan: 2 })],
-    [12, h('Inst.', { rowspan: 2, fontSize: 7, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('ÁREA DE FORMACIÓN', { colspan: 7 })],
-    [21, h('AÑO', { colspan: 3 })],
-    [24, h('LITERAL', { colspan: 3 })],
-  ]))
+  // Row 29
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[12] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center', borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'ÁREAS DE\nFORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[26] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center', borderBottom: false })
+    rows.push(c)
+  }
 
-  // Sub-header row 2 (left: N°/LETRAS/etc, right: orientation data 1)
-  rows.push(row([
-    [4, h('N°', { colspan: 1 })],
-    [5, h('LETRAS', { colspan: 4 })],
-    [10, h('Mes', { colspan: 1 })],
-    [11, h('Año', { colspan: 1 })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('*', '', { textAlign: 'center', colspan: 7 })],
-    [21, c('*', '', { textAlign: 'center', colspan: 3 })],
-    [24, c('*', '', { textAlign: 'center', colspan: 3 })],
-  ]))
+  // Row 30
+  {
+    const c = emptyRow(totalCols)
+    c.cells[4] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[5] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[10] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[11] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[18] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[19] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[24] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[25] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    rows.push(c)
+  }
 
-  // 5th year data row 1 + orientation data 2
-  rows.push(row([
-    [0, c('Castellano', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [9, c('*', '', { textAlign: 'center' })],
-    [10, c('*', '', { textAlign: 'center' })],
-    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('*', '', { textAlign: 'center', colspan: 7 })],
-    [21, c('*', '', { textAlign: 'center', colspan: 3 })],
-    [24, c('*', '', { textAlign: 'center', colspan: 3 })],
-  ]))
+  // Row 31
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Castellano', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Castellano', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // 5th year data row 2 + groups header
-  rows.push(row([
-    [0, c('Matemáticas', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px' })],
-    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold' })],
-    [5, c('*', '', { textAlign: 'center', colspan: 4 })],
-    [9, c('*', '', { textAlign: 'center' })],
-    [10, c('*', '', { textAlign: 'center' })],
-    [11, c('*', '', { textAlign: 'center', fontSize: 7 })],
-    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px' })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('ÁREA DE FORMACIÓN', { colspan: 6 })],
-    [20, h('AÑO', { colspan: 3 })],
-    [23, h('GRUPO', { colspan: 2 })],
-    [25, h('LITERAL', { colspan: 2 })],
-  ]))
+  // Row 32
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // 5th year data row 3 (rowspan 2) + groups data 1
-  rows.push(row([
-    [0, c('Educación Física', '', { verticalAlign: 'top', whiteSpace: 'normal', height: '16px', rowspan: 2 })],
-    [4, c('*', '', { textAlign: 'center', fontWeight: 'bold', rowspan: 2 })],
-    [5, c('*', '', { textAlign: 'center', colspan: 4, rowspan: 2 })],
-    [9, c('*', '', { textAlign: 'center', rowspan: 2 })],
-    [10, c('*', '', { textAlign: 'center', rowspan: 2 })],
-    [11, c('*', '', { textAlign: 'center', fontSize: 7, rowspan: 2 })],
-    [12, c('*', '', { textAlign: 'center', fontSize: 5, padding: '0 1px', rowspan: 2 })],
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('*', '', { textAlign: 'center', colspan: 6 })],
-    [20, c('*', '', { textAlign: 'center', colspan: 3 })],
-    [23, c('*', '', { textAlign: 'center', colspan: 2 })],
-    [25, c('*', '', { textAlign: 'center', colspan: 2 })],
-  ]))
+  // Row 33
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // (left occupied by rowspan) + groups data 2
-  rows.push(row([
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('*', '', { textAlign: 'center', colspan: 6 })],
-    [20, c('*', '', { textAlign: 'center', colspan: 3 })],
-    [23, c('*', '', { textAlign: 'center', colspan: 2 })],
-    [25, c('*', '', { textAlign: 'center', colspan: 2 })],
-  ]))
+  // Row 34
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // ==================== SECTION VI: OBSERVACIONES ====================
-  rows.push(row([
-    [0, b('VI. Observaciones:', '', { whiteSpace: 'nowrap' })],             // A-C (3)
-    [3, b('P.A.:', '', { whiteSpace: 'nowrap' })],                          // D (1)
-    [4, c('', 'doc.promedioAcumulado', { colspan: 3, textAlign: 'center', width: '100px' })], // E-G (3)
-    [7, c('', 'doc.observaciones', { colspan: 20 })],                       // H-AA (20)
-  ]))
+  // Row 35
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // ==================== SECCIÓN VII + VIII: DIRECTORES (Rows 22-30) ====================
-  // Row 22: Headers side by side
-  rows.push(row([
-    [0, h('VII. Institución Educativa', { colspan: 13 })],                  // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('VIII. Centro de Desarrollo de la Calidad Educativa Estadal', { colspan: 13 })], // O-AA
-  ]))
+  // Row 36
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Química', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Química', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 23: Director(a) + Sello
-  rows.push(row([
-    [0, h('Director(a)', { colspan: 4, fontSize: 7 })],                     // A-D
-    [4, h('SELLO DE LA INSTITUCIÓN EDUCATIVA', { colspan: 9, fontSize: 7 })], // E-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, h('Director(a)', { colspan: 4, fontSize: 7 })],                    // O-R
-    [18, h('SELLO DEL CENTRO DE DESARROLLO DE LA CALIDAD EDUCATIVA ESTADAL', { colspan: 9, fontSize: 7 })], // S-AA
-  ]))
+  // Row 37
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Biología', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Biología', colspan: 4, verticalAlign: 'top' })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 24: "Apellidos y Nombres:" label
-  rows.push(row([
-    [0, b('Apellidos y Nombres:', '', { colspan: 13 })],                    // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, b('Apellidos y Nombres:', '', { colspan: 13 })],                   // O-AA
-  ]))
+  // Row 38
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top', borderBottom: false })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 25: Director name value
-  rows.push(row([
-    [0, c('', 'director.nombre', { colspan: 13 })],                         // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('', 'cdcee.nombre', { colspan: 13 })],                           // O-AA
-  ]))
+  // Row 39
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: '**********************', colspan: 4, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[5] = emptyCell({ content: '**********************', colspan: 4, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[10] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[11] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[12] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[14] = emptyCell({ content: 'Formación para la Soberanía Nacional', colspan: 4 })
+    c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
+    c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[24] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 26: "Cédula de Identidad:" label
-  rows.push(row([
-    [0, b('Cédula de Identidad:', '', { colspan: 13 })],                    // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, b('Cédula de Identidad:', '', { colspan: 13 })],                   // O-AA
-  ]))
+  // Row 40
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'QUINTO AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderBottom: false, borderLeft: false })
+    rows.push(c)
+  }
 
-  // Row 27: Director cedula value
-  rows.push(row([
-    [0, c('', 'director.cedula', { colspan: 13 })],                         // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('', 'cdcee.cedula', { colspan: 13 })],                           // O-AA
-  ]))
+  // Row 41
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[9] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[12] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center', borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'ÁREA DE FORMACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: 'AÑO', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[20] = emptyCell({ content: 'LITERAL', colspan: 7, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 28: "Firma:"
-  rows.push(row([
-    [0, b('Firma:', '', { colspan: 13 })],                                  // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, b('Firma:', '', { colspan: 13 })],                                 // O-AA
-  ]))
+  // Row 42
+  {
+    const c = emptyRow(totalCols)
+    c.cells[4] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[5] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false, borderBottom: false })
+    c.cells[10] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[11] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'Orientaciön y Convivencia', colspan: 5, rowspan: 5, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '1°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // Row 29: Validez text
-  rows.push(row([
-    [0, c('Para efectos de su Validez Nacional', '', { colspan: 13, fontStyle: 'italic', textAlign: 'center', fontSize: 7 })], // A-M
-    [13, c('', '', { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })],
-    [14, c('Para efectos de su Validez Internacional', '', { colspan: 13, fontStyle: 'italic', textAlign: 'center', fontSize: 7 })], // O-AA
-  ]))
+  // Row 43
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Castellano', colspan: 4, verticalAlign: 'top', borderBottom: false })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '2°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  // ==================== VALOR FISCAL (Row 30) ====================
-  rows.push(row([
-    [0, c('VALOR FISCAL: Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres décimas de la Unidad Tributaria (0,3 U.T.)', '', { colspan: 27, textAlign: 'center', fontWeight: 'bold', fontSize: 7 })],
-  ]))
+  // Row 44
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '3°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
 
-  return { totalCols: COLS, columnWidths: colWidths, rows }
+  // Row 45
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '4°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 46
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '5°', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 47
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Física', colspan: 4, verticalAlign: 'center', borderBottom: false })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'AREA DE FORMACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: 'AÑO', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[20] = emptyCell({ content: 'GRUPO', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[25] = emptyCell({ content: 'LITERAL', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 48
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Química', colspan: 4, verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Participaciónen Grupos de Creación, Recreación y Producción', colspan: 5, rowspan: 5, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '1°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 49
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Biología', colspan: 4, verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '2°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 50
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Ciencias de la Tierra', colspan: 4, verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '3°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 51
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4 })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '4°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 52
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Formación para la Soberanía Nacional', colspan: 4, borderBottom: false })
+    c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
+    c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '5°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 53
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'VI. Observaciones:', colspan: 4, fontWeight: 'bold', verticalAlign: 'center', borderRight: false })
+    c.cells[4] = emptyCell({ content: 'P.A.:', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })
+    c.cells[5] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center', borderRight: false, borderLeft: false })
+    c.cells[7] = emptyCell({ colspan: 20, verticalAlign: 'center', borderTop: false, borderLeft: false })
+    rows.push(c)
+  }
+
+  // Row 54
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ colspan: 27, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 55
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ colspan: 27, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 56
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ colspan: 27, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 57
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'VII. Institución Educativa', colspan: 13, fontWeight: 'bold', borderTop: false })
+    c.cells[14] = emptyCell({ content: 'VIII. Centro de Desarrollo de la Calidad Educativa Estadal', colspan: 13, fontWeight: 'bold', borderTop: false })
+    rows.push(c)
+  }
+
+  // Row 58
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Director(a)', colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[7] = emptyCell({ content: 'SELLO DE LA INSTITUCIÓN EDUCATIVA', colspan: 6, rowspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Director(a)', colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[21] = emptyCell({ content: 'SELLO DEL CENTRO DE DESARROLLO DE LA CALIDAD EDUCATIVA ESTADAL', colspan: 6, rowspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 59
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Apellidos y Nombres:', colspan: 7, verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Apellidos y Nombres:', colspan: 7, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 60
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 61
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Cédula de Identidad:', colspan: 7, verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Cédula de Identidad:', colspan: 7, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 62
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 63
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Firma:', colspan: 7, verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Firma:', colspan: 7, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 64
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'Para efectos de su Validez Nacional', colspan: 7, verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'Para efectos de su Validez Internacional', colspan: 7, verticalAlign: 'center' })
+    rows.push(c)
+  }
+
+  // Row 65
+  {
+    const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: 'VALOR FISCAL: Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres décimas de la Unidad Tributaria (0,3 U.T.)', colspan: 27, fontSize: 6, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })
+    rows.push(c)
+  }
+
+  return { totalCols, columnWidths, rows }
 }

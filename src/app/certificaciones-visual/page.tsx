@@ -159,8 +159,8 @@ function GridTable({
       style={{ maxHeight: 'calc(100vh - 200px)' }}
       onMouseUp={() => !isPreview && onCellMouseUp()}
     >
-      <div style={{ width: '800px', maxWidth: '100%', margin: '0 auto' }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2' }}>
+      <div style={{ width: '816px', height: '1344px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflow: 'hidden' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', height: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
           <colgroup>
             {config.columnWidths.map((w, i) => (
               <col key={i} style={{ width: w || `${100 / config.totalCols}%` }} />

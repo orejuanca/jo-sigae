@@ -76,8 +76,12 @@ function loadGridConfig(): GridConfig {
 
 function saveGridConfig(config: GridConfig) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-  } catch { /* ignore */ }
+    const json = JSON.stringify(config)
+    console.log('[saveGridConfig] size:', (json.length / 1024).toFixed(1), 'KB')
+    localStorage.setItem(STORAGE_KEY, json)
+  } catch (e) {
+    console.error('[saveGridConfig] FAILED:', e)
+  }
 }
 
 function updateCellInConfig(
@@ -417,9 +421,11 @@ export default function CertificacionesVisualPage() {
     setGridInitialized(true)
   }, [])
 
-  // Persist grid changes to localStorage (auto-save local)
+  // Persist grid changes to localStorage (debounced auto-save)
   useEffect(() => {
-    if (gridInitialized) saveGridConfig(gridConfig)
+    if (!gridInitialized) return
+    const timer = setTimeout(() => saveGridConfig(gridConfig), 500)
+    return () => clearTimeout(timer)
   }, [gridConfig, gridInitialized])
 
   // === Student selection + data fetching ===

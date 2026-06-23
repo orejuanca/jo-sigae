@@ -341,9 +341,11 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
     })
   }
 
-  // ---- Observaciones - keys 243-247 ----
-  for (let i = 0; i < 5; i++) {
-    const obs = rawData[String(243 + i)]
+  // ---- Observaciones - keys específicos por línea ----
+  // Línea 1: key 243, Línea 2: key 244, Línea 3: key 260, Línea 4: key 261
+  const obsKeys = ['243', '244', '260', '261']
+  for (const key of obsKeys) {
+    const obs = rawData[key]
     if (obs && !isAsterisk(obs)) {
       result.observaciones.push(String(obs).trim())
     }
@@ -709,7 +711,16 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
     grupos: grupos.slice(0, 5),
     observaciones: parsed.observacionCompleta || '',
     observacionesLines: (parsed.observaciones || []).slice(0, 4),
-    promedioAcumulado: parsed.acta ? `Acta: ${parsed.acta}` : '',
+    promedioAcumulado: (() => {
+      // Calcular promedio real: suma de todas las notas numéricas / total
+      const allCalifs = Object.values(calificaciones).flat()
+      const numericNotas = allCalifs
+        .map(c => parseFloat(c.nota))
+        .filter(n => !isNaN(n) && n > 0)
+      if (numericNotas.length === 0) return ''
+      const promedio = numericNotas.reduce((a, b) => a + b, 0) / numericNotas.length
+      return promedio.toFixed(2)
+    })(),
     director: {
       apellidosNombres: schoolConfig.director.apellidosNombres,
       cedula: schoolConfig.director.cedula,

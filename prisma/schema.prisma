@@ -19,6 +19,7 @@ model Student {
   seccion         String   @default("")
   plan            String   @default("vigente")
   rawData         String   @default("{}")
+  certDraft       String?  // Borrador de datos de certificación editados por pestaña (JSON)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

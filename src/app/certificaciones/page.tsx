@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StudentSearch } from '@/components/student-search'
-import { FileText, Printer, Loader2, Eye, Database, AlertCircle } from 'lucide-react'
+import { FileText, Printer, Loader2, Eye, Database, AlertCircle, Save, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { schoolConfig, planEMG, notaEnLetras, tiposEvaluacion, formatCedulaFinal } from '@/lib/school-config'
 import type { PlanAnio } from '@/lib/school-config'
@@ -189,6 +189,8 @@ export default function CertificacionesPage() {
   const [previewCert, setPreviewCert] = useState<Certification | null>(null)
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [savingTab, setSavingTab] = useState<string | null>(null)
+  const [lastSavedTab, setLastSavedTab] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(false)
   const [dataLoaded, setDataLoaded] = useState(false)
   const [activeTab, setActiveTab] = useState('calificaciones')
@@ -267,11 +269,12 @@ export default function CertificacionesPage() {
     }
   }
 
-  const handleSelectStudent = (student: Student) => {
+  const handleSelectStudent = async (student: Student) => {
     setSelectedStudent(student)
     setPreviewCert(null)
     setLoadedData(null)
     setDataLoaded(false)
+    setLastSavedTab(null)
     fetchCertifications(student.id)
 
     // Normalizar fecha de nacimiento a DD/MM/YYYY
@@ -298,8 +301,8 @@ export default function CertificacionesPage() {
     }
 
     // Iniciar con datos vacíos pero del plan correcto
-    const data = emptyCertData(student.plan === 'derogado' ? 'derogado' : 'vigente')
-    data.estudiante = {
+    const baseData = emptyCertData(student.plan === 'derogado' ? 'derogado' : 'vigente')
+    baseData.estudiante = {
       cedula: formatCedulaFinal(student.cedula),
       fechaNacimiento: normalizeFecha(student.fechaNacimiento),
       apellidos: student.apellidos,
@@ -308,11 +311,30 @@ export default function CertificacionesPage() {
       estado: student.estado || '',
       municipio: student.municipio || '',
     }
-    data.planTipo = student.plan === 'derogado' ? 'derogado' : 'vigente'
-    setCertData(data)
+    baseData.planTipo = student.plan === 'derogado' ? 'derogado' : 'vigente'
+    setCertData(baseData)
 
-    // Auto-cargar datos de rawData
-    fetchCertDataFromDB(student)
+    // Intentar cargar borrador guardado primero
+    const draft = await loadDraft(student.id)
+    if (draft) {
+      // Asegurar que los campos del estudiante estén actualizados con los datos del modelo
+      draft.estudiante = {
+        ...draft.estudiante,
+        cedula: formatCedulaFinal(student.cedula),
+        apellidos: student.apellidos,
+        nombres: student.nombres,
+      }
+      setCertData(draft)
+      setDataLoaded(true)
+      setActiveTab('calificaciones')
+      toast({
+        title: 'Borrador recuperado',
+        description: 'Se cargó la última versión guardada de los datos editados.',
+      })
+    } else {
+      // Si no hay borrador, cargar del rawData como antes
+      fetchCertDataFromDB(student)
+    }
   }
 
   const updateNota = (anio: string, matIndex: number, field: keyof CalificacionRow, value: string) => {
@@ -396,6 +418,59 @@ export default function CertificacionesPage() {
       toast({ title: 'Error', description: 'Error al cargar datos de certificación', variant: 'destructive' })
     }
   }
+
+  // Guardar borrador del certData completo en la base de datos
+  const handleSaveTab = async (tabName: string) => {
+    if (!selectedStudent) return
+    setSavingTab(tabName)
+    setLastSavedTab(null)
+    try {
+      const res = await fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ datos: certData }),
+      })
+      if (!res.ok) throw new Error('Error al guardar')
+      setLastSavedTab(tabName)
+      toast({ title: 'Borrador guardado', description: `Los cambios de la pestaña "${tabName}" se guardaron correctamente.` })
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo guardar el borrador. Intente de nuevo.', variant: 'destructive' })
+    } finally {
+      setSavingTab(null)
+    }
+  }
+
+  // Cargar borrador guardado previamente
+  const loadDraft = async (studentId: string): Promise<CertData | null> => {
+    try {
+      const res = await fetch(`/api/students/${studentId}/cert-draft`)
+      if (!res.ok) return null
+      const { draft } = await res.json()
+      return draft as CertData | null
+    } catch {
+      return null
+    }
+  }
+
+  // Botón reutilizable de guardar pestaña
+  const SaveButton = ({ tabName }: { tabName: string }) => (
+    <div className="flex items-center justify-end pt-4 border-t mt-4">
+      <Button
+        onClick={() => handleSaveTab(tabName)}
+        disabled={savingTab === tabName || !selectedStudent}
+        variant="outline"
+        className="gap-2"
+      >
+        {savingTab === tabName ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
+        ) : lastSavedTab === tabName ? (
+          <><Check className="h-4 w-4 text-emerald-500" /> Guardado</>
+        ) : (
+          <><Save className="h-4 w-4" /> Guardar Cambios</>
+        )}
+      </Button>
+    </div>
+  )
 
   const displayData = previewCert && loadedData ? loadedData : certData
 
@@ -703,6 +778,7 @@ export default function CertificacionesPage() {
                     </div>
                   </CardContent>
                 </Card>
+                <SaveButton tabName="Datos" />
               </TabsContent>
 
               {/* TAB: Instituciones Educativas */}
@@ -736,6 +812,7 @@ export default function CertificacionesPage() {
                     </div>
                   </CardContent>
                 </Card>
+                <SaveButton tabName="Instituciones" />
               </TabsContent>
 
               {/* TAB: Calificaciones por año — TAB PRINCIPAL */}
@@ -829,6 +906,7 @@ export default function CertificacionesPage() {
                     })}
                   </CardContent>
                 </Card>
+                <SaveButton tabName="Calificaciones" />
               </TabsContent>
 
               {/* TAB: Secciones adicionales */}
@@ -916,6 +994,7 @@ export default function CertificacionesPage() {
                     </CardContent>
                   </Card>
                 </div>
+                <SaveButton tabName="Adicional" />
               </TabsContent>
 
               {/* TAB: Vista Previa del documento oficial */}

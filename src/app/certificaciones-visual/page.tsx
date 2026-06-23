@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   type GridConfig, type CellConfig, type DisplayData,
-  emptyCell, emptyRow, createDefaultTemplate, resolveBinding,
+  emptyCell, emptyRow, createDefaultTemplate, resolveBinding, patchDataBindings,
 } from '@/components/cert-visual/types'
 import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
@@ -68,7 +68,7 @@ function loadGridConfig(): GridConfig {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as GridConfig
-      if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) return parsed
+      if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) return patchDataBindings(parsed)
     }
   } catch { /* ignore */ }
   return createDefaultTemplate()
@@ -76,7 +76,8 @@ function loadGridConfig(): GridConfig {
 
 function saveGridConfig(config: GridConfig) {
   try {
-    const json = JSON.stringify(config)
+    const patched = patchDataBindings(config)
+    const json = JSON.stringify(patched)
     console.log('[saveGridConfig] size:', (json.length / 1024).toFixed(1), 'KB')
     localStorage.setItem(STORAGE_KEY, json)
   } catch (e) {
@@ -221,11 +222,20 @@ function GridTable({
                           ? 'rgba(59,130,246,0.06)'
                           : cell.bgColor || undefined,
                       userSelect: 'none',
+                      position: 'relative',
                     }}
                     onMouseDown={() => !isPreview && onCellMouseDown(r, c)}
                     onMouseEnter={() => !isPreview && onCellMouseEnter(r, c)}
                     title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
                   >
+                    {!isPreview && cell.dataBinding && (
+                      <span style={{
+                        position: 'absolute', top: '1px', right: '2px',
+                        width: '5px', height: '5px', borderRadius: '50%',
+                        background: '#f97316', display: 'inline-block',
+                        pointerEvents: 'none',
+                      }} />
+                    )}
                     {isPreview && cell.dataBinding && !displayContent ? (
                       <span style={{ color: '#ccc' }}>—</span>
                     ) : (
@@ -943,7 +953,7 @@ export default function CertificacionesVisualPage() {
         : layout.datos
 
       if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) {
-        setGridConfig(parsed)
+        setGridConfig(patchDataBindings(parsed))
         setSelectedCell(null)
         setShowLayoutsDialog(false)
         toast({ title: 'Layout cargado', description: `"${layout.nombre}" se cargó correctamente.` })
@@ -1079,6 +1089,28 @@ export default function CertificacionesVisualPage() {
               </Button>
               <Button size="sm" variant="outline" onClick={handleReset} className="h-7 text-xs">
                 <RotateCcw className="h-3 w-3 mr-1" /> Restablecer
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const patched = patchDataBindings(gridConfig)
+                  setGridConfig(patched)
+                  let count = 0
+                  for (const row of patched.rows) {
+                    for (const col of Object.keys(row.cells)) {
+                      if (row.cells[Number(col)].dataBinding) count++
+                    }
+                  }
+                  toast({ title: 'Bindings parcheados', description: `Se asignaron ${count} data bindings a las celdas.` })
+                }}
+                className="h-7 text-xs"
+                title="Asignar automáticamente todos los data bindings de calificaciones, orientación, grupos y observaciones"
+              >
+                <Combine className="h-3 w-3 mr-1" /> Parchear Bindings
               </Button>
 
               <div className="w-px h-5 bg-border" />

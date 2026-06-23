@@ -191,6 +191,88 @@ function h(content: string, overrides?: Partial<CellConfig>): CellConfig {
   return emptyCell({ content, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', ...overrides })
 }
 
+// ============================================================
+// Patch calif/orient/grupo/obs bindings onto ANY loaded template
+// Call this after loading from localStorage or DB so bindings
+// are always up-to-date without losing visual corrections.
+// ============================================================
+export function patchDataBindings(config: GridConfig) {
+  const { rows } = config
+  const bind = (rowIdx: number, colIdx: number, binding: string) => {
+    const cell = rows[rowIdx]?.cells[colIdx]
+    if (cell) cell.dataBinding = binding
+  }
+
+  // --- 1st/2nd year (rows 21-27, idx 20-26, 7 subjects each) ---
+  for (let s = 0; s < 7; s++) {
+    const r = 20 + s
+    bind(r, 4, `calif.1.${s}.nota`)
+    bind(r, 5, `calif.1.${s}.literal`)
+    bind(r, 9, `calif.1.${s}.te`)
+    bind(r, 10, `calif.1.${s}.mes`)
+    bind(r, 11, `calif.1.${s}.anio`)
+    bind(r, 12, `calif.1.${s}.inst`)
+    bind(r, 18, `calif.2.${s}.nota`)
+    bind(r, 19, `calif.2.${s}.literal`)
+    bind(r, 23, `calif.2.${s}.te`)
+    bind(r, 24, `calif.2.${s}.mes`)
+    bind(r, 25, `calif.2.${s}.anio`)
+    bind(r, 26, `calif.2.${s}.inst`)
+  }
+
+  // --- 3rd/4th year (rows 31-38, idx 30-37, 8 subjects each) ---
+  for (let s = 0; s < 8; s++) {
+    const r = 30 + s
+    bind(r, 4, `calif.3.${s}.nota`)
+    bind(r, 5, `calif.3.${s}.literal`)
+    bind(r, 9, `calif.3.${s}.te`)
+    bind(r, 10, `calif.3.${s}.mes`)
+    bind(r, 11, `calif.3.${s}.anio`)
+    bind(r, 12, `calif.3.${s}.inst`)
+    bind(r, 18, `calif.4.${s}.nota`)
+    bind(r, 19, `calif.4.${s}.literal`)
+    bind(r, 23, `calif.4.${s}.te`)
+    bind(r, 24, `calif.4.${s}.mes`)
+    bind(r, 25, `calif.4.${s}.anio`)
+    bind(r, 26, `calif.4.${s}.inst`)
+  }
+
+  // --- 4th year 9th subject: Formación Soberanía (row 39, idx 38) ---
+  bind(38, 18, 'calif.4.8.nota')
+  bind(38, 19, 'calif.4.8.literal')
+  bind(38, 23, 'calif.4.8.te')
+  bind(38, 24, 'calif.4.8.mes')
+  bind(38, 25, 'calif.4.8.anio')
+  bind(38, 26, 'calif.4.8.inst')
+
+  // --- 5th year (rows 43-52, idx 42-51, 10 subjects) ---
+  for (let s = 0; s < 10; s++) {
+    const r = 42 + s
+    bind(r, 4, `calif.5.${s}.nota`)
+    bind(r, 5, `calif.5.${s}.literal`)
+    bind(r, 9, `calif.5.${s}.te`)
+    bind(r, 10, `calif.5.${s}.mes`)
+    bind(r, 11, `calif.5.${s}.anio`)
+    bind(r, 12, `calif.5.${s}.inst`)
+  }
+
+  // --- Orientación y Convivencia (rows 42-46, idx 41-45) ---
+  for (let i = 0; i < 5; i++) {
+    bind(41 + i, 20, `orient.${i}.literal`)
+  }
+
+  // --- Grupos de Creación/Recreación (rows 48-52, idx 47-51) ---
+  for (let i = 0; i < 5; i++) {
+    bind(47 + i, 20, `grupo.${i}.grupo`)
+    bind(47 + i, 25, `grupo.${i}.literal`)
+  }
+
+  // --- Observaciones (row 53, idx 52) ---
+  bind(52, 7, 'doc.observaciones')
+
+  return config
+}
+
 
 export function createDefaultTemplate(): GridConfig {
   const totalCols = 27

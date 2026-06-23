@@ -137,6 +137,11 @@ export interface DisplayData {
 }
 
 // === Data Resolution for Preview ===
+const YEAR_NAME_MAP: Record<string, string> = {
+  '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año',
+  '4': 'Cuarto Año', '5': 'Quinto Año',
+}
+
 export function resolveBinding(path: string, data: DisplayData): string {
   if (!path || !data) return ''
   const [domain, ...rest] = path.split('.')
@@ -165,6 +170,36 @@ export function resolveBinding(path: string, data: DisplayData): string {
       const idx = parseInt(rest[0])
       const field = rest[1]
       return data.instituciones[idx]?.[field as keyof InstitucionEducativa] || '*'
+    }
+    case 'calif': {
+      const yearKey = YEAR_NAME_MAP[rest[0]] || rest[0]
+      const idx = parseInt(rest[1])
+      const field = rest[2]
+      const yearData = data.calificaciones?.[yearKey]
+      if (!yearData) return ''
+      const subj = yearData[idx]
+      if (!subj) return ''
+      const map: Record<string, string> = {
+        materia: subj.materia, numero: String(subj.numero),
+        nota: subj.nota, literal: subj.literal, te: subj.tipoEvaluacion,
+        mes: subj.fechaMes, anio: subj.fechaAnio, inst: subj.instEduc,
+      }
+      return map[field] || ''
+    }
+    case 'orient': {
+      const idx = parseInt(rest[0])
+      const entry = data.orientacion?.[idx]
+      if (!entry) return ''
+      if (rest[1] === 'literal') return entry.literal
+      return entry.anio || ''
+    }
+    case 'grupo': {
+      const idx = parseInt(rest[0])
+      const entry = data.grupos?.[idx]
+      if (!entry) return ''
+      if (rest[1] === 'literal') return entry.literal
+      if (rest[1] === 'grupo') return entry.grupo
+      return entry.anio || ''
     }
     default: return ''
   }

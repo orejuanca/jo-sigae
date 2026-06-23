@@ -66,3 +66,28 @@ Rewrote the preview style variables, `renderYearHalf` function, and the entire `
 - Component interfaces, state management, API calls
 - School config or data interfaces
 - Student search and selection logic
+
+---
+Task ID: 1
+Agent: main
+Task: Fix missing data bindings in Cert.Visual - orientación literales, grupo 2°-5°, observaciones por línea, promedio académico
+
+Work Log:
+- Read and analyzed types.ts (patchDataBindings, resolveBinding, DisplayData, DATA_BINDINGS)
+- Read and analyzed page.tsx (displayData construction, CertData interface, grid rendering)
+- Read parse-rawdata.ts to understand data flow from rawData → parsed → certData → displayData
+- Identified root causes: bind() silently failed when cells missing from saved templates; observations were a single joined string instead of 4 individual lines
+- Fixed bind() to create row/cell if missing (robust bind)
+- Added obsLine.0-3 resolver case and DATA_BINDINGS entries
+- Split observaciones into 4 individual lines via observacionesLines field
+- Added calificaciones, orientacion, grupos to DisplayData interface
+- Updated parse-rawdata.ts parsedToCertData to include observacionesLines
+- Updated page.tsx CertData interface and displayData to pass observacionesLines
+- Pushed to GitHub, Vercel will auto-deploy
+
+Stage Summary:
+- Key fix: patchDataBindings bind() now creates missing rows/cells instead of silently failing
+- Observaciones now split into 4 lines (obsLine.0-3) instead of single doc.observaciones
+- Promedio Académico cell (doc.promedioAcumulado) now only shows acta value, not obs text
+- All 4 observation lines now have orange dots in designer mode
+- Orientación and grupo bindings work with any saved template (cells auto-created)

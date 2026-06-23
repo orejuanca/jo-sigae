@@ -203,6 +203,57 @@ export function patchDataBindings(config: GridConfig) {
     if (cell) cell.dataBinding = binding
   }
 
+  // --- Static data fields (student, school, doc, director, cdcee) ---
+  // Row 3 (idx 2): Lugar y Fecha
+  bind(2, 19, 'doc.lugar')
+  bind(2, 22, 'doc.fechaExpedicion')
+  // Row 6 (idx 5): Código OD, Denominación
+  bind(5, 3, 'school.codigo')
+  bind(5, 14, 'school.denominacion')
+  // Row 7 (idx 6): Dirección, Teléfono
+  bind(6, 3, 'school.direccion')
+  bind(6, 21, 'school.telefono')
+  // Row 8 (idx 7): Municipio, Estado, CDCEE
+  bind(7, 3, 'school.municipio')
+  bind(7, 10, 'school.estado')
+  bind(7, 22, 'school.cdcce')
+  // Row 10 (idx 9): Cédula, Fecha Nacimiento
+  bind(9, 4, 'student.cedula')
+  bind(9, 15, 'student.fechaNacimiento')
+  // Row 11 (idx 10): Apellidos, Nombres
+  bind(10, 3, 'student.apellidos')
+  bind(10, 15, 'student.nombres')
+  // Row 12 (idx 11): País, Estado nacimiento, Municipio nacimiento
+  bind(11, 5, 'student.pais')
+  bind(11, 13, 'student.estado')
+  bind(11, 22, 'student.municipio')
+  // Row 14 (idx 13): Inst 3
+  bind(13, 15, 'inst.2.denominacion')
+  bind(13, 21, 'inst.2.localidad')
+  bind(13, 26, 'inst.2.ef')
+  // Row 15 (idx 14): Inst 1, Inst 4
+  bind(14, 1, 'inst.0.denominacion')
+  bind(14, 7, 'inst.0.localidad')
+  bind(14, 12, 'inst.0.ef')
+  bind(14, 15, 'inst.3.denominacion')
+  bind(14, 21, 'inst.3.localidad')
+  bind(14, 26, 'inst.3.ef')
+  // Row 16 (idx 15): Inst 2, Inst 5
+  bind(15, 1, 'inst.1.denominacion')
+  bind(15, 7, 'inst.1.localidad')
+  bind(15, 12, 'inst.1.ef')
+  bind(15, 15, 'inst.4.denominacion')
+  bind(15, 21, 'inst.4.localidad')
+  bind(15, 26, 'inst.4.ef')
+  // Row 53 (idx 52): P.A. (promedio)
+  bind(52, 5, 'doc.promedioAcumulado')
+  // Row 60 (idx 59): Director nombre, CDCEE nombre
+  bind(59, 0, 'director.nombre')
+  bind(59, 14, 'cdcee.nombre')
+  // Row 62 (idx 61): Director cédula, CDCEE cédula
+  bind(61, 0, 'director.cedula')
+  bind(61, 14, 'cdcee.cedula')
+
   // --- 1st/2nd year (rows 21-27, idx 20-26, 7 subjects each) ---
   for (let s = 0; s < 7; s++) {
     const r = 20 + s

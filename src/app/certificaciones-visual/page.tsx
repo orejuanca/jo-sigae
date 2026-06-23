@@ -505,6 +505,9 @@ export default function CertificacionesVisualPage() {
       cdcce: certData.cdcce,
       estudiante: certData.estudiante,
       instituciones: certData.instituciones,
+      calificaciones: certData.calificaciones,
+      orientacion: certData.orientacion,
+      grupos: certData.grupos,
       observaciones: certData.observaciones,
       promedioAcumulado: certData.promedioAcumulado,
       director: certData.director,
@@ -1097,7 +1100,15 @@ export default function CertificacionesVisualPage() {
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  const patched = patchDataBindings(gridConfig)
+                  // Deep clone so React detects the state change
+                  const cloned: GridConfig = {
+                    ...gridConfig,
+                    rows: gridConfig.rows.map(row => ({
+                      ...row,
+                      cells: { ...row.cells },
+                    })),
+                  }
+                  const patched = patchDataBindings(cloned)
                   setGridConfig(patched)
                   let count = 0
                   for (const row of patched.rows) {

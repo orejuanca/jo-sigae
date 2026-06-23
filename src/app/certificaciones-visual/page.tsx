@@ -50,7 +50,7 @@ interface CertData {
   calificaciones: Record<string, CalificacionRow[]>
   orientacion: { anio: string; literal: string }[]
   grupos: { anio: string; grupo: string; literal: string }[]
-  observaciones: string; promedioAcumulado: string
+  observaciones: string; observacionesLines: string[]; promedioAcumulado: string
   director: { apellidosNombres: string; cedula: string }
   directorCdcce: { apellidosNombres: string; cedula: string }
 }
@@ -509,6 +509,7 @@ export default function CertificacionesVisualPage() {
       orientacion: certData.orientacion,
       grupos: certData.grupos,
       observaciones: certData.observaciones,
+      observacionesLines: certData.observacionesLines || [],
       promedioAcumulado: certData.promedioAcumulado,
       director: certData.director,
       directorCdcce: certData.directorCdcce,

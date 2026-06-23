@@ -1,0 +1,1269 @@
+     1→'use client'
+     2→
+     3→import { useState, useCallback, useEffect, useMemo } from 'react'
+     4→import { AppShell } from '@/components/app-shell'
+     5→import { Button } from '@/components/ui/button'
+     6→import { Card, CardContent } from '@/components/ui/card'
+     7→import { Input } from '@/components/ui/input'
+     8→import { Badge } from '@/components/ui/badge'
+     9→import { Label } from '@/components/ui/label'
+    10→import { StudentSearch } from '@/components/student-search'
+    11→import { useToast } from '@/hooks/use-toast'
+    12→import { PropertiesPanel } from '@/components/cert-visual/properties-panel'
+    13→import {
+    14→  Dialog,
+    15→  DialogContent,
+    16→  DialogHeader,
+    17→  DialogTitle,
+    18→  DialogDescription,
+    19→  DialogFooter,
+    20→} from '@/components/ui/dialog'
+    21→import {
+    22→  type GridConfig, type CellConfig, type DisplayData,
+    23→  emptyCell, emptyRow, createDefaultTemplate, resolveBinding, patchDataBindings,
+    24→} from '@/components/cert-visual/types'
+    25→import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
+    26→import {
+    27→  Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
+    28→  FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+    29→  Combine, TableCellsMerge, TableCellsSplit, Group,
+    30→} from 'lucide-react'
+    31→
+    32→// === Student & CertData types (local to this page) ===
+    33→interface Student {
+    34→  id: string; cedula: string; apellidos: string; nombres: string
+    35→  fechaNacimiento?: string | null; pais?: string | null
+    36→  estado?: string | null; municipio?: string | null; plan?: string | null
+    37→}
+    38→
+    39→interface CalificacionRow {
+    40→  materia: string; numero: number; nota: string; literal: string
+    41→  tipoEvaluacion: string; fechaMes: string; fechaAnio: string; instEduc: string
+    42→}
+    43→
+    44→interface CertData {
+    45→  lugar: string; fechaExpedicion: string; planEstudio: string; od: string
+    46→  denominacion: string; direccion: string; telefono: string; municipio: string
+    47→  estado: string; cdcce: string; planTipo?: string
+    48→  estudiante: { cedula: string; fechaNacimiento: string; apellidos: string; nombres: string; pais: string; estado: string; municipio: string }
+    49→  instituciones: { numero: number; denominacion: string; localidad: string; ef: string }[]
+    50→  calificaciones: Record<string, CalificacionRow[]>
+    51→  orientacion: { anio: string; literal: string }[]
+    52→  grupos: { anio: string; grupo: string; literal: string }[]
+    53→  observaciones: string; promedioAcumulado: string
+    54→  director: { apellidosNombres: string; cedula: string }
+    55→  directorCdcce: { apellidosNombres: string; cedula: string }
+    56→}
+    57→
+    58→interface SavedLayout {
+    59→  id: string; nombre: string; createdAt: string; updatedAt: string
+    60→}
+    61→
+    62→const STORAGE_KEY = 'cert-grid-layout'
+    63→
+    64→// === Grid helpers ===
+    65→function loadGridConfig(): GridConfig {
+    66→  if (typeof window === 'undefined') return createDefaultTemplate()
+    67→  try {
+    68→    const raw = localStorage.getItem(STORAGE_KEY)
+    69→    if (raw) {
+    70→      const parsed = JSON.parse(raw) as GridConfig
+    71→      if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) return patchDataBindings(parsed)
+    72→    }
+    73→  } catch { /* ignore */ }
+    74→  return createDefaultTemplate()
+    75→}
+    76→
+    77→function saveGridConfig(config: GridConfig) {
+    78→  try {
+    79→    const patched = patchDataBindings(config)
+    80→    const json = JSON.stringify(patched)
+    81→    console.log('[saveGridConfig] size:', (json.length / 1024).toFixed(1), 'KB')
+    82→    localStorage.setItem(STORAGE_KEY, json)
+    83→  } catch (e) {
+    84→    console.error('[saveGridConfig] FAILED:', e)
+    85→  }
+    86→}
+    87→
+    88→function updateCellInConfig(
+    89→  config: GridConfig,
+    90→  rowIdx: number,
+    91→  colIdx: number,
+    92→  updates: Partial<CellConfig>
+    93→): GridConfig {
+    94→  const newRows = config.rows.map((r, i) => {
+    95→    if (i !== rowIdx) return r
+    96→    const cell = r.cells[colIdx] || emptyCell()
+    97→    return { cells: { ...r.cells, [colIdx]: { ...cell, ...updates } } }
+    98→  })
+    99→  return { ...config, rows: newRows }
+   100→}
+   101→
+   102→// === Grid Rendering Component ===
+   103→function GridTable({
+   104→  config,
+   105→  selectedCell,
+   106→  selectionRange,
+   107→  onCellMouseDown,
+   108→  onCellMouseEnter,
+   109→  onCellMouseUp,
+   110→  isPreview,
+   111→  displayData,
+   112→}: {
+   113→  config: GridConfig
+   114→  selectedCell: { row: number; col: number } | null
+   115→  selectionRange: { r1: number; c1: number; r2: number; c2: number } | null
+   116→  onCellMouseDown: (row: number, col: number) => void
+   117→  onCellMouseEnter: (row: number, col: number) => void
+   118→  onCellMouseUp: () => void
+   119→  isPreview: boolean
+   120→  displayData: DisplayData | null
+   121→}) {
+   122→  // Recompute occupied set on every render to track rowspan AND colspan correctly
+   123→  const occupied = useMemo(() => {
+   124→    const occ = new Set<string>()
+   125→    for (let r = 0; r < config.rows.length; r++) {
+   126→      const row = config.rows[r]
+   127→      if (!row) continue
+   128→      for (const [key, cell] of Object.entries(row.cells)) {
+   129→        const c = Number(key)
+   130→        const rs = cell.rowspan || 1
+   131→        const cs = cell.colspan || 1
+   132→        // Mark cells consumed by rowspan (rows below)
+   133→        if (rs > 1) {
+   134→          for (let dr = 1; dr < rs; dr++) {
+   135→            occ.add(`${r + dr}-${c}`)
+   136→          }
+   137→        }
+   138→        // Mark cells consumed by colspan (columns to the right, same row)
+   139→        if (cs > 1) {
+   140→          for (let dc = 1; dc < cs; dc++) {
+   141→            occ.add(`${r}-${c + dc}`)
+   142→          }
+   143→        }
+   144→      }
+   145→    }
+   146→    return occ
+   147→  }, [config.rows])
+   148→
+   149→  const inRange = (r: number, c: number) => {
+   150→    if (!selectionRange) return false
+   151→    const minR = Math.min(selectionRange.r1, selectionRange.r2)
+   152→    const maxR = Math.max(selectionRange.r1, selectionRange.r2)
+   153→    const minC = Math.min(selectionRange.c1, selectionRange.c2)
+   154→    const maxC = Math.max(selectionRange.c1, selectionRange.c2)
+   155→    return r >= minR && r <= maxR && c >= minC && c <= maxC
+   156→  }
+   157→
+   158→  const isRangeActive = selectionRange !== null
+   159→  const isSingleSelected = selectedCell && !isRangeActive
+   160→
+   161→  return (
+   162→    <div
+   163→      className="overflow-auto flex-1 bg-white p-2 rounded border"
+   164→      style={{ maxHeight: 'calc(100vh - 200px)' }}
+   165→      onMouseUp={() => !isPreview && onCellMouseUp()}
+   166→    >
+   167→      <div style={{ width: '816px', height: '1344px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflow: 'hidden' }}>
+   168→        <table style={{ borderCollapse: 'collapse', width: '100%', height: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
+   169→          <colgroup>
+   170→            {config.columnWidths.map((w, i) => (
+   171→              <col key={i} style={{ width: w || `${100 / config.totalCols}%` }} />
+   172→            ))}
+   173→          </colgroup>
+   174→          <tbody>
+   175→            {config.rows.map((gridRow, r) => {
+   176→              const cells: React.ReactNode[] = []
+   177→              for (let c = 0; c < config.totalCols; c++) {
+   178→                const key = `${r}-${c}`
+   179→                if (occupied.has(key)) continue
+   180→
+   181→                const cell = gridRow.cells[c] || emptyCell()
+   182→
+   183→                let displayContent = cell.content
+   184→                if (isPreview && cell.dataBinding && displayData) {
+   185→                  displayContent = resolveBinding(cell.dataBinding, displayData)
+   186→                }
+   187→
+   188→                const borderStyle = (enabled: boolean) =>
+   189→                  enabled ? `1px solid ${cell.borderColor}` : 'none'
+   190→
+   191→                const cellIsSelected = isSingleSelected && selectedCell?.row === r && selectedCell?.col === c
+   192→                const cellInRange = isRangeActive && inRange(r, c)
+   193→                const hasContent = cell.content || cell.dataBinding
+   194→
+   195→                cells.push(
+   196→                  <td
+   197→                    key={key}
+   198→                    colSpan={cell.colspan > 1 ? cell.colspan : undefined}
+   199→                    rowSpan={cell.rowspan > 1 ? cell.rowspan : undefined}
+   200→                    style={{
+   201→                      borderTop: borderStyle(cell.borderTop),
+   202→                      borderRight: borderStyle(cell.borderRight),
+   203→                      borderBottom: borderStyle(cell.borderBottom),
+   204→                      borderLeft: borderStyle(cell.borderLeft),
+   205→                      width: cell.width || undefined,
+   206→                      height: cell.height || undefined,
+   207→                      fontSize: `${cell.fontSize}pt`,
+   208→                      fontWeight: cell.fontWeight,
+   209→                      fontStyle: cell.fontStyle,
+   210→                      textAlign: cell.textAlign,
+   211→                      verticalAlign: cell.verticalAlign,
+   212→                      color: cell.color || undefined,
+   213→                      whiteSpace: cell.whiteSpace,
+   214→                      padding: cell.padding,
+   215→                      cursor: isPreview ? 'default' : 'cell',
+   216→                      outline: cellIsSelected ? '2px solid #3b82f6' : undefined,
+   217→                      outlineOffset: '-2px',
+   218→                      minWidth: hasContent ? undefined : '0px',
+   219→                      background: cellInRange
+   220→                        ? 'rgba(59,130,246,0.15)'
+   221→                        : cellIsSelected
+   222→                          ? 'rgba(59,130,246,0.06)'
+   223→                          : cell.bgColor || undefined,
+   224→                      userSelect: 'none',
+   225→                      position: 'relative',
+   226→                    }}
+   227→                    onMouseDown={() => !isPreview && onCellMouseDown(r, c)}
+   228→                    onMouseEnter={() => !isPreview && onCellMouseEnter(r, c)}
+   229→                    title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
+   230→                  >
+   231→                    {!isPreview && cell.dataBinding && (
+   232→                      <span style={{
+   233→                        position: 'absolute', top: '1px', right: '2px',
+   234→                        width: '5px', height: '5px', borderRadius: '50%',
+   235→                        background: '#f97316', display: 'inline-block',
+   236→                        pointerEvents: 'none',
+   237→                      }} />
+   238→                    )}
+   239→                    {isPreview && cell.dataBinding && !displayContent ? (
+   240→                      <span style={{ color: '#ccc' }}>—</span>
+   241→                    ) : (
+   242→                      displayContent
+   243→                    )}
+   244→                  </td>
+   245→                )
+   246→              }
+   247→              return <tr key={r}>{cells}</tr>
+   248→            })}
+   249→          </tbody>
+   250→        </table>
+   251→      </div>
+   252→    </div>
+   253→  )
+   254→}
+   255→
+   256→// === Column Width Editor ===
+   257→function ColumnWidthEditor({
+   258→  config,
+   259→  onUpdate,
+   260→}: {
+   261→  config: GridConfig
+   262→  onUpdate: (config: GridConfig) => void
+   263→}) {
+   264→  const [editing, setEditing] = useState<number | null>(null)
+   265→  const [value, setValue] = useState('')
+   266→
+   267→  const startEdit = (idx: number) => {
+   268→    setEditing(idx)
+   269→    setValue(config.columnWidths[idx] || '')
+   270→  }
+   271→
+   272→  const commitEdit = () => {
+   273→    if (editing !== null && value.trim()) {
+   274→      const newWidths = [...config.columnWidths]
+   275→      newWidths[editing] = value.trim()
+   276→      onUpdate({ ...config, columnWidths: newWidths })
+   277→    }
+   278→    setEditing(null)
+   279→  }
+   280→
+   281→  return (
+   282→    <div className="flex gap-0.5 flex-wrap p-1">
+   283→      {config.columnWidths.map((w, i) => (
+   284→        <div
+   285→          key={i}
+   286→          className="text-center border rounded px-0.5 py-0.5 min-w-[44px]"
+   287→          style={{ fontSize: '7pt', backgroundColor: '#f8f8f8' }}
+   288→        >
+   289→          <div className="text-muted-foreground" style={{ fontSize: '6pt' }}>C{i}</div>
+   290→          {editing === i ? (
+   291→            <input
+   292→              autoFocus
+   293→              value={value}
+   294→              onChange={(e) => setValue(e.target.value)}
+   295→              onBlur={commitEdit}
+   296→              onKeyDown={(e) => { if (e.key === 'Enter') commitEdit() }}
+   297→              className="w-10 h-4 text-center text-[7pt] border rounded"
+   298→              style={{ padding: '0 1px' }}
+   299→            />
+   300→          ) : (
+   301→            <div
+   302→              onClick={() => startEdit(i)}
+   303→              className="cursor-pointer hover:bg-accent rounded"
+   304→              title="Clic para editar"
+   305→            >
+   306→              {w}
+   307→            </div>
+   308→          )}
+   309→        </div>
+   310→      ))}
+   311→    </div>
+   312→  )
+   313→}
+   314→
+   315→// === Saved Layouts Dialog ===
+   316→function SavedLayoutsDialog({
+   317→  open,
+   318→  onOpenChange,
+   319→  layouts,
+   320→  onLoad,
+   321→  onDelete,
+   322→  loading,
+   323→}: {
+   324→  open: boolean
+   325→  onOpenChange: (open: boolean) => void
+   326→  layouts: SavedLayout[]
+   327→  onLoad: (id: string) => void
+   328→  onDelete: (id: string) => void
+   329→  loading: boolean
+   330→}) {
+   331→  return (
+   332→    <Dialog open={open} onOpenChange={onOpenChange}>
+   333→      <DialogContent>
+   334→        <DialogHeader>
+   335→          <DialogTitle>Layouts Guardados</DialogTitle>
+   336→          <DialogDescription>
+   337→            Selecciona un layout para cargarlo en el editor.
+   338→          </DialogDescription>
+   339→        </DialogHeader>
+   340→
+   341→        {loading ? (
+   342→          <div className="flex items-center justify-center py-8">
+   343→            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+   344→            <span className="ml-2 text-sm text-muted-foreground">Cargando...</span>
+   345→          </div>
+   346→        ) : layouts.length === 0 ? (
+   347→          <div className="text-center py-8 text-muted-foreground text-sm">
+   348→            No hay layouts guardados.
+   349→          </div>
+   350→        ) : (
+   351→          <div className="max-h-[300px] overflow-y-auto space-y-1">
+   352→            {layouts.map((layout) => (
+   353→              <div
+   354→                key={layout.id}
+   355→                className="flex items-center justify-between p-2 rounded border hover:bg-accent transition-colors"
+   356→              >
+   357→                <div className="flex-1 min-w-0">
+   358→                  <div className="font-medium text-sm truncate">{layout.nombre}</div>
+   359→                  <div className="text-xs text-muted-foreground">
+   360→                    {new Date(layout.updatedAt).toLocaleString('es-VE')}
+   361→                  </div>
+   362→                </div>
+   363→                <div className="flex gap-1 ml-2 shrink-0">
+   364→                  <Button
+   365→                    size="sm"
+   366→                    variant="outline"
+   367→                    className="h-7 text-xs"
+   368→                    onClick={() => onLoad(layout.id)}
+   369→                  >
+   370→                    <Upload className="h-3 w-3 mr-1" /> Cargar
+   371→                  </Button>
+   372→                  <Button
+   373→                    size="sm"
+   374→                    variant="outline"
+   375→                    className="h-7 text-xs text-destructive hover:text-destructive"
+   376→                    onClick={() => onDelete(layout.id)}
+   377→                  >
+   378→                    <Trash2 className="h-3 w-3" />
+   379→                  </Button>
+   380→                </div>
+   381→              </div>
+   382→            ))}
+   383→          </div>
+   384→        )}
+   385→      </DialogContent>
+   386→    </Dialog>
+   387→  )
+   388→}
+   389→
+   390→// === Main Page Component ===
+   391→export default function CertificacionesVisualPage() {
+   392→  const { toast } = useToast()
+   393→
+   394→  // Grid state
+   395→  const [gridConfig, setGridConfig] = useState<GridConfig>(createDefaultTemplate)
+   396→  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
+   397→  const [isPreview, setIsPreview] = useState(false)
+   398→  const [gridInitialized, setGridInitialized] = useState(false)
+   399→  const [colInput, setColInput] = useState('27')
+   400→
+   401→  // Range selection state (drag to select multiple cells)
+   402→  const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
+   403→  const [selEnd, setSelEnd] = useState<{ row: number; col: number } | null>(null)
+   404→  const [isDragging, setIsDragging] = useState(false)
+   405→
+   406→  // Computed selection range
+   407→  const selectionRange = useMemo(() => {
+   408→    if (!selAnchor || !selEnd) return null
+   409→    return { r1: selAnchor.row, c1: selAnchor.col, r2: selEnd.row, c2: selEnd.col }
+   410→  }, [selAnchor, selEnd])
+   411→
+   412→  // Student / data state
+   413→  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+   414→  const [certData, setCertData] = useState<CertData | null>(null)
+   415→  const [loadingData, setLoadingData] = useState(false)
+   416→
+   417→  // Save dialog state
+   418→  const [showSaveDialog, setShowSaveDialog] = useState(false)
+   419→  const [saveName, setSaveName] = useState('')
+   420→  const [saving, setSaving] = useState(false)
+   421→
+   422→  // Saved layouts dialog state
+   423→  const [showLayoutsDialog, setShowLayoutsDialog] = useState(false)
+   424→  const [savedLayouts, setSavedLayouts] = useState<SavedLayout[]>([])
+   425→  const [loadingLayouts, setLoadingLayouts] = useState(false)
+   426→  const [loadingLayout, setLoadingLayout] = useState(false)
+   427→
+   428→  // Load grid from localStorage on mount
+   429→  useEffect(() => {
+   430→    setGridConfig(loadGridConfig())
+   431→    setGridInitialized(true)
+   432→  }, [])
+   433→
+   434→  // Persist grid changes to localStorage (debounced auto-save)
+   435→  useEffect(() => {
+   436→    if (!gridInitialized) return
+   437→    const timer = setTimeout(() => saveGridConfig(gridConfig), 500)
+   438→    return () => clearTimeout(timer)
+   439→  }, [gridConfig, gridInitialized])
+   440→
+   441→  // === Student selection + data fetching ===
+   442→  const handleSelectStudent = useCallback(async (student: Student) => {
+   443→    setSelectedStudent(student)
+   444→    setCertData(null)
+   445→    setLoadingData(true)
+   446→    try {
+   447→      const res = await fetch(`/api/students/${student.id}/cert-data`)
+   448→      if (!res.ok) {
+   449→        toast({ title: 'Sin datos', description: `No se encontraron datos de calificaciones para ${student.cedula}.`, variant: 'destructive' })
+   450→        setLoadingData(false)
+   451→        return
+   452→      }
+   453→      const result = await res.json()
+   454→      if (result.certData) {
+   455→        const cd = result.certData
+   456→        if (!cd.fechaExpedicion || cd.fechaExpedicion.trim() === '') {
+   457→          cd.fechaExpedicion = new Date().toISOString().split('T')[0]
+   458→        }
+   459→        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cd.fechaExpedicion)) {
+   460→          const parts = cd.fechaExpedicion.split('/')
+   461→          cd.fechaExpedicion = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+   462→        }
+   463→        // Fix old literals
+   464→        if (cd.calificaciones) {
+   465→          for (const anio of Object.keys(cd.calificaciones)) {
+   466→            for (const cal of cd.calificaciones[anio]) {
+   467→              if (cal.nota === 'IN' && cal.literal !== 'INASISTENTE') cal.literal = 'INASISTENTE'
+   468→              if (cal.nota === 'PE' && cal.literal !== 'PENDIENTE') cal.literal = 'PENDIENTE'
+   469→              if (!cal.literal && cal.nota) cal.literal = notaEnLetras(cal.nota)
+   470→            }
+   471→          }
+   472→        }
+   473→        setCertData(cd)
+   474→        const allCals = Object.values(cd.calificaciones || {}).flat() as CalificacionRow[]
+   475→        const gradeCount = allCals.filter(c => c.nota && c.nota !== '').length
+   476→        toast({ title: 'Datos cargados', description: `${gradeCount} calificaciones del rawData.` })
+   477→      }
+   478→    } catch {
+   479→      toast({ title: 'Error', description: 'Error al cargar datos de calificaciones.', variant: 'destructive' })
+   480→    } finally {
+   481→      setLoadingData(false)
+   482→    }
+   483→  }, [toast])
+   484→
+   485→  // Convert CertData to DisplayData for the grid
+   486→  const displayData: DisplayData | null = useMemo(() => {
+   487→    if (!certData) return null
+   488→    // Convert YYYY-MM-DD → DD/MM/YYYY
+   489→    let fechaExp = certData.fechaExpedicion
+   490→    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
+   491→      const [y, m, d] = fechaExp.split('-')
+   492→      fechaExp = `${d}/${m}/${y}`
+   493→    }
+   494→    return {
+   495→      lugar: certData.lugar,
+   496→      fechaExpedicion: fechaExp,
+   497→      planEstudio: certData.planEstudio,
+   498→      planCodigo: schoolConfig.planCodigo,
+   499→      od: certData.od,
+   500→      denominacion: certData.denominacion,
+   501→      direccion: certData.direccion,
+   502→      telefono: certData.telefono,
+   503→      municipio: certData.municipio,
+   504→      estado: certData.estado,
+   505→      cdcce: certData.cdcce,
+   506→      estudiante: certData.estudiante,
+   507→      instituciones: certData.instituciones,
+   508→      calificaciones: certData.calificaciones,
+   509→      orientacion: certData.orientacion,
+   510→      grupos: certData.grupos,
+   511→      observaciones: certData.observaciones,
+   512→      promedioAcumulado: certData.promedioAcumulado,
+   513→      director: certData.director,
+   514→      directorCdcce: certData.directorCdcce,
+   515→    }
+   516→  }, [certData])
+   517→
+   518→  // === Grid Operations ===
+   519→  // Mouse handlers for range selection
+   520→  const handleCellMouseDown = useCallback((r: number, c: number) => {
+   521→    setIsDragging(true)
+   522→    setSelAnchor({ row: r, col: c })
+   523→    setSelEnd({ row: r, col: c })
+   524→    setSelectedCell({ row: r, col: c })
+   525→  }, [])
+   526→
+   527→  const handleCellMouseEnter = useCallback((r: number, c: number) => {
+   528→    if (!isDragging) return
+   529→    setSelEnd({ row: r, col: c })
+   530→  }, [isDragging])
+   531→
+   532→  const handleCellMouseUp = useCallback(() => {
+   533→    setIsDragging(false)
+   534→  }, [])
+   535→
+   536→  const clearRangeSelection = useCallback(() => {
+   537→    setSelAnchor(null)
+   538→    setSelEnd(null)
+   539→    setIsDragging(false)
+   540→  }, [])
+   541→
+   542→  const handleCellUpdate = useCallback((updates: Partial<CellConfig>) => {
+   543→    if (!selectedCell) return
+   544→    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, updates))
+   545→  }, [selectedCell])
+   546→
+   547→  const handleApplyColumns = () => {
+   548→    const n = parseInt(colInput)
+   549→    if (isNaN(n) || n < 1 || n > 100) {
+   550→      toast({ title: 'Error', description: 'Ingrese un número válido de columnas (1-100).', variant: 'destructive' })
+   551→      return
+   552→    }
+   553→    const newConfig: GridConfig = {
+   554→      totalCols: n,
+   555→      columnWidths: Array(n).fill(`${(100 / n).toFixed(2)}%`),
+   556→      rows: [emptyRow(n)],
+   557→    }
+   558→    setGridConfig(newConfig)
+   559→    setSelectedCell(null)
+   560→    toast({ title: `Grilla reiniciada con ${n} columnas` })
+   561→  }
+   562→
+   563→  const handleAddRow = () => {
+   564→    setGridConfig((prev) => ({
+   565→      ...prev,
+   566→      rows: [...prev.rows, emptyRow(prev.totalCols)],
+   567→    }))
+   568→  }
+   569→
+   570→  const handleInsertRowAbove = () => {
+   571→    if (!selectedCell) {
+   572→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar fila arriba.', variant: 'destructive' })
+   573→      return
+   574→    }
+   575→    setGridConfig((prev) => {
+   576→      const newRow = emptyRow(prev.totalCols)
+   577→      const newRows = [...prev.rows]
+   578→
+   579→      // Adjust rowspan of cells in the row above (selectedCell.row - 1)
+   580→      // that span across the insertion point
+   581→      const aboveIdx = selectedCell.row - 1
+   582→      if (aboveIdx >= 0 && aboveIdx < prev.rows.length) {
+   583→        const aboveRow = prev.rows[aboveIdx]
+   584→        const adjustedCells: Record<number, CellConfig> = {}
+   585→        for (const [key, cell] of Object.entries(aboveRow.cells)) {
+   586→          const col = Number(key)
+   587→          const rs = cell.rowspan || 1
+   588→          // If this cell spans to or past the insertion row, reduce rowspan
+   589→          if (col === 0 || true) { // check all cells
+   590→            if (rs > 1 && (aboveIdx + rs) > selectedCell.row) {
+   591→              adjustedCells[col] = { ...cell, rowspan: rs - 1 }
+   592→              continue
+   593→            }
+   594→          }
+   595→          adjustedCells[col] = cell
+   596→        }
+   597→        newRows[aboveIdx] = { cells: adjustedCells }
+   598→      }
+   599→
+   600→      // Also adjust rowspan of cells in the CURRENT row (selectedCell.row)
+   601→      // since it shifts down by 1, but their rowspan origin stays the same
+   602→      const currentRow = prev.rows[selectedCell.row]
+   603→      if (currentRow) {
+   604→        const adjustedCurrent: Record<number, CellConfig> = {}
+   605→        for (const [key, cell] of Object.entries(currentRow.cells)) {
+   606→          const col = Number(key)
+   607→          const rs = cell.rowspan || 1
+   608→          // Cells that started in a row above and were part of a rowspan
+   609→          // don't need adjustment - they're already handled by the row above
+   610→          adjustedCurrent[col] = cell
+   611→        }
+   612→        // Keep the current row as-is (it just moves down)
+   613→      }
+   614→
+   615→      newRows.splice(selectedCell.row, 0, newRow)
+   616→      setSelectedCell({ row: selectedCell.row + 1, col: selectedCell.col })
+   617→      return { ...prev, rows: newRows }
+   618→    })
+   619→  }
+   620→
+   621→  const handleInsertRowBelow = () => {
+   622→    if (!selectedCell) {
+   623→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar fila abajo.', variant: 'destructive' })
+   624→      return
+   625→    }
+   626→    setGridConfig((prev) => {
+   627→      const newRow = emptyRow(prev.totalCols)
+   628→      const insertAt = selectedCell.row + 1
+   629→      const newRows = [...prev.rows]
+   630→
+   631→      // Adjust rowspan of cells in selectedCell.row that span across insertAt
+   632→      const currentRow = prev.rows[selectedCell.row]
+   633→      if (currentRow) {
+   634→        const adjustedCells: Record<number, CellConfig> = {}
+   635→        for (const [key, cell] of Object.entries(currentRow.cells)) {
+   636→          const col = Number(key)
+   637→          const rs = cell.rowspan || 1
+   638→          if (rs > 1 && (selectedCell.row + rs) > insertAt) {
+   639→            adjustedCells[col] = { ...cell, rowspan: rs - 1 }
+   640→            continue
+   641→          }
+   642→          adjustedCells[col] = cell
+   643→        }
+   644→        newRows[selectedCell.row] = { cells: adjustedCells }
+   645→      }
+   646→
+   647→      newRows.splice(insertAt, 0, newRow)
+   648→      return { ...prev, rows: newRows }
+   649→    })
+   650→  }
+   651→
+   652→  const handleDeleteLastRow = () => {
+   653→    setGridConfig((prev) => {
+   654→      if (prev.rows.length <= 1) {
+   655→        toast({ title: 'No se puede eliminar la última fila', variant: 'destructive' })
+   656→        return prev
+   657→      }
+   658→      const newRows = prev.rows.slice(0, -1)
+   659→      // Clear selection if it was on the deleted row
+   660→      if (selectedCell && selectedCell.row >= newRows.length) {
+   661→        setSelectedCell(null)
+   662→      }
+   663→      return { ...prev, rows: newRows }
+   664→    })
+   665→  }
+   666→
+   667→  // === Column Operations ===
+   668→  const handleInsertColLeft = () => {
+   669→    if (!selectedCell) {
+   670→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar columna a la izquierda.', variant: 'destructive' })
+   671→      return
+   672→    }
+   673→    setGridConfig((prev) => {
+   674→      const insertAt = selectedCell.col
+   675→      // Shift cell indices >= insertAt in every row
+   676→      const newRows = prev.rows.map((row) => {
+   677→        const newCells: Record<number, CellConfig> = {}
+   678→        for (const [key, cell] of Object.entries(row.cells)) {
+   679→          const idx = Number(key)
+   680→          if (idx >= insertAt) {
+   681→            newCells[idx + 1] = cell
+   682→          } else {
+   683→            newCells[idx] = cell
+   684→          }
+   685→        }
+   686→        newCells[insertAt] = emptyCell()
+   687→        return { cells: newCells }
+   688→      })
+   689→      // Insert column width
+   690→      const newWidths = [...prev.columnWidths]
+   691→      newWidths.splice(insertAt, 0, '3%')
+   692→      // Adjust selection
+   693→      setSelectedCell({ row: selectedCell.row, col: selectedCell.col + 1 })
+   694→      return { ...prev, totalCols: prev.totalCols + 1, columnWidths: newWidths, rows: newRows }
+   695→    })
+   696→    setColInput(String(gridConfig.totalCols + 1))
+   697→  }
+   698→
+   699→  const handleInsertColRight = () => {
+   700→    if (!selectedCell) {
+   701→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero para insertar columna a la derecha.', variant: 'destructive' })
+   702→      return
+   703→    }
+   704→    setGridConfig((prev) => {
+   705→      const insertAt = selectedCell.col + 1
+   706→      // Shift cell indices >= insertAt in every row
+   707→      const newRows = prev.rows.map((row) => {
+   708→        const newCells: Record<number, CellConfig> = {}
+   709→        for (const [key, cell] of Object.entries(row.cells)) {
+   710→          const idx = Number(key)
+   711→          if (idx >= insertAt) {
+   712→            newCells[idx + 1] = cell
+   713→          } else {
+   714→            newCells[idx] = cell
+   715→          }
+   716→        }
+   717→        newCells[insertAt] = emptyCell()
+   718→        return { cells: newCells }
+   719→      })
+   720→      // Insert column width
+   721→      const newWidths = [...prev.columnWidths]
+   722→      newWidths.splice(insertAt, 0, '3%')
+   723→      // Selection stays on same column
+   724→      return { ...prev, totalCols: prev.totalCols + 1, columnWidths: newWidths, rows: newRows }
+   725→    })
+   726→    setColInput(String(gridConfig.totalCols + 1))
+   727→  }
+   728→
+   729→  const handleDeleteLastCol = () => {
+   730→    setGridConfig((prev) => {
+   731→      if (prev.totalCols <= 1) {
+   732→        toast({ title: 'No se puede eliminar la última columna', variant: 'destructive' })
+   733→        return prev
+   734→      }
+   735→      const lastCol = prev.totalCols - 1
+   736→      const newRows = prev.rows.map((row) => {
+   737→        const { [lastCol]: _removed, ...rest } = row.cells
+   738→        return { cells: rest }
+   739→      })
+   740→      const newWidths = prev.columnWidths.slice(0, -1)
+   741→      if (selectedCell && selectedCell.col >= prev.totalCols - 1) {
+   742→        setSelectedCell(null)
+   743→      }
+   744→      return { ...prev, totalCols: prev.totalCols - 1, columnWidths: newWidths, rows: newRows }
+   745→    })
+   746→    setColInput(String(gridConfig.totalCols - 1))
+   747→  }
+   748→
+   749→  // === Merge Selection (drag range) ===
+   750→  const handleMergeSelection = () => {
+   751→    if (!selectionRange) {
+   752→      toast({ title: 'Sin selección', description: 'Selecciona varias celdas arrastrando primero.', variant: 'destructive' })
+   753→      return
+   754→    }
+   755→    const minR = Math.min(selectionRange.r1, selectionRange.r2)
+   756→    const maxR = Math.max(selectionRange.r1, selectionRange.r2)
+   757→    const minC = Math.min(selectionRange.c1, selectionRange.c2)
+   758→    const maxC = Math.max(selectionRange.c1, selectionRange.c2)
+   759→    const spanCols = maxC - minC + 1
+   760→    const spanRows = maxR - minR + 1
+   761→    if (spanCols === 1 && spanRows === 1) {
+   762→      toast({ title: 'Una sola celda', description: 'Selecciona al menos 2 celdas para combinar.', variant: 'destructive' })
+   763→      return
+   764→    }
+   765→    setGridConfig((prev) => {
+   766→      const updated = updateCellInConfig(prev, minR, minC, {
+   767→        colspan: spanCols,
+   768→        rowspan: spanRows,
+   769→      })
+   770→      const newRows = updated.rows.map((row, ri) => {
+   771→        if (ri < minR || ri > maxR) return row
+   772→        const newCells = { ...row.cells }
+   773→        for (let ci = minC; ci <= maxC; ci++) {
+   774→          if (ri === minR && ci === minC) continue
+   775→          delete newCells[ci]
+   776→        }
+   777→        return { cells: newCells }
+   778→      })
+   779→      return { ...updated, rows: newRows }
+   780→    })
+   781→    setSelectedCell({ row: minR, col: minC })
+   782→    clearRangeSelection()
+   783→    toast({ title: 'Celdas combinadas', description: `${spanCols}x${spanRows} celdas fusionadas en una.` })
+   784→  }
+   785→
+   786→  // === Merge / Split Operations ===
+   787→  // Combina columnas: elimina la columna de la derecha y suma su ancho a la actual.
+   788→  // El total de columnas baja (ej: 27 → 26).
+   789→  const handleMergeColumns = () => {
+   790→    if (!selectedCell) {
+   791→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
+   792→      return
+   793→    }
+   794→    if (gridConfig.totalCols <= 1) {
+   795→      toast({ title: 'No se puede', description: 'Solo queda 1 columna.', variant: 'destructive' })
+   796→      return
+   797→    }
+   798→    const mergeCol = selectedCell.col
+   799→    if (mergeCol >= gridConfig.totalCols - 1) {
+   800→      toast({ title: 'No se puede', description: 'No hay columna a la derecha para combinar.', variant: 'destructive' })
+   801→      return
+   802→    }
+   803→    setGridConfig((prev) => {
+   804→      // Sumar ancho de la columna derecha a la actual
+   805→      const newWidths = [...prev.columnWidths]
+   806→      const leftW = parseFloat(newWidths[mergeCol]) || 0
+   807→      const rightW = parseFloat(newWidths[mergeCol + 1]) || 0
+   808→      newWidths[mergeCol] = `${leftW + rightW}%`
+   809→      newWidths.splice(mergeCol + 1, 1)
+   810→      // En cada fila, remover la columna mergeCol+1 y reindexar
+   811→      const newRows = prev.rows.map((row) => {
+   812→        const newCells: Record<number, CellConfig> = {}
+   813→        for (const [key, cell] of Object.entries(row.cells)) {
+   814→          const idx = Number(key)
+   815→          if (idx === mergeCol + 1) continue // descartar columna derecha
+   816→          if (idx > mergeCol + 1) {
+   817→            newCells[idx - 1] = cell // reindexar
+   818→          } else {
+   819→            newCells[idx] = cell
+   820→          }
+   821→        }
+   822→        return { cells: newCells }
+   823→      })
+   824→      // Ajustar seleccion si estaba mas alla de la columna eliminada
+   825→      if (selectedCell.col > mergeCol) {
+   826→        setSelectedCell({ row: selectedCell.row, col: Math.max(0, selectedCell.col - 1) })
+   827→      }
+   828→      const newTotal = prev.totalCols - 1
+   829→      return { ...prev, totalCols: newTotal, columnWidths: newWidths, rows: newRows }
+   830→    })
+   831→    setColInput(String(gridConfig.totalCols - 1))
+   832→  }
+   833→
+   834→  // Combina filas: elimina la fila de abajo y la suma a la actual.
+   835→  // El total de filas baja en 1.
+   836→  const handleMergeRows = () => {
+   837→    if (!selectedCell) {
+   838→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
+   839→      return
+   840→    }
+   841→    if (gridConfig.rows.length <= 1) {
+   842→      toast({ title: 'No se puede', description: 'Solo queda 1 fila.', variant: 'destructive' })
+   843→      return
+   844→    }
+   845→    const mergeRow = selectedCell.row
+   846→    if (mergeRow >= gridConfig.rows.length - 1) {
+   847→      toast({ title: 'No se puede', description: 'No hay fila debajo para combinar.', variant: 'destructive' })
+   848→      return
+   849→    }
+   850→    setGridConfig((prev) => {
+   851→      const currentRow = prev.rows[mergeRow]
+   852→      const nextRow = prev.rows[mergeRow + 1]
+   853→      // Fusionar contenido de celdas: si la celda de abajo tiene contenido y la actual no, copiarlo
+   854→      const mergedCells: Record<number, CellConfig> = { ...currentRow.cells }
+   855→      for (const [key, cell] of Object.entries(nextRow.cells)) {
+   856→        const idx = Number(key)
+   857→        const existing = mergedCells[idx]
+   858→        if (!existing || (!existing.content && !existing.dataBinding)) {
+   859→          mergedCells[idx] = { ...cell }
+   860→        } else if (cell.content && !existing.content) {
+   861→          mergedCells[idx] = { ...existing, content: existing.content + ' ' + cell.content }
+   862→        }
+   863→      }
+   864→      const newRows = [...prev.rows]
+   865→      newRows[mergeRow] = { cells: mergedCells }
+   866→      newRows.splice(mergeRow + 1, 1)
+   867→      if (selectedCell.row >= newRows.length) {
+   868→        setSelectedCell(null)
+   869→      }
+   870→      return { ...prev, rows: newRows }
+   871→    })
+   872→  }
+   873→
+   874→  // Separar celda: reset colspan/rowspan a 1
+   875→  const handleSplitCell = () => {
+   876→    if (!selectedCell) {
+   877→      toast({ title: 'Sin selección', description: 'Selecciona una celda primero.', variant: 'destructive' })
+   878→      return
+   879→    }
+   880→    const cell = gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]
+   881→    if (!cell || (cell.colspan === 1 && cell.rowspan === 1)) {
+   882→      toast({ title: 'Sin combinación', description: 'Esta celda no está combinada (colspan/rowspan ya es 1).', variant: 'destructive' })
+   883→      return
+   884→    }
+   885→    setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, { colspan: 1, rowspan: 1 }))
+   886→  }
+   887→
+   888→  // === Save to DB (opens dialog for name) ===
+   889→  const handleOpenSaveDialog = () => {
+   890→    setSaveName('')
+   891→    setShowSaveDialog(true)
+   892→  }
+   893→
+   894→  const handleConfirmSave = async () => {
+   895→    if (!saveName.trim()) {
+   896→      toast({ title: 'Nombre requerido', description: 'Ingresa un nombre para el layout.', variant: 'destructive' })
+   897→      return
+   898→    }
+   899→
+   900→    setSaving(true)
+   901→    try {
+   902→      const res = await fetch('/api/cert-layouts', {
+   903→        method: 'POST',
+   904→        headers: { 'Content-Type': 'application/json' },
+   905→        body: JSON.stringify({
+   906→          nombre: saveName.trim(),
+   907→          datos: gridConfig,
+   908→        }),
+   909→      })
+   910→
+   911→      if (!res.ok) {
+   912→        const err = await res.json()
+   913→        throw new Error(err.error || 'Error al guardar')
+   914→      }
+   915→
+   916→      setShowSaveDialog(false)
+   917→      toast({
+   918→        title: '¡Guardado exitoso!',
+   919→        description: `El layout "${saveName.trim()}" se guardó correctamente en la base de datos.`,
+   920→      })
+   921→    } catch (error: unknown) {
+   922→      const msg = error instanceof Error ? error.message : 'Error desconocido'
+   923→      toast({ title: 'Error al guardar', description: msg, variant: 'destructive' })
+   924→    } finally {
+   925→      setSaving(false)
+   926→    }
+   927→  }
+   928→
+   929→  // === Load saved layouts ===
+   930→  const handleOpenLayoutsDialog = async () => {
+   931→    setShowLayoutsDialog(true)
+   932→    setLoadingLayouts(true)
+   933→    try {
+   934→      const res = await fetch('/api/cert-layouts')
+   935→      if (res.ok) {
+   936→        const data = await res.json()
+   937→        setSavedLayouts(data)
+   938→      }
+   939→    } catch {
+   940→      toast({ title: 'Error', description: 'No se pudieron cargar los layouts.', variant: 'destructive' })
+   941→    } finally {
+   942→      setLoadingLayouts(false)
+   943→    }
+   944→  }
+   945→
+   946→  const handleLoadLayoutFromDB = async (id: string) => {
+   947→    setLoadingLayout(true)
+   948→    try {
+   949→      const res = await fetch(`/api/cert-layouts/${id}`)
+   950→      if (!res.ok) {
+   951→        throw new Error('Layout no encontrado')
+   952→      }
+   953→      const layout = await res.json()
+   954→      const parsed: GridConfig = typeof layout.datos === 'string'
+   955→        ? JSON.parse(layout.datos)
+   956→        : layout.datos
+   957→
+   958→      if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) {
+   959→        setGridConfig(patchDataBindings(parsed))
+   960→        setSelectedCell(null)
+   961→        setShowLayoutsDialog(false)
+   962→        toast({ title: 'Layout cargado', description: `"${layout.nombre}" se cargó correctamente.` })
+   963→      } else {
+   964→        throw new Error('Datos de layout inválidos')
+   965→      }
+   966→    } catch (error: unknown) {
+   967→      const msg = error instanceof Error ? error.message : 'Error desconocido'
+   968→      toast({ title: 'Error al cargar', description: msg, variant: 'destructive' })
+   969→    } finally {
+   970→      setLoadingLayout(false)
+   971→    }
+   972→  }
+   973→
+   974→  const handleDeleteLayout = async (id: string) => {
+   975→    try {
+   976→      const res = await fetch(`/api/cert-layouts/${id}`, { method: 'DELETE' })
+   977→      if (res.ok) {
+   978→        setSavedLayouts((prev) => prev.filter((l) => l.id !== id))
+   979→        toast({ title: 'Layout eliminado' })
+   980→      }
+   981→    } catch {
+   982→      toast({ title: 'Error', description: 'No se pudo eliminar el layout.', variant: 'destructive' })
+   983→    }
+   984→  }
+   985→
+   986→  // Local save/load/reset
+   987→  const handleLoadLocal = () => {
+   988→    const loaded = loadGridConfig()
+   989→    setGridConfig(loaded)
+   990→    setSelectedCell(null)
+   991→    toast({ title: 'Diseño cargado', description: 'Se restauró desde el almacenamiento local.' })
+   992→  }
+   993→
+   994→  const handleReset = () => {
+   995→    const def = createDefaultTemplate()
+   996→    setGridConfig(def)
+   997→    setSelectedCell(null)
+   998→    setColInput('27')
+   999→    toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
+  1000→  }
+  1001→
+  1002→  // Selected cell data
+  1003→  const selectedCellData = useMemo(() => {
+  1004→    if (!selectedCell) return null
+  1005→    const row = gridConfig.rows[selectedCell.row]
+  1006→    return row?.cells[selectedCell.col] || emptyCell()
+  1007→  }, [selectedCell, gridConfig])
+  1008→
+  1009→  return (
+  1010→    <AppShell>
+  1011→      <div className="space-y-3 print:hidden">
+  1012→        {/* Header */}
+  1013→        <div>
+  1014→          <h1 className="text-2xl font-bold">Editor de Grilla — Certificaciones</h1>
+  1015→          <p className="text-muted-foreground text-sm">Constructor celda por celda para el formato de certificación</p>
+  1016→        </div>
+  1017→
+  1018→        {/* Toolbar Row 1: Grid controls */}
+  1019→        <Card>
+  1020→          <CardContent className="py-2 px-3">
+  1021→            <div className="flex items-center gap-2 flex-wrap">
+  1022→              {/* === FILAS === */}
+  1023→              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">FILAS</Badge>
+  1024→              <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">
+  1025→                <Plus className="h-3 w-3 mr-1" /> Agregar
+  1026→              </Button>
+  1027→              <Button size="sm" variant="outline" onClick={handleInsertRowAbove} className="h-7 text-xs" title="Insertar fila arriba de la celda seleccionada">
+  1028→                <ArrowUp className="h-3 w-3 mr-1" /> Arriba
+  1029→              </Button>
+  1030→              <Button size="sm" variant="outline" onClick={handleInsertRowBelow} className="h-7 text-xs" title="Insertar fila abajo de la celda seleccionada">
+  1031→                <ArrowDown className="h-3 w-3 mr-1" /> Abajo
+  1032→              </Button>
+  1033→              <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
+  1034→                <Minus className="h-3 w-3 mr-1" /> Eliminar
+  1035→              </Button>
+  1036→
+  1037→              <div className="w-px h-5 bg-border" />
+  1038→
+  1039→              {/* === COLUMNAS === */}
+  1040→              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COLS</Badge>
+  1041→              <Button size="sm" variant="outline" onClick={handleInsertColLeft} className="h-7 text-xs" title="Insertar columna a la izquierda de la celda seleccionada">
+  1042→                <ArrowLeft className="h-3 w-3 mr-1" /> Izquierda
+  1043→              </Button>
+  1044→              <Button size="sm" variant="outline" onClick={handleInsertColRight} className="h-7 text-xs" title="Insertar columna a la derecha de la celda seleccionada">
+  1045→                <ArrowRight className="h-3 w-3 mr-1" /> Derecha
+  1046→              </Button>
+  1047→              <Button size="sm" variant="outline" onClick={handleDeleteLastCol} className="h-7 text-xs">
+  1048→                <Minus className="h-3 w-3 mr-1" /> Eliminar
+  1049→              </Button>
+  1050→              <div className="flex items-center gap-1.5">
+  1051→                <Label className="text-xs text-muted-foreground whitespace-nowrap">Total:</Label>
+  1052→                <Input
+  1053→                  type="number"
+  1054→                  min={1}
+  1055→                  max={100}
+  1056→                  value={colInput}
+  1057→                  onChange={(e) => setColInput(e.target.value)}
+  1058→                  className="h-7 w-14 text-xs text-center"
+  1059→                />
+  1060→                <Button size="sm" variant="outline" onClick={handleApplyColumns} className="h-7 text-xs">
+  1061→                  Aplicar
+  1062→                </Button>
+  1063→              </div>
+  1064→
+  1065→              <div className="w-px h-5 bg-border" />
+  1066→
+  1067→              {/* === COMBINAR === */}
+  1068→              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COMBINAR</Badge>
+  1069→              <Button size="sm" variant="outline" onClick={handleMergeSelection} className="h-7 text-xs" title="Arrastra sobre varias celdas, luego pulsa para combinarlas en una">
+  1070→                <Group className="h-3 w-3 mr-1" /> Selección
+  1071→              </Button>
+  1072→              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeColumns() }} className="h-7 text-xs" title="Elimina la columna derecha y suma su ancho. Total cols baja en 1.">
+  1073→                <Combine className="h-3 w-3 mr-1" /> Columnas
+  1074→              </Button>
+  1075→              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeRows() }} className="h-7 text-xs" title="Elimina la fila de abajo. Total filas baja en 1.">
+  1076→                <TableCellsMerge className="h-3 w-3 mr-1" /> Filas
+  1077→              </Button>
+  1078→              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleSplitCell() }} className="h-7 text-xs" title="Reset colspan/rowspan a 1">
+  1079→                <TableCellsSplit className="h-3 w-3 mr-1" /> Separar
+  1080→              </Button>
+  1081→
+  1082→              <div className="w-px h-5 bg-border" />
+  1083→
+  1084→              <Button size="sm" variant="default" onClick={handleOpenSaveDialog} className="h-7 text-xs">
+  1085→                <Save className="h-3 w-3 mr-1" /> Guardar
+  1086→              </Button>
+  1087→              <Button size="sm" variant="outline" onClick={handleOpenLayoutsDialog} className="h-7 text-xs">
+  1088→                <FolderOpen className="h-3 w-3 mr-1" /> Mis Layouts
+  1089→              </Button>
+  1090→              <Button size="sm" variant="outline" onClick={handleLoadLocal} className="h-7 text-xs">
+  1091→                <Upload className="h-3 w-3 mr-1" /> Local
+  1092→              </Button>
+  1093→              <Button size="sm" variant="outline" onClick={handleReset} className="h-7 text-xs">
+  1094→                <RotateCcw className="h-3 w-3 mr-1" /> Restablecer
+  1095→              </Button>
+  1096→
+  1097→              <div className="w-px h-5 bg-border" />
+  1098→
+  1099→              <Button
+  1100→                size="sm"
+  1101→                variant="outline"
+  1102→                onClick={() => {
+  1103→                  // Deep clone so React detects the state change
+  1104→                  const cloned: GridConfig = {
+  1105→                    ...gridConfig,
+  1106→                    rows: gridConfig.rows.map(row => ({
+  1107→                      ...row,
+  1108→                      cells: { ...row.cells },
+  1109→                    })),
+  1110→                  }
+  1111→                  const patched = patchDataBindings(cloned)
+  1112→                  setGridConfig(patched)
+  1113→                  let count = 0
+  1114→                  for (const row of patched.rows) {
+  1115→                    for (const col of Object.keys(row.cells)) {
+  1116→                      if (row.cells[Number(col)].dataBinding) count++
+  1117→                    }
+  1118→                  }
+  1119→                  toast({ title: 'Bindings parcheados', description: `Se asignaron ${count} data bindings a las celdas.` })
+  1120→                }}
+  1121→                className="h-7 text-xs"
+  1122→                title="Asignar automáticamente todos los data bindings de calificaciones, orientación, grupos y observaciones"
+  1123→              >
+  1124→                <Combine className="h-3 w-3 mr-1" /> Parchear Bindings
+  1125→              </Button>
+  1126→
+  1127→              <div className="w-px h-5 bg-border" />
+  1128→
+  1129→              <Button
+  1130→                size="sm"
+  1131→                variant={isPreview ? 'default' : 'outline'}
+  1132→                onClick={() => setIsPreview(!isPreview)}
+  1133→                className="h-7 text-xs"
+  1134→              >
+  1135→                {isPreview ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+  1136→                {isPreview ? 'Diseñador' : 'Vista Previa'}
+  1137→              </Button>
+  1138→
+  1139→              {isPreview && (
+  1140→                <Badge variant="outline" className="text-xs">
+  1141→                  {gridConfig.rows.length} filas × {gridConfig.totalCols} columnas
+  1142→                </Badge>
+  1143→              )}
+  1144→            </div>
+  1145→          </CardContent>
+  1146→        </Card>
+  1147→
+  1148→        {/* Student search */}
+  1149→        <Card>
+  1150→          <CardContent className="py-2 px-3">
+  1151→            <div className="flex items-center gap-3 flex-wrap">
+  1152→              <div className="flex-1 min-w-[250px]">
+  1153→                <StudentSearch
+  1154→                  onSelect={handleSelectStudent}
+  1155→                  placeholder="Buscar alumno por cédula, apellidos o nombres..."
+  1156→                />
+  1157→              </div>
+  1158→              {selectedStudent && (
+  1159→                <div className="flex items-center gap-2">
+  1160→                  <Badge variant={selectedStudent.plan === 'derogado' ? 'destructive' : 'default'}>
+  1161→                    {selectedStudent.plan === 'derogado' ? 'BD2' : 'BD'}
+  1162→                  </Badge>
+  1163→                  <span className="text-sm font-medium">{selectedStudent.apellidos}, {selectedStudent.nombres}</span>
+  1164→                  <span className="text-xs text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</span>
+  1165→                </div>
+  1166→              )}
+  1167→              {loadingData && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+  1168→            </div>
+  1169→          </CardContent>
+  1170→        </Card>
+  1171→
+  1172→        {/* Column Widths Editor (only in designer mode) */}
+  1173→        {!isPreview && (
+  1174→          <Card>
+  1175→            <CardContent className="py-2 px-3">
+  1176→              <div className="flex items-center gap-2">
+  1177→                <span className="text-xs font-medium text-muted-foreground">Anchos de columna (clic para editar):</span>
+  1178→              </div>
+  1179→              <ColumnWidthEditor config={gridConfig} onUpdate={setGridConfig} />
+  1180→            </CardContent>
+  1181→          </Card>
+  1182→        )}
+  1183→      </div>
+  1184→
+  1185→      {/* Main Area: Grid + Properties Panel */}
+  1186→      <div className="flex gap-3 mt-3" style={{ minHeight: 'calc(100vh - 280px)' }}>
+  1187→        {/* Grid */}
+  1188→        <div className="flex-1 min-w-0">
+  1189→          <GridTable
+  1190→            config={gridConfig}
+  1191→            selectedCell={selectedCell}
+  1192→            selectionRange={selectionRange}
+  1193→            onCellMouseDown={handleCellMouseDown}
+  1194→            onCellMouseEnter={handleCellMouseEnter}
+  1195→            onCellMouseUp={handleCellMouseUp}
+  1196→            isPreview={isPreview}
+  1197→            displayData={displayData}
+  1198→          />
+  1199→        </div>
+  1200→
+  1201→        {/* Properties Panel (only in designer mode, when cell selected) */}
+  1202→        {!isPreview && selectedCell && (
+  1203→          <div className="w-[300px] shrink-0">
+  1204→            <PropertiesPanel
+  1205→              cell={selectedCellData}
+  1206→              row={selectedCell.row}
+  1207→              col={selectedCell.col}
+  1208→              onUpdate={handleCellUpdate}
+  1209→            />
+  1210→          </div>
+  1211→        )}
+  1212→      </div>
+  1213→
+  1214→      {/* === Save Dialog (enter name) === */}
+  1215→      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+  1216→        <DialogContent>
+  1217→          <DialogHeader>
+  1218→            <DialogTitle>Guardar Layout</DialogTitle>
+  1219→            <DialogDescription>
+  1220→              Asigna un nombre a este layout para guardarlo en la base de datos.
+  1221→            </DialogDescription>
+  1222→          </DialogHeader>
+  1223→          <div className="py-2">
+  1224→            <Label htmlFor="layout-name" className="text-sm font-medium">Nombre del layout</Label>
+  1225→            <Input
+  1226→              id="layout-name"
+  1227→              placeholder="Ej: Certificación EMG 2024"
+  1228→              value={saveName}
+  1229→              onChange={(e) => setSaveName(e.target.value)}
+  1230→              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmSave() }}
+  1231→              className="mt-1.5"
+  1232→              autoFocus
+  1233→            />
+  1234→          </div>
+  1235→          <DialogFooter>
+  1236→            <Button
+  1237→              variant="outline"
+  1238→              onClick={() => setShowSaveDialog(false)}
+  1239→              disabled={saving}
+  1240→            >
+  1241→              Cancelar
+  1242→            </Button>
+  1243→            <Button
+  1244→              onClick={handleConfirmSave}
+  1245→              disabled={saving || !saveName.trim()}
+  1246→            >
+  1247→              {saving ? (
+  1248→                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+  1249→              ) : (
+  1250→                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+  1251→              )}
+  1252→              {saving ? 'Guardando...' : 'Guardar'}
+  1253→            </Button>
+  1254→          </DialogFooter>
+  1255→        </DialogContent>
+  1256→      </Dialog>
+  1257→
+  1258→      {/* === Saved Layouts Dialog === */}
+  1259→      <SavedLayoutsDialog
+  1260→        open={showLayoutsDialog}
+  1261→        onOpenChange={setShowLayoutsDialog}
+  1262→        layouts={savedLayouts}
+  1263→        onLoad={handleLoadLayoutFromDB}
+  1264→        onDelete={handleDeleteLayout}
+  1265→        loading={loadingLayouts || loadingLayout}
+  1266→      />
+  1267→    </AppShell>
+  1268→  )
+  1269→}

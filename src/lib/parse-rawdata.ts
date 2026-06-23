@@ -708,6 +708,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
     orientacion: orientacion.slice(0, 5),
     grupos: grupos.slice(0, 5),
     observaciones: parsed.observacionCompleta || '',
+    observacionesLines: (parsed.observaciones || []).slice(0, 4),
     promedioAcumulado: parsed.acta ? `Acta: ${parsed.acta}` : '',
     director: {
       apellidosNombres: schoolConfig.director.apellidosNombres,

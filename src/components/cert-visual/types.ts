@@ -80,8 +80,14 @@ export const DATA_BINDINGS = [
     { value: 'doc.codigo', label: 'Código Plan' },
     { value: 'doc.lugar', label: 'Lugar' },
     { value: 'doc.fechaExpedicion', label: 'Fecha de Expedición' },
-    { value: 'doc.observaciones', label: 'Observaciones' },
+    { value: 'doc.observaciones', label: 'Observaciones (completo)' },
     { value: 'doc.promedioAcumulado', label: 'Promedio Acumulado' },
+  ]},
+  { group: 'Observaciones por Línea', bindings: [
+    { value: 'obsLine.0', label: 'Observación Línea 1' },
+    { value: 'obsLine.1', label: 'Observación Línea 2' },
+    { value: 'obsLine.2', label: 'Observación Línea 3' },
+    { value: 'obsLine.3', label: 'Observación Línea 4' },
   ]},
   { group: 'Director', bindings: [
     { value: 'director.nombre', label: 'Nombre del Director' },
@@ -130,7 +136,11 @@ export interface DisplayData {
     municipio: string
   }
   instituciones: InstitucionEducativa[]
+  calificaciones: Record<string, { materia: string; numero: number; nota: string; literal: string; tipoEvaluacion: string; fechaMes: string; fechaAnio: string; instEduc: string }[]>
+  orientacion: { anio: string; literal: string }[]
+  grupos: { anio: string; grupo: string; literal: string }[]
   observaciones: string
+  observacionesLines: string[]
   promedioAcumulado: string
   director: { apellidosNombres: string; cedula: string }
   directorCdcce: { apellidosNombres: string; cedula: string }
@@ -201,6 +211,10 @@ export function resolveBinding(path: string, data: DisplayData): string {
       if (rest[1] === 'grupo') return entry.grupo
       return entry.anio || ''
     }
+    case 'obsLine': {
+      const idx = parseInt(rest[0])
+      return data.observacionesLines?.[idx] || ''
+    }
     default: return ''
   }
 }
@@ -232,10 +246,12 @@ function h(content: string, overrides?: Partial<CellConfig>): CellConfig {
 // are always up-to-date without losing visual corrections.
 // ============================================================
 export function patchDataBindings(config: GridConfig) {
-  const { rows } = config
+  const { rows, totalCols } = config
+  // Robust bind: creates row/cell if missing so bindings never silently fail
   const bind = (rowIdx: number, colIdx: number, binding: string) => {
-    const cell = rows[rowIdx]?.cells[colIdx]
-    if (cell) cell.dataBinding = binding
+    if (!rows[rowIdx]) rows[rowIdx] = emptyRow(totalCols)
+    if (!rows[rowIdx].cells[colIdx]) rows[rowIdx].cells[colIdx] = emptyCell()
+    rows[rowIdx].cells[colIdx].dataBinding = binding
   }
 
   // --- Static data fields (student, school, doc, director, cdcee) ---
@@ -353,8 +369,12 @@ export function patchDataBindings(config: GridConfig) {
     bind(47 + i, 25, `grupo.${i}.literal`)
   }
 
-  // --- Observaciones (row 53, idx 52) ---
-  bind(52, 7, 'doc.observaciones')
+  // --- Observaciones (row 53, idx 52: P.A. + obs line 1) ---
+  bind(52, 7, 'obsLine.0')
+  // --- Observaciones Línea 2-4 (rows 54-56, idx 53-55) ---
+  bind(53, 0, 'obsLine.1')
+  bind(54, 0, 'obsLine.2')
+  bind(55, 0, 'obsLine.3')
 
   return config
 }

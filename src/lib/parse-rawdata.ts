@@ -1,5 +1,7 @@
 // Parser para extraer datos de certificación desde rawData (BD vigente y BD2 derogado)
-// Los datos originales provienen del archivo .xlsm y se almacenan como JSON en Student.rawData
+// Soporta dos formatos de rawData:
+//   1. ESTRUCTURADO (nuevo): claves descriptivas + arrays anidados (_format: "structured_v1")
+//   2. PLANO (legacy): claves numéricas ("23", "24", ...) — se parsea igual que antes
 
 import { planEMG, notaEnLetras, schoolConfig, type PlanAnio, type MateriaAnio } from './school-config'
 
@@ -164,7 +166,6 @@ function parseMes(m: string): string {
 function isAsterisk(val: string | undefined): boolean {
   if (!val) return true
   const v = String(val).trim()
-  // Matches: *, **, ****, * *, * * * *, etc.
   return v === '' || /^\*+$/.test(v) || /^\*\s+\*/.test(v)
 }
 
@@ -173,12 +174,10 @@ function isValidGrade(val: string | undefined): boolean {
   if (!val) return false
   const v = String(val).trim()
   if (isAsterisk(v)) return false
-  // Numeric grades: 01-20 (with or without leading zero)
   if (/^\d{1,2}$/.test(v)) {
     const n = parseInt(v, 10)
     return n >= 1 && n <= 20
   }
-  // Special grade types
   return ['PE', 'IN', 'EX'].includes(v.toUpperCase())
 }
 
@@ -197,8 +196,255 @@ function findActaKey(rawData: Record<string, string>, startSearch: number, endSe
   return ''
 }
 
-// === PARSER BD VIGENTE ===
-export function parseBDRawData(rawData: Record<string, string>): ParsedCertData {
+// ============================================================
+// PARSER PARA FORMATO ESTRUCTURADO (nuevo)
+// ============================================================
+
+interface StructuredGrade {
+  materia: string
+  abrev: string
+  anioEscolar: number
+  nota: string
+  eval: string
+  mes: string
+  anio: string
+  inst: string
+}
+
+function parseStructuredVigente(data: Record<string, unknown>): ParsedCertData {
+  const result: ParsedCertData = {
+    plan: 'vigente',
+    acta: String(data['acta'] || '').trim(),
+    actaFecha: formatDateVal(String(data['actaFecha'] || '')),
+    actaAnio: String(data['actaAnio'] || '').trim(),
+    instituciones: [],
+    calificaciones: {},
+    aniosEscolares: [],
+    orientacion: [],
+    grupos: [],
+    especializaciones: [],
+    observaciones: [],
+    observacionCompleta: '',
+    literalesFinales: [],
+  }
+
+  // Instituciones
+  const insts = data['instituciones'] as Array<{ denominacion: string; localidad: string; ef: string }> | undefined
+  if (Array.isArray(insts)) {
+    result.instituciones = insts.map((inst, i) => ({
+      numero: i + 1,
+      denominacion: inst.denominacion,
+      localidad: inst.localidad,
+      ef: inst.ef,
+    }))
+  }
+
+  // Calificaciones — agrupar por anioEscolar
+  const grades = data['calificaciones'] as StructuredGrade[] | undefined
+  if (Array.isArray(grades)) {
+    const gradesByYear: Record<number, StructuredGrade[]> = {}
+    for (const g of grades) {
+      const y = g.anioEscolar || 0
+      if (!gradesByYear[y]) gradesByYear[y] = []
+      gradesByYear[y].push(g)
+    }
+
+    const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+    const sortedYears = Object.keys(gradesByYear).map(Number).sort((a, b) => a - b)
+
+    sortedYears.forEach((yearNum, yearIdx) => {
+      if (yearIdx >= 5) return
+      const yearName = yearNames[yearIdx]
+      const yearGrades = gradesByYear[yearNum]
+      const planIdx = Math.min(yearIdx, planEMG.length - 1)
+      const subjects = planEMG[planIdx].materias
+
+      // Recoger años escolares únicos de las notas
+      const aniosSet = new Set<string>()
+
+      result.calificaciones[yearName] = yearGrades.map((g, sIdx) => {
+        const literal = notaEnLetras(g.nota)
+        const subjectIndex = sIdx % subjects.length
+        const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
+
+        if (g.anio) aniosSet.add(g.anio)
+
+        return {
+          materia,
+          numero: sIdx + 1,
+          nota: g.nota,
+          literal,
+          tipoEvaluacion: g.eval || '',
+          fechaMes: parseMes(g.mes),
+          fechaAnio: g.anio,
+          instEduc: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+        }
+      })
+
+      aniosSet.forEach(a => {
+        if (!result.aniosEscolares.includes(a)) result.aniosEscolares.push(a)
+      })
+    })
+  }
+
+  // Orientación
+  const orient = data['orientacion'] as Array<{ anio: string; literal: string }> | undefined
+  if (Array.isArray(orient)) {
+    result.orientacion = orient.map(o => ({
+      anio: o.anio || '',
+      literal: o.literal || '',
+    }))
+  }
+  while (result.orientacion.length < 5) {
+    result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
+  }
+
+  // Grupos
+  const grps = data['grupos'] as Array<{ anio: string; grupo: string; literal: string }> | undefined
+  if (Array.isArray(grps)) {
+    result.grupos = grps.map(g => ({
+      anio: g.anio || '',
+      grupo: g.grupo || '',
+      literal: g.literal || '',
+    }))
+  }
+  while (result.grupos.length < 5) {
+    result.grupos.push({ anio: result.aniosEscolares[result.grupos.length] || '', grupo: '', literal: '' })
+  }
+
+  // Observaciones
+  const obs = data['observaciones'] as string[] | undefined
+  if (Array.isArray(obs)) {
+    result.observaciones = obs.filter(o => o && o.trim())
+  }
+  result.observacionCompleta = result.observaciones.join(' ')
+
+  // Literales finales
+  const lits = data['literalesFinales'] as string[] | undefined
+  if (Array.isArray(lits)) {
+    result.literalesFinales = lits.filter(l => l && l.trim())
+  }
+
+  return result
+}
+
+function parseStructuredDerogado(data: Record<string, unknown>): ParsedCertData {
+  const result: ParsedCertData = {
+    plan: 'derogado',
+    acta: String(data['acta'] || '').trim(),
+    actaFecha: '',
+    actaAnio: '',
+    instituciones: [],
+    calificaciones: {},
+    aniosEscolares: [],
+    orientacion: [],
+    grupos: [],
+    especializaciones: [],
+    observaciones: [],
+    observacionCompleta: '',
+    literalesFinales: [],
+  }
+
+  // Instituciones
+  const insts = data['instituciones'] as Array<{ denominacion: string; localidad: string; ef: string }> | undefined
+  if (Array.isArray(insts)) {
+    result.instituciones = insts.map((inst, i) => ({
+      numero: i + 1,
+      denominacion: inst.denominacion,
+      localidad: inst.localidad,
+      ef: inst.ef,
+    }))
+  }
+
+  // Calificaciones
+  const grades = data['calificaciones'] as StructuredGrade[] | undefined
+  if (Array.isArray(grades)) {
+    const gradesByYear: Record<number, StructuredGrade[]> = {}
+    for (const g of grades) {
+      const y = g.anioEscolar || 0
+      if (!gradesByYear[y]) gradesByYear[y] = []
+      gradesByYear[y].push(g)
+    }
+
+    const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+    const sortedYears = Object.keys(gradesByYear).map(Number).sort((a, b) => a - b)
+
+    sortedYears.forEach((yearNum, yearIdx) => {
+      if (yearIdx >= 5) return
+      const yearName = yearNames[yearIdx]
+      const yearGrades = gradesByYear[yearNum]
+      const planIdx = Math.min(yearIdx, PLAN_DEROGADO.length - 1)
+      const subjects = PLAN_DEROGADO[planIdx].materias
+
+      const aniosSet = new Set<string>()
+
+      result.calificaciones[yearName] = yearGrades.map((g, sIdx) => {
+        const literal = notaEnLetras(g.nota)
+        const subjectIndex = sIdx % subjects.length
+        const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
+
+        if (g.anio) aniosSet.add(g.anio)
+
+        return {
+          materia,
+          numero: sIdx + 1,
+          nota: g.nota,
+          literal,
+          tipoEvaluacion: g.eval || '',
+          fechaMes: parseMes(g.mes),
+          fechaAnio: g.anio,
+          instEduc: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+        }
+      })
+
+      aniosSet.forEach(a => {
+        if (!result.aniosEscolares.includes(a)) result.aniosEscolares.push(a)
+      })
+    })
+  }
+
+  // Especializaciones
+  const specs = data['especializaciones'] as Array<{ anio: string; especialidad: string; periodo: string }> | undefined
+  if (Array.isArray(specs)) {
+    result.especializaciones = specs
+    result.grupos = specs.map(s => ({
+      anio: s.anio,
+      grupo: s.especialidad,
+      literal: '',
+    }))
+  }
+
+  // Orientación
+  const orient = data['orientacion'] as Array<{ anio: string; literal: string }> | undefined
+  if (Array.isArray(orient)) {
+    result.orientacion = orient.map(o => ({ anio: o.anio || '', literal: o.literal || '' }))
+  }
+  while (result.orientacion.length < 5) {
+    result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
+  }
+
+  // Observaciones
+  const obs = data['observaciones'] as string[] | undefined
+  if (Array.isArray(obs)) {
+    result.observaciones = obs.filter(o => o && o.trim())
+  }
+  result.observacionCompleta = result.observaciones.join(' ')
+
+  // Literales finales
+  const lits = data['literalesFinales'] as string[] | undefined
+  if (Array.isArray(lits)) {
+    result.literalesFinales = lits.filter(l => l && l.trim())
+  }
+
+  return result
+}
+
+// ============================================================
+// PARSER LEGACY — FORMATO PLANO (claves numéricas)
+// ============================================================
+
+// === PARSER BD VIGENTE (LEGACY) ===
+function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
   const result: ParsedCertData = {
     plan: 'vigente',
     acta: '',
@@ -217,11 +463,7 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
 
   // ---- Instituciones (Sección IV) - keys 8-22, grupos de 3 (nombre, localidad, EF) ----
   const instSlots = [
-    [8, 9, 10],
-    [11, 12, 13],
-    [14, 15, 16],
-    [17, 18, 19],
-    [20, 21, 22],
+    [8, 9, 10], [11, 12, 13], [14, 15, 16], [17, 18, 19], [20, 21, 22],
   ]
 
   instSlots.forEach(([nameKey, locKey, efKey], i) => {
@@ -240,11 +482,6 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
   })
 
   // ---- Calificaciones - keys 23 to 227, scan in groups of 5 ----
-  // Strategy: scan ALL groups of 5 from key 23 to 227
-  // Skip groups where the nota field is asterisks/invalid
-  // Group valid grades by year to detect year boundaries
-  // Then map grades to subjects from planEMG based on year index
-
   interface RawGrade {
     nota: string
     tipo: string
@@ -271,12 +508,11 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
         lapso: String(lapsoRaw || '').trim(),
       })
     }
-    // Always advance by 5 regardless of whether it was valid or asterisk
     key += 5
   }
 
-  // Group grades by year (detecting year transitions)
-  const gradesByYear: string[] = [] // the actual year values in order
+  // Group grades by year
+  const gradesByYear: string[] = []
   const gradeGroupsByYear: Record<string, RawGrade[]> = {}
 
   for (const grade of allValidGrades) {
@@ -293,14 +529,13 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
   const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
 
   gradesByYear.forEach((year, yearIdx) => {
-    if (yearIdx >= 5) return // Max 5 school years
+    if (yearIdx >= 5) return
     const grades = gradeGroupsByYear[year]
     const planIdx = Math.min(yearIdx, planEMG.length - 1)
     const subjects = planEMG[planIdx].materias
     const yearName = yearNames[yearIdx]
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
-      const numNota = parseFloat(g.nota)
       const literal = notaEnLetras(g.nota)
       const subjectIndex = sIdx % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
@@ -342,7 +577,6 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
   }
 
   // ---- Observaciones - keys específicos por línea ----
-  // Línea 1: key 243, Línea 2: key 244, Línea 3: key 260, Línea 4: key 261
   const obsKeys = ['243', '244', '260', '261']
   for (const key of obsKeys) {
     const obs = rawData[key]
@@ -368,8 +602,8 @@ export function parseBDRawData(rawData: Record<string, string>): ParsedCertData 
   return result
 }
 
-// === PARSER BD2 DEROGADO ===
-export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData {
+// === PARSER BD2 DEROGADO (LEGACY) ===
+function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData {
   const result: ParsedCertData = {
     plan: 'derogado',
     acta: '',
@@ -387,19 +621,10 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
   }
 
   // ---- Instituciones en BD2 - keys "9°"-"38" ----
-  // Escuela 1: keys "9°", "10", "11"
-  // Escuela 2: keys "12", "13", "14"
-  // Escuela 3-10: keys 15-38 en grupos de 3 (but many are asterisks)
   const bd2InstSlots = [
-    ['9°', '10', '11'],
-    ['12', '13', '14'],
-    ['15', '16', '17'],
-    ['18', '19', '20'],
-    ['21', '22', '23'],
-    ['24', '25', '26'],
-    ['27', '28', '29'],
-    ['30', '31', '32'],
-    ['33', '34', '35'],
+    ['9°', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
+    ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
+    ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
     ['36', '37', '38'],
   ]
 
@@ -420,7 +645,6 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
   }
 
   // ---- Calificaciones BD2 - scan keys 39 to 293 in groups of 5 ----
-  // Skip asterisk groups; collect valid grades; group by year
   interface RawGrade {
     nota: string
     tipo: string
@@ -469,14 +693,13 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
   const sortedYears = Object.keys(gradeGroupsByYear).sort()
 
   sortedYears.forEach((year, yearIdx) => {
-    if (yearIdx >= 5) return // Max 5 years
+    if (yearIdx >= 5) return
     const grades = gradeGroupsByYear[year]
     const planIdx = Math.min(yearIdx, PLAN_DEROGADO.length - 1)
     const subjects = PLAN_DEROGADO[planIdx].materias
     const yearName = yearNames[yearIdx]
 
     const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
-      const numNota = parseFloat(g.nota)
       const literal = notaEnLetras(g.nota)
       const subjectIndex = sIdx % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
@@ -505,7 +728,7 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
     }
   }
 
-  // ---- Especializaciones - keys 299+ (year, specialization, period - repeating) ----
+  // ---- Especializaciones - keys 299+ ----
   let specKey = 299
   const specs: ParsedSpecialization[] = []
   while (rawData[String(specKey)] && !isAsterisk(rawData[String(specKey)]) && specKey < 320) {
@@ -519,7 +742,6 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
   }
   result.especializaciones = specs
 
-  // If there are specialization groups, populate the "grupos" section with them
   if (specs.length > 0) {
     result.grupos = specs.map((s) => ({
       anio: s.anio,
@@ -528,25 +750,27 @@ export function parseBD2RawData(rawData: Record<string, string>): ParsedCertData
     }))
   }
 
-  // ---- Orientación - populate from aniosEscolares if empty ----
   while (result.orientacion.length < 5) {
     result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
   }
 
-  // ---- Observaciones BD2 - key 339 (or search for it) ----
+  // ---- Observaciones BD2 - key 339 ----
   const obs339 = rawData['339']
   if (obs339 && !isAsterisk(obs339)) {
     result.observacionCompleta = String(obs339).trim()
     result.observaciones.push(String(obs339).trim())
   }
 
-  // ---- Acta - find it ----
+  // ---- Acta ----
   result.acta = findActaKey(rawData, 335, 340)
 
   return result
 }
 
-// === MAIN PARSER (detects plan automatically) ===
+// ============================================================
+// PARSER PRINCIPAL (detecta formato automáticamente)
+// ============================================================
+
 export function parseCertData(rawDataStr: string | null | undefined, plan: string | null | undefined): ParsedCertData | null {
   if (!rawDataStr) return null
 
@@ -554,20 +778,27 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
     const rawData = typeof rawDataStr === 'string' ? JSON.parse(rawDataStr) : rawDataStr
     if (!rawData || typeof rawData !== 'object') return null
 
-    // Detect plan by key structure
+    // Detectar formato estructurado
+    if (rawData._format === 'structured_v1') {
+      const p = rawData._plan || plan
+      if (p === 'derogado') return parseStructuredDerogado(rawData)
+      return parseStructuredVigente(rawData)
+    }
+
+    // Detectar formato plano por claves numéricas
     const isBD2 = rawData['9°'] !== undefined || (plan === 'derogado')
     const isBD = rawData['8'] !== undefined && !rawData['9°']
 
-    if (isBD2) return parseBD2RawData(rawData)
-    if (isBD) return parseBDRawData(rawData)
+    if (isBD2) return parseBD2RawDataLegacy(rawData)
+    if (isBD) return parseBDRawDataLegacy(rawData)
 
-    // Fallback: try to detect by checking for numbered keys
+    // Fallback: buscar claves numéricas
     const numKeys = Object.keys(rawData).filter(k => {
       const n = parseInt(k)
       return !isNaN(n) && n >= 8 && n <= 50
     })
 
-    if (numKeys.length > 0) return parseBDRawData(rawData)
+    if (numKeys.length > 0) return parseBDRawDataLegacy(rawData)
     return null
   } catch {
     return null
@@ -580,7 +811,6 @@ function formatDateVal(dateStr: string): string {
   const trimmed = String(dateStr).trim()
   if (!trimmed) return ''
   
-  // Ya está en formato DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
     const parts = trimmed.split('/')
     const day = parts[0].padStart(2, '0')
@@ -589,7 +819,6 @@ function formatDateVal(dateStr: string): string {
     return `${day}/${month}/${year}`
   }
   
-  // Handle ISO format: "2018-07-19T00:00:00" o "2001-10-29"
   if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
     try {
       const d = new Date(trimmed)
@@ -602,15 +831,6 @@ function formatDateVal(dateStr: string): string {
     } catch { /* ignore */ }
   }
   return trimmed
-}
-
-// Obtener fecha actual en formato DD/MM/YYYY
-function currentDateDDMMYYYY(): string {
-  const now = new Date()
-  const day = String(now.getDate()).padStart(2, '0')
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const year = now.getFullYear()
-  return `${day}/${month}/${year}`
 }
 
 // Convert parsed data to the format expected by the certificaciones page
@@ -661,7 +881,6 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
 
   // Build institutions
   const instituciones: ParsedInstitucion[] = [...parsed.instituciones]
-  // Pad to 5
   while (instituciones.length < 5) {
     instituciones.push({
       numero: instituciones.length + 1,
@@ -685,7 +904,7 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
 
   return {
     lugar: schoolConfig.estado,
-    fechaExpedicion: new Date().toISOString().split('T')[0], // YYYY-MM-DD para input type="date"
+    fechaExpedicion: new Date().toISOString().split('T')[0],
     planEstudio: parsed.plan === 'derogado'
       ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
       : schoolConfig.planEstudio,
@@ -712,7 +931,6 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
     observaciones: parsed.observacionCompleta || '',
     observacionesLines: (parsed.observaciones || []).slice(0, 4),
     promedioAcumulado: (() => {
-      // Calcular promedio real: suma de todas las notas numéricas / total
       const allCalifs = Object.values(calificaciones).flat()
       const numericNotas = allCalifs
         .map(c => parseFloat(c.nota))

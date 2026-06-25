@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { formatCedulaFinal } from '@/lib/school-config';
+import { transformRawData } from '@/lib/transform-rawdata';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -65,7 +66,7 @@ async function seedStudents(filePath: string, plan: string) {
           estado: (record.ESTADO || '').trim(),
           municipio: (record.MUNICIPIO || '').trim(),
           plan,
-          rawData: JSON.stringify(record),
+          rawData: transformRawData(JSON.stringify(record), plan),
         },
         update: {
           fechaNacimiento: normalizeFecha(record.FECHA || ''),
@@ -75,7 +76,7 @@ async function seedStudents(filePath: string, plan: string) {
           estado: (record.ESTADO || '').trim(),
           municipio: (record.MUNICIPIO || '').trim(),
           plan,
-          rawData: JSON.stringify(record),
+          rawData: transformRawData(JSON.stringify(record), plan),
         },
       });
       count++;

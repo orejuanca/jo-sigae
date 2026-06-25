@@ -53,6 +53,7 @@ interface CertData {
   observaciones: string; observacionesLines: string[]; promedioAcumulado: string
   director: { apellidosNombres: string; cedula: string }
   directorCdcce: { apellidosNombres: string; cedula: string }
+  acta: string; actaFecha: string; actaAnio: string; literalesFinales: string[]
 }
 
 interface SavedLayout {
@@ -513,6 +514,10 @@ export default function CertificacionesVisualPage() {
       promedioAcumulado: certData.promedioAcumulado,
       director: certData.director,
       directorCdcce: certData.directorCdcce,
+      acta: certData.acta || '',
+      actaFecha: certData.actaFecha || '',
+      actaAnio: certData.actaAnio || '',
+      literalesFinales: certData.literalesFinales || [],
     }
   }, [certData])
 

@@ -8,7 +8,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Settings2, ChevronDown } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Settings2, ChevronDown, Search, Check } from 'lucide-react'
 import { useState } from 'react'
 import type { CellConfig } from './types'
 import { DATA_BINDINGS } from './types'
@@ -48,6 +50,62 @@ function SectionHeader({ title, defaultOpen, children }: { title: string; defaul
   )
 }
 
+function BindingCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const selected = value
+    ? DATA_BINDINGS.flatMap(g => g.bindings).find(b => b.value === value)
+    : null
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="h-7 text-xs w-full flex items-center justify-between rounded-md border border-input bg-background px-2 hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+        >
+          {selected ? (
+            <span className="truncate">{selected.label}</span>
+          ) : value ? (
+            <span className="font-mono truncate text-muted-foreground">{value}</span>
+          ) : (
+            <span className="text-muted-foreground">Buscar campo de datos...</span>
+          )}
+          <Search className="h-3 w-3 ml-1 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0" align="start">
+        <Command shouldFilter={true}>
+          <CommandInput placeholder="Buscar campo..." className="h-8 text-xs" />
+          <CommandList className="max-h-[300px]">
+            <CommandEmpty className="text-xs py-2 px-2">Sin resultados</CommandEmpty>
+            {DATA_BINDINGS.map((group) => (
+              <CommandGroup key={group.group} heading={group.group}>
+                <CommandItem
+                  value="__none__"
+                  onSelect={() => { onChange(''); setOpen(false) }}
+                  className="text-xs"
+                >
+                  <span className="opacity-60">— Quitar enlace —</span>
+                </CommandItem>
+                {group.bindings.map((binding) => (
+                  <CommandItem
+                    key={binding.value}
+                    value={`${binding.label} ${binding.value}`}
+                    onSelect={() => { onChange(binding.value); setOpen(false) }}
+                    className="text-xs"
+                  >
+                    <Check className={`h-3 w-3 mr-2 ${value === binding.value ? 'opacity-100' : 'opacity-0'}`} />
+                    {binding.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelProps) {
   if (!cell) {
     return (
@@ -61,9 +119,6 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
       </Card>
     )
   }
-
-  // Build flat list of all bindings for the select dropdown
-  const allBindings = DATA_BINDINGS.flatMap(g => g.bindings)
 
   return (
     <Card className="h-full">
@@ -91,27 +146,10 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
                 />
               </FieldRow>
               <FieldRow label="Enlazar a dato:">
-                <Select
-                  value={cell.dataBinding || '__none__'}
-                  onValueChange={(v) => onUpdate({ dataBinding: v === '__none__' ? '' : v })}
-                >
-                  <SelectTrigger className="h-7 text-xs w-full">
-                    <SelectValue placeholder="Sin enlace" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— Sin enlace —</SelectItem>
-                    {DATA_BINDINGS.map((group) => (
-                      <SelectItem key={group.group} disabled value={`__group_${group.group}`}>
-                        <span className="font-semibold text-xs">{group.group}</span>
-                      </SelectItem>
-                    ))}
-                    {allBindings.map((binding) => (
-                      <SelectItem key={binding.value} value={binding.value} className="pl-6">
-                        <span className="text-xs">{binding.label}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <BindingCombobox
+                  value={cell.dataBinding}
+                  onChange={(v) => onUpdate({ dataBinding: v })}
+                />
               </FieldRow>
               <FieldRow label="Enlace directo:">
                 <Input

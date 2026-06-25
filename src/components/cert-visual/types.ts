@@ -56,6 +56,41 @@ export function emptyRow(totalCols: number): GridRow {
 }
 
 // === Data Bindings for Dropdown ===
+
+const YEAR_NAMES = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+const YEAR_SHORT = ['1°', '2°', '3°', '4°', '5°']
+const MATERIAS_VIGENTE: Record<number, string[]> = {
+  1: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Arte y Patrimonio', 'Ciencias Naturales', 'Geografía, Historia y Ciudadanía'],
+  2: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Arte y Patrimonio', 'Ciencias Naturales', 'Geografía, Historia y Ciudadanía'],
+  3: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Geografía, Historia y Ciudadanía', 'Formación Soberanía Nacional'],
+  4: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Geografía, Historia y Ciudadanía', 'Formación Soberanía Nacional'],
+  5: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Ciencias de la Tierra', 'Geografía, Historia y Ciudadanía', 'Formación Soberanía Nacional'],
+}
+
+// Generar bindings de calificaciones por año
+function generateCalifBindings() {
+  const groups: { group: string; bindings: { value: string; label: string }[] }[] = []
+  for (let y = 1; y <= 5; y++) {
+    const materias = MATERIAS_VIGENTE[y] || []
+    const bindings: { value: string; label: string }[] = []
+    for (let s = 0; s < materias.length; s++) {
+      const nombre = materias[s]
+      bindings.push(
+        { value: `calif.${y}.${s}.materia`, label: `${s + 1}. ${nombre}` },
+        { value: `calif.${y}.${s}.nota`, label: `${s + 1}. ${nombre} — Nota` },
+        { value: `calif.${y}.${s}.literal`, label: `${s + 1}. ${nombre} — Literal` },
+        { value: `calif.${y}.${s}.te`, label: `${s + 1}. ${nombre} — T-E` },
+        { value: `calif.${y}.${s}.mes`, label: `${s + 1}. ${nombre} — Mes` },
+        { value: `calif.${y}.${s}.anio`, label: `${s + 1}. ${nombre} — Año` },
+        { value: `calif.${y}.${s}.inst`, label: `${s + 1}. ${nombre} — Inst. Educ.` },
+        { value: `calif.${y}.${s}.numero`, label: `${s + 1}. ${nombre} — N°` },
+      )
+    }
+    groups.push({ group: `Calificaciones — ${YEAR_NAMES[y - 1]}`, bindings })
+  }
+  return groups
+}
+
 export const DATA_BINDINGS = [
   { group: 'Estudiante', bindings: [
     { value: 'student.cedula', label: 'Cédula de Identidad' },
@@ -66,7 +101,7 @@ export const DATA_BINDINGS = [
     { value: 'student.estado', label: 'Estado de Nacimiento' },
     { value: 'student.municipio', label: 'Municipio de Nacimiento' },
   ]},
-  { group: 'Institución', bindings: [
+  { group: 'Institución (Escuela)', bindings: [
     { value: 'school.codigo', label: 'Código OD' },
     { value: 'school.denominacion', label: 'Denominación' },
     { value: 'school.direccion', label: 'Dirección' },
@@ -82,12 +117,22 @@ export const DATA_BINDINGS = [
     { value: 'doc.fechaExpedicion', label: 'Fecha de Expedición' },
     { value: 'doc.observaciones', label: 'Observaciones (completo)' },
     { value: 'doc.promedioAcumulado', label: 'Promedio Acumulado' },
+    { value: 'doc.acta', label: 'Acta' },
+    { value: 'doc.actaFecha', label: 'Acta — Fecha' },
+    { value: 'doc.actaAnio', label: 'Acta — Año' },
   ]},
   { group: 'Observaciones por Línea', bindings: [
     { value: 'obsLine.0', label: 'Observación Línea 1' },
     { value: 'obsLine.1', label: 'Observación Línea 2' },
     { value: 'obsLine.2', label: 'Observación Línea 3' },
     { value: 'obsLine.3', label: 'Observación Línea 4' },
+  ]},
+  { group: 'Literales Finales', bindings: [
+    { value: 'doc.literalFinal.0', label: 'Literal Final — 1° Año' },
+    { value: 'doc.literalFinal.1', label: 'Literal Final — 2° Año' },
+    { value: 'doc.literalFinal.2', label: 'Literal Final — 3° Año' },
+    { value: 'doc.literalFinal.3', label: 'Literal Final — 4° Año' },
+    { value: 'doc.literalFinal.4', label: 'Literal Final — 5° Año' },
   ]},
   { group: 'Director', bindings: [
     { value: 'director.nombre', label: 'Nombre del Director' },
@@ -97,11 +142,28 @@ export const DATA_BINDINGS = [
     { value: 'cdcee.nombre', label: 'Nombre Director CDCEE' },
     { value: 'cdcee.cedula', label: 'Cédula Director CDCEE' },
   ]},
-  { group: 'Instituciones', bindings: [
+  { group: 'Instituciones Educativas', bindings: [
     ...[0,1,2,3,4].flatMap(i => [
-      { value: `inst.${i}.denominacion`, label: `Institución ${i+1} - Denominación` },
-      { value: `inst.${i}.localidad`, label: `Institución ${i+1} - Localidad` },
-      { value: `inst.${i}.ef`, label: `Institución ${i+1} - E.F.` },
+      { value: `inst.${i}.denominacion`, label: `Institución ${i+1} — Denominación` },
+      { value: `inst.${i}.localidad`, label: `Institución ${i+1} — Localidad` },
+      { value: `inst.${i}.ef`, label: `Institución ${i+1} — E.F.` },
+    ])
+  ]},
+  // Calificaciones por año — generadas dinámicamente
+  ...generateCalifBindings(),
+  // Orientación y Convivencia
+  { group: 'Orientación y Convivencia', bindings: [
+    ...[0,1,2,3,4].flatMap(i => [
+      { value: `orient.${i}.anio`, label: `${YEAR_SHORT[i]} Año — Año Escolar` },
+      { value: `orient.${i}.literal`, label: `${YEAR_SHORT[i]} Año — Literal` },
+    ])
+  ]},
+  // Grupos de Creación/Recreación
+  { group: 'Grupos (Creación/Recreación)', bindings: [
+    ...[0,1,2,3,4].flatMap(i => [
+      { value: `grupo.${i}.anio`, label: `${YEAR_SHORT[i]} Año — Año Escolar` },
+      { value: `grupo.${i}.grupo`, label: `${YEAR_SHORT[i]} Año — Nombre Grupo` },
+      { value: `grupo.${i}.literal`, label: `${YEAR_SHORT[i]} Año — Literal` },
     ])
   ]},
 ]
@@ -144,6 +206,10 @@ export interface DisplayData {
   promedioAcumulado: string
   director: { apellidosNombres: string; cedula: string }
   directorCdcce: { apellidosNombres: string; cedula: string }
+  acta: string
+  actaFecha: string
+  actaAnio: string
+  literalesFinales: string[]
 }
 
 // === Data Resolution for Preview ===
@@ -165,10 +231,16 @@ export function resolveBinding(path: string, data: DisplayData): string {
       return schoolMap[rest[0]] || ''
     }
     case 'doc': {
+      // Soporte para doc.literalFinal.N
+      if (rest[0] === 'literalFinal') {
+        const idx = parseInt(rest[1])
+        return data.literalesFinales?.[idx] || ''
+      }
       const docMap: Record<string, string> = {
         planEstudio: data.planEstudio, codigo: data.planCodigo,
         lugar: data.lugar, fechaExpedicion: data.fechaExpedicion,
-        observaciones: data.observaciones, promedioAcumulado: data.promedioAcumulado
+        observaciones: data.observaciones, promedioAcumulado: data.promedioAcumulado,
+        acta: data.acta || '', actaFecha: data.actaFecha || '', actaAnio: data.actaAnio || '',
       }
       return docMap[rest[0]] || ''
     }

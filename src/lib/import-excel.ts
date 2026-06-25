@@ -3,6 +3,7 @@
 // Lee el Excel y produce directamente el formato structured_v1 que parse-rawdata.ts consume
 
 import * as XLSX from 'xlsx'
+import { readFileSync } from 'fs'
 import { formatCedulaFinal } from './school-config'
 
 // === MATERIAS POR AÑO (plan vigente) ===
@@ -192,7 +193,9 @@ interface RawGrade {
 // === FUNCIÓN PRINCIPAL: LEER EXCEL Y PRODUCIR REGISTROS ESTRUCTURADOS ===
 
 export function importExcelVigente(filePath: string): ExcelStudentRecord[] {
-  const workbook = XLSX.readFile(filePath, { cellDates: true })
+  // Usar readFileSync + XLSX.read para compatibilidad con Vercel serverless
+  const fileBuffer = readFileSync(filePath)
+  const workbook = XLSX.read(fileBuffer, { cellDates: true, type: 'buffer' })
   const sheet = workbook.Sheets[workbook.SheetNames[0]]
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { raw: false })
 

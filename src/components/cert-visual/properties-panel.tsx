@@ -106,6 +106,110 @@ function BindingCombobox({ value, onChange }: { value: string; onChange: (v: str
   )
 }
 
+// Helper: check if a binding path exists in the DATA_BINDINGS catalog
+function isCatalogBinding(value: string): boolean {
+  if (!value) return false
+  return DATA_BINDINGS.some(g => g.bindings.some(b => b.value === value))
+}
+
+// Mutually-exclusive binding mode: catalog dropdown OR free-text direct path
+function BindingModeSection({ dataBinding, onUpdate }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void }) {
+  const isDirect = dataBinding !== '' && !isCatalogBinding(dataBinding)
+  const [mode, setMode] = useState<'none' | 'catalog' | 'direct'>(
+    !dataBinding ? 'none' : isDirect ? 'direct' : 'catalog'
+  )
+
+  // Sync mode when dataBinding changes externally (e.g. patchDataBindings)
+  const effectiveIsDirect = dataBinding !== '' && !isCatalogBinding(dataBinding)
+  const effectiveMode = !dataBinding ? 'none' : effectiveIsDirect ? 'direct' : 'catalog'
+
+  const handleModeChange = (newMode: 'none' | 'catalog' | 'direct') => {
+    setMode(newMode)
+    if (newMode === 'none') {
+      onUpdate({ dataBinding: '' })
+    } else if (newMode === 'catalog') {
+      // Clear any direct binding so user picks from catalog
+      if (isDirect) onUpdate({ dataBinding: '' })
+    } else if (newMode === 'direct') {
+      // Clear any catalog binding so user types freely
+      if (!isDirect && dataBinding) onUpdate({ dataBinding: '' })
+    }
+  }
+
+  const handleCatalogChange = (v: string) => {
+    onUpdate({ dataBinding: v })
+  }
+
+  const handleDirectChange = (v: string) => {
+    onUpdate({ dataBinding: v })
+  }
+
+  const currentMode = effectiveMode
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <Label className="text-xs whitespace-nowrap min-w-[120px]">Modo enlace:</Label>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => handleModeChange('none')}
+            className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+              currentMode === 'none'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background border-input hover:bg-accent'
+            }`}
+          >
+            Ninguno
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange('catalog')}
+            className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+              currentMode === 'catalog'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background border-input hover:bg-accent'
+            }`}
+          >
+            Catálogo
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange('direct')}
+            className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+              currentMode === 'direct'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background border-input hover:bg-accent'
+            }`}
+          >
+            Directo
+          </button>
+        </div>
+      </div>
+
+      {currentMode === 'catalog' && (
+        <FieldRow label="Enlazar a dato:">
+          <BindingCombobox
+            value={dataBinding}
+            onChange={handleCatalogChange}
+          />
+        </FieldRow>
+      )}
+
+      {currentMode === 'direct' && (
+        <FieldRow label="Enlace directo:">
+          <Input
+            value={dataBinding}
+            onChange={(e) => handleDirectChange(e.target.value)}
+            className="h-7 text-xs font-mono"
+            placeholder="student.cedula"
+          />
+        </FieldRow>
+      )}
+    </div>
+  )
+}
+
 export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelProps) {
   if (!cell) {
     return (
@@ -138,27 +242,17 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
           <div className="space-y-3 pr-2">
             {/* CONTENIDO */}
             <SectionHeader title="Contenido" defaultOpen>
-              <FieldRow label="Texto:">
+              <FieldRow label="Texto estático:">
                 <Input
                   value={cell.content}
                   onChange={(e) => onUpdate({ content: e.target.value })}
                   className="h-7 text-xs"
                 />
               </FieldRow>
-              <FieldRow label="Enlazar a dato:">
-                <BindingCombobox
-                  value={cell.dataBinding}
-                  onChange={(v) => onUpdate({ dataBinding: v })}
-                />
-              </FieldRow>
-              <FieldRow label="Enlace directo:">
-                <Input
-                  value={cell.dataBinding}
-                  onChange={(e) => onUpdate({ dataBinding: e.target.value })}
-                  className="h-7 text-xs font-mono"
-                  placeholder="student.cedula"
-                />
-              </FieldRow>
+              <BindingModeSection
+                dataBinding={cell.dataBinding}
+                onUpdate={onUpdate}
+              />
             </SectionHeader>
 
             <Separator />

@@ -221,7 +221,7 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
     const val = flat[String(228 + i)]
     orientacion.push({
       anio: gradesByYear[i] || '',
-      literal: val && !isAsterisk(val) ? String(val).trim() : '',
+      literal: val && val.trim() ? String(val).trim() : '',
     })
   }
   result['orientacion'] = orientacion
@@ -233,8 +233,8 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
     const grupoLiteral = flat[String(238 + i)]
     grupos.push({
       anio: gradesByYear[i] || '',
-      grupo: grupoDesc && !isAsterisk(grupoDesc) ? String(grupoDesc).trim() : '',
-      literal: grupoLiteral && !isAsterisk(grupoLiteral) ? String(grupoLiteral).trim() : '',
+      grupo: grupoDesc && grupoDesc.trim() ? String(grupoDesc).trim() : '',
+      literal: grupoLiteral && grupoLiteral.trim() ? String(grupoLiteral).trim() : '',
     })
   }
   result['grupos'] = grupos
@@ -277,13 +277,13 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
 
   // 10. Título/Serial (cols 242-256 aprox) — preservar
   const tituloSerial = flat['242'] ? String(flat['242']).trim() : ''
-  if (tituloSerial && !isAsterisk(tituloSerial)) result['tituloSerial'] = tituloSerial
+  if (tituloSerial && tituloSerial.trim()) result['tituloSerial'] = tituloSerial
 
   const tituloExpedicion = flat['245'] ? String(flat['245']).trim() : ''
-  if (tituloExpedicion && !isAsterisk(tituloExpedicion)) result['tituloExpedicion'] = tituloExpedicion
+  if (tituloExpedicion && tituloExpedicion.trim()) result['tituloExpedicion'] = tituloExpedicion
 
   const tituloEgreso = flat['246'] ? String(flat['246']).trim() : ''
-  if (tituloEgreso && !isAsterisk(tituloEgreso)) result['tituloEgreso'] = tituloEgreso
+  if (tituloEgreso && tituloEgreso.trim()) result['tituloEgreso'] = tituloEgreso
 
   // 11. Metadata
   result['_format'] = 'structured_v1'
@@ -445,7 +445,7 @@ export function transformBDDerogado(flat: Record<string, string>): Record<string
 
   // 8. Observaciones BD2 (key 339)
   const obs339 = flat['339']
-  if (obs339 && !isAsterisk(obs339)) {
+  if (obs339 && obs339.trim()) {
     result['observaciones'] = [String(obs339).trim()]
   } else {
     result['observaciones'] = []
@@ -455,7 +455,7 @@ export function transformBDDerogado(flat: Record<string, string>): Record<string
   let acta = ''
   for (let k = 335; k <= 340; k++) {
     const val = flat[String(k)]
-    if (val && !isAsterisk(val) && String(val).trim().match(/^[A-Z]/i)) {
+    if (val && val.trim().match(/^[A-Z\*]/i)) {
       acta = String(val).trim()
       break
     }

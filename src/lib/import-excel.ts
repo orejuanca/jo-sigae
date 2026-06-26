@@ -349,7 +349,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
     const val = values[String(228 + i)]
     orientacion.push({
       anio: gradesByYear[i] || '',
-      literal: val && !isAsterisk(val) ? val.trim() : '',
+      literal: val && val.trim() ? val.trim() : '',
     })
   }
   result['orientacion'] = orientacion
@@ -362,8 +362,8 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
     const grupoLiteral = values[String(238 + i)]
     grupos.push({
       anio: gradesByYear[i] || '',
-      grupo: grupoDesc && !isAsterisk(grupoDesc) ? grupoDesc.trim() : '',
-      literal: grupoLiteral && !isAsterisk(grupoLiteral) ? grupoLiteral.trim() : '',
+      grupo: grupoDesc && grupoDesc.trim() ? grupoDesc.trim() : '',
+      literal: grupoLiteral && grupoLiteral.trim() ? grupoLiteral.trim() : '',
     })
   }
   result['grupos'] = grupos
@@ -384,7 +384,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   const literales: string[] = []
   for (let i = 0; i < 5; i++) {
     const val = values[String(248 + i)]
-    if (val && !isAsterisk(val)) {
+    if (val && val.trim()) {
       literales.push(val.trim())
     }
   }
@@ -398,7 +398,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
 
   // 10. Título / Serial (cols 256+)
   const tituloExpedicion = values['256']
-  if (tituloExpedicion && !isAsterisk(tituloExpedicion)) {
+  if (tituloExpedicion && tituloExpedicion.toString().trim()) {
     result['tituloExpedicion'] = formatDateVal(tituloExpedicion)
   }
 
@@ -543,7 +543,7 @@ function buildStructuredDerogado(flat: Record<string, string>): Record<string, u
   const literales: string[] = []
   for (let i = 0; i < 5; i++) {
     const val = flat[String(294 + i)]
-    if (val && !isAsterisk(val)) {
+    if (val && val.trim()) {
       literales.push(String(val).trim())
     }
   }
@@ -583,7 +583,7 @@ function buildStructuredDerogado(flat: Record<string, string>): Record<string, u
 
   // 8. Observaciones BD2 (key 339)
   const obs339 = flat['339']
-  if (obs339 && !isAsterisk(obs339)) {
+  if (obs339 && obs339.toString().trim()) {
     result['observaciones'] = [String(obs339).trim()]
   } else {
     result['observaciones'] = []
@@ -593,7 +593,7 @@ function buildStructuredDerogado(flat: Record<string, string>): Record<string, u
   let acta = ''
   for (let k = 335; k <= 340; k++) {
     const val = flat[String(k)]
-    if (val && !isAsterisk(val) && String(val).trim().match(/^[A-Z]/i)) {
+    if (val && val.toString().trim().match(/^[A-Z\*]/i)) {
       acta = String(val).trim()
       break
     }

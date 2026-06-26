@@ -561,7 +561,7 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
     const val = rawData[String(228 + i)]
     result.orientacion.push({
       anio: gradesByYear[i] || '',
-      literal: val && !isAsterisk(val) ? String(val).trim() : '',
+      literal: val && val.trim() ? String(val).trim() : '',
     })
   }
 
@@ -571,8 +571,8 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
     const grupoLiteral = rawData[String(238 + i)]
     result.grupos.push({
       anio: gradesByYear[i] || '',
-      grupo: grupoDesc && !isAsterisk(grupoDesc) ? String(grupoDesc).trim() : '',
-      literal: grupoLiteral && !isAsterisk(grupoLiteral) ? String(grupoLiteral).trim() : '',
+      grupo: grupoDesc && grupoDesc.trim() ? String(grupoDesc).trim() : '',
+      literal: grupoLiteral && grupoLiteral.trim() ? String(grupoLiteral).trim() : '',
     })
   }
 
@@ -589,7 +589,7 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
   // ---- Literales finales - keys 248-252 ----
   for (let i = 0; i < 5; i++) {
     const lit = rawData[String(248 + i)]
-    if (lit && !isAsterisk(lit)) {
+    if (lit && lit.trim()) {
       result.literalesFinales.push(String(lit).trim())
     }
   }
@@ -723,7 +723,7 @@ function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData 
   // ---- Literales finales - keys 294-298 ----
   for (let i = 0; i < 5; i++) {
     const lit = rawData[String(294 + i)]
-    if (lit && !isAsterisk(lit)) {
+    if (lit && lit.trim()) {
       result.literalesFinales.push(String(lit).trim())
     }
   }
@@ -756,7 +756,7 @@ function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData 
 
   // ---- Observaciones BD2 - key 339 ----
   const obs339 = rawData['339']
-  if (obs339 && !isAsterisk(obs339)) {
+  if (obs339 && obs339.trim()) {
     result.observacionCompleta = String(obs339).trim()
     result.observaciones.push(String(obs339).trim())
   }

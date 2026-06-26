@@ -514,7 +514,12 @@ export default function CertificacionesVisualPage() {
           if (draftRes.ok) {
             const draftData = await draftRes.json()
             if (draftData.draft?.overrides) {
-              setDraftOverrides(draftData.draft.overrides)
+              // Filter out empty-string overrides — they were blocking real data
+              const clean: Record<string, string> = {}
+              for (const [k, v] of Object.entries(draftData.draft.overrides)) {
+                if (v !== undefined && v !== null && v !== '') clean[k] = v as string
+              }
+              setDraftOverrides(clean)
             } else {
               setDraftOverrides({})
             }
@@ -586,8 +591,12 @@ export default function CertificacionesVisualPage() {
     }
 
     // Apply draft overrides to certData fields
+    // Treat empty string as "no override" so nullish coalescing works
     const ov = draftOverrides
-    const get = (binding: string) => ov[binding]
+    const get = (binding: string): string | undefined => {
+      const v = ov[binding]
+      return (v === undefined || v === null || v === '') ? undefined : v
+    }
 
     return {
       lugar: get('doc.lugar') ?? certData.lugar,

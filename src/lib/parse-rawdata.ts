@@ -268,6 +268,8 @@ function parseStructuredVigente(data: Record<string, unknown>): ParsedCertData {
         const literal = isAster ? notaStr : notaEnLetras(g.nota)
         const subjectIndex = sIdx % subjects.length
         const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
+        const mesStr = String(g.mes || '').trim()
+        const isMesAster = /^\*+$/.test(mesStr)
 
         if (g.anio) aniosSet.add(g.anio)
 
@@ -277,7 +279,7 @@ function parseStructuredVigente(data: Record<string, unknown>): ParsedCertData {
           nota: notaStr,
           literal,
           tipoEvaluacion: g.eval || '',
-          fechaMes: isAster ? String(g.mes || '').trim() : parseMes(g.mes),
+          fechaMes: isMesAster ? mesStr : parseMes(g.mes),
           fechaAnio: g.anio || '',
           instEduc: g.inst || '',
         }
@@ -386,6 +388,8 @@ function parseStructuredDerogado(data: Record<string, unknown>): ParsedCertData 
         const literal = isAster ? notaStr : notaEnLetras(g.nota)
         const subjectIndex = sIdx % subjects.length
         const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
+        const mesStr = String(g.mes || '').trim()
+        const isMesAster = /^\*+$/.test(mesStr)
 
         if (g.anio) aniosSet.add(g.anio)
 
@@ -395,7 +399,7 @@ function parseStructuredDerogado(data: Record<string, unknown>): ParsedCertData 
           nota: notaStr,
           literal,
           tipoEvaluacion: g.eval || '',
-          fechaMes: isAster ? String(g.mes || '').trim() : parseMes(g.mes),
+          fechaMes: isMesAster ? mesStr : parseMes(g.mes),
           fechaAnio: g.anio || '',
           instEduc: g.inst || '',
         }
@@ -522,21 +526,22 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
       const subjectIndex = i % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${i + 1}`
 
-      // Los asteriscos son datos válidos (norma oficial) — se preservan tal cual
+      // Los asteriscos son datos válidos (norma oficial) — cada campo se verifica independientemente
       const notaStr = String(notaRaw || '').trim()
-      const isAsteriskField = /^\*+$/.test(notaStr)
+      const isNotaAsterisk = /^\*+$/.test(notaStr)
       const tipoStr = String(tipoRaw || '').trim()
       const mesStr = String(mesRaw || '').trim()
       const anioStr = String(anioRaw || '').trim()
       const instStr = String(lapsoRaw || '').trim()
+      const isMesAsterisk = /^\*+$/.test(mesStr)
 
       calificaciones.push({
         materia,
         numero: i + 1,
-        nota: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaStr : ''),
-        literal: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaEnLetras(notaStr) : ''),
+        nota: isNotaAsterisk ? notaStr : (isValidGrade(notaStr) ? notaStr : ''),
+        literal: isNotaAsterisk ? notaStr : (isValidGrade(notaStr) ? notaEnLetras(notaStr) : ''),
         tipoEvaluacion: tipoStr,
-        fechaMes: isAsteriskField ? mesStr : parseMes(mesStr),
+        fechaMes: isMesAsterisk ? mesStr : parseMes(mesStr),
         fechaAnio: anioStr,
         instEduc: instStr,
       })
@@ -673,21 +678,22 @@ function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData 
       const subjectIndex = i % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${i + 1}`
 
-      // Los asteriscos son datos válidos (norma oficial) — se preservan tal cual
+      // Los asteriscos son datos válidos (norma oficial) — cada campo se verifica independientemente
       const notaStr = String(notaRaw || '').trim()
-      const isAsteriskField = /^\*+$/.test(notaStr)
+      const isNotaAsterisk = /^\*+$/.test(notaStr)
       const tipoStr = String(tipoRaw || '').trim()
       const mesStr = String(mesRaw || '').trim()
       const anioStr = String(anioRaw || '').trim()
       const instStr = String(lapsoRaw || '').trim()
+      const isMesAsterisk = /^\*+$/.test(mesStr)
 
       calificaciones.push({
         materia,
         numero: i + 1,
-        nota: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaStr : ''),
-        literal: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaEnLetras(notaStr) : ''),
+        nota: isNotaAsterisk ? notaStr : (isValidGrade(notaStr) ? notaStr : ''),
+        literal: isNotaAsterisk ? notaStr : (isValidGrade(notaStr) ? notaEnLetras(notaStr) : ''),
         tipoEvaluacion: tipoStr,
-        fechaMes: isAsteriskField ? mesStr : parseMes(mesStr),
+        fechaMes: isMesAsterisk ? mesStr : parseMes(mesStr),
         fechaAnio: anioStr,
         instEduc: instStr,
       })

@@ -263,7 +263,9 @@ function parseStructuredVigente(data: Record<string, unknown>): ParsedCertData {
       const aniosSet = new Set<string>()
 
       result.calificaciones[yearName] = yearGrades.map((g, sIdx) => {
-        const literal = notaEnLetras(g.nota)
+        const notaStr = String(g.nota || '').trim()
+        const isAster = /^\*+$/.test(notaStr)
+        const literal = isAster ? notaStr : notaEnLetras(g.nota)
         const subjectIndex = sIdx % subjects.length
         const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
 
@@ -272,12 +274,12 @@ function parseStructuredVigente(data: Record<string, unknown>): ParsedCertData {
         return {
           materia,
           numero: sIdx + 1,
-          nota: g.nota,
+          nota: notaStr,
           literal,
           tipoEvaluacion: g.eval || '',
-          fechaMes: parseMes(g.mes),
-          fechaAnio: g.anio,
-          instEduc: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+          fechaMes: isAster ? String(g.mes || '').trim() : parseMes(g.mes),
+          fechaAnio: g.anio || '',
+          instEduc: g.inst || '',
         }
       })
 
@@ -379,7 +381,9 @@ function parseStructuredDerogado(data: Record<string, unknown>): ParsedCertData 
       const aniosSet = new Set<string>()
 
       result.calificaciones[yearName] = yearGrades.map((g, sIdx) => {
-        const literal = notaEnLetras(g.nota)
+        const notaStr = String(g.nota || '').trim()
+        const isAster = /^\*+$/.test(notaStr)
+        const literal = isAster ? notaStr : notaEnLetras(g.nota)
         const subjectIndex = sIdx % subjects.length
         const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
 
@@ -388,12 +392,12 @@ function parseStructuredDerogado(data: Record<string, unknown>): ParsedCertData 
         return {
           materia,
           numero: sIdx + 1,
-          nota: g.nota,
+          nota: notaStr,
           literal,
           tipoEvaluacion: g.eval || '',
-          fechaMes: parseMes(g.mes),
-          fechaAnio: g.anio,
-          instEduc: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+          fechaMes: isAster ? String(g.mes || '').trim() : parseMes(g.mes),
+          fechaAnio: g.anio || '',
+          instEduc: g.inst || '',
         }
       })
 
@@ -518,15 +522,23 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
       const subjectIndex = i % subjects.length
       const materia = subjects[subjectIndex]?.nombre || `Materia ${i + 1}`
 
+      // Los asteriscos son datos válidos (norma oficial) — se preservan tal cual
+      const notaStr = String(notaRaw || '').trim()
+      const isAsteriskField = /^\*+$/.test(notaStr)
+      const tipoStr = String(tipoRaw || '').trim()
+      const mesStr = String(mesRaw || '').trim()
+      const anioStr = String(anioRaw || '').trim()
+      const instStr = String(lapsoRaw || '').trim()
+
       calificaciones.push({
         materia,
         numero: i + 1,
-        nota: isValidGrade(notaRaw) ? String(notaRaw).trim() : '',
-        literal: isValidGrade(notaRaw) ? notaEnLetras(String(notaRaw).trim()) : '',
-        tipoEvaluacion: String(tipoRaw || '').trim(),
-        fechaMes: parseMes(String(mesRaw || '').trim()),
-        fechaAnio: String(anioRaw || '').trim(),
-        instEduc: String(lapsoRaw || '').trim(),
+        nota: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaStr : ''),
+        literal: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaEnLetras(notaStr) : ''),
+        tipoEvaluacion: tipoStr,
+        fechaMes: isAsteriskField ? mesStr : parseMes(mesStr),
+        fechaAnio: anioStr,
+        instEduc: instStr,
       })
     }
 
@@ -634,72 +646,57 @@ function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData 
     lapso: string
   }
 
-  const allValidGrades: RawGrade[] = []
-  let key = 39
-  while (key <= 293) {
-    const notaRaw = rawData[String(key)]
-    const tipoRaw = rawData[String(key + 1)]
-    const mesRaw = rawData[String(key + 2)]
-    const anioRaw = rawData[String(key + 3)]
-    const lapsoRaw = rawData[String(key + 4)]
+  // Calificaciones — bloques fijos por posición (igual que BD vigente)
+  const BD2_YEAR_BLOCKS = [
+    { yearNum: 1, startCol: 39, count: 10 },
+    { yearNum: 2, startCol: 89, count: 10 },
+    { yearNum: 3, startCol: 139, count: 10 },
+    { yearNum: 4, startCol: 189, count: 10 },
+    { yearNum: 5, startCol: 239, count: 10 },
+  ]
+  const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
 
-    if (isValidGrade(notaRaw)) {
-      allValidGrades.push({
-        nota: String(notaRaw).trim(),
-        tipo: String(tipoRaw || '').trim(),
-        mes: String(mesRaw || '').trim(),
-        anio: String(anioRaw || '').trim(),
-        lapso: String(lapsoRaw || '').trim(),
+  for (const block of BD2_YEAR_BLOCKS) {
+    const planIdx = Math.min(block.yearNum - 1, PLAN_DEROGADO.length - 1)
+    const subjects = PLAN_DEROGADO[planIdx].materias
+    const yearName = yearNames[block.yearNum - 1]
+    const calificaciones: ParsedCalificacion[] = []
+
+    for (let i = 0; i < block.count; i++) {
+      const col = block.startCol + (i * 5)
+      const notaRaw = rawData[String(col)]
+      const tipoRaw = rawData[String(col + 1)]
+      const mesRaw = rawData[String(col + 2)]
+      const anioRaw = rawData[String(col + 3)]
+      const lapsoRaw = rawData[String(col + 4)]
+
+      const subjectIndex = i % subjects.length
+      const materia = subjects[subjectIndex]?.nombre || `Materia ${i + 1}`
+
+      // Los asteriscos son datos válidos (norma oficial) — se preservan tal cual
+      const notaStr = String(notaRaw || '').trim()
+      const isAsteriskField = /^\*+$/.test(notaStr)
+      const tipoStr = String(tipoRaw || '').trim()
+      const mesStr = String(mesRaw || '').trim()
+      const anioStr = String(anioRaw || '').trim()
+      const instStr = String(lapsoRaw || '').trim()
+
+      calificaciones.push({
+        materia,
+        numero: i + 1,
+        nota: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaStr : ''),
+        literal: isAsteriskField ? notaStr : (isValidGrade(notaStr) ? notaEnLetras(notaStr) : ''),
+        tipoEvaluacion: tipoStr,
+        fechaMes: isAsteriskField ? mesStr : parseMes(mesStr),
+        fechaAnio: anioStr,
+        instEduc: instStr,
       })
     }
-    key += 5
-  }
-
-  // Group grades by year
-  const gradesByYear: string[] = []
-  const gradeGroupsByYear: Record<string, RawGrade[]> = {}
-
-  for (const grade of allValidGrades) {
-    const year = grade.anio
-    if (!year) continue
-    if (!gradeGroupsByYear[year]) {
-      gradeGroupsByYear[year] = []
-      gradesByYear.push(year)
-    }
-    gradeGroupsByYear[year].push(grade)
-  }
-
-  // Map to PLAN_DEROGADO year names
-  const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
-  const sortedYears = Object.keys(gradeGroupsByYear).sort()
-
-  sortedYears.forEach((year, yearIdx) => {
-    if (yearIdx >= 5) return
-    const grades = gradeGroupsByYear[year]
-    const planIdx = Math.min(yearIdx, PLAN_DEROGADO.length - 1)
-    const subjects = PLAN_DEROGADO[planIdx].materias
-    const yearName = yearNames[yearIdx]
-
-    const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
-      const literal = notaEnLetras(g.nota)
-      const subjectIndex = sIdx % subjects.length
-      const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
-
-      return {
-        materia,
-        numero: sIdx + 1,
-        nota: g.nota,
-        literal,
-        tipoEvaluacion: g.tipo || '',
-        fechaMes: parseMes(g.mes),
-        fechaAnio: g.anio,
-        instEduc: g.lapso && !isAsterisk(g.lapso) ? String(g.lapso).trim() : '',
-      }
-    })
 
     result.calificaciones[yearName] = calificaciones
-    result.aniosEscolares.push(year)
-  })
+    const firstAnio = calificaciones.find(c => c.fechaAnio && !/^\*+$/.test(c.fechaAnio))?.fechaAnio
+    result.aniosEscolares.push(firstAnio || '')
+  }
 
   // ---- Literales finales - keys 294-298 ----
   for (let i = 0; i < 5; i++) {

@@ -285,9 +285,9 @@ function GridTable({
                       </span>
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
                       <img
-                        src="/cemg-logo.png"
-                        alt="Logo CEMG"
-                        style={{ height: '38px', objectFit: 'contain' }}
+                        src="/logo-gob-mppe.png"
+                        alt="Logo Gobierno Bolivariano"
+                        style={{ height: '36px', width: '100%', objectFit: 'contain', objectPosition: 'left' }}
                       />
                     ) : (
                       displayContent

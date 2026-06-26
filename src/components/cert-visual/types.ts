@@ -124,6 +124,8 @@ export const DATA_BINDINGS = [
   { group: 'Observaciones Certificación (OBS.CERT)', bindings: [
     { value: 'obsCert.0', label: 'OBS.CERT.L1 — Línea 1' },
     { value: 'obsCert.1', label: 'OBS.CERT.L2 — Línea 2' },
+    { value: 'obsCert.2', label: 'OBS.CERT.L3 — Línea 3' },
+    { value: 'obsCert.3', label: 'OBS.CERT.L4 — Línea 4' },
   ]},
   { group: 'Literales Finales', bindings: [
     { value: 'doc.literalFinal.0', label: 'Literal Final — 1° Año' },
@@ -442,10 +444,11 @@ export function patchDataBindings(config: GridConfig) {
     bind(47 + i, 25, `grupo.${i}.literal`)
   }
 
-  // --- Observaciones Certificación (row 53, idx 52: P.A. + OBS.CERT.L1) ---
+  // --- Observaciones Certificación OBS.CERT.L1-L4 ---
   bind(52, 7, 'obsCert.0')
-  // --- OBS.CERT.L2 (row 54, idx 53) ---
   bind(53, 0, 'obsCert.1')
+  bind(54, 0, 'obsCert.2')
+  bind(55, 0, 'obsCert.3')
 
   return config
 }

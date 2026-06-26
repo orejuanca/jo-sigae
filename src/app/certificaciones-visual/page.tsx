@@ -287,7 +287,7 @@ function GridTable({
                       <img
                         src="/logo-gob-mppe.png"
                         alt="Logo Gobierno Bolivariano"
-                        style={{ height: '36px', width: '100%', objectFit: 'contain', objectPosition: 'left' }}
+                        style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
                       />
                     ) : (
                       displayContent

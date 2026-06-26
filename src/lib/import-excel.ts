@@ -374,7 +374,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   const observaciones: string[] = []
   for (const i of obsCertCols) {
     const val = values[String(i)]
-    if (val && !isAsterisk(val)) {
+    if (val) {
       observaciones.push(val.trim())
     }
   }

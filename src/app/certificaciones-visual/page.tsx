@@ -283,6 +283,12 @@ function GridTable({
                       >
                         {displayContent}
                       </span>
+                    ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
+                      <img
+                        src="/cemg-logo.png"
+                        alt="Logo CEMG"
+                        style={{ height: '38px', objectFit: 'contain' }}
+                      />
                     ) : (
                       displayContent
                     )}

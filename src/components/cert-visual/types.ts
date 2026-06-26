@@ -488,9 +488,10 @@ export function createDefaultTemplate(): GridConfig {
 
   const rows: GridRow[] = []
 
-  // Row 1
+  // Row 1 — Logo + Título
   {
     const c = emptyRow(totalCols)
+    c.cells[0] = emptyCell({ content: '##LOGO_CEMG##', colspan: 11, textAlign: 'center', verticalAlign: 'middle', bgColor: '' })
     c.cells[12] = emptyCell({ content: 'CERTIFICACIÓN DE CALIFICACIONES  EMG', colspan: 15, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }

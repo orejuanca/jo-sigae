@@ -490,77 +490,57 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
     lapso: string
   }
 
-  const allValidGrades: RawGrade[] = []
-  let key = 23
-  while (key <= 227) {
-    const notaRaw = rawData[String(key)]
-    const tipoRaw = rawData[String(key + 1)]
-    const mesRaw = rawData[String(key + 2)]
-    const anioRaw = rawData[String(key + 3)]
-    const lapsoRaw = rawData[String(key + 4)]
-
-    if (isValidGrade(notaRaw)) {
-      allValidGrades.push({
-        nota: String(notaRaw).trim(),
-        tipo: String(tipoRaw || '').trim(),
-        mes: String(mesRaw || '').trim(),
-        anio: String(anioRaw || '').trim(),
-        lapso: String(lapsoRaw || '').trim(),
-      })
-    }
-    key += 5
-  }
-
-  // Group grades by year
-  const gradesByYear: string[] = []
-  const gradeGroupsByYear: Record<string, RawGrade[]> = {}
-
-  for (const grade of allValidGrades) {
-    const year = grade.anio
-    if (!year) continue
-    if (!gradeGroupsByYear[year]) {
-      gradeGroupsByYear[year] = []
-      gradesByYear.push(year)
-    }
-    gradeGroupsByYear[year].push(grade)
-  }
-
-  // Map to planEMG year names and assign subjects
+  // Calificaciones — agrupar por POSICIÓN FIJA (bloques por año)
+  // Cada materia = 5 columnas: NOTA, EVAL, MES, AÑO, INST
+  const YEAR_BLOCKS = [
+    { yearNum: 1, startCol: 23, count: 7 },
+    { yearNum: 2, startCol: 58, count: 7 },
+    { yearNum: 3, startCol: 93, count: 8 },
+    { yearNum: 4, startCol: 133, count: 9 },
+    { yearNum: 5, startCol: 178, count: 10 },
+  ]
   const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
 
-  gradesByYear.forEach((year, yearIdx) => {
-    if (yearIdx >= 5) return
-    const grades = gradeGroupsByYear[year]
-    const planIdx = Math.min(yearIdx, planEMG.length - 1)
+  for (const block of YEAR_BLOCKS) {
+    const planIdx = Math.min(block.yearNum - 1, planEMG.length - 1)
     const subjects = planEMG[planIdx].materias
-    const yearName = yearNames[yearIdx]
+    const yearName = yearNames[block.yearNum - 1]
+    const calificaciones: ParsedCalificacion[] = []
 
-    const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
-      const literal = notaEnLetras(g.nota)
-      const subjectIndex = sIdx % subjects.length
-      const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
+    for (let i = 0; i < block.count; i++) {
+      const col = block.startCol + (i * 5)
+      const notaRaw = rawData[String(col)]
+      const tipoRaw = rawData[String(col + 1)]
+      const mesRaw = rawData[String(col + 2)]
+      const anioRaw = rawData[String(col + 3)]
+      const lapsoRaw = rawData[String(col + 4)]
 
-      return {
+      const subjectIndex = i % subjects.length
+      const materia = subjects[subjectIndex]?.nombre || `Materia ${i + 1}`
+
+      calificaciones.push({
         materia,
-        numero: sIdx + 1,
-        nota: g.nota,
-        literal,
-        tipoEvaluacion: g.tipo || '',
-        fechaMes: parseMes(g.mes),
-        fechaAnio: g.anio,
-        instEduc: g.lapso && !isAsterisk(g.lapso) ? String(g.lapso).trim() : '',
-      }
-    })
+        numero: i + 1,
+        nota: isValidGrade(notaRaw) ? String(notaRaw).trim() : '',
+        literal: isValidGrade(notaRaw) ? notaEnLetras(String(notaRaw).trim()) : '',
+        tipoEvaluacion: String(tipoRaw || '').trim(),
+        fechaMes: parseMes(String(mesRaw || '').trim()),
+        fechaAnio: String(anioRaw || '').trim(),
+        instEduc: String(lapsoRaw || '').trim(),
+      })
+    }
 
     result.calificaciones[yearName] = calificaciones
-    result.aniosEscolares.push(year)
-  })
+    // Use the actual year from the first grade that has one
+    const firstAnio = calificaciones.find(c => c.fechaAnio)?.fechaAnio
+    result.aniosEscolares.push(firstAnio || '')
+  }
 
   // ---- Orientación y Convivencia - keys 228-232 ----
   for (let i = 0; i < 5; i++) {
     const val = rawData[String(228 + i)]
     result.orientacion.push({
-      anio: gradesByYear[i] || '',
+      anio: result.aniosEscolares[i] || '',
       literal: val && val.trim() ? String(val).trim() : '',
     })
   }
@@ -570,7 +550,7 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
     const grupoDesc = rawData[String(233 + i)]
     const grupoLiteral = rawData[String(238 + i)]
     result.grupos.push({
-      anio: gradesByYear[i] || '',
+      anio: result.aniosEscolares[i] || '',
       grupo: grupoDesc && grupoDesc.trim() ? String(grupoDesc).trim() : '',
       literal: grupoLiteral && grupoLiteral.trim() ? String(grupoLiteral).trim() : '',
     })

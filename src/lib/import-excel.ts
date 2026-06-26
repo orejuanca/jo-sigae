@@ -7,7 +7,17 @@ import { readFileSync } from 'fs'
 import { formatCedulaFinal } from './school-config'
 
 // === MATERIAS POR AÑO (plan vigente) ===
-// Mismas materias que en school-config pero con abreviaturas para rawData
+// Cantidad por año: 1ro=7, 2do=7, 3ro=8, 4to=9, 5to=10
+// Cada materia ocupa 5 columnas en rawData: NOTA, EVAL, MES, AÑO, INST
+// Bloques fijos: 1ro cols 23-57, 2do 58-92, 3ro 93-132, 4to 133-177, 5to 178-227
+const YEAR_BLOCKS = [
+  { yearNum: 1, startCol: 23, count: 7 },
+  { yearNum: 2, startCol: 58, count: 7 },
+  { yearNum: 3, startCol: 93, count: 8 },
+  { yearNum: 4, startCol: 133, count: 9 },
+  { yearNum: 5, startCol: 178, count: 10 },
+]
+
 const MATERIAS_VIGENTE: Record<number, { abrev: string; nombre: string }[]> = {
   1: [
     { abrev: 'CA', nombre: 'Castellano' },
@@ -36,7 +46,6 @@ const MATERIAS_VIGENTE: Record<number, { abrev: string; nombre: string }[]> = {
     { abrev: 'QU', nombre: 'Química' },
     { abrev: 'BI', nombre: 'Biología' },
     { abrev: 'GH', nombre: 'Geografía, Historia y Ciudadanía' },
-    { abrev: 'FSN', nombre: 'Formación Soberanía Nacional' },
   ],
   4: [
     { abrev: 'CA', nombre: 'Castellano' },
@@ -59,6 +68,7 @@ const MATERIAS_VIGENTE: Record<number, { abrev: string; nombre: string }[]> = {
     { abrev: 'BI', nombre: 'Biología' },
     { abrev: 'CT', nombre: 'Ciencias de la Tierra' },
     { abrev: 'GH', nombre: 'Geografía, Historia y Ciudadanía' },
+    { abrev: 'FSN', nombre: 'Formación Soberanía Nacional' },
   ],
 }
 
@@ -276,41 +286,8 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   }
   result['instituciones'] = instituciones
 
-  // 3. Calificaciones (cols 23-227, grupos de 5: nota, eval, mes, anio, inst)
-  const allGrades: RawGrade[] = []
-  let colKey = 23
-  while (colKey <= 227) {
-    const notaRaw = values[String(colKey)]
-    const tipoRaw = values[String(colKey + 1)]
-    const mesRaw = values[String(colKey + 2)]
-    const anioRaw = values[String(colKey + 3)]
-    const instRaw = values[String(colKey + 4)]
-
-    if (isValidGrade(notaRaw)) {
-      allGrades.push({
-        nota: String(notaRaw).trim(),
-        tipo: String(tipoRaw || '').trim(),
-        mes: String(mesRaw || '').trim(),
-        anio: String(anioRaw || '').trim(),
-        inst: String(instRaw || '').trim(),
-      })
-    }
-    colKey += 5
-  }
-
-  // Agrupar por año escolar
-  const gradesByYear: string[] = []
-  const groups: Record<string, RawGrade[]> = {}
-  for (const g of allGrades) {
-    if (!g.anio) continue
-    if (!groups[g.anio]) {
-      groups[g.anio] = []
-      gradesByYear.push(g.anio)
-    }
-    groups[g.anio].push(g)
-  }
-
-  // Asignar materias por año
+  // 3. Calificaciones — agrupar por POSICIÓN FIJA (bloques por año)
+  // Cada materia = 5 columnas: NOTA, EVAL, MES, AÑO, INST
   const calificaciones: {
     materia: string
     abrev: string
@@ -322,33 +299,44 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
     inst: string
   }[] = []
 
-  gradesByYear.forEach((year, yearIdx) => {
-    if (yearIdx >= 5) return
-    const grades = groups[year]
-    const materias = MATERIAS_VIGENTE[yearIdx + 1] || []
+  for (const block of YEAR_BLOCKS) {
+    const materias = MATERIAS_VIGENTE[block.yearNum] || []
+    for (let i = 0; i < block.count; i++) {
+      const col = block.startCol + (i * 5)
+      const notaRaw = values[String(col)]
+      const tipoRaw = values[String(col + 1)]
+      const mesRaw = values[String(col + 2)]
+      const anioRaw = values[String(col + 3)]
+      const instRaw = values[String(col + 4)]
 
-    grades.forEach((g, sIdx) => {
-      const m = materias[sIdx % materias.length]
+      const m = materias[i]
       calificaciones.push({
-        materia: m?.nombre || `Materia ${sIdx + 1}`,
-        abrev: m?.abrev || `M${sIdx + 1}`,
-        anioEscolar: yearIdx + 1,
-        nota: g.nota,
-        eval: g.tipo,
-        mes: g.mes,
-        anio: g.anio,
-        inst: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+        materia: m?.nombre || `Materia ${i + 1}`,
+        abrev: m?.abrev || `M${i + 1}`,
+        anioEscolar: block.yearNum,
+        nota: isValidGrade(notaRaw) ? String(notaRaw).trim() : '',
+        eval: String(tipoRaw || '').trim(),
+        mes: String(mesRaw || '').trim(),
+        anio: String(anioRaw || '').trim(),
+        inst: String(instRaw || '').trim(),
       })
-    })
-  })
+    }
+  }
   result['calificaciones'] = calificaciones
+
+  // Build aniosEscolares from the calificaciones
+  const aniosEscolares: string[] = []
+  for (const block of YEAR_BLOCKS) {
+    const firstCal = calificaciones.find(c => c.anioEscolar === block.yearNum && c.anio)
+    aniosEscolares.push(firstCal?.anio || '')
+  }
 
   // 4. Orientación y Convivencia (cols 228-232)
   const orientacion: { anio: string; literal: string }[] = []
   for (let i = 0; i < 5; i++) {
     const val = values[String(228 + i)]
     orientacion.push({
-      anio: gradesByYear[i] || '',
+      anio: aniosEscolares[i] || '',
       literal: val && val.trim() ? val.trim() : '',
     })
   }
@@ -361,7 +349,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
     const grupoDesc = values[String(233 + i)]
     const grupoLiteral = values[String(238 + i)]
     grupos.push({
-      anio: gradesByYear[i] || '',
+      anio: aniosEscolares[i] || '',
       grupo: grupoDesc && grupoDesc.trim() ? grupoDesc.trim() : '',
       literal: grupoLiteral && grupoLiteral.trim() ? grupoLiteral.trim() : '',
     })

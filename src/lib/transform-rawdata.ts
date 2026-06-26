@@ -31,7 +31,6 @@ const MATERIAS_BY_YEAR: Record<number, { abrev: string; nombre: string }[]> = {
     { abrev: 'QU', nombre: 'Química' },
     { abrev: 'BI', nombre: 'Biología' },
     { abrev: 'GH', nombre: 'Geografía, Historia y Ciudadanía' },
-    { abrev: 'FSN', nombre: 'Formación Soberanía Nacional' },
   ],
   4: [
     { abrev: 'CA', nombre: 'Castellano' },
@@ -140,49 +139,15 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
   }
   result['instituciones'] = instituciones
 
-  // 3. Calificaciones (cols 23-227, grupos de 5: nota, eval, mes, anio, inst)
-  interface RawGrade {
-    nota: string
-    tipo: string
-    mes: string
-    anio: string
-    inst: string
-  }
+  // 3. Calificaciones — agrupar por POSICIÓN FIJA (bloques por año)
+  const YEAR_BLOCKS = [
+    { yearNum: 1, startCol: 23, count: 7 },
+    { yearNum: 2, startCol: 58, count: 7 },
+    { yearNum: 3, startCol: 93, count: 8 },
+    { yearNum: 4, startCol: 133, count: 9 },
+    { yearNum: 5, startCol: 178, count: 10 },
+  ]
 
-  const allGrades: RawGrade[] = []
-  let key = 23
-  while (key <= 227) {
-    const notaRaw = flat[String(key)]
-    const tipoRaw = flat[String(key + 1)]
-    const mesRaw = flat[String(key + 2)]
-    const anioRaw = flat[String(key + 3)]
-    const instRaw = flat[String(key + 4)]
-
-    if (isValidGrade(notaRaw)) {
-      allGrades.push({
-        nota: String(notaRaw).trim(),
-        tipo: String(tipoRaw || '').trim(),
-        mes: String(mesRaw || '').trim(),
-        anio: String(anioRaw || '').trim(),
-        inst: String(instRaw || '').trim(),
-      })
-    }
-    key += 5
-  }
-
-  // Agrupar por año escolar
-  const gradesByYear: string[] = []
-  const groups: Record<string, RawGrade[]> = {}
-  for (const g of allGrades) {
-    if (!g.anio) continue
-    if (!groups[g.anio]) {
-      groups[g.anio] = []
-      gradesByYear.push(g.anio)
-    }
-    groups[g.anio].push(g)
-  }
-
-  // Asignar materias por año
   const calificaciones: {
     materia: string
     abrev: string
@@ -194,33 +159,45 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
     inst: string
   }[] = []
 
-  gradesByYear.forEach((year, yearIdx) => {
-    if (yearIdx >= 5) return
-    const grades = groups[year]
-    const materias = MATERIAS_BY_YEAR[yearIdx + 1] || []
+  const aniosEscolares: string[] = []
 
-    grades.forEach((g, sIdx) => {
-      const m = materias[sIdx % materias.length]
+  for (const block of YEAR_BLOCKS) {
+    const materias = MATERIAS_BY_YEAR[block.yearNum] || []
+    let firstAnio = ''
+    for (let i = 0; i < block.count; i++) {
+      const col = block.startCol + (i * 5)
+      const notaRaw = flat[String(col)]
+      const tipoRaw = flat[String(col + 1)]
+      const mesRaw = flat[String(col + 2)]
+      const anioRaw = flat[String(col + 3)]
+      const instRaw = flat[String(col + 4)]
+
+      const m = materias[i]
+      const anio = String(anioRaw || '').trim()
+      if (!firstAnio && anio) firstAnio = anio
+
       calificaciones.push({
-        materia: m?.nombre || `Materia ${sIdx + 1}`,
-        abrev: m?.abrev || `M${sIdx + 1}`,
-        anioEscolar: yearIdx + 1,
-        nota: g.nota,
-        eval: g.tipo,
-        mes: g.mes,
-        anio: g.anio,
-        inst: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+        materia: m?.nombre || `Materia ${i + 1}`,
+        abrev: m?.abrev || `M${i + 1}`,
+        anioEscolar: block.yearNum,
+        nota: isValidGrade(notaRaw) ? String(notaRaw).trim() : '',
+        eval: String(tipoRaw || '').trim(),
+        mes: String(mesRaw || '').trim(),
+        anio,
+        inst: String(instRaw || '').trim(),
       })
-    })
-  })
+    }
+    aniosEscolares.push(firstAnio)
+  }
   result['calificaciones'] = calificaciones
+  result['aniosEscolares'] = aniosEscolares
 
   // 4. Orientación y Convivencia (cols 228-232)
   const orientacion: { anio: string; literal: string }[] = []
   for (let i = 0; i < 5; i++) {
     const val = flat[String(228 + i)]
     orientacion.push({
-      anio: gradesByYear[i] || '',
+      anio: aniosEscolares[i] || '',
       literal: val && val.trim() ? String(val).trim() : '',
     })
   }
@@ -232,7 +209,7 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
     const grupoDesc = flat[String(233 + i)]
     const grupoLiteral = flat[String(238 + i)]
     grupos.push({
-      anio: gradesByYear[i] || '',
+      anio: aniosEscolares[i] || '',
       grupo: grupoDesc && grupoDesc.trim() ? String(grupoDesc).trim() : '',
       literal: grupoLiteral && grupoLiteral.trim() ? String(grupoLiteral).trim() : '',
     })

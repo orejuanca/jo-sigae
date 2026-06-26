@@ -240,11 +240,12 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
   result['grupos'] = grupos
 
   // 6. Observaciones (cols 243, 244, 260, 261)
+  // Los asteriscos son datos válidos (norma oficial), NO se filtran
   const obsKeys = ['243', '244', '260', '261']
   const observaciones: string[] = []
   for (const k of obsKeys) {
     const val = flat[k]
-    if (val && !isAsterisk(val)) {
+    if (val && val.trim()) {
       observaciones.push(String(val).trim())
     }
   }
@@ -254,7 +255,7 @@ export function transformBDVigente(flat: Record<string, string>): Record<string,
   const literales: string[] = []
   for (let i = 0; i < 5; i++) {
     const val = flat[String(248 + i)]
-    if (val && !isAsterisk(val)) {
+    if (val && val.trim()) {
       literales.push(String(val).trim())
     }
   }

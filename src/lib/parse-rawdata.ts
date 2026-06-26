@@ -577,10 +577,11 @@ function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
   }
 
   // ---- Observaciones - keys específicos por línea ----
+  // Los asteriscos son datos válidos (norma oficial), NO se filtran
   const obsKeys = ['243', '244', '260', '261']
   for (const key of obsKeys) {
     const obs = rawData[key]
-    if (obs && !isAsterisk(obs)) {
+    if (obs && obs.trim()) {
       result.observaciones.push(String(obs).trim())
     }
   }

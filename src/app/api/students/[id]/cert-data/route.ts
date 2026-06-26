@@ -44,6 +44,10 @@ export async function GET(
     // Convertir al formato del frontend
     const certData = parsedToCertData(parsed, student)
 
+    // DEBUG: log observaciones parsing
+    console.log(`[cert-data] ${student.cedula} obs from parsed:`, JSON.stringify(parsed.observaciones))
+    console.log(`[cert-data] ${student.cedula} obsLines in certData:`, JSON.stringify(certData.observacionesLines))
+
     const gradeCount = Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '').length
 
     return NextResponse.json({

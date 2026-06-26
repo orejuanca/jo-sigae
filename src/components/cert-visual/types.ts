@@ -323,7 +323,10 @@ export function patchDataBindings(config: GridConfig) {
   const bind = (rowIdx: number, colIdx: number, binding: string) => {
     if (!rows[rowIdx]) rows[rowIdx] = emptyRow(totalCols)
     if (!rows[rowIdx].cells[colIdx]) rows[rowIdx].cells[colIdx] = emptyCell()
-    rows[rowIdx].cells[colIdx].dataBinding = binding
+    // Only set binding if cell has no user-assigned binding (preserve manual changes)
+    if (!rows[rowIdx].cells[colIdx].dataBinding) {
+      rows[rowIdx].cells[colIdx].dataBinding = binding
+    }
   }
 
   // --- Static data fields (student, school, doc, director, cdcee) ---

@@ -110,6 +110,8 @@ function GridTable({
   onCellMouseUp,
   isPreview,
   displayData,
+  onCellEdit,
+  savingDraft,
 }: {
   config: GridConfig
   selectedCell: { row: number; col: number } | null
@@ -119,6 +121,8 @@ function GridTable({
   onCellMouseUp: () => void
   isPreview: boolean
   displayData: DisplayData | null
+  onCellEdit?: (binding: string, newValue: string) => void
+  savingDraft?: boolean
 }) {
   // Recompute occupied set on every render to track rowspan AND colspan correctly
   const occupied = useMemo(() => {
@@ -228,6 +232,22 @@ function GridTable({
                     onMouseDown={() => !isPreview && onCellMouseDown(r, c)}
                     onMouseEnter={() => !isPreview && onCellMouseEnter(r, c)}
                     title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
+                    onDoubleClick={(e) => {
+                      if (isPreview && cell.dataBinding && onCellEdit) {
+                        e.stopPropagation()
+                        const target = e.currentTarget.querySelector('[data-editable]') as HTMLElement | null
+                        if (target) {
+                          target.setAttribute('contentEditable', 'true')
+                          target.focus()
+                          // Select all text
+                          const range = document.createRange()
+                          range.selectNodeContents(target)
+                          const sel = window.getSelection()
+                          sel?.removeAllRanges()
+                          sel?.addRange(range)
+                        }
+                      }
+                    }}
                   >
                     {!isPreview && cell.dataBinding && (
                       <span style={{
@@ -239,6 +259,30 @@ function GridTable({
                     )}
                     {isPreview && cell.dataBinding && !displayContent ? (
                       <span style={{ color: '#ccc' }}>—</span>
+                    ) : isPreview && cell.dataBinding && onCellEdit ? (
+                      <span
+                        data-editable
+                        style={{ cursor: 'text', outline: 'none', minWidth: '20px', display: 'inline-block', minHeight: '1em' }}
+                        onBlur={(e) => {
+                          e.currentTarget.setAttribute('contentEditable', 'false')
+                          const newVal = e.currentTarget.textContent || ''
+                          if (newVal !== resolveBinding(cell.dataBinding!, displayData!)) {
+                            onCellEdit(cell.dataBinding, newVal)
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            e.currentTarget.blur()
+                          }
+                          if (e.key === 'Escape') {
+                            e.currentTarget.blur()
+                          }
+                        }}
+                        suppressContentEditableWarning
+                      >
+                        {displayContent}
+                      </span>
                     ) : (
                       displayContent
                     )}
@@ -415,6 +459,10 @@ export default function CertificacionesVisualPage() {
   const [certData, setCertData] = useState<CertData | null>(null)
   const [loadingData, setLoadingData] = useState(false)
 
+  // Inline editing: overrides per dataBinding path
+  const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
+  const [savingDraft, setSavingDraft] = useState(false)
+
   // Save dialog state
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [saveName, setSaveName] = useState('')
@@ -443,6 +491,7 @@ export default function CertificacionesVisualPage() {
   const handleSelectStudent = useCallback(async (student: Student) => {
     setSelectedStudent(student)
     setCertData(null)
+    setDraftOverrides({})
     setLoadingData(true)
     try {
       const res = await fetch(`/api/students/${student.id}/cert-data`)
@@ -453,6 +502,19 @@ export default function CertificacionesVisualPage() {
       }
       const result = await res.json()
       if (result.certData) {
+        // Load draft overrides if they exist
+        try {
+          const draftRes = await fetch(`/api/students/${student.id}/cert-draft`)
+          if (draftRes.ok) {
+            const draftData = await draftRes.json()
+            if (draftData.draft?.overrides) {
+              setDraftOverrides(draftData.draft.overrides)
+            } else {
+              setDraftOverrides({})
+            }
+          }
+        } catch { /* ignore */ }
+
         const cd = result.certData
         if (!cd.fechaExpedicion || cd.fechaExpedicion.trim() === '') {
           cd.fechaExpedicion = new Date().toISOString().split('T')[0]
@@ -472,6 +534,7 @@ export default function CertificacionesVisualPage() {
           }
         }
         setCertData(cd)
+        // Apply draft overrides to displayData later (via useMemo)
         const allCals = Object.values(cd.calificaciones || {}).flat() as CalificacionRow[]
         const gradeCount = allCals.filter(c => c.nota && c.nota !== '').length
         toast({ title: 'Datos cargados', description: `${gradeCount} calificaciones del rawData.` })
@@ -483,6 +546,29 @@ export default function CertificacionesVisualPage() {
     }
   }, [toast])
 
+  // Inline edit handler: update a single dataBinding value and auto-save
+  const handleCellEdit = useCallback((binding: string, newValue: string) => {
+    setDraftOverrides(prev => {
+      const updated = { ...prev, [binding]: newValue }
+      // Auto-save to cert-draft (debounced would be ideal, but immediate is simpler)
+      if (selectedStudent) {
+        setSavingDraft(true)
+        fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ datos: { overrides: updated } }),
+        }).then(res => {
+          if (res.ok) {
+            toast({ title: 'Guardado', description: `Cambios guardados en borrador.`, duration: 1500 })
+          }
+        }).catch(() => {
+          toast({ title: 'Error', description: 'No se pudo guardar el cambio.', variant: 'destructive' })
+        }).finally(() => setSavingDraft(false))
+      }
+      return updated
+    })
+  }, [selectedStudent, toast])
+
   // Convert CertData to DisplayData for the grid
   const displayData: DisplayData | null = useMemo(() => {
     if (!certData) return null
@@ -492,34 +578,58 @@ export default function CertificacionesVisualPage() {
       const [y, m, d] = fechaExp.split('-')
       fechaExp = `${d}/${m}/${y}`
     }
+
+    // Apply draft overrides to certData fields
+    const ov = draftOverrides
+    const get = (binding: string) => ov[binding]
+
     return {
-      lugar: certData.lugar,
-      fechaExpedicion: fechaExp,
-      planEstudio: certData.planEstudio,
+      lugar: get('doc.lugar') ?? certData.lugar,
+      fechaExpedicion: get('doc.fechaExpedicion') ?? fechaExp,
+      planEstudio: get('doc.planEstudio') ?? certData.planEstudio,
       planCodigo: schoolConfig.planCodigo,
-      od: certData.od,
-      denominacion: certData.denominacion,
-      direccion: certData.direccion,
-      telefono: certData.telefono,
-      municipio: certData.municipio,
-      estado: certData.estado,
-      cdcce: certData.cdcce,
-      estudiante: certData.estudiante,
+      od: get('school.codigo') ?? certData.od,
+      denominacion: get('school.denominacion') ?? certData.denominacion,
+      direccion: get('school.direccion') ?? certData.direccion,
+      telefono: get('school.telefono') ?? certData.telefono,
+      municipio: get('school.municipio') ?? certData.municipio,
+      estado: get('school.estado') ?? certData.estado,
+      cdcce: get('school.cdcce') ?? certData.cdcce,
+      estudiante: {
+        cedula: get('student.cedula') ?? certData.estudiante.cedula,
+        fechaNacimiento: get('student.fechaNacimiento') ?? certData.estudiante.fechaNacimiento,
+        apellidos: get('student.apellidos') ?? certData.estudiante.apellidos,
+        nombres: get('student.nombres') ?? certData.estudiante.nombres,
+        pais: get('student.pais') ?? certData.estudiante.pais,
+        estado: get('student.estado') ?? certData.estudiante.estado,
+        municipio: get('student.municipio') ?? certData.estudiante.municipio,
+      },
       instituciones: certData.instituciones,
       calificaciones: certData.calificaciones,
       orientacion: certData.orientacion,
       grupos: certData.grupos,
-      observaciones: certData.observaciones,
-      observacionesLines: certData.observacionesLines || [],
-      promedioAcumulado: certData.promedioAcumulado,
+      observaciones: get('doc.observaciones') ?? certData.observaciones,
+      observacionesLines: [
+        get('obsCert.0') ?? (certData.observacionesLines?.[0] || ''),
+        get('obsCert.1') ?? (certData.observacionesLines?.[1] || ''),
+        get('obsCert.2') ?? (certData.observacionesLines?.[2] || ''),
+        get('obsCert.3') ?? (certData.observacionesLines?.[3] || ''),
+      ],
+      promedioAcumulado: get('doc.promedioAcumulado') ?? certData.promedioAcumulado,
       director: certData.director,
       directorCdcce: certData.directorCdcce,
-      acta: certData.acta || '',
-      actaFecha: certData.actaFecha || '',
-      actaAnio: certData.actaAnio || '',
-      literalesFinales: certData.literalesFinales || [],
+      acta: get('doc.acta') ?? (certData.acta || ''),
+      actaFecha: get('doc.actaFecha') ?? (certData.actaFecha || ''),
+      actaAnio: get('doc.actaAnio') ?? (certData.actaAnio || ''),
+      literalesFinales: [
+        get('doc.literalFinal.0') ?? (certData.literalesFinales?.[0] || ''),
+        get('doc.literalFinal.1') ?? (certData.literalesFinales?.[1] || ''),
+        get('doc.literalFinal.2') ?? (certData.literalesFinales?.[2] || ''),
+        get('doc.literalFinal.3') ?? (certData.literalesFinales?.[3] || ''),
+        get('doc.literalFinal.4') ?? (certData.literalesFinales?.[4] || ''),
+      ],
     }
-  }, [certData])
+  }, [certData, draftOverrides])
 
   // === Grid Operations ===
   // Mouse handlers for range selection
@@ -1171,6 +1281,7 @@ export default function CertificacionesVisualPage() {
                 </div>
               )}
               {loadingData && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {savingDraft && <Loader2 className="h-3 w-3 animate-spin text-orange-500" />}
             </div>
           </CardContent>
         </Card>
@@ -1201,6 +1312,8 @@ export default function CertificacionesVisualPage() {
             onCellMouseUp={handleCellMouseUp}
             isPreview={isPreview}
             displayData={displayData}
+            onCellEdit={handleCellEdit}
+            savingDraft={savingDraft}
           />
         </div>
 

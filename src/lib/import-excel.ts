@@ -368,9 +368,10 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   }
   result['grupos'] = grupos
 
-  // 7. Observaciones (cols 243-247, texto continuo que puede dividirse en varias celdas)
+  // 7. Observaciones de Certificación (cols 243-244 = OBS.CERT.L1 y L2)
+  //    Cols 245-247 son de otros formatos (OBS.NOTAS / OBS.BOLETA), NO se cargan aquí
   const observaciones: string[] = []
-  for (let i = 243; i <= 247; i++) {
+  for (let i = 243; i <= 244; i++) {
     const val = values[String(i)]
     if (val && !isAsterisk(val)) {
       observaciones.push(val.trim())

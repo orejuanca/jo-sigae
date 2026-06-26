@@ -121,11 +121,11 @@ export const DATA_BINDINGS = [
     { value: 'doc.actaFecha', label: 'Acta — Fecha' },
     { value: 'doc.actaAnio', label: 'Acta — Año' },
   ]},
-  { group: 'Observaciones por Línea', bindings: [
-    { value: 'obsLine.0', label: 'Observación Línea 1' },
-    { value: 'obsLine.1', label: 'Observación Línea 2' },
-    { value: 'obsLine.2', label: 'Observación Línea 3' },
-    { value: 'obsLine.3', label: 'Observación Línea 4' },
+  { group: 'Observaciones Certificación (OBS.CERT)', bindings: [
+    { value: 'obsCert.0', label: 'OBS.CERT.L1 — Línea 1' },
+    { value: 'obsCert.1', label: 'OBS.CERT.L2 — Línea 2' },
+    { value: 'obsCert.2', label: 'OBS.CERT.L3 — Línea 3' },
+    { value: 'obsCert.3', label: 'OBS.CERT.L4 — Línea 4' },
   ]},
   { group: 'Literales Finales', bindings: [
     { value: 'doc.literalFinal.0', label: 'Literal Final — 1° Año' },
@@ -283,6 +283,11 @@ export function resolveBinding(path: string, data: DisplayData): string {
       if (rest[1] === 'grupo') return entry.grupo
       return entry.anio || ''
     }
+    case 'obsCert': {
+      const idx = parseInt(rest[0])
+      return data.observacionesLines?.[idx] || ''
+    }
+    // Legacy fallback
     case 'obsLine': {
       const idx = parseInt(rest[0])
       return data.observacionesLines?.[idx] || ''
@@ -445,11 +450,11 @@ export function patchDataBindings(config: GridConfig) {
   }
 
   // --- Observaciones (row 53, idx 52: P.A. + obs line 1) ---
-  bind(52, 7, 'obsLine.0')
+  bind(52, 7, 'obsCert.0')
   // --- Observaciones Línea 2-4 (rows 54-56, idx 53-55) ---
-  bind(53, 0, 'obsLine.1')
-  bind(54, 0, 'obsLine.2')
-  bind(55, 0, 'obsLine.3')
+  bind(53, 0, 'obsCert.1')
+  bind(54, 0, 'obsCert.2')
+  bind(55, 0, 'obsCert.3')
 
   return config
 }

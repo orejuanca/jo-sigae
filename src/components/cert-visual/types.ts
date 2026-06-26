@@ -287,11 +287,6 @@ export function resolveBinding(path: string, data: DisplayData): string {
       const idx = parseInt(rest[0])
       return data.observacionesLines?.[idx] || ''
     }
-    // Legacy fallback
-    case 'obsLine': {
-      const idx = parseInt(rest[0])
-      return data.observacionesLines?.[idx] || ''
-    }
     default: return ''
   }
 }

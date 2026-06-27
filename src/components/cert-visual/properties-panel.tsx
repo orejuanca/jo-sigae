@@ -24,9 +24,9 @@ interface PropertiesPanelProps {
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <Label className="text-xs whitespace-nowrap min-w-[120px]">{label}</Label>
-      <div className="flex items-center gap-2 flex-1 justify-end">
+    <div className="flex items-center gap-2">
+      <Label className="text-xs whitespace-nowrap">{label}</Label>
+      <div className="flex items-center gap-2 ml-auto">
         {children}
       </div>
     </div>
@@ -238,8 +238,8 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
       </CardHeader>
       <Separator />
       <CardContent className="p-3">
-        <ScrollArea className="h-[calc(100vh-180px)]" type="both">
-          <div className="space-y-3 pr-2" style={{ minWidth: '340px' }}>
+        <ScrollArea className="h-[calc(100vh-180px)]">
+          <div className="space-y-3 pr-2">
             {/* CONTENIDO */}
             <SectionHeader title="Contenido" defaultOpen>
               <FieldRow label="Texto estático:">

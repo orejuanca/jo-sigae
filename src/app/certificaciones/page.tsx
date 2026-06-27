@@ -197,124 +197,10 @@ export default function CertificacionesPage() {
   const { toast } = useToast()
 
   const [certData, setCertData] = useState<CertData>(emptyCertData())
-  const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
   const [loadedData, setLoadedData] = useState<CertData | null>(null)
 
-  // === Apply overrides to base certData (same system as Cert. Visual) ===
-  const YEAR_NAME_MAP_REV: Record<string, string> = {
-    'Primer Año': '1', 'Segundo Año': '2', 'Tercer Año': '3',
-    'Cuarto Año': '4', 'Quinto Año': '5',
-  }
-  const CALIF_FIELD_MAP: Record<string, string> = {
-    materia: 'materia', numero: 'numero', nota: 'nota', literal: 'literal',
-    te: 'tipoEvaluacion', mes: 'fechaMes', anio: 'fechaAnio', inst: 'instEduc',
-  }
-
-  const displayCertData: CertData = (() => {
-    const ov = draftOverrides
-    const get = (binding: string): string | undefined => {
-      const v = ov[binding]
-      return (v === undefined || v === null || v === '') ? undefined : v
-    }
-    const base = certData
-    // Deep clone calificaciones to apply per-field overrides
-    const califs: Record<string, CalificacionRow[]> = {}
-    for (const [yearKey, subjects] of Object.entries(base.calificaciones)) {
-      califs[yearKey] = subjects.map((subj, sIdx) => {
-        const patched = { ...subj }
-        const yNum = YEAR_NAME_MAP_REV[yearKey] || ''
-        if (yNum) {
-          for (const [shortField, realField] of Object.entries(CALIF_FIELD_MAP)) {
-            const key = `calif.${yNum}.${sIdx}.${shortField}`
-            const val = ov[key]
-            if (val !== undefined && val !== null && val !== '') {
-              ;(patched as any)[realField] = val
-            }
-          }
-        }
-        return patched
-      })
-    }
-    // Deep clone instituciones
-    const insts = base.instituciones.map((item, idx) => {
-      const patched = { ...item }
-      for (const field of ['denominacion', 'localidad', 'ef']) {
-        const val = ov[`inst.${idx}.${field}`]
-        if (val !== undefined && val !== null && val !== '') patched[field] = val
-      }
-      return patched
-    })
-    // Deep clone orientacion
-    const orients = base.orientacion.map((item, idx) => {
-      const patched = { ...item }
-      for (const field of ['anio', 'literal']) {
-        const val = ov[`orient.${idx}.${field}`]
-        if (val !== undefined && val !== null && val !== '') patched[field] = val
-      }
-      return patched
-    })
-    // Deep clone grupos
-    const grps = base.grupos.map((item, idx) => {
-      const patched = { ...item }
-      for (const field of ['anio', 'grupo', 'literal']) {
-        const val = ov[`grupo.${idx}.${field}`]
-        if (val !== undefined && val !== null && val !== '') patched[field] = val
-      }
-      return patched
-    })
-    // Build obs lines from rawData base
-    const obsLines = [
-      get('obsCert.0') ?? (base.observaciones || ''),
-      get('obsCert.1') ?? '',
-      get('obsCert.2') ?? '',
-      get('obsCert.3') ?? '',
-    ]
-    // Merge obs lines into single observaciones string
-    const mergedObs = obsLines.filter(l => l.trim()).join(' ')
-
-    return {
-      ...base,
-      lugar: get('doc.lugar') ?? base.lugar,
-      fechaExpedicion: get('doc.fechaExpedicion') ?? base.fechaExpedicion,
-      planEstudio: get('doc.planEstudio') ?? base.planEstudio,
-      od: get('school.codigo') ?? base.od,
-      denominacion: get('school.denominacion') ?? base.denominacion,
-      direccion: get('school.direccion') ?? base.direccion,
-      telefono: get('school.telefono') ?? base.telefono,
-      municipio: get('school.municipio') ?? base.municipio,
-      estado: get('school.estado') ?? base.estado,
-      cdcce: get('school.cdcce') ?? base.cdcce,
-      estudiante: {
-        cedula: get('student.cedula') ?? base.estudiante.cedula,
-        fechaNacimiento: get('student.fechaNacimiento') ?? base.estudiante.fechaNacimiento,
-        apellidos: get('student.apellidos') ?? base.estudiante.apellidos,
-        nombres: get('student.nombres') ?? base.estudiante.nombres,
-        pais: get('student.pais') ?? base.estudiante.pais,
-        estado: get('student.estado') ?? base.estudiante.estado,
-        municipio: get('student.municipio') ?? base.estudiante.municipio,
-      },
-      instituciones: insts,
-      calificaciones: califs,
-      orientacion: orients,
-      grupos: grps,
-      observaciones: get('doc.observaciones') ?? mergedObs,
-      promedioAcumulado: get('doc.promedioAcumulado') ?? base.promedioAcumulado,
-      director: {
-        apellidosNombres: get('director.nombre') ?? base.director.apellidosNombres,
-        cedula: get('director.cedula') ?? base.director.cedula,
-      },
-      directorCdcce: {
-        apellidosNombres: get('cdcee.nombre') ?? base.directorCdcce.apellidosNombres,
-        cedula: get('cdcee.cedula') ?? base.directorCdcce.cedula,
-      },
-      acta: get('doc.acta') ?? (base.acta || ''),
-      actaFecha: get('doc.actaFecha') ?? (base.actaFecha || ''),
-      actaAnio: get('doc.actaAnio') ?? (base.actaAnio || ''),
-    }
-  })()
-
   // Plan activo basado en los datos cargados
-  const activePlan = getActivePlan(displayCertData.planTipo)
+  const activePlan = getActivePlan(certData.planTipo)
 
   // Fetch historial de certificaciones del estudiante
   const fetchCertifications = async (studentId: string) => {
@@ -389,7 +275,6 @@ export default function CertificacionesPage() {
     setLoadedData(null)
     setDataLoaded(false)
     setLastSavedTab(null)
-    setDraftOverrides({})
     fetchCertifications(student.id)
 
     // Normalizar fecha de nacimiento a DD/MM/YYYY
@@ -429,15 +314,22 @@ export default function CertificacionesPage() {
     baseData.planTipo = student.plan === 'derogado' ? 'derogado' : 'vigente'
     setCertData(baseData)
 
-    // Intentar cargar borrador guardado (overrides)
-    const overrides = await loadDraft(student.id)
-    if (overrides && Object.keys(overrides).length > 0) {
-      setDraftOverrides(overrides)
+    // Intentar cargar borrador guardado primero
+    const draft = await loadDraft(student.id)
+    if (draft) {
+      // Asegurar que los campos del estudiante estén actualizados con los datos del modelo
+      draft.estudiante = {
+        ...draft.estudiante,
+        cedula: formatCedulaFinal(student.cedula),
+        apellidos: student.apellidos,
+        nombres: student.nombres,
+      }
+      setCertData(draft)
       setDataLoaded(true)
       setActiveTab('calificaciones')
       toast({
         title: 'Borrador recuperado',
-        description: `Se cargaron ${Object.keys(overrides).length} overrides guardados.`,
+        description: 'Se cargó la última versión guardada de los datos editados.',
       })
     } else {
       // Si no hay borrador, cargar del rawData como antes
@@ -445,32 +337,44 @@ export default function CertificacionesPage() {
     }
   }
 
-  const setOverride = (binding: string, value: string) => {
-    setDraftOverrides(prev => ({ ...prev, [binding]: value }))
-  }
-
   const updateNota = (anio: string, matIndex: number, field: keyof CalificacionRow, value: string) => {
-    const yNum = YEAR_NAME_MAP_REV[anio]
-    if (!yNum) return
-    // Find the short field name (reverse of CALIF_FIELD_MAP)
-    const shortField = (Object.entries(CALIF_FIELD_MAP).find(([, real]) => real === field)?.[0]) || field
-    setOverride(`calif.${yNum}.${matIndex}.${shortField}`, value)
-    // Auto-update literal when nota changes
-    if (field === 'nota' && value) {
-      setOverride(`calif.${yNum}.${matIndex}.literal`, notaEnLetras(value))
-    }
+    setCertData(prev => {
+      const updated = { ...prev }
+      updated.calificaciones = { ...prev.calificaciones }
+      updated.calificaciones[anio] = [...prev.calificaciones[anio]]
+      updated.calificaciones[anio][matIndex] = { ...updated.calificaciones[anio][matIndex], [field]: value }
+      if (field === 'nota' && value) {
+        updated.calificaciones[anio][matIndex].literal = notaEnLetras(value)
+      }
+      return updated
+    })
   }
 
   const updateInstitucion = (index: number, field: keyof InstitucionEducativa, value: string) => {
-    setOverride(`inst.${index}.${field}`, value)
+    setCertData(prev => {
+      const updated = { ...prev }
+      updated.instituciones = [...prev.instituciones]
+      updated.instituciones[index] = { ...updated.instituciones[index], [field]: value }
+      return updated
+    })
   }
 
   const updateOrientacion = (index: number, field: keyof OrientationRow, value: string) => {
-    setOverride(`orient.${index}.${field}`, value)
+    setCertData(prev => {
+      const updated = { ...prev }
+      updated.orientacion = [...prev.orientacion]
+      updated.orientacion[index] = { ...updated.orientacion[index], [field]: value }
+      return updated
+    })
   }
 
   const updateGrupo = (index: number, field: keyof GrupoRow, value: string) => {
-    setOverride(`grupo.${index}.${field}`, value)
+    setCertData(prev => {
+      const updated = { ...prev }
+      updated.grupos = [...prev.grupos]
+      updated.grupos[index] = { ...updated.grupos[index], [field]: value }
+      return updated
+    })
   }
 
   const handleGenerate = async () => {
@@ -480,7 +384,7 @@ export default function CertificacionesPage() {
       const res = await fetch('/api/certifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'CERTIFICACION_CALIFICACIONES', studentId: selectedStudent.id, datos: displayCertData }),
+        body: JSON.stringify({ tipo: 'CERTIFICACION_CALIFICACIONES', studentId: selectedStudent.id, datos: certData }),
       })
       if (!res.ok) throw new Error('Error al generar')
       const cert = await res.json()
@@ -524,7 +428,7 @@ export default function CertificacionesPage() {
       const res = await fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ datos: { overrides: draftOverrides } }),
+        body: JSON.stringify({ datos: certData }),
       })
       if (!res.ok) throw new Error('Error al guardar')
       setLastSavedTab(tabName)
@@ -536,80 +440,16 @@ export default function CertificacionesPage() {
     }
   }
 
-  // Cargar borrador — formato unificado: {overrides: {...}}
-  const loadDraft = async (studentId: string): Promise<Record<string, string> | null> => {
+  // Cargar borrador guardado previamente
+  const loadDraft = async (studentId: string): Promise<CertData | null> => {
     try {
       const res = await fetch(`/api/students/${studentId}/cert-draft`)
       if (!res.ok) return null
       const { draft } = await res.json()
       if (!draft) return null
-      // New unified format: {overrides: {...}}
-      if (draft.overrides && typeof draft.overrides === 'object') {
-        return draft.overrides as Record<string, string>
-      }
-      // Legacy format: full CertData object — migrate to overrides
-      if (draft.calificaciones) {
-        const overrides: Record<string, string> = {}
-        if (draft.lugar) overrides['doc.lugar'] = draft.lugar
-        if (draft.fechaExpedicion) overrides['doc.fechaExpedicion'] = draft.fechaExpedicion
-        if (draft.planEstudio) overrides['doc.planEstudio'] = draft.planEstudio
-        if (draft.od) overrides['school.codigo'] = draft.od
-        if (draft.denominacion) overrides['school.denominacion'] = draft.denominacion
-        if (draft.direccion) overrides['school.direccion'] = draft.direccion
-        if (draft.telefono) overrides['school.telefono'] = draft.telefono
-        if (draft.municipio) overrides['school.municipio'] = draft.municipio
-        if (draft.estado) overrides['school.estado'] = draft.estado
-        if (draft.observaciones) overrides['doc.observaciones'] = draft.observaciones
-        if (draft.promedioAcumulado) overrides['doc.promedioAcumulado'] = draft.promedioAcumulado
-        if (draft.acta) overrides['doc.acta'] = draft.acta
-        if (draft.actaFecha) overrides['doc.actaFecha'] = draft.actaFecha
-        if (draft.actaAnio) overrides['doc.actaAnio'] = draft.actaAnio
-        if (draft.estudiante) {
-          if (draft.estudiante.cedula) overrides['student.cedula'] = draft.estudiante.cedula
-          if (draft.estudiante.fechaNacimiento) overrides['student.fechaNacimiento'] = draft.estudiante.fechaNacimiento
-          if (draft.estudiante.apellidos) overrides['student.apellidos'] = draft.estudiante.apellidos
-          if (draft.estudiante.nombres) overrides['student.nombres'] = draft.estudiante.nombres
-          if (draft.estudiante.pais) overrides['student.pais'] = draft.estudiante.pais
-          if (draft.estudiante.estado) overrides['student.estado'] = draft.estudiante.estado
-          if (draft.estudiante.municipio) overrides['student.municipio'] = draft.estudiante.municipio
-        }
-        if (draft.calificaciones) {
-          for (const [yearKey, subjects] of Object.entries(draft.calificaciones)) {
-            const yNum = YEAR_NAME_MAP_REV[yearKey]
-            if (!yNum) continue
-            ;(subjects as CalificacionRow[]).forEach((subj, sIdx) => {
-              if (subj.nota) overrides[`calif.${yNum}.${sIdx}.nota`] = subj.nota
-              if (subj.literal) overrides[`calif.${yNum}.${sIdx}.literal`] = subj.literal
-              if (subj.tipoEvaluacion) overrides[`calif.${yNum}.${sIdx}.te`] = subj.tipoEvaluacion
-              if (subj.fechaMes) overrides[`calif.${yNum}.${sIdx}.mes`] = subj.fechaMes
-              if (subj.fechaAnio) overrides[`calif.${yNum}.${sIdx}.anio`] = subj.fechaAnio
-              if (subj.instEduc) overrides[`calif.${yNum}.${sIdx}.inst`] = subj.instEduc
-            })
-          }
-        }
-        if (draft.instituciones) {
-          ;(draft.instituciones as InstitucionEducativa[]).forEach((inst, idx) => {
-            if (inst.denominacion) overrides[`inst.${idx}.denominacion`] = inst.denominacion
-            if (inst.localidad) overrides[`inst.${idx}.localidad`] = inst.localidad
-            if (inst.ef) overrides[`inst.${idx}.ef`] = inst.ef
-          })
-        }
-        if (draft.orientacion) {
-          ;(draft.orientacion as OrientationRow[]).forEach((row, idx) => {
-            if (row.anio) overrides[`orient.${idx}.anio`] = row.anio
-            if (row.literal) overrides[`orient.${idx}.literal`] = row.literal
-          })
-        }
-        if (draft.grupos) {
-          ;(draft.grupos as GrupoRow[]).forEach((row, idx) => {
-            if (row.anio) overrides[`grupo.${idx}.anio`] = row.anio
-            if (row.grupo) overrides[`grupo.${idx}.grupo`] = row.grupo
-            if (row.literal) overrides[`grupo.${idx}.literal`] = row.literal
-          })
-        }
-        return overrides
-      }
-      return null
+      // Ignore cert-visual inline-edit drafts (they use "overrides" format, not full CertData)
+      if (draft.overrides && !draft.calificaciones) return null
+      return draft as CertData | null
     } catch {
       return null
     }
@@ -635,7 +475,7 @@ export default function CertificacionesPage() {
     </div>
   )
 
-  const displayData = previewCert && loadedData ? loadedData : displayCertData
+  const displayData = previewCert && loadedData ? loadedData : certData
 
   // Convertir YYYY-MM-DD → DD/MM/YYYY para mostrar en la vista de impresión
   const displayFechaExpedicion = (() => {
@@ -664,7 +504,7 @@ export default function CertificacionesPage() {
   }
 
   const countGrades = () => {
-    return Object.values(displayCertData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && c.nota !== 'PE').length
+    return Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && c.nota !== 'PE').length
   }
 
   // Helper styles for cert preview tables — Excel format: Arial 9pt, thin borders, NO backgrounds
@@ -869,74 +709,74 @@ export default function CertificacionesPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div className="grid gap-2">
                         <Label>Lugar de Expedición</Label>
-                        <Input value={displayCertData.lugar} onChange={(e) => setOverride('doc.lugar', e.target.value)} />
+                        <Input value={certData.lugar} onChange={(e) => setCertData(prev => ({ ...prev, lugar: e.target.value }))} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Fecha de Expedición</Label>
-                        <Input type="date" value={displayCertData.fechaExpedicion} onChange={(e) => setOverride('doc.fechaExpedicion', e.target.value)} />
+                        <Input type="date" value={certData.fechaExpedicion} onChange={(e) => setCertData(prev => ({ ...prev, fechaExpedicion: e.target.value }))} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Código OD</Label>
-                        <Input value={displayCertData.od} onChange={(e) => setOverride('school.codigo', e.target.value)} />
+                        <Input value={certData.od} onChange={(e) => setCertData(prev => ({ ...prev, od: e.target.value }))} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Plan de Estudio</Label>
-                        <Input value={displayCertData.planEstudio} onChange={(e) => setOverride('doc.planEstudio', e.target.value)} />
+                        <Input value={certData.planEstudio} onChange={(e) => setCertData(prev => ({ ...prev, planEstudio: e.target.value }))} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label>Denominación y Epónimo</Label>
-                        <Input value={displayCertData.denominacion} onChange={(e) => setOverride('school.denominacion', e.target.value)} />
+                        <Input value={certData.denominacion} onChange={(e) => setCertData(prev => ({ ...prev, denominacion: e.target.value }))} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Teléfono</Label>
-                        <Input value={displayCertData.telefono} onChange={(e) => setOverride('school.telefono', e.target.value)} />
+                        <Input value={certData.telefono} onChange={(e) => setCertData(prev => ({ ...prev, telefono: e.target.value }))} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="grid gap-2">
                         <Label>Dirección</Label>
-                        <Input value={displayCertData.direccion} onChange={(e) => setOverride('school.direccion', e.target.value)} />
+                        <Input value={certData.direccion} onChange={(e) => setCertData(prev => ({ ...prev, direccion: e.target.value }))} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Municipio</Label>
-                        <Input value={displayCertData.municipio} onChange={(e) => setOverride('school.municipio', e.target.value)} />
+                        <Input value={certData.municipio} onChange={(e) => setCertData(prev => ({ ...prev, municipio: e.target.value }))} />
                       </div>
                       <div className="grid gap-2">
                         <Label>Estado / CDCCE</Label>
-                        <Input value={displayCertData.estado} onChange={(e) => { setOverride('school.estado', e.target.value); setOverride('school.cdcce', e.target.value) }} />
+                        <Input value={certData.estado} onChange={(e) => setCertData(prev => ({ ...prev, estado: e.target.value, cdcce: e.target.value }))} />
                       </div>
                     </div>
 
                     <div className="border-t pt-4">
                       <h3 className="text-sm font-semibold mb-4">III. Datos del Estudiante</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="grid gap-2"><Label>Cédula de Identificación</Label><Input value={displayCertData.estudiante.cedula} onChange={(e) => setOverride('student.cedula', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Fecha de Nacimiento</Label><Input value={displayCertData.estudiante.fechaNacimiento} onChange={(e) => setOverride('student.fechaNacimiento', e.target.value)} placeholder="dd/mm/aaaa" /></div>
-                        <div className="grid gap-2"><Label>Apellidos</Label><Input value={displayCertData.estudiante.apellidos} onChange={(e) => setOverride('student.apellidos', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Nombres</Label><Input value={displayCertData.estudiante.nombres} onChange={(e) => setOverride('student.nombres', e.target.value)} /></div>
+                        <div className="grid gap-2"><Label>Cédula de Identificación</Label><Input value={certData.estudiante.cedula} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, cedula: e.target.value } }))} /></div>
+                        <div className="grid gap-2"><Label>Fecha de Nacimiento</Label><Input value={certData.estudiante.fechaNacimiento} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, fechaNacimiento: e.target.value } }))} placeholder="dd/mm/aaaa" /></div>
+                        <div className="grid gap-2"><Label>Apellidos</Label><Input value={certData.estudiante.apellidos} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, apellidos: e.target.value } }))} /></div>
+                        <div className="grid gap-2"><Label>Nombres</Label><Input value={certData.estudiante.nombres} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, nombres: e.target.value } }))} /></div>
                       </div>
                       <div className="grid grid-cols-3 gap-4 mt-4">
-                        <div className="grid gap-2"><Label>País</Label><Input value={displayCertData.estudiante.pais} onChange={(e) => setOverride('student.pais', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Estado</Label><Input value={displayCertData.estudiante.estado} onChange={(e) => setOverride('student.estado', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Municipio</Label><Input value={displayCertData.estudiante.municipio} onChange={(e) => setOverride('student.municipio', e.target.value)} /></div>
+                        <div className="grid gap-2"><Label>País</Label><Input value={certData.estudiante.pais} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, pais: e.target.value } }))} /></div>
+                        <div className="grid gap-2"><Label>Estado</Label><Input value={certData.estudiante.estado} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, estado: e.target.value } }))} /></div>
+                        <div className="grid gap-2"><Label>Municipio</Label><Input value={certData.estudiante.municipio} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, municipio: e.target.value } }))} /></div>
                       </div>
                     </div>
 
                     <div className="border-t pt-4">
                       <h3 className="text-sm font-semibold mb-4">VII. Director(a) de la Institución</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2"><Label>Apellidos y Nombres</Label><Input value={displayCertData.director.apellidosNombres} onChange={(e) => setOverride('director.nombre', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Cédula de Identidad</Label><Input value={displayCertData.director.cedula} onChange={(e) => setOverride('director.cedula', e.target.value)} /></div>
+                        <div className="grid gap-2"><Label>Apellidos y Nombres</Label><Input value={certData.director.apellidosNombres} onChange={(e) => setCertData(prev => ({ ...prev, director: { ...prev.director, apellidosNombres: e.target.value } }))} /></div>
+                        <div className="grid gap-2"><Label>Cédula de Identidad</Label><Input value={certData.director.cedula} onChange={(e) => setCertData(prev => ({ ...prev, director: { ...prev.director, cedula: e.target.value } }))} /></div>
                       </div>
                     </div>
 
                     <div className="border-t pt-4">
                       <h3 className="text-sm font-semibold mb-4">VIII. Director(a) del CDCCE</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2"><Label>Apellidos y Nombres</Label><Input value={displayCertData.directorCdcce.apellidosNombres} onChange={(e) => setOverride('cdcee.nombre', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Cédula de Identidad</Label><Input value={displayCertData.directorCdcce.cedula} onChange={(e) => setOverride('cdcee.cedula', e.target.value)} /></div>
+                        <div className="grid gap-2"><Label>Apellidos y Nombres</Label><Input value={certData.directorCdcce.apellidosNombres} onChange={(e) => setCertData(prev => ({ ...prev, directorCdcce: { ...prev.directorCdcce, apellidosNombres: e.target.value } }))} /></div>
+                        <div className="grid gap-2"><Label>Cédula de Identidad</Label><Input value={certData.directorCdcce.cedula} onChange={(e) => setCertData(prev => ({ ...prev, directorCdcce: { ...prev.directorCdcce, cedula: e.target.value } }))} /></div>
                       </div>
                     </div>
                   </CardContent>
@@ -962,7 +802,7 @@ export default function CertificacionesPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {displayCertData.instituciones.map((inst, i) => (
+                          {certData.instituciones.map((inst, i) => (
                             <tr key={i} className="border-b">
                               <td className="text-center py-2 px-3">{inst.numero}</td>
                               <td className="py-2 px-3"><Input className="h-8" value={inst.denominacion} onChange={(e) => updateInstitucion(i, 'denominacion', e.target.value)} placeholder="Nombre de la institución" /></td>
@@ -984,16 +824,16 @@ export default function CertificacionesPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <CardTitle className="text-base">V. Plan de Estudio — Calificaciones por Año</CardTitle>
-                      {displayCertData.acta && (
+                      {certData.acta && (
                         <Badge variant="outline" className="text-xs">
-                          Acta: {displayCertData.acta} {displayCertData.actaFecha && `| ${displayCertData.actaFecha}`}
+                          Acta: {certData.acta} {certData.actaFecha && `| ${certData.actaFecha}`}
                         </Badge>
                       )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {activePlan.map((plan, planIdx) => {
-                      const grades = displayCertData.calificaciones[plan.anio] || []
+                      const grades = certData.calificaciones[plan.anio] || []
                       const hasGrades = grades.some(g => g.nota && g.nota !== '')
                       const yearLabel = certData.aniosEscolares?.[planIdx] || ''
 
@@ -1090,7 +930,7 @@ export default function CertificacionesPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {displayCertData.orientacion.map((row, i) => (
+                            {certData.orientacion.map((row, i) => (
                               <tr key={i} className="border-b">
                                 <td className="text-center py-1 px-3">{i + 1}</td>
                                 <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-20 mx-auto" value={row.anio} onChange={(e) => updateOrientacion(i, 'anio', e.target.value)} /></td>
@@ -1119,7 +959,7 @@ export default function CertificacionesPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {displayCertData.grupos.map((row, i) => (
+                            {certData.grupos.map((row, i) => (
                               <tr key={i} className="border-b">
                                 <td className="text-center py-1 px-3">{i + 1}</td>
                                 <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-20 mx-auto" value={row.anio} onChange={(e) => updateGrupo(i, 'anio', e.target.value)} /></td>
@@ -1138,20 +978,20 @@ export default function CertificacionesPage() {
                       <CardTitle className="text-base">VI. Observaciones</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {displayCertData.observaciones && (
+                      {certData.observaciones && (
                         <div className="bg-muted/50 p-3 rounded-lg text-sm">
                           <Label className="text-xs text-muted-foreground">Observaciones cargadas del rawData:</Label>
-                          <p className="mt-1 text-xs leading-relaxed">{displayCertData.observaciones}</p>
+                          <p className="mt-1 text-xs leading-relaxed">{certData.observaciones}</p>
                         </div>
                       )}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label>P.A. (Promedio Acumulado) / Acta</Label>
-                          <Input value={displayCertData.promedioAcumulado} onChange={(e) => setOverride('doc.promedioAcumulado', e.target.value)} placeholder="Ej: Acta AA 7379891" />
+                          <Input value={certData.promedioAcumulado} onChange={(e) => setCertData(prev => ({ ...prev, promedioAcumulado: e.target.value }))} placeholder="Ej: Acta AA 7379891" />
                         </div>
                         <div className="grid gap-2">
                           <Label>Observaciones adicionales</Label>
-                          <Input value={displayCertData.observaciones} onChange={(e) => setOverride('doc.observaciones', e.target.value)} placeholder="Observaciones adicionales" />
+                          <Input value={certData.observaciones} onChange={(e) => setCertData(prev => ({ ...prev, observaciones: e.target.value }))} placeholder="Observaciones adicionales" />
                         </div>
                       </div>
                     </CardContent>
@@ -1558,9 +1398,9 @@ export default function CertificacionesPage() {
                     <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
                       <p><strong>Estudiante:</strong> {selectedStudent.apellidos}, {selectedStudent.nombres}</p>
                       <p><strong>C.I.:</strong> {formatCedulaFinal(selectedStudent.cedula)}</p>
-                      <p><strong>Plan:</strong> {displayCertData.planEstudio}</p>
+                      <p><strong>Plan:</strong> {certData.planEstudio}</p>
                       <p><strong>Calificaciones cargadas:</strong> {countGrades()}</p>
-                      {displayCertData.acta && <p><strong>Acta:</strong> {displayCertData.acta}</p>}
+                      {certData.acta && <p><strong>Acta:</strong> {certData.acta}</p>}
                     </div>
 
                     {countGrades() === 0 && (

@@ -1214,8 +1214,9 @@ export default function CertificacionesVisualPage() {
         }
         const cs = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rs = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
+        const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="/logo-gob-mppe.png" style="max-width:100%;height:auto;object-fit:contain;display:block">`
+          ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
           : ''
         const text = imgTag || (content || '')
         cellsHtml += `<td${cs}${rs} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`

@@ -26,8 +26,9 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
+  Combine, TableCellsMerge, TableCellsSplit, Group, Printer, FileDown,
 } from 'lucide-react'
+import html2pdf from 'html2pdf.js'
 
 // === Student & CertData types (local to this page) ===
 interface Student {
@@ -451,6 +452,7 @@ export default function CertificacionesVisualPage() {
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape')
   const [printScale, setPrintScale] = useState(100)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
 
   // Range selection state (drag to select multiple cells)
   const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
@@ -1185,8 +1187,8 @@ export default function CertificacionesVisualPage() {
     toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
   }
 
-  const executePrint = (orientation: 'landscape' | 'portrait', scale: number) => {
-    setShowPrintDialog(false)
+  // Build the certification table HTML string (shared by print & PDF)
+  const buildTableHtml = () => {
     const cfg = gridConfig
     const data = displayData
     const occupied = new Set<string>()
@@ -1204,7 +1206,6 @@ export default function CertificacionesVisualPage() {
 
     const borderStyle = (enabled: boolean, color: string) =>
       enabled ? `1px solid ${color}` : 'none'
-
     const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
 
     let rowsHtml = ''
@@ -1230,6 +1231,12 @@ export default function CertificacionesVisualPage() {
     }
 
     const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
+    return { tableHtml: `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
+  }
+
+  const executePrint = (orientation: 'landscape' | 'portrait', scale: number) => {
+    setShowPrintDialog(false)
+    const { tableHtml } = buildTableHtml()
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
 @page{size:${orientation};margin:5mm}
@@ -1239,7 +1246,7 @@ table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style></head><body><table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table></body></html>`
+</style></head><body>${tableHtml}</body></html>`
 
     let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
     if (!iframe) {
@@ -1268,6 +1275,35 @@ img{max-width:100%;height:auto}
       })
     } else {
       setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+    }
+  }
+
+  const executeSavePDF = async (orientation: 'landscape' | 'portrait', scale: number) => {
+    setShowPrintDialog(false)
+    setGeneratingPDF(true)
+    const { tableHtml } = buildTableHtml()
+
+    const wrapper = document.createElement('div')
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1344px;'
+    wrapper.innerHTML = `<div style="border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center">${tableHtml}</div>`
+    document.body.appendChild(wrapper)
+
+    try {
+      const opt = {
+        margin: [5, 5, 5, 5],
+        filename: `certificacion-${selectedStudent?.cedula || 'documento'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: orientation as 'landscape' | 'portrait' },
+      }
+      await html2pdf().from(wrapper.firstElementChild as HTMLElement).set(opt).save()
+      toast({ title: 'PDF generado', description: 'El archivo se descargó correctamente.' })
+    } catch (e) {
+      console.error('[PDF]', e)
+      toast({ title: 'Error al generar PDF', description: 'No se pudo crear el archivo PDF.', variant: 'destructive' })
+    } finally {
+      document.body.removeChild(wrapper)
+      setGeneratingPDF(false)
     }
   }
 
@@ -1609,7 +1645,18 @@ img{max-width:100%;height:auto}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
-            <Button onClick={() => executePrint(printOrientation, printScale)}>
+            <Button
+              variant="outline"
+              onClick={() => executeSavePDF(printOrientation, printScale)}
+              disabled={generatingPDF}
+            >
+              {generatingPDF
+                ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                : <FileDown className="h-4 w-4 mr-1.5" />
+              }
+              {generatingPDF ? 'Generando...' : 'Guardar PDF'}
+            </Button>
+            <Button onClick={() => executePrint(printOrientation, printScale)} disabled={generatingPDF}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimir
             </Button>
           </DialogFooter>

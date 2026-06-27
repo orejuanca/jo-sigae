@@ -450,6 +450,7 @@ export default function CertificacionesVisualPage() {
   const [colInput, setColInput] = useState('27')
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape')
+  const [printScale, setPrintScale] = useState(100)
 
   // Range selection state (drag to select multiple cells)
   const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
@@ -1184,7 +1185,7 @@ export default function CertificacionesVisualPage() {
     toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
   }
 
-  const executePrint = (orientation: 'landscape' | 'portrait') => {
+  const executePrint = (orientation: 'landscape' | 'portrait', scale: number) => {
     setShowPrintDialog(false)
     const cfg = gridConfig
     const data = displayData
@@ -1233,8 +1234,8 @@ export default function CertificacionesVisualPage() {
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
 @page{size:${orientation};margin:5mm}
 *{margin:0;padding:0;box-sizing:border-box}
-body{display:flex;justify-content:center}
-table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed}
+body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
+table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -1558,7 +1559,7 @@ img{max-width:100%;height:auto}
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
             <DialogTitle>Imprimir Certificación</DialogTitle>
-            <DialogDescription>Configura la orientación del papel antes de imprimir.</DialogDescription>
+            <DialogDescription>Configura la orientación y escala antes de imprimir.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-3">
             <Label className="text-sm font-medium">Orientación del papel</Label>
@@ -1584,10 +1585,31 @@ img{max-width:100%;height:auto}
                 <span className="text-sm font-medium">Vertical</span>
               </button>
             </div>
+
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Escala</Label>
+                <span className="text-sm font-semibold text-primary">{printScale}%</span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={150}
+                step={5}
+                value={printScale}
+                onChange={(e) => setPrintScale(Number(e.target.value))}
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+                <span>50%</span>
+                <span>100%</span>
+                <span>150%</span>
+              </div>
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
-            <Button onClick={() => executePrint(printOrientation)}>
+            <Button onClick={() => executePrint(printOrientation, printScale)}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimir
             </Button>
           </DialogFooter>

@@ -581,9 +581,9 @@ export default function CertificacionesVisualPage() {
   }, [selectedStudent, draftOverrides, toast])
 
   // Helper: apply draft overrides to simple array fields (inst, orient, grupo)
-  function applyArrayOverrides<T extends Record<string, any> & { [k: string]: any }>(
-    arr: T[] | undefined, ov: Record<string, string>, prefix: string, fields: string[]
-  ): T[] {
+  function applyArrayOverrides(
+    arr: Record<string, any>[] | undefined, ov: Record<string, string>, prefix: string, fields: string[]
+  ): Record<string, any>[] {
     if (!arr) return []
     return arr.map((item, idx) => {
       const patched = { ...item }

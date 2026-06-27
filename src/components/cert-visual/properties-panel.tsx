@@ -238,8 +238,8 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
       </CardHeader>
       <Separator />
       <CardContent className="p-3">
-        <ScrollArea className="h-[calc(100vh-180px)]">
-          <div className="space-y-3 pr-2">
+        <ScrollArea className="h-[calc(100vh-180px)]" type="both">
+          <div className="space-y-3 pr-2" style={{ minWidth: '340px' }}>
             {/* CONTENIDO */}
             <SectionHeader title="Contenido" defaultOpen>
               <FieldRow label="Texto estático:">

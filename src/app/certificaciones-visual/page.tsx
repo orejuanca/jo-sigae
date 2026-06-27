@@ -448,6 +448,8 @@ export default function CertificacionesVisualPage() {
   const [isPreview, setIsPreview] = useState(false)
   const [gridInitialized, setGridInitialized] = useState(false)
   const [colInput, setColInput] = useState('27')
+  const [showPrintDialog, setShowPrintDialog] = useState(false)
+  const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape')
 
   // Range selection state (drag to select multiple cells)
   const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
@@ -1182,7 +1184,8 @@ export default function CertificacionesVisualPage() {
     toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
   }
 
-  const handlePrint = () => {
+  const executePrint = (orientation: 'landscape' | 'portrait') => {
+    setShowPrintDialog(false)
     const cfg = gridConfig
     const data = displayData
     const occupied = new Set<string>()
@@ -1228,7 +1231,7 @@ export default function CertificacionesVisualPage() {
     const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
-@page{size:landscape;margin:5mm}
+@page{size:${orientation};margin:5mm}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center}
 table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed}
@@ -1237,7 +1240,6 @@ img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head><body><table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table></body></html>`
 
-    // Use hidden iframe — no popup, no blank page, logo loads correctly
     let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
     if (!iframe) {
       iframe = document.createElement('iframe')
@@ -1250,16 +1252,13 @@ img{max-width:100%;height:auto}
     doc.write(html)
     doc.close()
 
-    // Wait for images to load before printing
     const imgs = doc.querySelectorAll('img')
     if (imgs.length > 0) {
       let loaded = 0
       const onDone = () => {
         loaded++
         if (loaded >= imgs.length) {
-          setTimeout(() => {
-            iframe!.contentWindow!.print()
-          }, 300)
+          setTimeout(() => { iframe!.contentWindow!.print() }, 300)
         }
       }
       imgs.forEach(img => {
@@ -1270,6 +1269,8 @@ img{max-width:100%;height:auto}
       setTimeout(() => { iframe!.contentWindow!.print() }, 300)
     }
   }
+
+  const handlePrint = () => setShowPrintDialog(true)
 
   // Selected cell data
   const selectedCellData = useMemo(() => {
@@ -1551,6 +1552,47 @@ img{max-width:100%;height:auto}
         onDelete={handleDeleteLayout}
         loading={loadingLayouts || loadingLayout}
       />
+
+      {/* === Print Dialog === */}
+      <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+        <DialogContent className="sm:max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle>Imprimir Certificación</DialogTitle>
+            <DialogDescription>Configura la orientación del papel antes de imprimir.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <Label className="text-sm font-medium">Orientación del papel</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setPrintOrientation('landscape')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${printOrientation === 'landscape' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
+              >
+                <svg width="40" height="28" viewBox="0 0 40 28" fill="none" className="text-foreground">
+                  <rect x="0.5" y="0.5" width="39" height="27" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <line x1="0.5" y1="22" x2="39.5" y2="22" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 1" opacity="0.4"/>
+                </svg>
+                <span className="text-sm font-medium">Horizontal</span>
+              </button>
+              <button
+                onClick={() => setPrintOrientation('portrait')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${printOrientation === 'portrait' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
+              >
+                <svg width="28" height="40" viewBox="0 0 28 40" fill="none" className="text-foreground">
+                  <rect x="0.5" y="0.5" width="27" height="39" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <line x1="0.5" y1="34" x2="27.5" y2="34" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 1" opacity="0.4"/>
+                </svg>
+                <span className="text-sm font-medium">Vertical</span>
+              </button>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
+            <Button onClick={() => executePrint(printOrientation)}>
+              <Printer className="h-4 w-4 mr-1.5" /> Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   )
 }

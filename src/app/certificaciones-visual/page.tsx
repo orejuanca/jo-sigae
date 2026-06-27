@@ -330,7 +330,7 @@ function ColumnWidthEditor({
   }
 
   return (
-    <div className="flex gap-0.5 flex-wrap p-1">
+    <div className="flex gap-0.5 overflow-x-auto p-1" style={{ flexWrap: 'nowrap' }}>
       {config.columnWidths.map((w, i) => (
         <div
           key={i}
@@ -1386,7 +1386,7 @@ export default function CertificacionesVisualPage() {
 
         {/* Properties Panel (only in designer mode, when cell selected) */}
         {!isPreview && selectedCell && (
-          <div className="w-[300px] shrink-0">
+          <div className="w-[300px] shrink-0 max-h-[calc(100vh-280px)] overflow-y-auto">
             <PropertiesPanel
               cell={selectedCellData}
               row={selectedCell.row}

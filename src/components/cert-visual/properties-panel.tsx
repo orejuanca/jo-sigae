@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -225,7 +224,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
   }
 
   return (
-    <Card className="h-full">
+    <Card style={{ minWidth: 320 }}>
       <CardHeader className="pb-2 px-4 pt-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm">Celda [{row}, {col}]</CardTitle>
@@ -237,9 +236,8 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
         </div>
       </CardHeader>
       <Separator />
-      <CardContent className="p-3">
-        <ScrollArea className="h-[calc(100vh-180px)]">
-          <div className="space-y-3 pr-2">
+      <CardContent className="p-3 overflow-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+          <div className="space-y-3 pr-2" style={{ minWidth: 340 }}>
             {/* CONTENIDO */}
             <SectionHeader title="Contenido" defaultOpen>
               <FieldRow label="Texto estático:">
@@ -459,7 +457,6 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
               </FieldRow>
             </SectionHeader>
           </div>
-        </ScrollArea>
       </CardContent>
     </Card>
   )

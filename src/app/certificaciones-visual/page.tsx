@@ -1386,7 +1386,7 @@ export default function CertificacionesVisualPage() {
 
         {/* Properties Panel (only in designer mode, when cell selected) */}
         {!isPreview && selectedCell && (
-          <div className="w-[300px] shrink-0 max-h-[calc(100vh-280px)] overflow-y-auto overflow-x-auto">
+          <div className="w-[320px] shrink-0">
             <PropertiesPanel
               cell={selectedCellData}
               row={selectedCell.row}

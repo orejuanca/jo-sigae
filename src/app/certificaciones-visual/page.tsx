@@ -1201,6 +1201,8 @@ export default function CertificacionesVisualPage() {
     const borderStyle = (enabled: boolean, color: string) =>
       enabled ? `1px solid ${color}` : 'none'
 
+    const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
+
     let rowsHtml = ''
     for (let r = 0; r < cfg.rows.length; r++) {
       const gridRow = cfg.rows[r]
@@ -1212,32 +1214,61 @@ export default function CertificacionesVisualPage() {
         if (cell.dataBinding && data) {
           content = resolveBinding(cell.dataBinding, data) || ''
         }
-        const cs = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
-        const rs = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
-        const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
+        const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
+        const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
           ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
           : ''
         const text = imgTag || (content || '')
-        cellsHtml += `<td${cs}${rs} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
+        cellsHtml += `<td${csAttr}${rsAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }
 
     const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
 
-    const printWin = window.open('', '_blank', 'width=900,height=700')
-    if (!printWin) { toast({ title: 'Error', description: 'No se pudo abrir la ventana de impresión. Permite ventanas emergentes.' }); return }
-    printWin.document.write(`<!DOCTYPE html><html><head><title>Imprimir Certificación</title><style>
-@page { size: landscape; margin: 5mm; }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { display: flex; justify-content: center; }
-table { border-collapse: collapse; width: 816px; height: 1344px; font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; table-layout: fixed; }
-td { overflow: hidden; }
-img { max-width: 100%; height: auto; }
-@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-</style></head><body><table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table><script>setTimeout(()=>{window.print();window.close()},400)<\/script></body></html>`)
-    printWin.document.close()
+    const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
+@page{size:landscape;margin:5mm}
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center}
+table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed}
+td{overflow:hidden}
+img{max-width:100%;height:auto}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body><table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table></body></html>`
+
+    // Use hidden iframe — no popup, no blank page, logo loads correctly
+    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.id = 'cert-print-frame'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+      document.body.appendChild(iframe)
+    }
+    const doc = iframe.contentDocument!
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    // Wait for images to load before printing
+    const imgs = doc.querySelectorAll('img')
+    if (imgs.length > 0) {
+      let loaded = 0
+      const onDone = () => {
+        loaded++
+        if (loaded >= imgs.length) {
+          setTimeout(() => {
+            iframe!.contentWindow!.print()
+          }, 300)
+        }
+      }
+      imgs.forEach(img => {
+        if (img.complete) { onDone() }
+        else { img.onload = onDone; img.onerror = onDone }
+      })
+    } else {
+      setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+    }
   }
 
   // Selected cell data

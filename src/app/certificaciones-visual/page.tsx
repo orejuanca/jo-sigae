@@ -1201,7 +1201,7 @@ export default function CertificacionesVisualPage() {
         {/* Toolbar Row 1: Grid controls */}
         <Card>
           <CardContent className="py-2 px-3">
-            <div className="flex items-center gap-2 overflow-x-auto" style={{ flexWrap: 'nowrap' }}>
+            <div className="flex items-center gap-2 flex-wrap">
               {/* === FILAS === */}
               <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">FILAS</Badge>
               <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">

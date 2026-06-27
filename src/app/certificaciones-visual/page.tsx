@@ -26,7 +26,7 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Combine, TableCellsMerge, TableCellsSplit, Group,
+  Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -1182,6 +1182,63 @@ export default function CertificacionesVisualPage() {
     toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
   }
 
+  const handlePrint = () => {
+    const cfg = gridConfig
+    const data = displayData
+    const occupied = new Set<string>()
+    for (let r = 0; r < cfg.rows.length; r++) {
+      const row = cfg.rows[r]
+      if (!row) continue
+      for (const [key, cell] of Object.entries(row.cells)) {
+        const c = Number(key)
+        const rs = cell.rowspan || 1
+        const cs = cell.colspan || 1
+        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occupied.add(`${r + dr}-${c}`) }
+        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
+      }
+    }
+
+    const borderStyle = (enabled: boolean, color: string) =>
+      enabled ? `1px solid ${color}` : 'none'
+
+    let rowsHtml = ''
+    for (let r = 0; r < cfg.rows.length; r++) {
+      const gridRow = cfg.rows[r]
+      let cellsHtml = ''
+      for (let c = 0; c < cfg.totalCols; c++) {
+        if (occupied.has(`${r}-${c}`)) continue
+        const cell = gridRow.cells[c] || emptyCell()
+        let content = cell.content
+        if (cell.dataBinding && data) {
+          content = resolveBinding(cell.dataBinding, data) || ''
+        }
+        const cs = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
+        const rs = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
+        const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
+          ? `<img src="/logo-gob-mppe.png" style="max-width:100%;height:auto;object-fit:contain;display:block">`
+          : ''
+        const text = imgTag || (content || '')
+        cellsHtml += `<td${cs}${rs} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
+      }
+      rowsHtml += `<tr>${cellsHtml}</tr>`
+    }
+
+    const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
+
+    const printWin = window.open('', '_blank', 'width=900,height=700')
+    if (!printWin) { toast({ title: 'Error', description: 'No se pudo abrir la ventana de impresión. Permite ventanas emergentes.' }); return }
+    printWin.document.write(`<!DOCTYPE html><html><head><title>Imprimir Certificación</title><style>
+@page { size: landscape; margin: 5mm; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { display: flex; justify-content: center; }
+table { border-collapse: collapse; width: 816px; height: 1344px; font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; table-layout: fixed; }
+td { overflow: hidden; }
+img { max-width: 100%; height: auto; }
+@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style></head><body><table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table><script>setTimeout(()=>{window.print();window.close()},400)<\/script></body></html>`)
+    printWin.document.close()
+  }
+
   // Selected cell data
   const selectedCellData = useMemo(() => {
     if (!selectedCell) return null
@@ -1324,6 +1381,18 @@ export default function CertificacionesVisualPage() {
                   {gridConfig.rows.length} filas × {gridConfig.totalCols} columnas
                 </Badge>
               )}
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handlePrint}
+                className="h-7 text-xs"
+                title="Imprimir la certificación con los datos actuales"
+              >
+                <Printer className="h-3 w-3 mr-1" /> Imprimir
+              </Button>
             </div>
           </CardContent>
         </Card>

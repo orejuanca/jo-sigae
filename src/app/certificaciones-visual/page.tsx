@@ -560,25 +560,77 @@ export default function CertificacionesVisualPage() {
   // Inline edit handler: update a single dataBinding value and auto-save
   const handleCellEdit = useCallback((binding: string, newValue: string) => {
     setDraftOverrides(prev => {
-      const updated = { ...prev, [binding]: newValue }
-      // Auto-save to cert-draft (debounced would be ideal, but immediate is simpler)
-      if (selectedStudent) {
-        setSavingDraft(true)
-        fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ datos: { overrides: updated } }),
-        }).then(res => {
-          if (res.ok) {
-            toast({ title: 'Guardado', description: `Cambios guardados en borrador.`, duration: 1500 })
-          }
-        }).catch(() => {
-          toast({ title: 'Error', description: 'No se pudo guardar el cambio.', variant: 'destructive' })
-        }).finally(() => setSavingDraft(false))
-      }
-      return updated
+      return { ...prev, [binding]: newValue }
     })
-  }, [selectedStudent, toast])
+    // Auto-save to cert-draft — outside state updater to avoid side-effects in React
+    if (selectedStudent) {
+      const updated = { ...draftOverrides, [binding]: newValue }
+      setSavingDraft(true)
+      fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ datos: { overrides: updated } }),
+      }).then(res => {
+        if (res.ok) {
+          toast({ title: 'Guardado', description: `Cambios guardados en borrador.`, duration: 1500 })
+        }
+      }).catch(() => {
+        toast({ title: 'Error', description: 'No se pudo guardar el cambio.', variant: 'destructive' })
+      }).finally(() => setSavingDraft(false))
+    }
+  }, [selectedStudent, draftOverrides, toast])
+
+  // Helper: apply draft overrides to simple array fields (inst, orient, grupo)
+  function applyArrayOverrides<T extends Record<string, any> & { [k: string]: any }>(
+    arr: T[] | undefined, ov: Record<string, string>, prefix: string, fields: string[]
+  ): T[] {
+    if (!arr) return []
+    return arr.map((item, idx) => {
+      const patched = { ...item }
+      for (const field of fields) {
+        const key = `${prefix}.${idx}.${field}`
+        const val = ov[key]
+        if (val !== undefined && val !== null && val !== '') {
+          patched[field] = val
+        }
+      }
+      return patched
+    })
+  }
+
+  // Helper: apply draft overrides to calificaciones (nested by year key)
+  function applyCalifOverrides(
+    cals: Record<string, any[]> | undefined, ov: Record<string, string>
+  ): Record<string, any[]> {
+    if (!cals) return {}
+    const YEAR_NAME_MAP: Record<string, string> = {
+      '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año',
+      '4': 'Cuarto Año', '5': 'Quinto Año',
+    }
+    const CALIF_FIELD_MAP: Record<string, string> = {
+      materia: 'materia', numero: 'numero', nota: 'nota', literal: 'literal',
+      te: 'tipoEvaluacion', mes: 'fechaMes', anio: 'fechaAnio', inst: 'instEduc',
+    }
+    const result: Record<string, any[]> = {}
+    for (const [yearKey, subjects] of Object.entries(cals)) {
+      result[yearKey] = subjects.map((subj: any, sIdx: number) => {
+        const patched = { ...subj }
+        // Check both numeric key (e.g., "calif.1.0.nota") and year-name key
+        for (let yNum = 1; yNum <= 5; yNum++) {
+          if (YEAR_NAME_MAP[String(yNum)] !== yearKey) continue
+          for (const [shortField, realField] of Object.entries(CALIF_FIELD_MAP)) {
+            const key = `calif.${yNum}.${sIdx}.${shortField}`
+            const val = ov[key]
+            if (val !== undefined && val !== null && val !== '') {
+              patched[realField] = val
+            }
+          }
+        }
+        return patched
+      })
+    }
+    return result
+  }
 
   // Convert CertData to DisplayData for the grid
   const displayData: DisplayData | null = useMemo(() => {
@@ -619,10 +671,10 @@ export default function CertificacionesVisualPage() {
         estado: get('student.estado') ?? certData.estudiante.estado,
         municipio: get('student.municipio') ?? certData.estudiante.municipio,
       },
-      instituciones: certData.instituciones,
-      calificaciones: certData.calificaciones,
-      orientacion: certData.orientacion,
-      grupos: certData.grupos,
+      instituciones: applyArrayOverrides(certData.instituciones, ov, 'inst', ['denominacion', 'localidad', 'ef']),
+      calificaciones: applyCalifOverrides(certData.calificaciones, ov),
+      orientacion: applyArrayOverrides(certData.orientacion, ov, 'orient', ['anio', 'literal']),
+      grupos: applyArrayOverrides(certData.grupos, ov, 'grupo', ['anio', 'grupo', 'literal']),
       observaciones: get('doc.observaciones') ?? certData.observaciones,
       observacionesLines: [
         get('obsCert.0') ?? (certData.observacionesLines?.[0] || ''),

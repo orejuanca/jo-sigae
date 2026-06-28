@@ -26,7 +26,7 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Combine, TableCellsMerge, TableCellsSplit, Group, Printer, FileDown,
+  Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -449,9 +449,7 @@ export default function CertificacionesVisualPage() {
   const [gridInitialized, setGridInitialized] = useState(false)
   const [colInput, setColInput] = useState('27')
   const [showPrintDialog, setShowPrintDialog] = useState(false)
-  const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape')
   const [printScale, setPrintScale] = useState(100)
-  const [generatingPDF, setGeneratingPDF] = useState(false)
 
   // Range selection state (drag to select multiple cells)
   const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
@@ -488,25 +486,6 @@ export default function CertificacionesVisualPage() {
   useEffect(() => {
     setGridConfig(loadGridConfig())
     setGridInitialized(true)
-  }, [])
-
-  // Listen for PDF generation completion from iframe
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data === 'pdf-done') {
-        setGeneratingPDF(false)
-        toast({ title: 'PDF generado', description: 'El archivo se descargó correctamente.' })
-        const iframe = document.getElementById('cert-pdf-frame')
-        if (iframe) document.body.removeChild(iframe)
-      } else if (e.data === 'pdf-error') {
-        setGeneratingPDF(false)
-        toast({ title: 'Error al generar PDF', description: 'No se pudo crear el archivo PDF.', variant: 'destructive' })
-        const iframe = document.getElementById('cert-pdf-frame')
-        if (iframe) document.body.removeChild(iframe)
-      }
-    }
-    window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
   }, [])
 
   // Persist grid changes to localStorage (debounced auto-save)
@@ -1296,52 +1275,6 @@ img{max-width:100%;height:auto}
     }
   }
 
-  const executeSavePDF = (orientation: 'landscape' | 'portrait', scale: number) => {
-    setShowPrintDialog(false)
-    setGeneratingPDF(true)
-    const { tableHtml } = buildTableHtml()
-    const filename = `certificacion-${selectedStudent?.cedula || 'documento'}.pdf`
-
-    // Do all heavy work inside an isolated iframe so the main page stays responsive
-    let iframe = document.getElementById('cert-pdf-frame') as HTMLIFrameElement | null
-    if (iframe) document.body.removeChild(iframe)
-    iframe = document.createElement('iframe')
-    iframe.id = 'cert-pdf-frame'
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:700px;border:none'
-    document.body.appendChild(iframe)
-
-    const doc = iframe.contentDocument!
-    doc.open()
-    doc.write(`<!DOCTYPE html><html><head><title>Generando PDF...</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"><\/script>
-</head><body>
-<div id="pdf-content" style="width:816px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;">
-${tableHtml}
-</div>
-<style>
-#pdf-content table{border-collapse:collapse;width:816px;height:1344px;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
-#pdf-content td{overflow:hidden}
-#pdf-content img{max-width:100%;height:auto}
-</style>
-<script>
-(function(){
-  var el = document.getElementById('pdf-content');
-  html2pdf().from(el).set({
-    margin: [5,5,5,5],
-    filename: ${JSON.stringify(filename)},
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: ${JSON.stringify(orientation)} }
-  }).save().then(function(){
-    window.parent.postMessage('pdf-done', '*');
-  }).catch(function(err){
-    window.parent.postMessage('pdf-error', '*');
-  });
-})();
-<\/script></body></html>`)
-    doc.close()
-  }
-
   const handlePrint = () => setShowPrintDialog(true)
 
   // Selected cell data
@@ -1630,34 +1563,10 @@ ${tableHtml}
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
             <DialogTitle>Imprimir Certificación</DialogTitle>
-            <DialogDescription>Configura la orientación y escala antes de imprimir.</DialogDescription>
+            <DialogDescription>Configura la escala antes de imprimir.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-3">
-            <Label className="text-sm font-medium">Orientación del papel</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setPrintOrientation('landscape')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${printOrientation === 'landscape' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
-              >
-                <svg width="40" height="28" viewBox="0 0 40 28" fill="none" className="text-foreground">
-                  <rect x="0.5" y="0.5" width="39" height="27" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                  <line x1="0.5" y1="22" x2="39.5" y2="22" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 1" opacity="0.4"/>
-                </svg>
-                <span className="text-sm font-medium">Horizontal</span>
-              </button>
-              <button
-                onClick={() => setPrintOrientation('portrait')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors cursor-pointer ${printOrientation === 'portrait' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
-              >
-                <svg width="28" height="40" viewBox="0 0 28 40" fill="none" className="text-foreground">
-                  <rect x="0.5" y="0.5" width="27" height="39" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                  <line x1="0.5" y1="34" x2="27.5" y2="34" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 1" opacity="0.4"/>
-                </svg>
-                <span className="text-sm font-medium">Vertical</span>
-              </button>
-            </div>
-
-            <div className="pt-2 space-y-2">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Escala</Label>
                 <span className="text-sm font-semibold text-primary">{printScale}%</span>
@@ -1680,18 +1589,7 @@ ${tableHtml}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
-            <Button
-              variant="outline"
-              onClick={() => executeSavePDF(printOrientation, printScale)}
-              disabled={generatingPDF}
-            >
-              {generatingPDF
-                ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                : <FileDown className="h-4 w-4 mr-1.5" />
-              }
-              {generatingPDF ? 'Generando...' : 'Guardar PDF'}
-            </Button>
-            <Button onClick={() => executePrint(printScale)} disabled={generatingPDF}>
+            <Button onClick={() => executePrint(printScale)}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimir
             </Button>
           </DialogFooter>

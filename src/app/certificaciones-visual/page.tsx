@@ -1252,12 +1252,12 @@ export default function CertificacionesVisualPage() {
     return { tableHtml: `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
   }
 
-  const executePrint = (orientation: 'landscape' | 'portrait', scale: number) => {
+  const executePrint = (scale: number) => {
     setShowPrintDialog(false)
     const { tableHtml } = buildTableHtml()
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
-@page{size:${orientation};margin:5mm}
+@page{margin:5mm}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
@@ -1691,7 +1691,7 @@ ${tableHtml}
               }
               {generatingPDF ? 'Generando...' : 'Guardar PDF'}
             </Button>
-            <Button onClick={() => executePrint(printOrientation, printScale)} disabled={generatingPDF}>
+            <Button onClick={() => executePrint(printScale)} disabled={generatingPDF}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimir
             </Button>
           </DialogFooter>

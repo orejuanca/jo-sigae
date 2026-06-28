@@ -28,7 +28,6 @@ import {
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   Combine, TableCellsMerge, TableCellsSplit, Group, Printer, FileDown,
 } from 'lucide-react'
-import html2pdf from 'html2pdf.js'
 
 // === Student & CertData types (local to this page) ===
 interface Student {
@@ -489,6 +488,25 @@ export default function CertificacionesVisualPage() {
   useEffect(() => {
     setGridConfig(loadGridConfig())
     setGridInitialized(true)
+  }, [])
+
+  // Listen for PDF generation completion from iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data === 'pdf-done') {
+        setGeneratingPDF(false)
+        toast({ title: 'PDF generado', description: 'El archivo se descargó correctamente.' })
+        const iframe = document.getElementById('cert-pdf-frame')
+        if (iframe) document.body.removeChild(iframe)
+      } else if (e.data === 'pdf-error') {
+        setGeneratingPDF(false)
+        toast({ title: 'Error al generar PDF', description: 'No se pudo crear el archivo PDF.', variant: 'destructive' })
+        const iframe = document.getElementById('cert-pdf-frame')
+        if (iframe) document.body.removeChild(iframe)
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
   }, [])
 
   // Persist grid changes to localStorage (debounced auto-save)
@@ -1278,50 +1296,50 @@ img{max-width:100%;height:auto}
     }
   }
 
-  const executeSavePDF = async (orientation: 'landscape' | 'portrait', scale: number) => {
+  const executeSavePDF = (orientation: 'landscape' | 'portrait', scale: number) => {
     setShowPrintDialog(false)
     setGeneratingPDF(true)
     const { tableHtml } = buildTableHtml()
+    const filename = `certificacion-${selectedStudent?.cedula || 'documento'}.pdf`
 
-    // Parse HTML string into a real DOM element with proper styles
-    const tmp = document.createElement('div')
-    tmp.innerHTML = tableHtml
-    const tableEl = tmp.firstElementChild as HTMLTableElement
-    if (!tableEl) { setGeneratingPDF(false); return }
-    tableEl.style.borderCollapse = 'collapse'
-    tableEl.style.width = '816px'
-    tableEl.style.height = '1344px'
-    tableEl.style.fontFamily = 'Arial, sans-serif'
-    tableEl.style.fontSize = '9pt'
-    tableEl.style.lineHeight = '1.2'
-    tableEl.style.tableLayout = 'fixed'
-    tableEl.style.transform = `scale(${scale / 100})`
-    tableEl.style.transformOrigin = 'top center'
+    // Do all heavy work inside an isolated iframe so the main page stays responsive
+    let iframe = document.getElementById('cert-pdf-frame') as HTMLIFrameElement | null
+    if (iframe) document.body.removeChild(iframe)
+    iframe = document.createElement('iframe')
+    iframe.id = 'cert-pdf-frame'
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:700px;border:none'
+    document.body.appendChild(iframe)
 
-    // Render in visible but non-interactive layer (html2canvas needs it on-screen)
-    const wrapper = document.createElement('div')
-    wrapper.id = 'cert-pdf-render'
-    wrapper.style.cssText = 'position:fixed;left:0;top:0;z-index:-9999;pointer-events:none;background:#fff;'
-    wrapper.appendChild(tableEl)
-    document.body.appendChild(wrapper)
-
-    try {
-      const opt = {
-        margin: [5, 5, 5, 5],
-        filename: `certificacion-${selectedStudent?.cedula || 'documento'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: orientation as 'landscape' | 'portrait' },
-      }
-      await html2pdf().from(tableEl).set(opt).save()
-      toast({ title: 'PDF generado', description: 'El archivo se descargó correctamente.' })
-    } catch (e) {
-      console.error('[PDF]', e)
-      toast({ title: 'Error al generar PDF', description: 'No se pudo crear el archivo PDF.', variant: 'destructive' })
-    } finally {
-      document.body.removeChild(wrapper)
-      setGeneratingPDF(false)
-    }
+    const doc = iframe.contentDocument!
+    doc.open()
+    doc.write(`<!DOCTYPE html><html><head><title>Generando PDF...</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"><\/script>
+</head><body>
+<div id="pdf-content" style="width:816px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;">
+${tableHtml}
+</div>
+<style>
+#pdf-content table{border-collapse:collapse;width:816px;height:1344px;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
+#pdf-content td{overflow:hidden}
+#pdf-content img{max-width:100%;height:auto}
+</style>
+<script>
+(function(){
+  var el = document.getElementById('pdf-content');
+  html2pdf().from(el).set({
+    margin: [5,5,5,5],
+    filename: ${JSON.stringify(filename)},
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: ${JSON.stringify(orientation)} }
+  }).save().then(function(){
+    window.parent.postMessage('pdf-done', '*');
+  }).catch(function(err){
+    window.parent.postMessage('pdf-error', '*');
+  });
+})();
+<\/script></body></html>`)
+    doc.close()
   }
 
   const handlePrint = () => setShowPrintDialog(true)

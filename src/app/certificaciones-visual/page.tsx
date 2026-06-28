@@ -451,7 +451,6 @@ export default function CertificacionesVisualPage() {
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [printOrientation, setPrintOrientation] = useState<'landscape' | 'portrait'>('landscape')
   const [printScale, setPrintScale] = useState(100)
-  const [printPageSize, setPrintPageSize] = useState<'letter' | 'a4' | 'legal'>('legal')
   const [generatingPDF, setGeneratingPDF] = useState(false)
 
   // Range selection state (drag to select multiple cells)
@@ -1253,19 +1252,12 @@ export default function CertificacionesVisualPage() {
     return { tableHtml: `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
   }
 
-  const PAGE_SIZES: Record<string, [number, number]> = {
-    letter: [215.9, 279.4],
-    a4: [210, 297],
-    legal: [215.9, 355.6],
-  }
-
-  const executePrint = (orientation: 'landscape' | 'portrait', scale: number, pageSize: string) => {
+  const executePrint = (orientation: 'landscape' | 'portrait', scale: number) => {
     setShowPrintDialog(false)
     const { tableHtml } = buildTableHtml()
-    const cssPageSize = `${pageSize} ${orientation}`
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
-@page{size:${cssPageSize};margin:5mm}
+@page{size:${orientation};margin:5mm}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
@@ -1304,7 +1296,7 @@ img{max-width:100%;height:auto}
     }
   }
 
-  const executeSavePDF = (orientation: 'landscape' | 'portrait', scale: number, pageSize: string) => {
+  const executeSavePDF = (orientation: 'landscape' | 'portrait', scale: number) => {
     setShowPrintDialog(false)
     setGeneratingPDF(true)
     const { tableHtml } = buildTableHtml()
@@ -1339,7 +1331,7 @@ ${tableHtml}
     filename: ${JSON.stringify(filename)},
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
-    jsPDF: { unit: 'mm', format: [${PAGE_SIZES[pageSize] ? PAGE_SIZES[pageSize][0] : 215.9}, ${PAGE_SIZES[pageSize] ? PAGE_SIZES[pageSize][1] : 355.6}], orientation: ${JSON.stringify(orientation)} }
+    jsPDF: { unit: 'mm', format: 'a4', orientation: ${JSON.stringify(orientation)} }
   }).save().then(function(){
     window.parent.postMessage('pdf-done', '*');
   }).catch(function(err){
@@ -1638,7 +1630,7 @@ ${tableHtml}
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
             <DialogTitle>Imprimir Certificación</DialogTitle>
-            <DialogDescription>Configura orientación, tamaño y escala antes de imprimir o guardar PDF.</DialogDescription>
+            <DialogDescription>Configura la orientación y escala antes de imprimir.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-3">
             <Label className="text-sm font-medium">Orientación del papel</Label>
@@ -1663,21 +1655,6 @@ ${tableHtml}
                 </svg>
                 <span className="text-sm font-medium">Vertical</span>
               </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Tamaño del papel</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['letter', 'a4', 'legal'] as const).map(size => (
-                  <button
-                    key={size}
-                    onClick={() => setPrintPageSize(size)}
-                    className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors cursor-pointer ${printPageSize === size ? 'border-primary bg-primary/5 text-primary' : 'border-muted hover:border-muted-foreground/30'}`}
-                  >
-                    {size === 'letter' ? 'Carta' : size === 'a4' ? 'A4' : 'Legal'}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div className="pt-2 space-y-2">
@@ -1705,7 +1682,7 @@ ${tableHtml}
             <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
             <Button
               variant="outline"
-              onClick={() => executeSavePDF(printOrientation, printScale, printPageSize)}
+              onClick={() => executeSavePDF(printOrientation, printScale)}
               disabled={generatingPDF}
             >
               {generatingPDF
@@ -1714,7 +1691,7 @@ ${tableHtml}
               }
               {generatingPDF ? 'Generando...' : 'Guardar PDF'}
             </Button>
-            <Button onClick={() => executePrint(printOrientation, printScale, printPageSize)} disabled={generatingPDF}>
+            <Button onClick={() => executePrint(printOrientation, printScale)} disabled={generatingPDF}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimir
             </Button>
           </DialogFooter>

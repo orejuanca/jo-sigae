@@ -1283,9 +1283,26 @@ img{max-width:100%;height:auto}
     setGeneratingPDF(true)
     const { tableHtml } = buildTableHtml()
 
+    // Parse HTML string into a real DOM element with proper styles
+    const tmp = document.createElement('div')
+    tmp.innerHTML = tableHtml
+    const tableEl = tmp.firstElementChild as HTMLTableElement
+    if (!tableEl) { setGeneratingPDF(false); return }
+    tableEl.style.borderCollapse = 'collapse'
+    tableEl.style.width = '816px'
+    tableEl.style.height = '1344px'
+    tableEl.style.fontFamily = 'Arial, sans-serif'
+    tableEl.style.fontSize = '9pt'
+    tableEl.style.lineHeight = '1.2'
+    tableEl.style.tableLayout = 'fixed'
+    tableEl.style.transform = `scale(${scale / 100})`
+    tableEl.style.transformOrigin = 'top center'
+
+    // Render in visible but non-interactive layer (html2canvas needs it on-screen)
     const wrapper = document.createElement('div')
-    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1344px;'
-    wrapper.innerHTML = `<div style="border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center">${tableHtml}</div>`
+    wrapper.id = 'cert-pdf-render'
+    wrapper.style.cssText = 'position:fixed;left:0;top:0;z-index:-9999;pointer-events:none;background:#fff;'
+    wrapper.appendChild(tableEl)
     document.body.appendChild(wrapper)
 
     try {
@@ -1296,7 +1313,7 @@ img{max-width:100%;height:auto}
         html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: orientation as 'landscape' | 'portrait' },
       }
-      await html2pdf().from(wrapper.firstElementChild as HTMLElement).set(opt).save()
+      await html2pdf().from(tableEl).set(opt).save()
       toast({ title: 'PDF generado', description: 'El archivo se descargó correctamente.' })
     } catch (e) {
       console.error('[PDF]', e)

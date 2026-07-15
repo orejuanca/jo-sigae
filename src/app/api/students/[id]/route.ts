@@ -50,7 +50,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio } = body
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData } = body
 
     const student = await prisma.student.update({
       where: { id },
@@ -62,6 +62,7 @@ export async function PUT(
         ...(pais !== undefined && { pais: pais?.trim() || 'VENEZUELA' }),
         ...(estado !== undefined && { estado: estado?.trim() || '' }),
         ...(municipio !== undefined && { municipio: municipio?.trim() || '' }),
+        ...(rawData !== undefined && { rawData: typeof rawData === 'string' ? rawData : JSON.stringify(rawData) }),
       },
     })
 

@@ -22,18 +22,21 @@ function normalizeCedula(c: string): string {
   return c.replace(/[\s.\-]/g, '').toUpperCase()
 }
 
-// GET /api/students?q=...&page=1&limit=20
+// GET /api/students?q=...&page=1&limit=20&plan=vigente
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q') || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+    const plan = searchParams.get('plan') || 'vigente'
+
+    const planFilter = { plan }
 
     if (!q) {
       const [students, total] = await Promise.all([
-        prisma.student.findMany({ take: limit, skip: (page - 1) * limit, orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }] }),
-        prisma.student.count(),
+        prisma.student.findMany({ where: planFilter, take: limit, skip: (page - 1) * limit, orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }] }),
+        prisma.student.count({ where: planFilter }),
       ])
       return NextResponse.json({ students, total, page, limit, totalPages: Math.ceil(total / limit) })
     }
@@ -41,11 +44,10 @@ export async function GET(request: NextRequest) {
     const normalized = normalizeCedula(q)
 
     const where = {
+      ...planFilter,
       OR: [
-        // Exact/contains on cedula with original format
         { cedula: { contains: q } },
         { cedula: { contains: q.toUpperCase() } },
-        // Contains on name fields
         { apellidos: { contains: q, mode: 'insensitive' as const } },
         { nombres: { contains: q, mode: 'insensitive' as const } },
       ],
@@ -67,6 +69,7 @@ export async function GET(request: NextRequest) {
       // This is a fallback for when the user types "V12345678" but DB has "V 12345678"
       const allStudents = await prisma.student.findMany({
         where: {
+          ...planFilter,
           OR: [
             { cedula: { contains: normalized.substring(0, 3) } },
             { cedula: { contains: q.substring(0, 3) } },
@@ -112,7 +115,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio } = body
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, plan, rawData } = body
 
     if (!cedula || !apellidos || !nombres) {
       return NextResponse.json(
@@ -130,6 +133,8 @@ export async function POST(request: NextRequest) {
         pais: pais?.trim() || 'VENEZUELA',
         estado: estado?.trim() || '',
         municipio: municipio?.trim() || '',
+        plan: plan || 'vigente',
+        rawData: rawData || '{}',
       },
     })
 

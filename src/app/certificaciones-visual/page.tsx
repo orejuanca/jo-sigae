@@ -26,7 +26,7 @@ import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-conf
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Combine, TableCellsMerge, TableCellsSplit, Group,
+  Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
@@ -53,6 +53,7 @@ interface CertData {
   observaciones: string; observacionesLines: string[]; promedioAcumulado: string
   director: { apellidosNombres: string; cedula: string }
   directorCdcce: { apellidosNombres: string; cedula: string }
+  acta: string; actaFecha: string; actaAnio: string; literalesFinales: string[]
 }
 
 interface SavedLayout {
@@ -109,6 +110,8 @@ function GridTable({
   onCellMouseUp,
   isPreview,
   displayData,
+  onCellEdit,
+  savingDraft,
 }: {
   config: GridConfig
   selectedCell: { row: number; col: number } | null
@@ -118,6 +121,8 @@ function GridTable({
   onCellMouseUp: () => void
   isPreview: boolean
   displayData: DisplayData | null
+  onCellEdit?: (binding: string, newValue: string) => void
+  savingDraft?: boolean
 }) {
   // Recompute occupied set on every render to track rowspan AND colspan correctly
   const occupied = useMemo(() => {
@@ -227,6 +232,22 @@ function GridTable({
                     onMouseDown={() => !isPreview && onCellMouseDown(r, c)}
                     onMouseEnter={() => !isPreview && onCellMouseEnter(r, c)}
                     title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
+                    onDoubleClick={(e) => {
+                      if (isPreview && cell.dataBinding && onCellEdit) {
+                        e.stopPropagation()
+                        const target = e.currentTarget.querySelector('[data-editable]') as HTMLElement | null
+                        if (target) {
+                          target.setAttribute('contentEditable', 'true')
+                          target.focus()
+                          // Select all text
+                          const range = document.createRange()
+                          range.selectNodeContents(target)
+                          const sel = window.getSelection()
+                          sel?.removeAllRanges()
+                          sel?.addRange(range)
+                        }
+                      }
+                    }}
                   >
                     {!isPreview && cell.dataBinding && (
                       <span style={{
@@ -238,6 +259,36 @@ function GridTable({
                     )}
                     {isPreview && cell.dataBinding && !displayContent ? (
                       <span style={{ color: '#ccc' }}>—</span>
+                    ) : isPreview && cell.dataBinding && onCellEdit ? (
+                      <span
+                        data-editable
+                        style={{ cursor: 'text', outline: 'none', minWidth: '20px', display: 'inline-block', minHeight: '1em' }}
+                        onBlur={(e) => {
+                          e.currentTarget.setAttribute('contentEditable', 'false')
+                          const newVal = e.currentTarget.textContent || ''
+                          if (newVal !== resolveBinding(cell.dataBinding!, displayData!)) {
+                            onCellEdit(cell.dataBinding, newVal)
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            e.currentTarget.blur()
+                          }
+                          if (e.key === 'Escape') {
+                            e.currentTarget.blur()
+                          }
+                        }}
+                        suppressContentEditableWarning
+                      >
+                        {displayContent}
+                      </span>
+                    ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
+                      <img
+                        src="/logo-gob-mppe.png"
+                        alt="Logo Gobierno Bolivariano"
+                        style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
+                      />
                     ) : (
                       displayContent
                     )}
@@ -279,7 +330,7 @@ function ColumnWidthEditor({
   }
 
   return (
-    <div className="flex gap-0.5 flex-wrap p-1">
+    <div className="flex gap-0.5 overflow-x-auto p-1" style={{ flexWrap: 'nowrap' }}>
       {config.columnWidths.map((w, i) => (
         <div
           key={i}
@@ -397,6 +448,8 @@ export default function CertificacionesVisualPage() {
   const [isPreview, setIsPreview] = useState(false)
   const [gridInitialized, setGridInitialized] = useState(false)
   const [colInput, setColInput] = useState('27')
+  const [showPrintDialog, setShowPrintDialog] = useState(false)
+  const [printScale, setPrintScale] = useState(100)
 
   // Range selection state (drag to select multiple cells)
   const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
@@ -413,6 +466,10 @@ export default function CertificacionesVisualPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certData, setCertData] = useState<CertData | null>(null)
   const [loadingData, setLoadingData] = useState(false)
+
+  // Inline editing: overrides per dataBinding path
+  const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
+  const [savingDraft, setSavingDraft] = useState(false)
 
   // Save dialog state
   const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -442,6 +499,7 @@ export default function CertificacionesVisualPage() {
   const handleSelectStudent = useCallback(async (student: Student) => {
     setSelectedStudent(student)
     setCertData(null)
+    setDraftOverrides({})
     setLoadingData(true)
     try {
       const res = await fetch(`/api/students/${student.id}/cert-data`)
@@ -452,6 +510,24 @@ export default function CertificacionesVisualPage() {
       }
       const result = await res.json()
       if (result.certData) {
+        // Load draft overrides if they exist
+        try {
+          const draftRes = await fetch(`/api/students/${student.id}/cert-draft`)
+          if (draftRes.ok) {
+            const draftData = await draftRes.json()
+            if (draftData.draft?.overrides) {
+              // Filter out empty-string overrides — they were blocking real data
+              const clean: Record<string, string> = {}
+              for (const [k, v] of Object.entries(draftData.draft.overrides)) {
+                if (v !== undefined && v !== null && v !== '') clean[k] = v as string
+              }
+              setDraftOverrides(clean)
+            } else {
+              setDraftOverrides({})
+            }
+          }
+        } catch { /* ignore */ }
+
         const cd = result.certData
         if (!cd.fechaExpedicion || cd.fechaExpedicion.trim() === '') {
           cd.fechaExpedicion = new Date().toISOString().split('T')[0]
@@ -471,6 +547,7 @@ export default function CertificacionesVisualPage() {
           }
         }
         setCertData(cd)
+        // Apply draft overrides to displayData later (via useMemo)
         const allCals = Object.values(cd.calificaciones || {}).flat() as CalificacionRow[]
         const gradeCount = allCals.filter(c => c.nota && c.nota !== '').length
         toast({ title: 'Datos cargados', description: `${gradeCount} calificaciones del rawData.` })
@@ -482,6 +559,81 @@ export default function CertificacionesVisualPage() {
     }
   }, [toast])
 
+  // Inline edit handler: update a single dataBinding value and auto-save
+  const handleCellEdit = useCallback((binding: string, newValue: string) => {
+    setDraftOverrides(prev => {
+      return { ...prev, [binding]: newValue }
+    })
+    // Auto-save to cert-draft — outside state updater to avoid side-effects in React
+    if (selectedStudent) {
+      const updated = { ...draftOverrides, [binding]: newValue }
+      setSavingDraft(true)
+      fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ datos: { overrides: updated } }),
+      }).then(res => {
+        if (res.ok) {
+          toast({ title: 'Guardado', description: `Cambios guardados en borrador.`, duration: 1500 })
+        }
+      }).catch(() => {
+        toast({ title: 'Error', description: 'No se pudo guardar el cambio.', variant: 'destructive' })
+      }).finally(() => setSavingDraft(false))
+    }
+  }, [selectedStudent, draftOverrides, toast])
+
+  // Helper: apply draft overrides to simple array fields (inst, orient, grupo)
+  function applyArrayOverrides(
+    arr: Record<string, any>[] | undefined, ov: Record<string, string>, prefix: string, fields: string[]
+  ): Record<string, any>[] {
+    if (!arr) return []
+    return arr.map((item, idx) => {
+      const patched = { ...item }
+      for (const field of fields) {
+        const key = `${prefix}.${idx}.${field}`
+        const val = ov[key]
+        if (val !== undefined && val !== null && val !== '') {
+          patched[field] = val
+        }
+      }
+      return patched
+    })
+  }
+
+  // Helper: apply draft overrides to calificaciones (nested by year key)
+  function applyCalifOverrides(
+    cals: Record<string, any[]> | undefined, ov: Record<string, string>
+  ): Record<string, any[]> {
+    if (!cals) return {}
+    const YEAR_NAME_MAP: Record<string, string> = {
+      '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año',
+      '4': 'Cuarto Año', '5': 'Quinto Año',
+    }
+    const CALIF_FIELD_MAP: Record<string, string> = {
+      materia: 'materia', numero: 'numero', nota: 'nota', literal: 'literal',
+      te: 'tipoEvaluacion', mes: 'fechaMes', anio: 'fechaAnio', inst: 'instEduc',
+    }
+    const result: Record<string, any[]> = {}
+    for (const [yearKey, subjects] of Object.entries(cals)) {
+      result[yearKey] = subjects.map((subj: any, sIdx: number) => {
+        const patched = { ...subj }
+        // Check both numeric key (e.g., "calif.1.0.nota") and year-name key
+        for (let yNum = 1; yNum <= 5; yNum++) {
+          if (YEAR_NAME_MAP[String(yNum)] !== yearKey) continue
+          for (const [shortField, realField] of Object.entries(CALIF_FIELD_MAP)) {
+            const key = `calif.${yNum}.${sIdx}.${shortField}`
+            const val = ov[key]
+            if (val !== undefined && val !== null && val !== '') {
+              patched[realField] = val
+            }
+          }
+        }
+        return patched
+      })
+    }
+    return result
+  }
+
   // Convert CertData to DisplayData for the grid
   const displayData: DisplayData | null = useMemo(() => {
     if (!certData) return null
@@ -491,30 +643,62 @@ export default function CertificacionesVisualPage() {
       const [y, m, d] = fechaExp.split('-')
       fechaExp = `${d}/${m}/${y}`
     }
+
+    // Apply draft overrides to certData fields
+    // Treat empty string as "no override" so nullish coalescing works
+    const ov = draftOverrides
+    const get = (binding: string): string | undefined => {
+      const v = ov[binding]
+      return (v === undefined || v === null || v === '') ? undefined : v
+    }
+
     return {
-      lugar: certData.lugar,
-      fechaExpedicion: fechaExp,
-      planEstudio: certData.planEstudio,
+      lugar: get('doc.lugar') ?? certData.lugar,
+      fechaExpedicion: get('doc.fechaExpedicion') ?? fechaExp,
+      planEstudio: get('doc.planEstudio') ?? certData.planEstudio,
       planCodigo: schoolConfig.planCodigo,
-      od: certData.od,
-      denominacion: certData.denominacion,
-      direccion: certData.direccion,
-      telefono: certData.telefono,
-      municipio: certData.municipio,
-      estado: certData.estado,
-      cdcce: certData.cdcce,
-      estudiante: certData.estudiante,
-      instituciones: certData.instituciones,
-      calificaciones: certData.calificaciones,
-      orientacion: certData.orientacion,
-      grupos: certData.grupos,
-      observaciones: certData.observaciones,
-      observacionesLines: certData.observacionesLines || [],
-      promedioAcumulado: certData.promedioAcumulado,
+      od: get('school.codigo') ?? certData.od,
+      denominacion: get('school.denominacion') ?? certData.denominacion,
+      direccion: get('school.direccion') ?? certData.direccion,
+      telefono: get('school.telefono') ?? certData.telefono,
+      municipio: get('school.municipio') ?? certData.municipio,
+      estado: get('school.estado') ?? certData.estado,
+      cdcce: get('school.cdcce') ?? certData.cdcce,
+      estudiante: {
+        cedula: get('student.cedula') ?? certData.estudiante.cedula,
+        fechaNacimiento: get('student.fechaNacimiento') ?? certData.estudiante.fechaNacimiento,
+        apellidos: get('student.apellidos') ?? certData.estudiante.apellidos,
+        nombres: get('student.nombres') ?? certData.estudiante.nombres,
+        pais: get('student.pais') ?? certData.estudiante.pais,
+        estado: get('student.estado') ?? certData.estudiante.estado,
+        municipio: get('student.municipio') ?? certData.estudiante.municipio,
+      },
+      instituciones: applyArrayOverrides(certData.instituciones, ov, 'inst', ['denominacion', 'localidad', 'ef']),
+      calificaciones: applyCalifOverrides(certData.calificaciones, ov),
+      orientacion: applyArrayOverrides(certData.orientacion, ov, 'orient', ['anio', 'literal']),
+      grupos: applyArrayOverrides(certData.grupos, ov, 'grupo', ['anio', 'grupo', 'literal']),
+      observaciones: get('doc.observaciones') ?? certData.observaciones,
+      observacionesLines: [
+        get('obsCert.0') ?? (certData.observacionesLines?.[0] || ''),
+        get('obsCert.1') ?? (certData.observacionesLines?.[1] || ''),
+        get('obsCert.2') ?? (certData.observacionesLines?.[2] || ''),
+        get('obsCert.3') ?? (certData.observacionesLines?.[3] || ''),
+      ],
+      promedioAcumulado: get('doc.promedioAcumulado') ?? certData.promedioAcumulado,
       director: certData.director,
       directorCdcce: certData.directorCdcce,
+      acta: get('doc.acta') ?? (certData.acta || ''),
+      actaFecha: get('doc.actaFecha') ?? (certData.actaFecha || ''),
+      actaAnio: get('doc.actaAnio') ?? (certData.actaAnio || ''),
+      literalesFinales: [
+        get('doc.literalFinal.0') ?? (certData.literalesFinales?.[0] || ''),
+        get('doc.literalFinal.1') ?? (certData.literalesFinales?.[1] || ''),
+        get('doc.literalFinal.2') ?? (certData.literalesFinales?.[2] || ''),
+        get('doc.literalFinal.3') ?? (certData.literalesFinales?.[3] || ''),
+        get('doc.literalFinal.4') ?? (certData.literalesFinales?.[4] || ''),
+      ],
     }
-  }, [certData])
+  }, [certData, draftOverrides])
 
   // === Grid Operations ===
   // Mouse handlers for range selection
@@ -1000,6 +1184,99 @@ export default function CertificacionesVisualPage() {
     toast({ title: 'Diseño restablecido', description: 'Se restauró la plantilla por defecto.' })
   }
 
+  // Build the certification table HTML string (shared by print & PDF)
+  const buildTableHtml = () => {
+    const cfg = gridConfig
+    const data = displayData
+    const occupied = new Set<string>()
+    for (let r = 0; r < cfg.rows.length; r++) {
+      const row = cfg.rows[r]
+      if (!row) continue
+      for (const [key, cell] of Object.entries(row.cells)) {
+        const c = Number(key)
+        const rs = cell.rowspan || 1
+        const cs = cell.colspan || 1
+        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occupied.add(`${r + dr}-${c}`) }
+        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
+      }
+    }
+
+    const borderStyle = (enabled: boolean, color: string) =>
+      enabled ? `1px solid ${color}` : 'none'
+    const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
+
+    let rowsHtml = ''
+    for (let r = 0; r < cfg.rows.length; r++) {
+      const gridRow = cfg.rows[r]
+      let cellsHtml = ''
+      for (let c = 0; c < cfg.totalCols; c++) {
+        if (occupied.has(`${r}-${c}`)) continue
+        const cell = gridRow.cells[c] || emptyCell()
+        let content = cell.content
+        if (cell.dataBinding && data) {
+          content = resolveBinding(cell.dataBinding, data) || ''
+        }
+        const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
+        const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
+        const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
+          ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
+          : ''
+        const text = imgTag || (content || '')
+        cellsHtml += `<td${csAttr}${rsAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
+      }
+      rowsHtml += `<tr>${cellsHtml}</tr>`
+    }
+
+    const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
+    return { tableHtml: `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
+  }
+
+  const executePrint = (scale: number) => {
+    setShowPrintDialog(false)
+    const { tableHtml } = buildTableHtml()
+
+    const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
+@page{margin:5mm}
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
+table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
+td{overflow:hidden}
+img{max-width:100%;height:auto}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>${tableHtml}</body></html>`
+
+    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.id = 'cert-print-frame'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+      document.body.appendChild(iframe)
+    }
+    const doc = iframe.contentDocument!
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    const imgs = doc.querySelectorAll('img')
+    if (imgs.length > 0) {
+      let loaded = 0
+      const onDone = () => {
+        loaded++
+        if (loaded >= imgs.length) {
+          setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+        }
+      }
+      imgs.forEach(img => {
+        if (img.complete) { onDone() }
+        else { img.onload = onDone; img.onerror = onDone }
+      })
+    } else {
+      setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+    }
+  }
+
+  const handlePrint = () => setShowPrintDialog(true)
+
   // Selected cell data
   const selectedCellData = useMemo(() => {
     if (!selectedCell) return null
@@ -1142,6 +1419,18 @@ export default function CertificacionesVisualPage() {
                   {gridConfig.rows.length} filas × {gridConfig.totalCols} columnas
                 </Badge>
               )}
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handlePrint}
+                className="h-7 text-xs"
+                title="Imprimir la certificación con los datos actuales"
+              >
+                <Printer className="h-3 w-3 mr-1" /> Imprimir
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1166,6 +1455,7 @@ export default function CertificacionesVisualPage() {
                 </div>
               )}
               {loadingData && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {savingDraft && <Loader2 className="h-3 w-3 animate-spin text-orange-500" />}
             </div>
           </CardContent>
         </Card>
@@ -1196,12 +1486,14 @@ export default function CertificacionesVisualPage() {
             onCellMouseUp={handleCellMouseUp}
             isPreview={isPreview}
             displayData={displayData}
+            onCellEdit={handleCellEdit}
+            savingDraft={savingDraft}
           />
         </div>
 
         {/* Properties Panel (only in designer mode, when cell selected) */}
         {!isPreview && selectedCell && (
-          <div className="w-[300px] shrink-0">
+          <div className="w-[320px] shrink-0">
             <PropertiesPanel
               cell={selectedCellData}
               row={selectedCell.row}
@@ -1265,6 +1557,44 @@ export default function CertificacionesVisualPage() {
         onDelete={handleDeleteLayout}
         loading={loadingLayouts || loadingLayout}
       />
+
+      {/* === Print Dialog === */}
+      <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+        <DialogContent className="sm:max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle>Imprimir Certificación</DialogTitle>
+            <DialogDescription>Configura la escala antes de imprimir.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Escala</Label>
+                <span className="text-sm font-semibold text-primary">{printScale}%</span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={150}
+                step={5}
+                value={printScale}
+                onChange={(e) => setPrintScale(Number(e.target.value))}
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+                <span>50%</span>
+                <span>100%</span>
+                <span>150%</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
+            <Button onClick={() => executePrint(printScale)}>
+              <Printer className="h-4 w-4 mr-1.5" /> Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   )
 }

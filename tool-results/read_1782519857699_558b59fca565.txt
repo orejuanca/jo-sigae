@@ -1,0 +1,1440 @@
+     1→'use client'
+     2→
+     3→import { useState, useCallback } from 'react'
+     4→import { AppShell } from '@/components/app-shell'
+     5→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+     6→import { Button } from '@/components/ui/button'
+     7→import { Input } from '@/components/ui/input'
+     8→import { Label } from '@/components/ui/label'
+     9→import { Badge } from '@/components/ui/badge'
+    10→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    11→import { StudentSearch } from '@/components/student-search'
+    12→import { FileText, Printer, Loader2, Eye, Database, AlertCircle, Save, Check } from 'lucide-react'
+    13→import { useToast } from '@/hooks/use-toast'
+    14→import { schoolConfig, planEMG, notaEnLetras, tiposEvaluacion, formatCedulaFinal } from '@/lib/school-config'
+    15→import type { PlanAnio } from '@/lib/school-config'
+    16→
+    17→// === INTERFACES ===
+    18→
+    19→interface Student {
+    20→  id: string
+    21→  cedula: string
+    22→  apellidos: string
+    23→  nombres: string
+    24→  fechaNacimiento?: string | null
+    25→  pais?: string | null
+    26→  estado?: string | null
+    27→  municipio?: string | null
+    28→  plan?: string | null
+    29→}
+    30→
+    31→interface Certification {
+    32→  id: string
+    33→  tipo: string
+    34→  numero: string
+    35→  datos: string
+    36→  fechaEmision: string
+    37→  studentId: string
+    38→}
+    39→
+    40→interface CalificacionRow {
+    41→  materia: string
+    42→  numero: number
+    43→  nota: string
+    44→  literal: string
+    45→  tipoEvaluacion: string
+    46→  fechaMes: string
+    47→  fechaAnio: string
+    48→  instEduc: string
+    49→}
+    50→
+    51→interface InstitucionEducativa {
+    52→  numero: number
+    53→  denominacion: string
+    54→  localidad: string
+    55→  ef: string
+    56→}
+    57→
+    58→interface OrientationRow {
+    59→  anio: string
+    60→  literal: string
+    61→}
+    62→
+    63→interface GrupoRow {
+    64→  anio: string
+    65→  grupo: string
+    66→  literal: string
+    67→}
+    68→
+    69→interface CertData {
+    70→  lugar: string
+    71→  fechaExpedicion: string
+    72→  planEstudio: string
+    73→  od: string
+    74→  denominacion: string
+    75→  direccion: string
+    76→  telefono: string
+    77→  municipio: string
+    78→  estado: string
+    79→  cdcce: string
+    80→  estudiante: {
+    81→    cedula: string
+    82→    fechaNacimiento: string
+    83→    apellidos: string
+    84→    nombres: string
+    85→    pais: string
+    86→    estado: string
+    87→    municipio: string
+    88→  }
+    89→  instituciones: InstitucionEducativa[]
+    90→  calificaciones: Record<string, CalificacionRow[]>
+    91→  orientacion: OrientationRow[]
+    92→  grupos: GrupoRow[]
+    93→  observaciones: string
+    94→  promedioAcumulado: string
+    95→  director: { apellidosNombres: string; cedula: string }
+    96→  directorCdcce: { apellidosNombres: string; cedula: string }
+    97→  acta?: string
+    98→  actaFecha?: string
+    99→  aniosEscolares?: string[]
+   100→  planTipo?: string
+   101→}
+   102→
+   103→// === HELPERS ===
+   104→
+   105→function getActivePlan(planTipo?: string): PlanAnio[] {
+   106→  return planTipo === 'derogado'
+   107→    ? [
+   108→        { anio: 'Primer Año', materias: [
+   109→          { nombre: 'Castellano y Literatura', numero: 1 }, { nombre: 'Inglés', numero: 2 },
+   110→          { nombre: 'Matemáticas', numero: 3 }, { nombre: 'Historia de Venezuela', numero: 4 },
+   111→          { nombre: 'Geografía de Venezuela', numero: 5 }, { nombre: 'Ciencias Biológicas', numero: 6 },
+   112→          { nombre: 'Física', numero: 7 }, { nombre: 'Química', numero: 8 },
+   113→          { nombre: 'Educación Física', numero: 9 }, { nombre: 'Educación para el Trabajo', numero: 10 },
+   114→        ]},
+   115→        { anio: 'Segundo Año', materias: [
+   116→          { nombre: 'Castellano y Literatura', numero: 1 }, { nombre: 'Inglés', numero: 2 },
+   117→          { nombre: 'Matemáticas', numero: 3 }, { nombre: 'Historia de Venezuela', numero: 4 },
+   118→          { nombre: 'Geografía de Venezuela', numero: 5 }, { nombre: 'Ciencias Biológicas', numero: 6 },
+   119→          { nombre: 'Física', numero: 7 }, { nombre: 'Química', numero: 8 },
+   120→          { nombre: 'Educación Física', numero: 9 }, { nombre: 'Educación para el Trabajo', numero: 10 },
+   121→        ]},
+   122→        { anio: 'Tercer Año', materias: [
+   123→          { nombre: 'Castellano y Literatura', numero: 1 }, { nombre: 'Inglés', numero: 2 },
+   124→          { nombre: 'Matemáticas', numero: 3 }, { nombre: 'Historia de Venezuela', numero: 4 },
+   125→          { nombre: 'Geografía de Venezuela', numero: 5 }, { nombre: 'Ciencias Biológicas', numero: 6 },
+   126→          { nombre: 'Física', numero: 7 }, { nombre: 'Química', numero: 8 },
+   127→          { nombre: 'Educación Física', numero: 9 }, { nombre: 'Educación para el Trabajo', numero: 10 },
+   128→        ]},
+   129→        { anio: 'Cuarto Año', materias: [
+   130→          { nombre: 'Castellano y Literatura', numero: 1 }, { nombre: 'Inglés', numero: 2 },
+   131→          { nombre: 'Matemáticas', numero: 3 }, { nombre: 'Historia de Venezuela', numero: 4 },
+   132→          { nombre: 'Geografía de Venezuela', numero: 5 }, { nombre: 'Ciencias Biológicas', numero: 6 },
+   133→          { nombre: 'Física', numero: 7 }, { nombre: 'Química', numero: 8 },
+   134→          { nombre: 'Educación Física', numero: 9 }, { nombre: 'Educación para el Trabajo', numero: 10 },
+   135→        ]},
+   136→        { anio: 'Quinto Año', materias: [
+   137→          { nombre: 'Castellano y Literatura', numero: 1 }, { nombre: 'Inglés', numero: 2 },
+   138→          { nombre: 'Matemáticas', numero: 3 }, { nombre: 'Historia de Venezuela', numero: 4 },
+   139→          { nombre: 'Geografía de Venezuela', numero: 5 }, { nombre: 'Ciencias Biológicas', numero: 6 },
+   140→          { nombre: 'Física', numero: 7 }, { nombre: 'Química', numero: 8 },
+   141→          { nombre: 'Educación Física', numero: 9 }, { nombre: 'Educación para el Trabajo', numero: 10 },
+   142→        ]},
+   143→      ]
+   144→    : planEMG
+   145→}
+   146→
+   147→const emptyCertData = (planTipo?: string): CertData => {
+   148→  const activePlan = getActivePlan(planTipo)
+   149→  const calificaciones: Record<string, CalificacionRow[]> = {}
+   150→  activePlan.forEach(plan => {
+   151→    calificaciones[plan.anio] = plan.materias.map(m => ({
+   152→      materia: m.nombre, numero: m.numero, nota: '', literal: '',
+   153→      tipoEvaluacion: '', fechaMes: '', fechaAnio: '', instEduc: '',
+   154→    }))
+   155→  })
+   156→
+   157→  return {
+   158→    lugar: schoolConfig.estado,
+   159→    fechaExpedicion: new Date().toISOString().split('T')[0], // YYYY-MM-DD para input type="date"
+   160→    planEstudio: planTipo === 'derogado'
+   161→      ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
+   162→      : schoolConfig.planEstudio,
+   163→    od: schoolConfig.od,
+   164→    denominacion: schoolConfig.nombreCompleto,
+   165→    direccion: schoolConfig.direccion,
+   166→    telefono: schoolConfig.telefono,
+   167→    municipio: schoolConfig.municipio,
+   168→    estado: schoolConfig.estado,
+   169→    cdcce: schoolConfig.cdcceEstado,
+   170→    estudiante: { cedula: '', fechaNacimiento: '', apellidos: '', nombres: '', pais: 'VENEZUELA', estado: '', municipio: '' },
+   171→    instituciones: Array.from({ length: 5 }, (_, i) => ({ numero: i + 1, denominacion: '', localidad: '', ef: '' })),
+   172→    calificaciones,
+   173→    orientacion: Array.from({ length: 5 }, () => ({ anio: '', literal: '' })),
+   174→    grupos: Array.from({ length: 5 }, () => ({ anio: '', grupo: '', literal: '' })),
+   175→    observaciones: '',
+   176→    promedioAcumulado: '',
+   177→    director: { apellidosNombres: schoolConfig.director.apellidosNombres, cedula: schoolConfig.director.cedula },
+   178→    directorCdcce: { apellidosNombres: schoolConfig.directorCdcce.apellidosNombres, cedula: schoolConfig.directorCdcce.cedula },
+   179→    planTipo: planTipo || 'vigente',
+   180→    aniosEscolares: [],
+   181→  }
+   182→}
+   183→
+   184→// === MAIN COMPONENT ===
+   185→
+   186→export default function CertificacionesPage() {
+   187→  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+   188→  const [certifications, setCertifications] = useState<Certification[]>([])
+   189→  const [previewCert, setPreviewCert] = useState<Certification | null>(null)
+   190→  const [loading, setLoading] = useState(false)
+   191→  const [generating, setGenerating] = useState(false)
+   192→  const [savingTab, setSavingTab] = useState<string | null>(null)
+   193→  const [lastSavedTab, setLastSavedTab] = useState<string | null>(null)
+   194→  const [loadingData, setLoadingData] = useState(false)
+   195→  const [dataLoaded, setDataLoaded] = useState(false)
+   196→  const [activeTab, setActiveTab] = useState('calificaciones')
+   197→  const { toast } = useToast()
+   198→
+   199→  const [certData, setCertData] = useState<CertData>(emptyCertData())
+   200→  const [loadedData, setLoadedData] = useState<CertData | null>(null)
+   201→
+   202→  // Plan activo basado en los datos cargados
+   203→  const activePlan = getActivePlan(certData.planTipo)
+   204→
+   205→  // Fetch historial de certificaciones del estudiante
+   206→  const fetchCertifications = async (studentId: string) => {
+   207→    setLoading(true)
+   208→    try {
+   209→      const res = await fetch(`/api/certifications/${studentId}`)
+   210→      if (!res.ok) { setCertifications([]); return }
+   211→      const data = await res.json()
+   212→      setCertifications(Array.isArray(data) ? data.filter((c: Certification) => c.tipo === 'CERTIFICACION_CALIFICACIONES') : [])
+   213→    } catch { setCertifications([]) }
+   214→    finally { setLoading(false) }
+   215→  }
+   216→
+   217→  // Cargar datos de calificaciones del rawData del estudiante
+   218→  const fetchCertDataFromDB = async (student: Student) => {
+   219→    setLoadingData(true)
+   220→    setDataLoaded(false)
+   221→    try {
+   222→      const res = await fetch(`/api/students/${student.id}/cert-data`)
+   223→      if (!res.ok) {
+   224→        const errorData = await res.json().catch(() => ({}))
+   225→        console.error('cert-data API error:', res.status, errorData)
+   226→        const reason = errorData.reason || ''
+   227→        const detailMsg = reason === 'empty_rawData'
+   228→          ? `El alumno ${student.cedula} no tiene rawData (datos de calificaciones) en la base de datos. Se requiere re-importar los datos.`
+   229→          : reason === 'parse_error'
+   230→            ? `Error al parsear rawData del alumno ${student.cedula} (longitud: ${errorData.rawDataLength || '?'}).`
+   231→            : `No se encontraron datos de calificaciones para ${student.cedula}.`
+   232→        toast({ title: 'Sin datos de calificaciones', description: detailMsg, variant: 'destructive' })
+   233→        setLoadingData(false)
+   234→        return
+   235→      }
+   236→      const result = await res.json()
+   237→
+   238→      if (result.certData) {
+   239→        // Si el estudiante tiene rawData parseado, usar esos datos
+   240→        const cd = result.certData as CertData
+   241→        // Si la fecha de expedición está vacía, usar la fecha actual
+   242→        if (!cd.fechaExpedicion || cd.fechaExpedicion.trim() === '') {
+   243→          cd.fechaExpedicion = new Date().toISOString().split('T')[0]
+   244→        }
+   245→        // Si la fecha viene en DD/MM/YYYY, convertir a YYYY-MM-DD para el input
+   246→        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cd.fechaExpedicion)) {
+   247→          const parts = cd.fechaExpedicion.split('/')
+   248→          cd.fechaExpedicion = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+   249→        }
+   250→        setCertData(cd)
+   251→        setDataLoaded(true)
+   252→
+   253→        const planLabel = result.certData.planTipo === 'derogado' ? 'Plan Derogado (BD2)' : 'Plan Vigente (BD)'
+   254→        const gradeCount = result.gradeCount || Object.values(result.certData.calificaciones || {})
+   255→          .flat()
+   256→          .filter((c: CalificacionRow) => c.nota && c.nota !== '').length
+   257→
+   258→        toast({
+   259→          title: `Datos cargados — ${planLabel}`,
+   260→          description: `Se cargaron ${gradeCount} calificaciones del rawData. Verifica y edita los datos en las pestañas.`,
+   261→        })
+   262→        setActiveTab('calificaciones')
+   263→      }
+   264→    } catch (err) {
+   265→      console.error('Error fetching cert data:', err)
+   266→      toast({ title: 'Error', description: 'Error al cargar datos de calificaciones. Verifique su conexión e intente de nuevo.', variant: 'destructive' })
+   267→    } finally {
+   268→      setLoadingData(false)
+   269→    }
+   270→  }
+   271→
+   272→  const handleSelectStudent = async (student: Student) => {
+   273→    setSelectedStudent(student)
+   274→    setPreviewCert(null)
+   275→    setLoadedData(null)
+   276→    setDataLoaded(false)
+   277→    setLastSavedTab(null)
+   278→    fetchCertifications(student.id)
+   279→
+   280→    // Normalizar fecha de nacimiento a DD/MM/YYYY
+   281→    const normalizeFecha = (f: string | null | undefined): string => {
+   282→      if (!f) return ''
+   283→      const trimmed = String(f).trim()
+   284→      if (!trimmed) return ''
+   285→      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+   286→        const parts = trimmed.split('/')
+   287→        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
+   288→      }
+   289→      if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+   290→        try {
+   291→          const d = new Date(trimmed)
+   292→          if (!isNaN(d.getTime())) {
+   293→            const day = String(d.getDate()).padStart(2, '0')
+   294→            const month = String(d.getMonth() + 1).padStart(2, '0')
+   295→            const year = d.getFullYear()
+   296→            return `${day}/${month}/${year}`
+   297→          }
+   298→        } catch { /* ignore */ }
+   299→      }
+   300→      return trimmed
+   301→    }
+   302→
+   303→    // Iniciar con datos vacíos pero del plan correcto
+   304→    const baseData = emptyCertData(student.plan === 'derogado' ? 'derogado' : 'vigente')
+   305→    baseData.estudiante = {
+   306→      cedula: formatCedulaFinal(student.cedula),
+   307→      fechaNacimiento: normalizeFecha(student.fechaNacimiento),
+   308→      apellidos: student.apellidos,
+   309→      nombres: student.nombres,
+   310→      pais: student.pais || 'VENEZUELA',
+   311→      estado: student.estado || '',
+   312→      municipio: student.municipio || '',
+   313→    }
+   314→    baseData.planTipo = student.plan === 'derogado' ? 'derogado' : 'vigente'
+   315→    setCertData(baseData)
+   316→
+   317→    // Intentar cargar borrador guardado primero
+   318→    const draft = await loadDraft(student.id)
+   319→    if (draft) {
+   320→      // Asegurar que los campos del estudiante estén actualizados con los datos del modelo
+   321→      draft.estudiante = {
+   322→        ...draft.estudiante,
+   323→        cedula: formatCedulaFinal(student.cedula),
+   324→        apellidos: student.apellidos,
+   325→        nombres: student.nombres,
+   326→      }
+   327→      setCertData(draft)
+   328→      setDataLoaded(true)
+   329→      setActiveTab('calificaciones')
+   330→      toast({
+   331→        title: 'Borrador recuperado',
+   332→        description: 'Se cargó la última versión guardada de los datos editados.',
+   333→      })
+   334→    } else {
+   335→      // Si no hay borrador, cargar del rawData como antes
+   336→      fetchCertDataFromDB(student)
+   337→    }
+   338→  }
+   339→
+   340→  const updateNota = (anio: string, matIndex: number, field: keyof CalificacionRow, value: string) => {
+   341→    setCertData(prev => {
+   342→      const updated = { ...prev }
+   343→      updated.calificaciones = { ...prev.calificaciones }
+   344→      updated.calificaciones[anio] = [...prev.calificaciones[anio]]
+   345→      updated.calificaciones[anio][matIndex] = { ...updated.calificaciones[anio][matIndex], [field]: value }
+   346→      if (field === 'nota' && value) {
+   347→        updated.calificaciones[anio][matIndex].literal = notaEnLetras(value)
+   348→      }
+   349→      return updated
+   350→    })
+   351→  }
+   352→
+   353→  const updateInstitucion = (index: number, field: keyof InstitucionEducativa, value: string) => {
+   354→    setCertData(prev => {
+   355→      const updated = { ...prev }
+   356→      updated.instituciones = [...prev.instituciones]
+   357→      updated.instituciones[index] = { ...updated.instituciones[index], [field]: value }
+   358→      return updated
+   359→    })
+   360→  }
+   361→
+   362→  const updateOrientacion = (index: number, field: keyof OrientationRow, value: string) => {
+   363→    setCertData(prev => {
+   364→      const updated = { ...prev }
+   365→      updated.orientacion = [...prev.orientacion]
+   366→      updated.orientacion[index] = { ...updated.orientacion[index], [field]: value }
+   367→      return updated
+   368→    })
+   369→  }
+   370→
+   371→  const updateGrupo = (index: number, field: keyof GrupoRow, value: string) => {
+   372→    setCertData(prev => {
+   373→      const updated = { ...prev }
+   374→      updated.grupos = [...prev.grupos]
+   375→      updated.grupos[index] = { ...updated.grupos[index], [field]: value }
+   376→      return updated
+   377→    })
+   378→  }
+   379→
+   380→  const handleGenerate = async () => {
+   381→    if (!selectedStudent) return
+   382→    setGenerating(true)
+   383→    try {
+   384→      const res = await fetch('/api/certifications', {
+   385→        method: 'POST',
+   386→        headers: { 'Content-Type': 'application/json' },
+   387→        body: JSON.stringify({ tipo: 'CERTIFICACION_CALIFICACIONES', studentId: selectedStudent.id, datos: certData }),
+   388→      })
+   389→      if (!res.ok) throw new Error('Error al generar')
+   390→      const cert = await res.json()
+   391→      setPreviewCert(cert)
+   392→      setCertifications(prev => [cert, ...prev])
+   393→      setActiveTab('vista')
+   394→      toast({ title: 'Certificación de Calificaciones Generada', description: `Numero: ${cert.numero}` })
+   395→    } catch {
+   396→      toast({ title: 'Error', description: 'Error al generar certificación', variant: 'destructive' })
+   397→    } finally { setGenerating(false) }
+   398→  }
+   399→
+   400→  const handleViewCert = (cert: Certification) => {
+   401→    try {
+   402→      const data = JSON.parse(cert.datos || '{}')
+   403→      // Corregir literales viejos: IN→INASISTENTE, PE→PENDIENTE
+   404→      if (data.calificaciones) {
+   405→        for (const anio of Object.keys(data.calificaciones)) {
+   406→          for (const cal of data.calificaciones[anio]) {
+   407→            if (cal.nota === 'IN' && cal.literal !== 'INASISTENTE') cal.literal = 'INASISTENTE'
+   408→            if (cal.nota === 'PE' && cal.literal !== 'PENDIENTE') cal.literal = 'PENDIENTE'
+   409→            // Si el literal está vacío pero la nota tiene valor, regenerar
+   410→            if (!cal.literal && cal.nota) cal.literal = notaEnLetras(cal.nota)
+   411→          }
+   412→        }
+   413→      }
+   414→      setLoadedData(data)
+   415→      setPreviewCert(cert)
+   416→      setActiveTab('vista')
+   417→    } catch {
+   418→      toast({ title: 'Error', description: 'Error al cargar datos de certificación', variant: 'destructive' })
+   419→    }
+   420→  }
+   421→
+   422→  // Guardar borrador del certData completo en la base de datos
+   423→  const handleSaveTab = async (tabName: string) => {
+   424→    if (!selectedStudent) return
+   425→    setSavingTab(tabName)
+   426→    setLastSavedTab(null)
+   427→    try {
+   428→      const res = await fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+   429→        method: 'PUT',
+   430→        headers: { 'Content-Type': 'application/json' },
+   431→        body: JSON.stringify({ datos: certData }),
+   432→      })
+   433→      if (!res.ok) throw new Error('Error al guardar')
+   434→      setLastSavedTab(tabName)
+   435→      toast({ title: 'Borrador guardado', description: `Los cambios de la pestaña "${tabName}" se guardaron correctamente.` })
+   436→    } catch {
+   437→      toast({ title: 'Error', description: 'No se pudo guardar el borrador. Intente de nuevo.', variant: 'destructive' })
+   438→    } finally {
+   439→      setSavingTab(null)
+   440→    }
+   441→  }
+   442→
+   443→  // Cargar borrador guardado previamente
+   444→  const loadDraft = async (studentId: string): Promise<CertData | null> => {
+   445→    try {
+   446→      const res = await fetch(`/api/students/${studentId}/cert-draft`)
+   447→      if (!res.ok) return null
+   448→      const { draft } = await res.json()
+   449→      if (!draft) return null
+   450→      // Ignore cert-visual inline-edit drafts (they use "overrides" format, not full CertData)
+   451→      if (draft.overrides && !draft.calificaciones) return null
+   452→      return draft as CertData | null
+   453→    } catch {
+   454→      return null
+   455→    }
+   456→  }
+   457→
+   458→  // Botón reutilizable de guardar pestaña
+   459→  const SaveButton = ({ tabName }: { tabName: string }) => (
+   460→    <div className="flex items-center justify-end pt-4 border-t mt-4">
+   461→      <Button
+   462→        onClick={() => handleSaveTab(tabName)}
+   463→        disabled={savingTab === tabName || !selectedStudent}
+   464→        variant="outline"
+   465→        className="gap-2"
+   466→      >
+   467→        {savingTab === tabName ? (
+   468→          <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
+   469→        ) : lastSavedTab === tabName ? (
+   470→          <><Check className="h-4 w-4 text-emerald-500" /> Guardado</>
+   471→        ) : (
+   472→          <><Save className="h-4 w-4" /> Guardar Cambios</>
+   473→        )}
+   474→      </Button>
+   475→    </div>
+   476→  )
+   477→
+   478→  const displayData = previewCert && loadedData ? loadedData : certData
+   479→
+   480→  // Convertir YYYY-MM-DD → DD/MM/YYYY para mostrar en la vista de impresión
+   481→  const displayFechaExpedicion = (() => {
+   482→    const f = displayData.fechaExpedicion
+   483→    if (!f) return new Date().toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+   484→    if (/^\d{4}-\d{2}-\d{2}$/.test(f)) {
+   485→      const [y, m, d] = f.split('-')
+   486→      return `${d}/${m}/${y}`
+   487→    }
+   488→    return f
+   489→  })()
+   490→
+   491→  const formatDate = (dateStr: string) => {
+   492→    try { return new Date(dateStr).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' }) }
+   493→    catch { return dateStr }
+   494→  }
+   495→
+   496→  const getNotaColor = (nota: string) => {
+   497→    const n = parseFloat(nota)
+   498→    if (isNaN(n) || nota === '') return ''
+   499→    if (n >= 18) return 'text-emerald-600 font-bold'
+   500→    if (n >= 15) return 'text-blue-600 font-medium'
+   501→    if (n >= 12) return 'text-amber-600'
+   502→    if (n >= 10) return 'text-orange-600'
+   503→    return 'text-red-600 font-bold'
+   504→  }
+   505→
+   506→  const countGrades = () => {
+   507→    return Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && c.nota !== 'PE').length
+   508→  }
+   509→
+   510→  // Helper styles for cert preview tables — Excel format: Arial 9pt, thin borders, NO backgrounds
+   511→  const tbS: React.CSSProperties = { borderCollapse: 'collapse', fontSize: '9pt', lineHeight: '1.2', fontFamily: 'Arial, sans-serif' }
+   512→  const bd: React.CSSProperties = { border: '1px solid #000', padding: '1px 2px', fontSize: '9pt' }
+   513→  const bdB: React.CSSProperties = { ...bd, fontWeight: 'bold' }
+   514→  const bdH: React.CSSProperties = { ...bd, fontWeight: 'bold' }
+   515→  const bdC: React.CSSProperties = { ...bd, textAlign: 'center' }
+   516→  const bdCh: React.CSSProperties = { ...bd, fontWeight: 'bold', textAlign: 'center', fontSize: '7pt', verticalAlign: 'middle' }
+   517→
+   518→  // Render one half of a year table (left=A-M or right=O-AA)
+   519→  // Excel columns per half: A-D(4), E(1), F-I(4), J(1), K(1), L(1), M(1) = 13
+   520→  // Logical columns rendered as 7 <td>: Areas(1), N°(1), Letras(1), T-E(1), Mes(1), Año(1), Inst(1)
+   521→  const bdH9: React.CSSProperties = { ...bd, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle' }
+   522→  // Vertical text style for Inst. Educ. header (Excel: rotation=88, Arial 7pt bold)
+   523→  const instVertStyle: React.CSSProperties = {
+   524→    ...bd,
+   525→    fontWeight: 'bold',
+   526→    textAlign: 'center',
+   527→    verticalAlign: 'middle',
+   528→    padding: '0 1px',
+   529→  }
+   530→  // Vertical separator column (like Section IV's N column)
+   531→  const sepCol: React.CSSProperties = { border: 'none' }
+   532→
+   533→  const renderYearHalf = (plan: PlanAnio, planIdx: number, minRows?: number) => {
+   534→    const allGrades = displayData.calificaciones[plan.anio] || []
+   535→    // Filter only quantitative subjects (exclude cualitativas)
+   536→    const grades = allGrades.filter((_g, idx) => {
+   537→      const m = plan.materias[idx]
+   538→      return m && m.tipo !== 'cualitativa'
+   539→    })
+   540→    // Filler rows for paired years with different subject counts
+   541→    const fillerCount = minRows ? Math.max(0, minRows - grades.length) : 0
+   542→    // Excel column widths: A=4.57, B-K=13 each, L=5.0, M=4.57 → total=144.14
+   543→    // Proportions: Areas 30.2%, N° 9.0%, Letras 36.1%, T-E 9.0%, Mes 9.0%, Año 3.5%, Inst 3.2%
+   544→    return (
+   545→      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+   546→        <colgroup>
+   547→          <col style={{ width: '30.2%' }} />{/* A-D: ÁREAS DE FORMACIÓN */}
+   548→          <col style={{ width: '9.0%' }} />{/* E: N° */}
+   549→          <col style={{ width: '36.1%' }} />{/* F-I: LETRAS */}
+   550→          <col style={{ width: '9.0%' }} />{/* J: T-E */}
+   551→          <col style={{ width: '9.0%' }} />{/* K: Mes */}
+   552→          <col style={{ width: '3.5%' }} />{/* L: Año */}
+   553→          <col style={{ width: '3.2%' }} />{/* M: Inst. Educ. */}
+   554→        </colgroup>
+   555→        <tbody>
+   556→          {/* Year header row - centered, no top/internal lines, only bottom border */}
+   557→          <tr>
+   558→            <td colSpan={7} style={{ ...bdH, borderTop: 'none', borderLeft: 'none', borderRight: 'none', textAlign: 'center' }}>{plan.anio.toUpperCase()}</td>
+   559→          </tr>
+   560→          {/* Sub-header row 1 */}
+   561→          <tr>
+   562→            <td colSpan={1} rowSpan={2} style={bdH9}>ÁREAS DE FORMACIÓN</td>
+   563→            <td colSpan={2} style={bdH9}>CALIFICACIÓN</td>
+   564→            <td rowSpan={2} style={bdH9}>T-E</td>
+   565→            <td colSpan={2} style={bdH9}>FECHA</td>
+   566→            <td rowSpan={2} style={instVertStyle}>
+   567→              <span style={{ display: 'inline-block', writingMode: 'vertical-rl' as const, transform: 'rotate(180deg)', fontSize: '7pt', whiteSpace: 'nowrap', lineHeight: '1' }}>
+   568→                Inst. Educ.
+   569→              </span>
+   570→            </td>
+   571→          </tr>
+   572→          {/* Sub-header row 2 */}
+   573→          <tr>
+   574→            <td style={bdH9}>N°</td>
+   575→            <td style={bdH9}>LETRAS</td>
+   576→            <td style={bdH9}>Mes</td>
+   577→            <td style={bdH9}>Año</td>
+   578→          </tr>
+   579→          {/* Subject rows — fixed height for uniform row sizing */}
+   580→          {grades.map((cal, idx) => (
+   581→            <tr key={idx} style={{ height: '16px' }}>
+   582→              <td style={{ ...bd, verticalAlign: 'top', whiteSpace: 'normal', lineHeight: '1.1', overflow: 'hidden' }}>{cal.materia}</td>
+   583→              <td style={{ ...bdC, fontWeight: 'bold' }}>{cal.nota || ''}</td>
+   584→              <td style={{ ...bdC, textAlign: 'left' }}>{cal.literal || ''}</td>
+   585→              <td style={bdC}>{cal.tipoEvaluacion || ''}</td>
+   586→              <td style={bdC}>{cal.fechaMes || ''}</td>
+   587→              <td style={{ ...bdC, fontSize: '7pt' }}>{cal.fechaAnio || ''}</td>
+   588→              <td style={{ ...bdC, fontSize: '5pt', padding: '0 1px', overflow: 'hidden', whiteSpace: 'nowrap' }}>{cal.instEduc || ''}</td>
+   589→            </tr>
+   590→          ))}
+   591→          {/* Filler rows (asterisks) for paired years with different subject counts */}
+   592→          {Array.from({ length: fillerCount }).map((_, idx) => (
+   593→            <tr key={`fill-${idx}`} style={{ height: '16px' }}>
+   594→              <td style={bd}>{'**********************'}</td>
+   595→              <td style={bdC}>{'*'}</td>
+   596→              <td style={bdC}>{'**********************'}</td>
+   597→              <td style={bdC}>{'*'}</td>
+   598→              <td style={bdC}>{'*'}</td>
+   599→              <td style={bdC}>{'*'}</td>
+   600→              <td style={bdC}>{'*'}</td>
+   601→            </tr>
+   602→          ))}
+   603→        </tbody>
+   604→      </table>
+   605→    )
+   606→  }
+   607→
+   608→  return (
+   609→    <AppShell>
+   610→      <div className="space-y-6">
+   611→        <div>
+   612→          <h1 className="text-2xl font-bold">Certificación de Calificaciones</h1>
+   613→          <p className="text-muted-foreground">Generar Certificación de Calificaciones — BD (Plan Vigente) y BD2 (Planes Derogados)</p>
+   614→        </div>
+   615→
+   616→        {/* Buscar Alumno */}
+   617→        <Card>
+   618→          <CardHeader className="pb-3">
+   619→            <CardTitle className="text-base">Buscar Alumno</CardTitle>
+   620→          </CardHeader>
+   621→          <CardContent>
+   622→            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cédula, apellidos o nombres (BD y BD2)..." />
+   623→          </CardContent>
+   624→        </Card>
+   625→
+   626→        {selectedStudent && (
+   627→          <>
+   628→            {/* Info del estudiante + historial */}
+   629→            <Card>
+   630→              <CardHeader className="pb-3">
+   631→                <div className="flex items-center justify-between flex-wrap gap-2">
+   632→                  <div>
+   633→                    <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres}</CardTitle>
+   634→                    <p className="text-sm text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</p>
+   635→                  </div>
+   636→                  <div className="flex gap-2">
+   637→                    <Badge variant={selectedStudent.plan === 'derogado' ? 'destructive' : 'default'}>
+   638→                      {selectedStudent.plan === 'derogado' ? 'BD2 — Plan Derogado' : 'BD — Plan Vigente'}
+   639→                    </Badge>
+   640→                    {dataLoaded && (
+   641→                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+   642→                        <Database className="h-3 w-3 mr-1" /> {countGrades()} calificaciones cargadas
+   643→                      </Badge>
+   644→                    )}
+   645→                  </div>
+   646→                </div>
+   647→              </CardHeader>
+   648→              <CardContent>
+   649→                {loading && <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
+   650→                {!loading && certifications.length === 0 && (
+   651→                  <p className="text-sm text-muted-foreground text-center py-4">No hay certificaciones de calificaciones para este alumno</p>
+   652→                )}
+   653→                {!loading && certifications.length > 0 && (
+   654→                  <div className="space-y-2">
+   655→                    {certifications.map((cert) => (
+   656→                      <div key={cert.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+   657→                        <div className="flex items-center gap-3">
+   658→                          <FileText className="h-4 w-4 text-primary" />
+   659→                          <div>
+   660→                            <p className="text-sm font-medium">{cert.numero}</p>
+   661→                            <p className="text-xs text-muted-foreground">{formatDate(cert.fechaEmision)}</p>
+   662→                          </div>
+   663→                        </div>
+   664→                        <Button variant="ghost" size="sm" onClick={() => handleViewCert(cert)}>
+   665→                          <Eye className="h-3.5 w-3.5 mr-1" /> Ver
+   666→                        </Button>
+   667→                      </div>
+   668→                    ))}
+   669→                  </div>
+   670→                )}
+   671→              </CardContent>
+   672→            </Card>
+   673→
+   674→            {/* Loading indicator for rawData parsing */}
+   675→            {loadingData && (
+   676→              <Card>
+   677→                <CardContent className="py-6">
+   678→                  <div className="flex items-center justify-center gap-3 text-muted-foreground">
+   679→                    <Loader2 className="h-5 w-5 animate-spin" />
+   680→                    <span className="text-sm">Extrayendo calificaciones del rawData...</span>
+   681→                  </div>
+   682→                </CardContent>
+   683→              </Card>
+   684→            )}
+   685→
+   686→            {/* Tabs principales */}
+   687→            <Tabs value={activeTab} onValueChange={setActiveTab}>
+   688→              <TabsList className="grid w-full grid-cols-6">
+   689→                <TabsTrigger value="datos">Datos</TabsTrigger>
+   690→                <TabsTrigger value="instituciones">Instituciones</TabsTrigger>
+   691→                <TabsTrigger value="calificaciones">
+   692→                  Calificaciones {dataLoaded && <span className="ml-1 text-emerald-600">({countGrades()})</span>}
+   693→                </TabsTrigger>
+   694→                <TabsTrigger value="adicional">Adicional</TabsTrigger>
+   695→                <TabsTrigger value="vista">Vista Previa</TabsTrigger>
+   696→                <TabsTrigger value="generar">
+   697→                  <Loader2 className={`h-3.5 w-3.5 mr-1 ${generating ? 'animate-spin' : 'hidden'}`} />
+   698→                  Generar
+   699→                </TabsTrigger>
+   700→              </TabsList>
+   701→
+   702→              {/* TAB: Datos del estudiante e institución */}
+   703→              <TabsContent value="datos">
+   704→                <Card>
+   705→                  <CardHeader className="pb-3">
+   706→                    <CardTitle className="text-base">I. Datos de la Institución y Estudiante</CardTitle>
+   707→                  </CardHeader>
+   708→                  <CardContent className="space-y-6">
+   709→                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+   710→                      <div className="grid gap-2">
+   711→                        <Label>Lugar de Expedición</Label>
+   712→                        <Input value={certData.lugar} onChange={(e) => setCertData(prev => ({ ...prev, lugar: e.target.value }))} />
+   713→                      </div>
+   714→                      <div className="grid gap-2">
+   715→                        <Label>Fecha de Expedición</Label>
+   716→                        <Input type="date" value={certData.fechaExpedicion} onChange={(e) => setCertData(prev => ({ ...prev, fechaExpedicion: e.target.value }))} />
+   717→                      </div>
+   718→                      <div className="grid gap-2">
+   719→                        <Label>Código OD</Label>
+   720→                        <Input value={certData.od} onChange={(e) => setCertData(prev => ({ ...prev, od: e.target.value }))} />
+   721→                      </div>
+   722→                      <div className="grid gap-2">
+   723→                        <Label>Plan de Estudio</Label>
+   724→                        <Input value={certData.planEstudio} onChange={(e) => setCertData(prev => ({ ...prev, planEstudio: e.target.value }))} />
+   725→                      </div>
+   726→                    </div>
+   727→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   728→                      <div className="grid gap-2">
+   729→                        <Label>Denominación y Epónimo</Label>
+   730→                        <Input value={certData.denominacion} onChange={(e) => setCertData(prev => ({ ...prev, denominacion: e.target.value }))} />
+   731→                      </div>
+   732→                      <div className="grid gap-2">
+   733→                        <Label>Teléfono</Label>
+   734→                        <Input value={certData.telefono} onChange={(e) => setCertData(prev => ({ ...prev, telefono: e.target.value }))} />
+   735→                      </div>
+   736→                    </div>
+   737→                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   738→                      <div className="grid gap-2">
+   739→                        <Label>Dirección</Label>
+   740→                        <Input value={certData.direccion} onChange={(e) => setCertData(prev => ({ ...prev, direccion: e.target.value }))} />
+   741→                      </div>
+   742→                      <div className="grid gap-2">
+   743→                        <Label>Municipio</Label>
+   744→                        <Input value={certData.municipio} onChange={(e) => setCertData(prev => ({ ...prev, municipio: e.target.value }))} />
+   745→                      </div>
+   746→                      <div className="grid gap-2">
+   747→                        <Label>Estado / CDCCE</Label>
+   748→                        <Input value={certData.estado} onChange={(e) => setCertData(prev => ({ ...prev, estado: e.target.value, cdcce: e.target.value }))} />
+   749→                      </div>
+   750→                    </div>
+   751→
+   752→                    <div className="border-t pt-4">
+   753→                      <h3 className="text-sm font-semibold mb-4">III. Datos del Estudiante</h3>
+   754→                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+   755→                        <div className="grid gap-2"><Label>Cédula de Identificación</Label><Input value={certData.estudiante.cedula} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, cedula: e.target.value } }))} /></div>
+   756→                        <div className="grid gap-2"><Label>Fecha de Nacimiento</Label><Input value={certData.estudiante.fechaNacimiento} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, fechaNacimiento: e.target.value } }))} placeholder="dd/mm/aaaa" /></div>
+   757→                        <div className="grid gap-2"><Label>Apellidos</Label><Input value={certData.estudiante.apellidos} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, apellidos: e.target.value } }))} /></div>
+   758→                        <div className="grid gap-2"><Label>Nombres</Label><Input value={certData.estudiante.nombres} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, nombres: e.target.value } }))} /></div>
+   759→                      </div>
+   760→                      <div className="grid grid-cols-3 gap-4 mt-4">
+   761→                        <div className="grid gap-2"><Label>País</Label><Input value={certData.estudiante.pais} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, pais: e.target.value } }))} /></div>
+   762→                        <div className="grid gap-2"><Label>Estado</Label><Input value={certData.estudiante.estado} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, estado: e.target.value } }))} /></div>
+   763→                        <div className="grid gap-2"><Label>Municipio</Label><Input value={certData.estudiante.municipio} onChange={(e) => setCertData(prev => ({ ...prev, estudiante: { ...prev.estudiante, municipio: e.target.value } }))} /></div>
+   764→                      </div>
+   765→                    </div>
+   766→
+   767→                    <div className="border-t pt-4">
+   768→                      <h3 className="text-sm font-semibold mb-4">VII. Director(a) de la Institución</h3>
+   769→                      <div className="grid grid-cols-2 gap-4">
+   770→                        <div className="grid gap-2"><Label>Apellidos y Nombres</Label><Input value={certData.director.apellidosNombres} onChange={(e) => setCertData(prev => ({ ...prev, director: { ...prev.director, apellidosNombres: e.target.value } }))} /></div>
+   771→                        <div className="grid gap-2"><Label>Cédula de Identidad</Label><Input value={certData.director.cedula} onChange={(e) => setCertData(prev => ({ ...prev, director: { ...prev.director, cedula: e.target.value } }))} /></div>
+   772→                      </div>
+   773→                    </div>
+   774→
+   775→                    <div className="border-t pt-4">
+   776→                      <h3 className="text-sm font-semibold mb-4">VIII. Director(a) del CDCCE</h3>
+   777→                      <div className="grid grid-cols-2 gap-4">
+   778→                        <div className="grid gap-2"><Label>Apellidos y Nombres</Label><Input value={certData.directorCdcce.apellidosNombres} onChange={(e) => setCertData(prev => ({ ...prev, directorCdcce: { ...prev.directorCdcce, apellidosNombres: e.target.value } }))} /></div>
+   779→                        <div className="grid gap-2"><Label>Cédula de Identidad</Label><Input value={certData.directorCdcce.cedula} onChange={(e) => setCertData(prev => ({ ...prev, directorCdcce: { ...prev.directorCdcce, cedula: e.target.value } }))} /></div>
+   780→                      </div>
+   781→                    </div>
+   782→                  </CardContent>
+   783→                </Card>
+   784→                <SaveButton tabName="Datos" />
+   785→              </TabsContent>
+   786→
+   787→              {/* TAB: Instituciones Educativas */}
+   788→              <TabsContent value="instituciones">
+   789→                <Card>
+   790→                  <CardHeader className="pb-3">
+   791→                    <CardTitle className="text-base">IV. Instituciones Educativas</CardTitle>
+   792→                  </CardHeader>
+   793→                  <CardContent>
+   794→                    <div className="overflow-x-auto">
+   795→                      <table className="w-full text-sm border-collapse">
+   796→                        <thead>
+   797→                          <tr className="border-b-2">
+   798→                            <th className="text-center py-2 px-3 w-12">N°</th>
+   799→                            <th className="text-left py-2 px-3">Denominación y Epónimo</th>
+   800→                            <th className="text-left py-2 px-3">Localidad</th>
+   801→                            <th className="text-center py-2 px-3 w-16">E.F.</th>
+   802→                          </tr>
+   803→                        </thead>
+   804→                        <tbody>
+   805→                          {certData.instituciones.map((inst, i) => (
+   806→                            <tr key={i} className="border-b">
+   807→                              <td className="text-center py-2 px-3">{inst.numero}</td>
+   808→                              <td className="py-2 px-3"><Input className="h-8" value={inst.denominacion} onChange={(e) => updateInstitucion(i, 'denominacion', e.target.value)} placeholder="Nombre de la institución" /></td>
+   809→                              <td className="py-2 px-3"><Input className="h-8" value={inst.localidad} onChange={(e) => updateInstitucion(i, 'localidad', e.target.value)} placeholder="Localidad" /></td>
+   810→                              <td className="py-2 px-3"><Input className="h-8 text-center" value={inst.ef} onChange={(e) => updateInstitucion(i, 'ef', e.target.value)} /></td>
+   811→                            </tr>
+   812→                          ))}
+   813→                        </tbody>
+   814→                      </table>
+   815→                    </div>
+   816→                  </CardContent>
+   817→                </Card>
+   818→                <SaveButton tabName="Instituciones" />
+   819→              </TabsContent>
+   820→
+   821→              {/* TAB: Calificaciones por año — TAB PRINCIPAL */}
+   822→              <TabsContent value="calificaciones">
+   823→                <Card>
+   824→                  <CardHeader className="pb-3">
+   825→                    <div className="flex items-center justify-between flex-wrap gap-2">
+   826→                      <CardTitle className="text-base">V. Plan de Estudio — Calificaciones por Año</CardTitle>
+   827→                      {certData.acta && (
+   828→                        <Badge variant="outline" className="text-xs">
+   829→                          Acta: {certData.acta} {certData.actaFecha && `| ${certData.actaFecha}`}
+   830→                        </Badge>
+   831→                      )}
+   832→                    </div>
+   833→                  </CardHeader>
+   834→                  <CardContent className="space-y-6">
+   835→                    {activePlan.map((plan, planIdx) => {
+   836→                      const grades = certData.calificaciones[plan.anio] || []
+   837→                      const hasGrades = grades.some(g => g.nota && g.nota !== '')
+   838→                      const yearLabel = certData.aniosEscolares?.[planIdx] || ''
+   839→
+   840→                      return (
+   841→                        <div key={plan.anio} className={`border rounded-lg p-4 ${hasGrades ? 'border-emerald-300 bg-emerald-50/30' : 'border-gray-200'}`}>
+   842→                          <div className="flex items-center justify-between mb-3">
+   843→                            <h4 className="font-semibold text-sm text-emerald-700">{plan.anio}</h4>
+   844→                            <div className="flex gap-2">
+   845→                              {yearLabel && <Badge variant="outline" className="text-xs">{yearLabel}</Badge>}
+   846→                              {hasGrades && <Badge variant="default" className="text-xs bg-emerald-600">{grades.filter(g => g.nota).length} materias</Badge>}
+   847→                            </div>
+   848→                          </div>
+   849→                          <div className="overflow-x-auto">
+   850→                            <table className="w-full text-sm border-collapse">
+   851→                              <thead>
+   852→                                <tr className="border-b-2 bg-muted/50">
+   853→                                  <th className="text-center py-2 px-1 w-8">N°</th>
+   854→                                  <th className="text-left py-2 px-1 min-w-[180px]">Área de Formación</th>
+   855→                                  <th className="text-center py-2 px-1 w-14">NOTA</th>
+   856→                                  <th className="text-center py-2 px-1 w-12">LETRAS</th>
+   857→                                  <th className="text-center py-2 px-1 w-12">T-E</th>
+   858→                                  <th className="text-center py-2 px-1 w-14">MES</th>
+   859→                                  <th className="text-center py-2 px-1 w-16">AÑO</th>
+   860→                                </tr>
+   861→                              </thead>
+   862→                              <tbody>
+   863→                                {grades.map((cal, idx) => (
+   864→                                  <tr key={idx} className={`border-b ${cal.nota ? 'bg-white' : 'bg-gray-50/50'}`}>
+   865→                                    <td className="text-center py-1 px-1 text-xs">{cal.numero}</td>
+   866→                                    <td className="py-1 px-1 text-xs font-medium">{cal.materia}</td>
+   867→                                    <td className="py-1 px-1">
+   868→                                      <Input
+   869→                                        type="text"
+   870→                                        className="h-7 text-center text-xs w-14 mx-auto"
+   871→                                        value={cal.nota}
+   872→                                        onChange={(e) => updateNota(plan.anio, idx, 'nota', e.target.value)}
+   873→                                      />
+   874→                                    </td>
+   875→                                    <td className={`text-center py-1 px-1 font-bold text-xs ${getNotaColor(cal.nota)}`}>
+   876→                                      {cal.literal || '—'}
+   877→                                    </td>
+   878→                                    <td className="py-1 px-1">
+   879→                                      <Input
+   880→                                        className="h-7 text-center text-xs w-12 mx-auto"
+   881→                                        value={cal.tipoEvaluacion}
+   882→                                        onChange={(e) => updateNota(plan.anio, idx, 'tipoEvaluacion', e.target.value)}
+   883→                                        maxLength={2}
+   884→                                      />
+   885→                                    </td>
+   886→                                    <td className="py-1 px-1">
+   887→                                      <Input
+   888→                                        className="h-7 text-center text-xs w-14 mx-auto"
+   889→                                        value={cal.fechaMes}
+   890→                                        onChange={(e) => updateNota(plan.anio, idx, 'fechaMes', e.target.value)}
+   891→                                        placeholder="MM"
+   892→                                      />
+   893→                                    </td>
+   894→                                    <td className="py-1 px-1">
+   895→                                      <Input
+   896→                                        className="h-7 text-center text-xs w-16 mx-auto"
+   897→                                        value={cal.fechaAnio}
+   898→                                        onChange={(e) => updateNota(plan.anio, idx, 'fechaAnio', e.target.value)}
+   899→                                        placeholder="AAAA"
+   900→                                      />
+   901→                                    </td>
+   902→                                  </tr>
+   903→                                ))}
+   904→                              </tbody>
+   905→                            </table>
+   906→                          </div>
+   907→                        </div>
+   908→                      )
+   909→                    })}
+   910→                  </CardContent>
+   911→                </Card>
+   912→                <SaveButton tabName="Calificaciones" />
+   913→              </TabsContent>
+   914→
+   915→              {/* TAB: Secciones adicionales */}
+   916→              <TabsContent value="adicional">
+   917→                <div className="space-y-6">
+   918→                  <Card>
+   919→                    <CardHeader className="pb-3">
+   920→                      <CardTitle className="text-base">Orientación y Convivencia</CardTitle>
+   921→                    </CardHeader>
+   922→                    <CardContent>
+   923→                      <div className="overflow-x-auto">
+   924→                        <table className="w-full text-sm border-collapse">
+   925→                          <thead>
+   926→                            <tr className="border-b-2 bg-muted/50">
+   927→                              <th className="text-center py-2 px-3 w-10">N°</th>
+   928→                              <th className="text-center py-2 px-3">AÑO</th>
+   929→                              <th className="text-center py-2 px-3">LITERAL</th>
+   930→                            </tr>
+   931→                          </thead>
+   932→                          <tbody>
+   933→                            {certData.orientacion.map((row, i) => (
+   934→                              <tr key={i} className="border-b">
+   935→                                <td className="text-center py-1 px-3">{i + 1}</td>
+   936→                                <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-20 mx-auto" value={row.anio} onChange={(e) => updateOrientacion(i, 'anio', e.target.value)} /></td>
+   937→                                <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-16 mx-auto" value={row.literal} onChange={(e) => updateOrientacion(i, 'literal', e.target.value)} maxLength={1} /></td>
+   938→                              </tr>
+   939→                            ))}
+   940→                          </tbody>
+   941→                        </table>
+   942→                      </div>
+   943→                    </CardContent>
+   944→                  </Card>
+   945→
+   946→                  <Card>
+   947→                    <CardHeader className="pb-3">
+   948→                      <CardTitle className="text-base">Participación en Grupos de Creación, Recreación y Producción</CardTitle>
+   949→                    </CardHeader>
+   950→                    <CardContent>
+   951→                      <div className="overflow-x-auto">
+   952→                        <table className="w-full text-sm border-collapse">
+   953→                          <thead>
+   954→                            <tr className="border-b-2 bg-muted/50">
+   955→                              <th className="text-center py-2 px-3 w-10">N°</th>
+   956→                              <th className="text-center py-2 px-3">AÑO</th>
+   957→                              <th className="text-center py-2 px-3">GRUPO</th>
+   958→                              <th className="text-center py-2 px-3">LITERAL</th>
+   959→                            </tr>
+   960→                          </thead>
+   961→                          <tbody>
+   962→                            {certData.grupos.map((row, i) => (
+   963→                              <tr key={i} className="border-b">
+   964→                                <td className="text-center py-1 px-3">{i + 1}</td>
+   965→                                <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-20 mx-auto" value={row.anio} onChange={(e) => updateGrupo(i, 'anio', e.target.value)} /></td>
+   966→                                <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-28 mx-auto" value={row.grupo} onChange={(e) => updateGrupo(i, 'grupo', e.target.value)} /></td>
+   967→                                <td className="py-1 px-3"><Input className="h-7 text-center text-xs w-16 mx-auto" value={row.literal} onChange={(e) => updateGrupo(i, 'literal', e.target.value)} maxLength={2} /></td>
+   968→                              </tr>
+   969→                            ))}
+   970→                          </tbody>
+   971→                        </table>
+   972→                      </div>
+   973→                    </CardContent>
+   974→                  </Card>
+   975→
+   976→                  <Card>
+   977→                    <CardHeader className="pb-3">
+   978→                      <CardTitle className="text-base">VI. Observaciones</CardTitle>
+   979→                    </CardHeader>
+   980→                    <CardContent className="space-y-4">
+   981→                      {certData.observaciones && (
+   982→                        <div className="bg-muted/50 p-3 rounded-lg text-sm">
+   983→                          <Label className="text-xs text-muted-foreground">Observaciones cargadas del rawData:</Label>
+   984→                          <p className="mt-1 text-xs leading-relaxed">{certData.observaciones}</p>
+   985→                        </div>
+   986→                      )}
+   987→                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   988→                        <div className="grid gap-2">
+   989→                          <Label>P.A. (Promedio Acumulado) / Acta</Label>
+   990→                          <Input value={certData.promedioAcumulado} onChange={(e) => setCertData(prev => ({ ...prev, promedioAcumulado: e.target.value }))} placeholder="Ej: Acta AA 7379891" />
+   991→                        </div>
+   992→                        <div className="grid gap-2">
+   993→                          <Label>Observaciones adicionales</Label>
+   994→                          <Input value={certData.observaciones} onChange={(e) => setCertData(prev => ({ ...prev, observaciones: e.target.value }))} placeholder="Observaciones adicionales" />
+   995→                        </div>
+   996→                      </div>
+   997→                    </CardContent>
+   998→                  </Card>
+   999→                </div>
+  1000→                <SaveButton tabName="Adicional" />
+  1001→              </TabsContent>
+  1002→
+  1003→              {/* TAB: Vista Previa del documento oficial */}
+  1004→              <TabsContent value="vista">
+  1005→                <Card>
+  1006→                  <CardHeader className="pb-3">
+  1007→                    <div className="flex items-center justify-between">
+  1008→                      <CardTitle className="text-base">Vista Previa — Documento Oficial</CardTitle>
+  1009→                      <Button variant="outline" size="sm" onClick={() => window.print()}>
+  1010→                        <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+  1011→                      </Button>
+  1012→                    </div>
+  1013→                  </CardHeader>
+  1014→                  <CardContent>
+  1015→                    {/* Main preview container — Excel format: Arial 9pt, thin borders, NO background colors */}
+  1016→                    <div
+  1017→                      className="border border-black bg-white text-black mx-auto overflow-x-auto"
+  1018→                      id="cert-preview"
+  1019→                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', maxWidth: '260mm', padding: '0' }}
+  1020→                    >
+  1021→                      {/* ====== ROW 1-3: ENCABEZADO (Title, Plan, Lugar/Fecha) ====== */}
+  1022→                      {/* Excel: Row 1: title M1:AA1, Row 2: plan M2:V2 + code W2:AA2, Row 3: lugar M3:S3 + T3:V3 + fecha W3:AA3 */}
+  1023→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1024→                        <colgroup>
+  1025→                          <col style={{ width: '44%' }} />{/* A-L: logo area */}
+  1026→                          <col style={{ width: '24%' }} />{/* M-S: left text */}
+  1027→                          <col style={{ width: '10%' }} />{/* T-V: middle text */}
+  1028→                          <col style={{ width: '22%' }} />{/* W-AA: right text */}
+  1029→                        </colgroup>
+  1030→                        <tbody>
+  1031→                          {/* Row 1: Title */}
+  1032→                          <tr>
+  1033→                            <td rowSpan={3} style={{ ...bd, verticalAlign: 'middle', padding: '2px' }}>
+  1034→                              <img src="/logo-mppe.png" alt="Logo" style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }} />
+  1035→                            </td>
+  1036→                            <td colSpan={3} style={{ ...bd, textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold', fontSize: '9pt', padding: '4px 4px' }}>
+  1037→                              CERTIFICACIÓN DE CALIFICACIONES&nbsp;&nbsp;{displayData.planTipo === 'derogado' ? '(PLAN DEROGADO)' : 'EMG'}
+  1038→                            </td>
+  1039→                          </tr>
+  1040→                          {/* Row 2: Plan de Estudio + Código */}
+  1041→                          <tr>
+  1042→                            <td colSpan={2} style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>I. Plan de Estudio:&nbsp;&nbsp;{displayData.planEstudio}</td>
+  1043→                            <td style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>Código&nbsp;{schoolConfig.planCodigo}</td>
+  1044→                          </tr>
+  1045→                          {/* Row 3: Lugar y Fecha */}
+  1046→                          <tr>
+  1047→                            <td style={{ ...bd, padding: '1px 3px', fontWeight: 'bold' }}>Lugar y Fecha de Expedición:</td>
+  1048→                            <td style={{ ...bd, padding: '1px 3px', textAlign: 'right', borderRight: 'none' }}>{displayData.lugar},</td>
+  1049→                            <td style={{ ...bd, padding: '1px 3px', borderLeft: 'none' }}>{displayFechaExpedicion}</td>
+  1050→                          </tr>
+  1051→                        </tbody>
+  1052→                      </table>
+  1053→
+  1054→                      {/* ====== SECCIÓN II — Datos de la Institución (rows 5-8) ====== */}
+  1055→                      {/* Excel: 27 equal cols (A-AA). Base 10-col decomposition: 3,4,1,2,3,1,4,3,1,5 */}
+  1056→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1057→                        <colgroup>
+  1058→                          <col style={{ width: '11.11%' }} />{/* 1: A-C (3) */}
+  1059→                          <col style={{ width: '14.81%' }} />{/* 2: D-G (4) */}
+  1060→                          <col style={{ width: '3.70%' }} />{/* 3: H (1) */}
+  1061→                          <col style={{ width: '7.41%' }} />{/* 4: I-J (2) */}
+  1062→                          <col style={{ width: '11.11%' }} />{/* 5: K-M (3) */}
+  1063→                          <col style={{ width: '3.70%' }} />{/* 6: N (1) */}
+  1064→                          <col style={{ width: '14.81%' }} />{/* 7: O-R (4) */}
+  1065→                          <col style={{ width: '11.11%' }} />{/* 8: S-U (3) */}
+  1066→                          <col style={{ width: '3.70%' }} />{/* 9: V (1) */}
+  1067→                          <col style={{ width: '18.52%' }} />{/* 10: W-AA (5) */}
+  1068→                        </colgroup>
+  1069→                        <tbody>
+  1070→                          {/* Row 5: Section header — A5:AA5 */}
+  1071→                          <tr>
+  1072→                            <td colSpan={10} style={bdH}>II. Datos de la Institución Educativa o  Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:</td>
+  1073→                          </tr>
+  1074→                          {/* Row 6: A6:C6 Código | D6:H6 value | I6:M6 Denom label | N6 gap | O6:AA6 Denom value */}
+  1075→                          <tr>
+  1076→                            <td style={bd}>Código:</td>
+  1077→                            <td colSpan={2} style={bd}>{displayData.od}</td>
+  1078→                            <td colSpan={2} style={{ ...bd, textAlign: 'center' }}>Denominación y Epónimo:</td>
+  1079→                            <td style={bd}></td>
+  1080→                            <td colSpan={4} style={bd}>{displayData.denominacion}</td>
+  1081→                          </tr>
+  1082→                          {/* Row 7: A7:C7 Dirección | D7:R7 value | S7:U7 Teléfono | V7:AA7 value */}
+  1083→                          <tr>
+  1084→                            <td style={bd}>Dirección:</td>
+  1085→                            <td colSpan={6} style={bd}>{displayData.direccion}</td>
+  1086→                            <td style={bd}>Teléfono:</td>
+  1087→                            <td colSpan={2} style={{ ...bd, textAlign: 'center' }}>{displayData.telefono}</td>
+  1088→                          </tr>
+  1089→                          {/* Row 8: A8:C8 Municipio | D8:G8 value | H8:J8 Estado | K8:R8 value | S8:V8 CDCEE | W8:AA8 value */}
+  1090→                          <tr>
+  1091→                            <td style={bd}>Municipio:</td>
+  1092→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.municipio}</td>
+  1093→                            <td colSpan={2} style={bd}>Estado:</td>
+  1094→                            <td colSpan={3} style={{ ...bd, textAlign: 'center' }}>{displayData.estado}</td>
+  1095→                            <td colSpan={2} style={bd}>CDCEE:</td>
+  1096→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.cdcce}</td>
+  1097→                          </tr>
+  1098→                        </tbody>
+  1099→                      </table>
+  1100→
+  1101→                      {/* ====== ROW 9-12: SECCIÓN III — Datos del Estudiante ====== */}
+  1102→                      {/* Excel 27 cols. Base 10-col decomposition: 3,1,1,4,2,2,2,5,2,5 */}
+  1103→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1104→                        <colgroup>
+  1105→                          <col style={{ width: '11.11%' }} />{/* 1: A-C (3) */}
+  1106→                          <col style={{ width: '3.70%' }} />{/* 2: D (1) */}
+  1107→                          <col style={{ width: '3.70%' }} />{/* 3: E (1) */}
+  1108→                          <col style={{ width: '14.81%' }} />{/* 4: F-I (4) */}
+  1109→                          <col style={{ width: '7.41%' }} />{/* 5: J-K (2) */}
+  1110→                          <col style={{ width: '7.41%' }} />{/* 6: L-M (2) */}
+  1111→                          <col style={{ width: '7.41%' }} />{/* 7: N-O (2) */}
+  1112→                          <col style={{ width: '18.52%' }} />{/* 8: P-T (5) */}
+  1113→                          <col style={{ width: '7.41%' }} />{/* 9: U-V (2) */}
+  1114→                          <col style={{ width: '18.52%' }} />{/* 10: W-AA (5) */}
+  1115→                        </colgroup>
+  1116→                        <tbody>
+  1117→                          {/* Row 9: Section header — A9:AA9 */}
+  1118→                          <tr>
+  1119→                            <td colSpan={10} style={bdH}>III. Datos de Identificación del Estudiante:</td>
+  1120→                          </tr>
+  1121→                          {/* Row 10: A10:D10 Cédula label | E10:I10 value | J10:O10 Fecha label | P10:AA10 value */}
+  1122→                          <tr>
+  1123→                            <td colSpan={2} style={bd}>Cédula de Identidad:</td>
+  1124→                            <td colSpan={2} style={bd}>{displayData.estudiante.cedula}</td>
+  1125→                            <td colSpan={3} style={bd}>Fecha de Nacimiento:</td>
+  1126→                            <td colSpan={3} style={bd}>{displayData.estudiante.fechaNacimiento || ''}</td>
+  1127→                          </tr>
+  1128→                          {/* Row 11: A11:C11 Apellidos | D11:K11 value | L11:O11 Nombres | P11:AA11 value */}
+  1129→                          <tr>
+  1130→                            <td style={bd}>Apellidos:</td>
+  1131→                            <td colSpan={4} style={bd}>{displayData.estudiante.apellidos}</td>
+  1132→                            <td colSpan={2} style={bd}>Nombres:</td>
+  1133→                            <td colSpan={3} style={bd}>{displayData.estudiante.nombres}</td>
+  1134→                          </tr>
+  1135→                          {/* Row 12: A12:E12 Lugar | F12:K12 value | L12:M12 Estado | N12:T12 value | U12:V12 Municipio | W12:AA12 value */}
+  1136→                          <tr>
+  1137→                            <td colSpan={3} style={bd}>Lugar de Nacimiento País:</td>
+  1138→                            <td colSpan={2} style={bd}>{displayData.estudiante.pais}</td>
+  1139→                            <td style={{ ...bd, textAlign: 'center' }}>Estado:</td>
+  1140→                            <td colSpan={2} style={bd}>{displayData.estudiante.estadoNac || ''}</td>
+  1141→                            <td style={{ ...bd, textAlign: 'center' }}>Municipio:</td>
+  1142→                            <td style={bd}>{displayData.estudiante.municipioNac || ''}</td>
+  1143→                          </tr>
+  1144→                        </tbody>
+  1145→                      </table>
+  1146→
+  1147→                      {/* ====== ROW 13-16: SECCIÓN IV — Instituciones Educativas (side-by-side, single table) ====== */}
+  1148→                      {/* Excel: Left A-M (13 cols) | N sep (1) | Right O-AA (13 cols). Base 9 cols: 1,6,5,1,1,1,6,5,1 */}
+  1149→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1150→                        <colgroup>
+  1151→                          <col style={{ width: '3.70%' }} />{/* 1: A (N°) */}
+  1152→                          <col style={{ width: '22.22%' }} />{/* 2: B-G (Denominación) */}
+  1153→                          <col style={{ width: '18.52%' }} />{/* 3: H-L (Localidad) */}
+  1154→                          <col style={{ width: '3.70%' }} />{/* 4: M (E.F.) */}
+  1155→                          <col style={{ width: '0.8%' }} />{/* 5: N (separator — no borders) */}
+  1156→                          <col style={{ width: '3.70%' }} />{/* 6: O (N°) */}
+  1157→                          <col style={{ width: '22.22%' }} />{/* 7: P-U (Denominación) */}
+  1158→                          <col style={{ width: '18.52%' }} />{/* 8: V-Z (Localidad) */}
+  1159→                          <col style={{ width: '3.70%' }} />{/* 9: AA (E.F.) */}
+  1160→                        </colgroup>
+  1161→                        <tbody>
+  1162→                          {/* Row 13: Title (A-M) | sep N | Right headers (O-AA) */}
+  1163→                          <tr>
+  1164→                            <td colSpan={4} style={bdH}>IV. Instituciones Educativas donde Cursó Estudios</td>
+  1165→                            <td style={{ border: 'none' }}></td>
+  1166→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>N°</td>
+  1167→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Denominación y Epónimo de la Institución Educativa</td>
+  1168→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Localidad</td>
+  1169→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>E.F.</td>
+  1170→                          </tr>
+  1171→                          {/* Row 14: Left headers (A-M) | sep N | Right data row 3 (O-AA) */}
+  1172→                          <tr>
+  1173→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>N°</td>
+  1174→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Denominación y Epónimo de la Institución Educativa</td>
+  1175→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>Localidad</td>
+  1176→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center' }}>E.F.</td>
+  1177→                            <td style={{ border: 'none' }}></td>
+  1178→                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[2] ? 3 : ''}</td>
+  1179→                            <td style={bd}>{displayData.instituciones[2]?.denominacion || '*'}</td>
+  1180→                            <td style={bd}>{displayData.instituciones[2]?.localidad || '*'}</td>
+  1181→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[2]?.ef || '*'}</td>
+  1182→                          </tr>
+  1183→                          {/* Row 15: Left data 1 (A-M) | sep N | Right data 4 (O-AA) */}
+  1184→                          <tr>
+  1185→                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>1</td>
+  1186→                            <td style={bd}>{displayData.instituciones[0]?.denominacion || '*'}</td>
+  1187→                            <td style={bd}>{displayData.instituciones[0]?.localidad || '*'}</td>
+  1188→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[0]?.ef || '*'}</td>
+  1189→                            <td style={{ border: 'none' }}></td>
+  1190→                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[3] ? 4 : ''}</td>
+  1191→                            <td style={bd}>{displayData.instituciones[3]?.denominacion || '*'}</td>
+  1192→                            <td style={bd}>{displayData.instituciones[3]?.localidad || '*'}</td>
+  1193→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[3]?.ef || '*'}</td>
+  1194→                          </tr>
+  1195→                          {/* Row 16: Left data 2 (A-M) | sep N | Right data 5 (O-AA) */}
+  1196→                          <tr>
+  1197→                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>2</td>
+  1198→                            <td style={bd}>{displayData.instituciones[1]?.denominacion || '*'}</td>
+  1199→                            <td style={bd}>{displayData.instituciones[1]?.localidad || '*'}</td>
+  1200→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[1]?.ef || '*'}</td>
+  1201→                            <td style={{ border: 'none' }}></td>
+  1202→                            <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold' }}>{displayData.instituciones[4] ? 5 : ''}</td>
+  1203→                            <td style={bd}>{displayData.instituciones[4]?.denominacion || '*'}</td>
+  1204→                            <td style={bd}>{displayData.instituciones[4]?.localidad || '*'}</td>
+  1205→                            <td style={{ ...bd, textAlign: 'center' }}>{displayData.instituciones[4]?.ef || '*'}</td>
+  1206→                          </tr>
+  1207→                        </tbody>
+  1208→                      </table>
+  1209→
+  1210→                      {/* ====== ROW 17+: SECCIÓN V — Plan de Estudio: Calificaciones ====== */}
+  1211→                      {/* Row 17: Section V header — no bottom border (directly adjacent to year headers) */}
+  1212→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1213→                        <tbody>
+  1214→                          <tr>
+  1215→                            <td style={{ ...bdH, borderBottom: 'none' }}>V. Plan de Estudio:</td>
+  1216→                          </tr>
+  1217→                        </tbody>
+  1218→                      </table>
+  1219→
+  1220→                      {/* Helper: count quantitative subjects for a plan */}
+  1221→                      {(() => {
+  1222→                        const countQuant = (p: PlanAnio) =>
+  1223→                          p.materias.filter(m => m.tipo !== 'cualitativa').length
+  1224→                        const c1 = countQuant(activePlan[0]), c2 = countQuant(activePlan[1])
+  1225→                        const c3 = countQuant(activePlan[2]), c4 = countQuant(activePlan[3])
+  1226→                        const max12 = Math.max(c1, c2)
+  1227→                        const max34 = Math.max(c3, c4)
+  1228→
+  1229→                        return (<>
+  1230→                      {/* 1° AÑO (left A-M) + 2° AÑO (right O-AA) */}
+  1231→                      <div style={{ display: 'flex', gap: '0' }}>
+  1232→                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[0], 0, max12)}</div>
+  1233→                        <div style={{ ...sepCol, flexShrink: 0, width: '0.8%' }} />
+  1234→                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[1], 1, max12)}</div>
+  1235→                      </div>
+  1236→
+  1237→                      {/* 3° AÑO (left) + 4° AÑO (right) */}
+  1238→                      <div style={{ display: 'flex', gap: '0' }}>
+  1239→                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[2], 2, max34)}</div>
+  1240→                        <div style={{ ...sepCol, flexShrink: 0, width: '0.8%' }} />
+  1241→                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[3], 3, max34)}</div>
+  1242→                      </div>
+  1243→
+  1244→                      {/* 5° AÑO (left) + Orientación / Grupos (right) */}
+  1245→                      <div style={{ display: 'flex', gap: '0' }}>
+  1246→                        <div style={{ flex: '1 1 49.6%' }}>{renderYearHalf(activePlan[4], 4)}</div>
+  1247→                        <div style={{ ...sepCol, flexShrink: 0, width: '0.8%' }} />
+  1248→                        <div style={{ flex: '1 1 49.6%' }}>
+  1249→                          {/* Orientación y Convivencia — Excel: O-S(5) ÁREA + T(1) AÑO + U-AA(7) LITERAL */}
+  1250→                          <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1251→                            <colgroup>
+  1252→                              <col style={{ width: '39.3%' }} />{/* O-S: 56.57/144.14 */}
+  1253→                              <col style={{ width: '9.0%' }} />{/* T: 13/144.14 */}
+  1254→                              <col style={{ width: '51.7%' }} />{/* U-AA: 74.57/144.14 */}
+  1255→                            </colgroup>
+  1256→                            <tbody>
+  1257→                              <tr>
+  1258→                                <td style={bdH9}>ÁREA DE FORMACIÓN</td>
+  1259→                                <td style={bdH9}>AÑO</td>
+  1260→                                <td style={bdH9}>LITERAL</td>
+  1261→                              </tr>
+  1262→                              <tr>
+  1263→                                <td rowSpan={5} style={bd}>Orientación y Convivencia</td>
+  1264→                                <td style={bdC}>1°</td>
+  1265→                                <td style={bdC}>{displayData.orientacion[0]?.literal || '*'}</td>
+  1266→                              </tr>
+  1267→                              {[1,2,3,4].map(i => (
+  1268→                                <tr key={`o${i}`}>
+  1269→                                  <td style={bdC}>{i + 1}°</td>
+  1270→                                  <td style={bdC}>{displayData.orientacion[i]?.literal || '*'}</td>
+  1271→                                </tr>
+  1272→                              ))}
+  1273→                            </tbody>
+  1274→                          </table>
+  1275→                          {/* Participación en Grupos — Excel: O-S(5) ÁREA + T(1) AÑO + U-Y(5) GRUPO + Z-AA(2) LITERAL */}
+  1276→                          <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1277→                            <colgroup>
+  1278→                              <col style={{ width: '39.3%' }} />{/* O-S: 56.57/144.14 */}
+  1279→                              <col style={{ width: '9.0%' }} />{/* T: 13/144.14 */}
+  1280→                              <col style={{ width: '45.1%' }} />{/* U-Y: 65/144.14 */}
+  1281→                              <col style={{ width: '6.6%' }} />{/* Z-AA: 9.57/144.14 */}
+  1282→                            </colgroup>
+  1283→                            <tbody>
+  1284→                              <tr>
+  1285→                                <td style={bdH9}>ÁREA DE FORMACIÓN</td>
+  1286→                                <td style={bdH9}>AÑO</td>
+  1287→                                <td style={bdH9}>GRUPO</td>
+  1288→                                <td style={bdH9}>LITERAL</td>
+  1289→                              </tr>
+  1290→                              {[0,1,2,3,4].map(i => (
+  1291→                                <tr key={`g${i}`}>
+  1292→                                  {i === 0 && <td rowSpan={5} style={bd}>Participación en Grupos de Creación, Recreación y Producción</td>}
+  1293→                                  <td style={bdC}>{i + 1}°</td>
+  1294→                                  <td style={bdC}>{displayData.grupos[i]?.grupo || '*'}</td>
+  1295→                                  <td style={bdC}>{displayData.grupos[i]?.literal || '*'}</td>
+  1296→                                </tr>
+  1297→                              ))}
+  1298→                            </tbody>
+  1299→                          </table>
+  1300→                        </div>
+  1301→                      </div>
+  1302→                      </>)
+  1303→                      })()}
+  1304→
+  1305→                      {/* ====== SECCIÓN VI: Observaciones ====== */}
+  1306→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1307→                        <tbody>
+  1308→                          <tr>
+  1309→                            <td style={{ ...bdB, whiteSpace: 'nowrap' }}>VI. Observaciones:</td>
+  1310→                            <td style={{ ...bdB, whiteSpace: 'nowrap', width: '60px' }}>P.A.:</td>
+  1311→                            <td style={{ ...bd, width: '100px', textAlign: 'center' }}>{displayData.promedioAcumulado || ''}</td>
+  1312→                            <td style={bd}>{displayData.observaciones || ''}</td>
+  1313→                          </tr>
+  1314→                        </tbody>
+  1315→                      </table>
+  1316→
+  1317→                      {/* ====== SECCIONES VII + VIII: Director y CDCCE (side by side) ====== */}
+  1318→                      <div style={{ display: 'flex', gap: '0' }}>
+  1319→                        {/* VII — Institución Educativa */}
+  1320→                        <div style={{ flex: '1 1 49.85%' }}>
+  1321→                          <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1322→                            <tbody>
+  1323→                              <tr>
+  1324→                                <td colSpan={2} style={bdH}>VII. Institución Educativa</td>
+  1325→                              </tr>
+  1326→                              <tr>
+  1327→                                <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold', fontSize: '7pt', width: '35%' }}>Director(a)</td>
+  1328→                                <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold', fontSize: '7pt' }}>SELLO DE LA INSTITUCIÓN EDUCATIVA</td>
+  1329→                              </tr>
+  1330→                              <tr><td colSpan={2} style={bdB}>Apellidos y Nombres:</td></tr>
+  1331→                              <tr><td colSpan={2} style={bd}>{displayData.director.apellidosNombres || ''}</td></tr>
+  1332→                              <tr><td colSpan={2} style={bdB}>Cédula de Identidad:</td></tr>
+  1333→                              <tr><td colSpan={2} style={bd}>{displayData.director.cedula || ''}</td></tr>
+  1334→                              <tr><td colSpan={2} style={{ ...bd, fontWeight: 'bold' }}>Firma:</td></tr>
+  1335→                              <tr>
+  1336→                                <td colSpan={2} style={{ ...bd, fontStyle: 'italic', textAlign: 'center', fontSize: '7pt' }}>
+  1337→                                  Para efectos de su Validez Nacional
+  1338→                                </td>
+  1339→                              </tr>
+  1340→                            </tbody>
+  1341→                          </table>
+  1342→                        </div>
+  1343→                        {/* VIII — CDCEE */}
+  1344→                        <div style={{ flex: '1 1 49.85%' }}>
+  1345→                          <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1346→                            <tbody>
+  1347→                              <tr>
+  1348→                                <td colSpan={2} style={bdH}>VIII. Centro de Desarrollo de la Calidad Educativa Estadal</td>
+  1349→                              </tr>
+  1350→                              <tr>
+  1351→                                <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold', fontSize: '7pt', width: '35%' }}>Director(a)</td>
+  1352→                                <td style={{ ...bd, textAlign: 'center', fontWeight: 'bold', fontSize: '7pt' }}>SELLO DEL CENTRO DE DESARROLLO DE LA CALIDAD EDUCATIVA ESTADAL</td>
+  1353→                              </tr>
+  1354→                              <tr><td colSpan={2} style={bdB}>Apellidos y Nombres:</td></tr>
+  1355→                              <tr><td colSpan={2} style={bd}>{displayData.directorCdcce.apellidosNombres || ''}</td></tr>
+  1356→                              <tr><td colSpan={2} style={bdB}>Cédula de Identidad:</td></tr>
+  1357→                              <tr><td colSpan={2} style={bd}>{displayData.directorCdcce.cedula || ''}</td></tr>
+  1358→                              <tr><td colSpan={2} style={{ ...bd, fontWeight: 'bold' }}>Firma:</td></tr>
+  1359→                              <tr>
+  1360→                                <td colSpan={2} style={{ ...bd, fontStyle: 'italic', textAlign: 'center', fontSize: '7pt' }}>
+  1361→                                  Para efectos de su Validez Internacional
+  1362→                                </td>
+  1363→                              </tr>
+  1364→                            </tbody>
+  1365→                          </table>
+  1366→                        </div>
+  1367→                      </div>
+  1368→
+  1369→                      {/* VALOR FISCAL */}
+  1370→                      <table width="100%" cellPadding={0} cellSpacing={0} style={tbS}>
+  1371→                        <tbody>
+  1372→                          <tr>
+  1373→                            <td style={{ ...bd, fontWeight: 'bold', textAlign: 'center', fontSize: '7pt' }}>
+  1374→                              VALOR FISCAL: Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres décimas de la Unidad Tributaria (0,3 U.T.)
+  1375→                            </td>
+  1376→                          </tr>
+  1377→                        </tbody>
+  1378→                      </table>
+  1379→
+  1380→                      {previewCert && (
+  1381→                        <div style={{ textAlign: 'right', marginTop: '2px', fontSize: '7pt' }}>
+  1382→                          <p><strong>Número:</strong> {previewCert.numero}</p>
+  1383→                          <p><strong>Fecha de Emisión:</strong> {formatDate(previewCert.fechaEmision)}</p>
+  1384→                        </div>
+  1385→                      )}
+  1386→                    </div>
+  1387→                  </CardContent>
+  1388→                </Card>
+  1389→              </TabsContent>
+  1390→
+  1391→              {/* TAB: Generar */}
+  1392→              <TabsContent value="generar">
+  1393→                <Card>
+  1394→                  <CardHeader className="pb-3">
+  1395→                    <CardTitle className="text-base">Generar Certificación de Calificaciones</CardTitle>
+  1396→                  </CardHeader>
+  1397→                  <CardContent className="space-y-4">
+  1398→                    <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
+  1399→                      <p><strong>Estudiante:</strong> {selectedStudent.apellidos}, {selectedStudent.nombres}</p>
+  1400→                      <p><strong>C.I.:</strong> {formatCedulaFinal(selectedStudent.cedula)}</p>
+  1401→                      <p><strong>Plan:</strong> {certData.planEstudio}</p>
+  1402→                      <p><strong>Calificaciones cargadas:</strong> {countGrades()}</p>
+  1403→                      {certData.acta && <p><strong>Acta:</strong> {certData.acta}</p>}
+  1404→                    </div>
+  1405→
+  1406→                    {countGrades() === 0 && (
+  1407→                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start gap-3">
+  1408→                        <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+  1409→                        <div>
+  1410→                          <p className="text-sm font-medium text-amber-800">Sin calificaciones</p>
+  1411→                          <p className="text-xs text-amber-600 mt-1">
+  1412→                            No se encontraron calificaciones en el rawData de este alumno. Puedes ingresar las notas manualmente en la pestaña de Calificaciones antes de generar la certificación.
+  1413→                          </p>
+  1414→                        </div>
+  1415→                      </div>
+  1416→                    )}
+  1417→
+  1418→                    <div className="flex gap-3">
+  1419→                      <Button onClick={() => setActiveTab('vista')} variant="outline">
+  1420→                        <Eye className="h-4 w-4 mr-2" /> Ver Vista Previa Primero
+  1421→                      </Button>
+  1422→                      <Button onClick={handleGenerate} disabled={generating}>
+  1423→                        {generating ? (
+  1424→                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando...</>
+  1425→                        ) : (
+  1426→                          <><FileText className="h-4 w-4 mr-2" /> Generar Certificación de Calificaciones</>
+  1427→                        )}
+  1428→                      </Button>
+  1429→                    </div>
+  1430→                  </CardContent>
+  1431→                </Card>
+  1432→              </TabsContent>
+  1433→            </Tabs>
+  1434→          </>
+  1435→        )}
+  1436→      </div>
+  1437→    </AppShell>
+  1438→  )
+  1439→}
+  1440→

@@ -90,4 +90,25 @@ Stage Summary:
 - Observaciones now split into 4 lines (obsLine.0-3) instead of single doc.observaciones
 - Promedio Académico cell (doc.promedioAcumulado) now only shows acta value, not obs text
 - All 4 observation lines now have orange dots in designer mode
+
+---
+Task ID: 1
+Agent: main
+Task: Refactor Excel import system — replace numeric column keys with structured named data
+
+Work Log:
+- Analyzed DATA_ALUMNOS.xlsx: 1871 rows, 261 columns, headers are numbers (8-261) for non-student cols
+- Created `/src/lib/import-excel.ts` — reads Excel directly and produces structured_v1 format
+- Modified `/src/app/api/seed/route.ts` — now imports from DATA_ALUMNOS.xlsx directly (plan vigente) + students_bd2.json (plan derogado)
+- Updated `/src/app/api/boletin/route.ts` — supports both structured_v1 and legacy flat numeric formats
+- Installed `xlsx` package for server-side Excel reading
+- Verified: 1870 records imported, 0 numeric keys, parseCertData works correctly
+- Build passes with no errors
+
+Stage Summary:
+- Eliminated fragile numeric-key intermediate JSON step entirely
+- rawData now stored as structured_v1 with descriptive keys (instituciones[], calificaciones[], orientacion[], etc.)
+- No changes needed to parse-rawdata.ts — it already handles structured_v1 format
+- Backward compatible: boletin API still reads legacy flat format if encountered
+- Seed API reads DATA_ALUMNOS.xlsx directly on POST /api/seed
 - Orientación and grupo bindings work with any saved template (cells auto-created)

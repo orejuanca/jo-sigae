@@ -446,6 +446,9 @@ export default function CertificacionesPage() {
       const res = await fetch(`/api/students/${studentId}/cert-draft`)
       if (!res.ok) return null
       const { draft } = await res.json()
+      if (!draft) return null
+      // Ignore cert-visual inline-edit drafts (they use "overrides" format, not full CertData)
+      if (draft.overrides && !draft.calificaciones) return null
       return draft as CertData | null
     } catch {
       return null

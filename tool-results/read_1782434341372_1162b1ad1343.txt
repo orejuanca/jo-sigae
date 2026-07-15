@@ -1,0 +1,957 @@
+     1→// Parser para extraer datos de certificación desde rawData (BD vigente y BD2 derogado)
+     2→// Soporta dos formatos de rawData:
+     3→//   1. ESTRUCTURADO (nuevo): claves descriptivas + arrays anidados (_format: "structured_v1")
+     4→//   2. PLANO (legacy): claves numéricas ("23", "24", ...) — se parsea igual que antes
+     5→
+     6→import { planEMG, notaEnLetras, schoolConfig, type PlanAnio, type MateriaAnio } from './school-config'
+     7→
+     8→// === INTERFACES ===
+     9→
+    10→export interface ParsedInstitucion {
+    11→  numero: number
+    12→  denominacion: string
+    13→  localidad: string
+    14→  ef: string
+    15→}
+    16→
+    17→export interface ParsedCalificacion {
+    18→  materia: string
+    19→  numero: number
+    20→  nota: string
+    21→  literal: string
+    22→  tipoEvaluacion: string // F=Final, R=Reprobado, M=Mejorada, PE=Pre-Militar
+    23→  fechaMes: string
+    24→  fechaAnio: string
+    25→  instEduc: string // N° de institución educativa (1-5)
+    26→}
+    27→
+    28→export interface ParsedOrientacion {
+    29→  anio: string
+    30→  literal: string
+    31→}
+    32→
+    33→export interface ParsedGrupo {
+    34→  anio: string
+    35→  grupo: string
+    36→  literal: string
+    37→}
+    38→
+    39→export interface ParsedSpecialization {
+    40→  anio: string
+    41→  especialidad: string
+    42→  periodo: string
+    43→}
+    44→
+    45→export interface ParsedCertData {
+    46→  // Metadatos
+    47→  plan: 'vigente' | 'derogado'
+    48→  acta: string
+    49→  actaFecha: string
+    50→  actaAnio: string
+    51→
+    52→  // Instituciones (Sección IV)
+    53→  instituciones: ParsedInstitucion[]
+    54→
+    55→  // Calificaciones por año (Sección V)
+    56→  calificaciones: Record<string, ParsedCalificacion[]>
+    57→  aniosEscolares: string[] // Los años escolares encontrados (ej: ['2014','2015',...])
+    58→
+    59→  // Orientación y Convivencia
+    60→  orientacion: ParsedOrientacion[]
+    61→
+    62→  // Participación en Grupos
+    63→  grupos: ParsedGrupo[]
+    64→
+    65→  // Especializaciones (solo BD2)
+    66→  especializaciones: ParsedSpecialization[]
+    67→
+    68→  // Observaciones
+    69→  observaciones: string[]
+    70→  observacionCompleta: string
+    71→
+    72→  // Literales finales
+    73→  literalesFinales: string[]
+    74→}
+    75→
+    76→// Materias del plan derogado (planes antiguos - diversificado)
+    77→const PLAN_DEROGADO: PlanAnio[] = [
+    78→  {
+    79→    anio: 'Primer Año',
+    80→    materias: [
+    81→      { nombre: 'Castellano y Literatura', numero: 1 },
+    82→      { nombre: 'Inglés', numero: 2 },
+    83→      { nombre: 'Matemáticas', numero: 3 },
+    84→      { nombre: 'Historia de Venezuela', numero: 4 },
+    85→      { nombre: 'Geografía de Venezuela', numero: 5 },
+    86→      { nombre: 'Ciencias Biológicas', numero: 6 },
+    87→      { nombre: 'Física', numero: 7 },
+    88→      { nombre: 'Química', numero: 8 },
+    89→      { nombre: 'Educación Física', numero: 9 },
+    90→      { nombre: 'Educación para el Trabajo', numero: 10 },
+    91→    ],
+    92→  },
+    93→  {
+    94→    anio: 'Segundo Año',
+    95→    materias: [
+    96→      { nombre: 'Castellano y Literatura', numero: 1 },
+    97→      { nombre: 'Inglés', numero: 2 },
+    98→      { nombre: 'Matemáticas', numero: 3 },
+    99→      { nombre: 'Historia de Venezuela', numero: 4 },
+   100→      { nombre: 'Geografía de Venezuela', numero: 5 },
+   101→      { nombre: 'Ciencias Biológicas', numero: 6 },
+   102→      { nombre: 'Física', numero: 7 },
+   103→      { nombre: 'Química', numero: 8 },
+   104→      { nombre: 'Educación Física', numero: 9 },
+   105→      { nombre: 'Educación para el Trabajo', numero: 10 },
+   106→    ],
+   107→  },
+   108→  {
+   109→    anio: 'Tercer Año',
+   110→    materias: [
+   111→      { nombre: 'Castellano y Literatura', numero: 1 },
+   112→      { nombre: 'Inglés', numero: 2 },
+   113→      { nombre: 'Matemáticas', numero: 3 },
+   114→      { nombre: 'Historia de Venezuela', numero: 4 },
+   115→      { nombre: 'Geografía de Venezuela', numero: 5 },
+   116→      { nombre: 'Ciencias Biológicas', numero: 6 },
+   117→      { nombre: 'Física', numero: 7 },
+   118→      { nombre: 'Química', numero: 8 },
+   119→      { nombre: 'Educación Física', numero: 9 },
+   120→      { nombre: 'Educación para el Trabajo', numero: 10 },
+   121→    ],
+   122→  },
+   123→  {
+   124→    anio: 'Cuarto Año',
+   125→    materias: [
+   126→      { nombre: 'Castellano y Literatura', numero: 1 },
+   127→      { nombre: 'Inglés', numero: 2 },
+   128→      { nombre: 'Matemáticas', numero: 3 },
+   129→      { nombre: 'Historia de Venezuela', numero: 4 },
+   130→      { nombre: 'Geografía de Venezuela', numero: 5 },
+   131→      { nombre: 'Ciencias Biológicas', numero: 6 },
+   132→      { nombre: 'Física', numero: 7 },
+   133→      { nombre: 'Química', numero: 8 },
+   134→      { nombre: 'Educación Física', numero: 9 },
+   135→      { nombre: 'Educación para el Trabajo', numero: 10 },
+   136→    ],
+   137→  },
+   138→  {
+   139→    anio: 'Quinto Año',
+   140→    materias: [
+   141→      { nombre: 'Castellano y Literatura', numero: 1 },
+   142→      { nombre: 'Inglés', numero: 2 },
+   143→      { nombre: 'Matemáticas', numero: 3 },
+   144→      { nombre: 'Historia de Venezuela', numero: 4 },
+   145→      { nombre: 'Geografía de Venezuela', numero: 5 },
+   146→      { nombre: 'Ciencias Biológicas', numero: 6 },
+   147→      { nombre: 'Física', numero: 7 },
+   148→      { nombre: 'Química', numero: 8 },
+   149→      { nombre: 'Educación Física', numero: 9 },
+   150→      { nombre: 'Educación para el Trabajo', numero: 10 },
+   151→    ],
+   152→  },
+   153→]
+   154→
+   155→// Meses en español
+   156→const MESES: Record<string, string> = {
+   157→  '1': '01', '2': '02', '3': '03', '4': '04', '5': '05', '6': '06',
+   158→  '7': '07', '8': '08', '9': '09', '10': '10', '11': '11', '12': '12',
+   159→}
+   160→
+   161→function parseMes(m: string): string {
+   162→  return MESES[m] || m.padStart(2, '0')
+   163→}
+   164→
+   165→// Check if a value is an asterisk placeholder (empty slot in the spreadsheet)
+   166→function isAsterisk(val: string | undefined): boolean {
+   167→  if (!val) return true
+   168→  const v = String(val).trim()
+   169→  return v === '' || /^\*+$/.test(v) || /^\*\s+\*/.test(v)
+   170→}
+   171→
+   172→// Check if a nota value represents a valid grade
+   173→function isValidGrade(val: string | undefined): boolean {
+   174→  if (!val) return false
+   175→  const v = String(val).trim()
+   176→  if (isAsterisk(v)) return false
+   177→  if (/^\d{1,2}$/.test(v)) {
+   178→    const n = parseInt(v, 10)
+   179→    return n >= 1 && n <= 20
+   180→  }
+   181→  return ['PE', 'IN', 'EX'].includes(v.toUpperCase())
+   182→}
+   183→
+   184→function cleanSchoolName(val: string): string {
+   185→  return String(val).replace(/^\*/, '').trim()
+   186→}
+   187→
+   188→// Find the acta key by scanning backwards from the end of the data
+   189→function findActaKey(rawData: Record<string, string>, startSearch: number, endSearch: number): string {
+   190→  for (let k = endSearch; k >= startSearch; k--) {
+   191→    const val = rawData[String(k)]
+   192→    if (val && !isAsterisk(val)) {
+   193→      return val.trim()
+   194→    }
+   195→  }
+   196→  return ''
+   197→}
+   198→
+   199→// ============================================================
+   200→// PARSER PARA FORMATO ESTRUCTURADO (nuevo)
+   201→// ============================================================
+   202→
+   203→interface StructuredGrade {
+   204→  materia: string
+   205→  abrev: string
+   206→  anioEscolar: number
+   207→  nota: string
+   208→  eval: string
+   209→  mes: string
+   210→  anio: string
+   211→  inst: string
+   212→}
+   213→
+   214→function parseStructuredVigente(data: Record<string, unknown>): ParsedCertData {
+   215→  const result: ParsedCertData = {
+   216→    plan: 'vigente',
+   217→    acta: String(data['acta'] || '').trim(),
+   218→    actaFecha: formatDateVal(String(data['actaFecha'] || '')),
+   219→    actaAnio: String(data['actaAnio'] || '').trim(),
+   220→    instituciones: [],
+   221→    calificaciones: {},
+   222→    aniosEscolares: [],
+   223→    orientacion: [],
+   224→    grupos: [],
+   225→    especializaciones: [],
+   226→    observaciones: [],
+   227→    observacionCompleta: '',
+   228→    literalesFinales: [],
+   229→  }
+   230→
+   231→  // Instituciones
+   232→  const insts = data['instituciones'] as Array<{ denominacion: string; localidad: string; ef: string }> | undefined
+   233→  if (Array.isArray(insts)) {
+   234→    result.instituciones = insts.map((inst, i) => ({
+   235→      numero: i + 1,
+   236→      denominacion: inst.denominacion,
+   237→      localidad: inst.localidad,
+   238→      ef: inst.ef,
+   239→    }))
+   240→  }
+   241→
+   242→  // Calificaciones — agrupar por anioEscolar
+   243→  const grades = data['calificaciones'] as StructuredGrade[] | undefined
+   244→  if (Array.isArray(grades)) {
+   245→    const gradesByYear: Record<number, StructuredGrade[]> = {}
+   246→    for (const g of grades) {
+   247→      const y = g.anioEscolar || 0
+   248→      if (!gradesByYear[y]) gradesByYear[y] = []
+   249→      gradesByYear[y].push(g)
+   250→    }
+   251→
+   252→    const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+   253→    const sortedYears = Object.keys(gradesByYear).map(Number).sort((a, b) => a - b)
+   254→
+   255→    sortedYears.forEach((yearNum, yearIdx) => {
+   256→      if (yearIdx >= 5) return
+   257→      const yearName = yearNames[yearIdx]
+   258→      const yearGrades = gradesByYear[yearNum]
+   259→      const planIdx = Math.min(yearIdx, planEMG.length - 1)
+   260→      const subjects = planEMG[planIdx].materias
+   261→
+   262→      // Recoger años escolares únicos de las notas
+   263→      const aniosSet = new Set<string>()
+   264→
+   265→      result.calificaciones[yearName] = yearGrades.map((g, sIdx) => {
+   266→        const literal = notaEnLetras(g.nota)
+   267→        const subjectIndex = sIdx % subjects.length
+   268→        const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
+   269→
+   270→        if (g.anio) aniosSet.add(g.anio)
+   271→
+   272→        return {
+   273→          materia,
+   274→          numero: sIdx + 1,
+   275→          nota: g.nota,
+   276→          literal,
+   277→          tipoEvaluacion: g.eval || '',
+   278→          fechaMes: parseMes(g.mes),
+   279→          fechaAnio: g.anio,
+   280→          instEduc: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+   281→        }
+   282→      })
+   283→
+   284→      aniosSet.forEach(a => {
+   285→        if (!result.aniosEscolares.includes(a)) result.aniosEscolares.push(a)
+   286→      })
+   287→    })
+   288→  }
+   289→
+   290→  // Orientación
+   291→  const orient = data['orientacion'] as Array<{ anio: string; literal: string }> | undefined
+   292→  if (Array.isArray(orient)) {
+   293→    result.orientacion = orient.map(o => ({
+   294→      anio: o.anio || '',
+   295→      literal: o.literal || '',
+   296→    }))
+   297→  }
+   298→  while (result.orientacion.length < 5) {
+   299→    result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
+   300→  }
+   301→
+   302→  // Grupos
+   303→  const grps = data['grupos'] as Array<{ anio: string; grupo: string; literal: string }> | undefined
+   304→  if (Array.isArray(grps)) {
+   305→    result.grupos = grps.map(g => ({
+   306→      anio: g.anio || '',
+   307→      grupo: g.grupo || '',
+   308→      literal: g.literal || '',
+   309→    }))
+   310→  }
+   311→  while (result.grupos.length < 5) {
+   312→    result.grupos.push({ anio: result.aniosEscolares[result.grupos.length] || '', grupo: '', literal: '' })
+   313→  }
+   314→
+   315→  // Observaciones
+   316→  const obs = data['observaciones'] as string[] | undefined
+   317→  if (Array.isArray(obs)) {
+   318→    result.observaciones = obs.filter(o => o && o.trim())
+   319→  }
+   320→  result.observacionCompleta = result.observaciones.join(' ')
+   321→
+   322→  // Literales finales
+   323→  const lits = data['literalesFinales'] as string[] | undefined
+   324→  if (Array.isArray(lits)) {
+   325→    result.literalesFinales = lits.filter(l => l && l.trim())
+   326→  }
+   327→
+   328→  return result
+   329→}
+   330→
+   331→function parseStructuredDerogado(data: Record<string, unknown>): ParsedCertData {
+   332→  const result: ParsedCertData = {
+   333→    plan: 'derogado',
+   334→    acta: String(data['acta'] || '').trim(),
+   335→    actaFecha: '',
+   336→    actaAnio: '',
+   337→    instituciones: [],
+   338→    calificaciones: {},
+   339→    aniosEscolares: [],
+   340→    orientacion: [],
+   341→    grupos: [],
+   342→    especializaciones: [],
+   343→    observaciones: [],
+   344→    observacionCompleta: '',
+   345→    literalesFinales: [],
+   346→  }
+   347→
+   348→  // Instituciones
+   349→  const insts = data['instituciones'] as Array<{ denominacion: string; localidad: string; ef: string }> | undefined
+   350→  if (Array.isArray(insts)) {
+   351→    result.instituciones = insts.map((inst, i) => ({
+   352→      numero: i + 1,
+   353→      denominacion: inst.denominacion,
+   354→      localidad: inst.localidad,
+   355→      ef: inst.ef,
+   356→    }))
+   357→  }
+   358→
+   359→  // Calificaciones
+   360→  const grades = data['calificaciones'] as StructuredGrade[] | undefined
+   361→  if (Array.isArray(grades)) {
+   362→    const gradesByYear: Record<number, StructuredGrade[]> = {}
+   363→    for (const g of grades) {
+   364→      const y = g.anioEscolar || 0
+   365→      if (!gradesByYear[y]) gradesByYear[y] = []
+   366→      gradesByYear[y].push(g)
+   367→    }
+   368→
+   369→    const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+   370→    const sortedYears = Object.keys(gradesByYear).map(Number).sort((a, b) => a - b)
+   371→
+   372→    sortedYears.forEach((yearNum, yearIdx) => {
+   373→      if (yearIdx >= 5) return
+   374→      const yearName = yearNames[yearIdx]
+   375→      const yearGrades = gradesByYear[yearNum]
+   376→      const planIdx = Math.min(yearIdx, PLAN_DEROGADO.length - 1)
+   377→      const subjects = PLAN_DEROGADO[planIdx].materias
+   378→
+   379→      const aniosSet = new Set<string>()
+   380→
+   381→      result.calificaciones[yearName] = yearGrades.map((g, sIdx) => {
+   382→        const literal = notaEnLetras(g.nota)
+   383→        const subjectIndex = sIdx % subjects.length
+   384→        const materia = subjects[subjectIndex]?.nombre || g.materia || `Materia ${sIdx + 1}`
+   385→
+   386→        if (g.anio) aniosSet.add(g.anio)
+   387→
+   388→        return {
+   389→          materia,
+   390→          numero: sIdx + 1,
+   391→          nota: g.nota,
+   392→          literal,
+   393→          tipoEvaluacion: g.eval || '',
+   394→          fechaMes: parseMes(g.mes),
+   395→          fechaAnio: g.anio,
+   396→          instEduc: g.inst && !isAsterisk(g.inst) ? g.inst : '',
+   397→        }
+   398→      })
+   399→
+   400→      aniosSet.forEach(a => {
+   401→        if (!result.aniosEscolares.includes(a)) result.aniosEscolares.push(a)
+   402→      })
+   403→    })
+   404→  }
+   405→
+   406→  // Especializaciones
+   407→  const specs = data['especializaciones'] as Array<{ anio: string; especialidad: string; periodo: string }> | undefined
+   408→  if (Array.isArray(specs)) {
+   409→    result.especializaciones = specs
+   410→    result.grupos = specs.map(s => ({
+   411→      anio: s.anio,
+   412→      grupo: s.especialidad,
+   413→      literal: '',
+   414→    }))
+   415→  }
+   416→
+   417→  // Orientación
+   418→  const orient = data['orientacion'] as Array<{ anio: string; literal: string }> | undefined
+   419→  if (Array.isArray(orient)) {
+   420→    result.orientacion = orient.map(o => ({ anio: o.anio || '', literal: o.literal || '' }))
+   421→  }
+   422→  while (result.orientacion.length < 5) {
+   423→    result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
+   424→  }
+   425→
+   426→  // Observaciones
+   427→  const obs = data['observaciones'] as string[] | undefined
+   428→  if (Array.isArray(obs)) {
+   429→    result.observaciones = obs.filter(o => o && o.trim())
+   430→  }
+   431→  result.observacionCompleta = result.observaciones.join(' ')
+   432→
+   433→  // Literales finales
+   434→  const lits = data['literalesFinales'] as string[] | undefined
+   435→  if (Array.isArray(lits)) {
+   436→    result.literalesFinales = lits.filter(l => l && l.trim())
+   437→  }
+   438→
+   439→  return result
+   440→}
+   441→
+   442→// ============================================================
+   443→// PARSER LEGACY — FORMATO PLANO (claves numéricas)
+   444→// ============================================================
+   445→
+   446→// === PARSER BD VIGENTE (LEGACY) ===
+   447→function parseBDRawDataLegacy(rawData: Record<string, string>): ParsedCertData {
+   448→  const result: ParsedCertData = {
+   449→    plan: 'vigente',
+   450→    acta: '',
+   451→    actaFecha: '',
+   452→    actaAnio: '',
+   453→    instituciones: [],
+   454→    calificaciones: {},
+   455→    aniosEscolares: [],
+   456→    orientacion: [],
+   457→    grupos: [],
+   458→    especializaciones: [],
+   459→    observaciones: [],
+   460→    observacionCompleta: '',
+   461→    literalesFinales: [],
+   462→  }
+   463→
+   464→  // ---- Instituciones (Sección IV) - keys 8-22, grupos de 3 (nombre, localidad, EF) ----
+   465→  const instSlots = [
+   466→    [8, 9, 10], [11, 12, 13], [14, 15, 16], [17, 18, 19], [20, 21, 22],
+   467→  ]
+   468→
+   469→  instSlots.forEach(([nameKey, locKey, efKey], i) => {
+   470→    const nombre = rawData[String(nameKey)]
+   471→    const localidad = rawData[String(locKey)]
+   472→    const ef = rawData[String(efKey)]
+   473→
+   474→    if (nombre && !isAsterisk(nombre)) {
+   475→      result.instituciones.push({
+   476→        numero: i + 1,
+   477→        denominacion: cleanSchoolName(nombre),
+   478→        localidad: cleanSchoolName(localidad || ''),
+   479→        ef: cleanSchoolName(ef || ''),
+   480→      })
+   481→    }
+   482→  })
+   483→
+   484→  // ---- Calificaciones - keys 23 to 227, scan in groups of 5 ----
+   485→  interface RawGrade {
+   486→    nota: string
+   487→    tipo: string
+   488→    mes: string
+   489→    anio: string
+   490→    lapso: string
+   491→  }
+   492→
+   493→  const allValidGrades: RawGrade[] = []
+   494→  let key = 23
+   495→  while (key <= 227) {
+   496→    const notaRaw = rawData[String(key)]
+   497→    const tipoRaw = rawData[String(key + 1)]
+   498→    const mesRaw = rawData[String(key + 2)]
+   499→    const anioRaw = rawData[String(key + 3)]
+   500→    const lapsoRaw = rawData[String(key + 4)]
+   501→
+   502→    if (isValidGrade(notaRaw)) {
+   503→      allValidGrades.push({
+   504→        nota: String(notaRaw).trim(),
+   505→        tipo: String(tipoRaw || '').trim(),
+   506→        mes: String(mesRaw || '').trim(),
+   507→        anio: String(anioRaw || '').trim(),
+   508→        lapso: String(lapsoRaw || '').trim(),
+   509→      })
+   510→    }
+   511→    key += 5
+   512→  }
+   513→
+   514→  // Group grades by year
+   515→  const gradesByYear: string[] = []
+   516→  const gradeGroupsByYear: Record<string, RawGrade[]> = {}
+   517→
+   518→  for (const grade of allValidGrades) {
+   519→    const year = grade.anio
+   520→    if (!year) continue
+   521→    if (!gradeGroupsByYear[year]) {
+   522→      gradeGroupsByYear[year] = []
+   523→      gradesByYear.push(year)
+   524→    }
+   525→    gradeGroupsByYear[year].push(grade)
+   526→  }
+   527→
+   528→  // Map to planEMG year names and assign subjects
+   529→  const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+   530→
+   531→  gradesByYear.forEach((year, yearIdx) => {
+   532→    if (yearIdx >= 5) return
+   533→    const grades = gradeGroupsByYear[year]
+   534→    const planIdx = Math.min(yearIdx, planEMG.length - 1)
+   535→    const subjects = planEMG[planIdx].materias
+   536→    const yearName = yearNames[yearIdx]
+   537→
+   538→    const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
+   539→      const literal = notaEnLetras(g.nota)
+   540→      const subjectIndex = sIdx % subjects.length
+   541→      const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
+   542→
+   543→      return {
+   544→        materia,
+   545→        numero: sIdx + 1,
+   546→        nota: g.nota,
+   547→        literal,
+   548→        tipoEvaluacion: g.tipo || '',
+   549→        fechaMes: parseMes(g.mes),
+   550→        fechaAnio: g.anio,
+   551→        instEduc: g.lapso && !isAsterisk(g.lapso) ? String(g.lapso).trim() : '',
+   552→      }
+   553→    })
+   554→
+   555→    result.calificaciones[yearName] = calificaciones
+   556→    result.aniosEscolares.push(year)
+   557→  })
+   558→
+   559→  // ---- Orientación y Convivencia - keys 228-232 ----
+   560→  for (let i = 0; i < 5; i++) {
+   561→    const val = rawData[String(228 + i)]
+   562→    result.orientacion.push({
+   563→      anio: gradesByYear[i] || '',
+   564→      literal: val && !isAsterisk(val) ? String(val).trim() : '',
+   565→    })
+   566→  }
+   567→
+   568→  // ---- Grupos de Creación/Recreación/Producción - keys 233-242 ----
+   569→  for (let i = 0; i < 5; i++) {
+   570→    const grupoDesc = rawData[String(233 + i)]
+   571→    const grupoLiteral = rawData[String(238 + i)]
+   572→    result.grupos.push({
+   573→      anio: gradesByYear[i] || '',
+   574→      grupo: grupoDesc && !isAsterisk(grupoDesc) ? String(grupoDesc).trim() : '',
+   575→      literal: grupoLiteral && !isAsterisk(grupoLiteral) ? String(grupoLiteral).trim() : '',
+   576→    })
+   577→  }
+   578→
+   579→  // ---- Observaciones - keys específicos por línea ----
+   580→  const obsKeys = ['243', '244', '260', '261']
+   581→  for (const key of obsKeys) {
+   582→    const obs = rawData[key]
+   583→    if (obs && !isAsterisk(obs)) {
+   584→      result.observaciones.push(String(obs).trim())
+   585→    }
+   586→  }
+   587→  result.observacionCompleta = result.observaciones.join(' ')
+   588→
+   589→  // ---- Literales finales - keys 248-252 ----
+   590→  for (let i = 0; i < 5; i++) {
+   591→    const lit = rawData[String(248 + i)]
+   592→    if (lit && !isAsterisk(lit)) {
+   593→      result.literalesFinales.push(String(lit).trim())
+   594→    }
+   595→  }
+   596→
+   597→  // ---- Acta - keys 253+ ----
+   598→  result.acta = rawData['253'] ? rawData['253'].trim() : ''
+   599→  result.actaFecha = rawData['254'] ? formatDateVal(rawData['254']) : ''
+   600→  result.actaAnio = rawData['255'] ? rawData['255'].trim() : ''
+   601→
+   602→  return result
+   603→}
+   604→
+   605→// === PARSER BD2 DEROGADO (LEGACY) ===
+   606→function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData {
+   607→  const result: ParsedCertData = {
+   608→    plan: 'derogado',
+   609→    acta: '',
+   610→    actaFecha: '',
+   611→    actaAnio: '',
+   612→    instituciones: [],
+   613→    calificaciones: {},
+   614→    aniosEscolares: [],
+   615→    orientacion: [],
+   616→    grupos: [],
+   617→    especializaciones: [],
+   618→    observaciones: [],
+   619→    observacionCompleta: '',
+   620→    literalesFinales: [],
+   621→  }
+   622→
+   623→  // ---- Instituciones en BD2 - keys "9°"-"38" ----
+   624→  const bd2InstSlots = [
+   625→    ['9°', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
+   626→    ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
+   627→    ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
+   628→    ['36', '37', '38'],
+   629→  ]
+   630→
+   631→  let instNum = 1
+   632→  for (const [nameKey, locKey, efKey] of bd2InstSlots) {
+   633→    const nombre = rawData[nameKey]
+   634→    const localidad = rawData[locKey]
+   635→    const ef = rawData[efKey]
+   636→
+   637→    if (nombre && !isAsterisk(nombre)) {
+   638→      result.instituciones.push({
+   639→        numero: instNum++,
+   640→        denominacion: cleanSchoolName(nombre),
+   641→        localidad: cleanSchoolName(localidad || ''),
+   642→        ef: cleanSchoolName(ef || ''),
+   643→      })
+   644→    }
+   645→  }
+   646→
+   647→  // ---- Calificaciones BD2 - scan keys 39 to 293 in groups of 5 ----
+   648→  interface RawGrade {
+   649→    nota: string
+   650→    tipo: string
+   651→    mes: string
+   652→    anio: string
+   653→    lapso: string
+   654→  }
+   655→
+   656→  const allValidGrades: RawGrade[] = []
+   657→  let key = 39
+   658→  while (key <= 293) {
+   659→    const notaRaw = rawData[String(key)]
+   660→    const tipoRaw = rawData[String(key + 1)]
+   661→    const mesRaw = rawData[String(key + 2)]
+   662→    const anioRaw = rawData[String(key + 3)]
+   663→    const lapsoRaw = rawData[String(key + 4)]
+   664→
+   665→    if (isValidGrade(notaRaw)) {
+   666→      allValidGrades.push({
+   667→        nota: String(notaRaw).trim(),
+   668→        tipo: String(tipoRaw || '').trim(),
+   669→        mes: String(mesRaw || '').trim(),
+   670→        anio: String(anioRaw || '').trim(),
+   671→        lapso: String(lapsoRaw || '').trim(),
+   672→      })
+   673→    }
+   674→    key += 5
+   675→  }
+   676→
+   677→  // Group grades by year
+   678→  const gradesByYear: string[] = []
+   679→  const gradeGroupsByYear: Record<string, RawGrade[]> = {}
+   680→
+   681→  for (const grade of allValidGrades) {
+   682→    const year = grade.anio
+   683→    if (!year) continue
+   684→    if (!gradeGroupsByYear[year]) {
+   685→      gradeGroupsByYear[year] = []
+   686→      gradesByYear.push(year)
+   687→    }
+   688→    gradeGroupsByYear[year].push(grade)
+   689→  }
+   690→
+   691→  // Map to PLAN_DEROGADO year names
+   692→  const yearNames = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+   693→  const sortedYears = Object.keys(gradeGroupsByYear).sort()
+   694→
+   695→  sortedYears.forEach((year, yearIdx) => {
+   696→    if (yearIdx >= 5) return
+   697→    const grades = gradeGroupsByYear[year]
+   698→    const planIdx = Math.min(yearIdx, PLAN_DEROGADO.length - 1)
+   699→    const subjects = PLAN_DEROGADO[planIdx].materias
+   700→    const yearName = yearNames[yearIdx]
+   701→
+   702→    const calificaciones: ParsedCalificacion[] = grades.map((g, sIdx) => {
+   703→      const literal = notaEnLetras(g.nota)
+   704→      const subjectIndex = sIdx % subjects.length
+   705→      const materia = subjects[subjectIndex]?.nombre || `Materia ${sIdx + 1}`
+   706→
+   707→      return {
+   708→        materia,
+   709→        numero: sIdx + 1,
+   710→        nota: g.nota,
+   711→        literal,
+   712→        tipoEvaluacion: g.tipo || '',
+   713→        fechaMes: parseMes(g.mes),
+   714→        fechaAnio: g.anio,
+   715→        instEduc: g.lapso && !isAsterisk(g.lapso) ? String(g.lapso).trim() : '',
+   716→      }
+   717→    })
+   718→
+   719→    result.calificaciones[yearName] = calificaciones
+   720→    result.aniosEscolares.push(year)
+   721→  })
+   722→
+   723→  // ---- Literales finales - keys 294-298 ----
+   724→  for (let i = 0; i < 5; i++) {
+   725→    const lit = rawData[String(294 + i)]
+   726→    if (lit && !isAsterisk(lit)) {
+   727→      result.literalesFinales.push(String(lit).trim())
+   728→    }
+   729→  }
+   730→
+   731→  // ---- Especializaciones - keys 299+ ----
+   732→  let specKey = 299
+   733→  const specs: ParsedSpecialization[] = []
+   734→  while (rawData[String(specKey)] && !isAsterisk(rawData[String(specKey)]) && specKey < 320) {
+   735→    const anio = rawData[String(specKey)] || ''
+   736→    const esp = rawData[String(specKey + 1)] || ''
+   737→    const periodo = rawData[String(specKey + 2)] || ''
+   738→    if (!isAsterisk(anio) && !isAsterisk(esp)) {
+   739→      specs.push({ anio: String(anio).trim(), especialidad: String(esp).trim(), periodo: String(periodo).trim() })
+   740→    }
+   741→    specKey += 3
+   742→  }
+   743→  result.especializaciones = specs
+   744→
+   745→  if (specs.length > 0) {
+   746→    result.grupos = specs.map((s) => ({
+   747→      anio: s.anio,
+   748→      grupo: s.especialidad,
+   749→      literal: '',
+   750→    }))
+   751→  }
+   752→
+   753→  while (result.orientacion.length < 5) {
+   754→    result.orientacion.push({ anio: result.aniosEscolares[result.orientacion.length] || '', literal: '' })
+   755→  }
+   756→
+   757→  // ---- Observaciones BD2 - key 339 ----
+   758→  const obs339 = rawData['339']
+   759→  if (obs339 && !isAsterisk(obs339)) {
+   760→    result.observacionCompleta = String(obs339).trim()
+   761→    result.observaciones.push(String(obs339).trim())
+   762→  }
+   763→
+   764→  // ---- Acta ----
+   765→  result.acta = findActaKey(rawData, 335, 340)
+   766→
+   767→  return result
+   768→}
+   769→
+   770→// ============================================================
+   771→// PARSER PRINCIPAL (detecta formato automáticamente)
+   772→// ============================================================
+   773→
+   774→export function parseCertData(rawDataStr: string | null | undefined, plan: string | null | undefined): ParsedCertData | null {
+   775→  if (!rawDataStr) return null
+   776→
+   777→  try {
+   778→    const rawData = typeof rawDataStr === 'string' ? JSON.parse(rawDataStr) : rawDataStr
+   779→    if (!rawData || typeof rawData !== 'object') return null
+   780→
+   781→    // Detectar formato estructurado
+   782→    if (rawData._format === 'structured_v1') {
+   783→      const p = rawData._plan || plan
+   784→      if (p === 'derogado') return parseStructuredDerogado(rawData)
+   785→      return parseStructuredVigente(rawData)
+   786→    }
+   787→
+   788→    // Detectar formato plano por claves numéricas
+   789→    const isBD2 = rawData['9°'] !== undefined || (plan === 'derogado')
+   790→    const isBD = rawData['8'] !== undefined && !rawData['9°']
+   791→
+   792→    if (isBD2) return parseBD2RawDataLegacy(rawData)
+   793→    if (isBD) return parseBDRawDataLegacy(rawData)
+   794→
+   795→    // Fallback: buscar claves numéricas
+   796→    const numKeys = Object.keys(rawData).filter(k => {
+   797→      const n = parseInt(k)
+   798→      return !isNaN(n) && n >= 8 && n <= 50
+   799→    })
+   800→
+   801→    if (numKeys.length > 0) return parseBDRawDataLegacy(rawData)
+   802→    return null
+   803→  } catch {
+   804→    return null
+   805→  }
+   806→}
+   807→
+   808→// Helper para formatear fechas a DD/MM/YYYY
+   809→function formatDateVal(dateStr: string): string {
+   810→  if (!dateStr) return ''
+   811→  const trimmed = String(dateStr).trim()
+   812→  if (!trimmed) return ''
+   813→  
+   814→  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+   815→    const parts = trimmed.split('/')
+   816→    const day = parts[0].padStart(2, '0')
+   817→    const month = parts[1].padStart(2, '0')
+   818→    const year = parts[2]
+   819→    return `${day}/${month}/${year}`
+   820→  }
+   821→  
+   822→  if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+   823→    try {
+   824→      const d = new Date(trimmed)
+   825→      if (!isNaN(d.getTime())) {
+   826→        const day = String(d.getDate()).padStart(2, '0')
+   827→        const month = String(d.getMonth() + 1).padStart(2, '0')
+   828→        const year = d.getFullYear()
+   829→        return `${day}/${month}/${year}`
+   830→      }
+   831→    } catch { /* ignore */ }
+   832→  }
+   833→  return trimmed
+   834→}
+   835→
+   836→// Convert parsed data to the format expected by the certificaciones page
+   837→export function parsedToCertData(parsed: ParsedCertData, student: {
+   838→  cedula: string
+   839→  fechaNacimiento?: string | null
+   840→  apellidos: string
+   841→  nombres: string
+   842→  pais?: string | null
+   843→  estado?: string | null
+   844→  municipio?: string | null
+   845→}) {
+   846→  // Build calificaciones in the page format
+   847→  const calificaciones: Record<string, Array<{
+   848→    materia: string; numero: number; nota: string; literal: string;
+   849→    tipoEvaluacion: string; fechaMes: string; fechaAnio: string; instEduc: string
+   850→  }>> = {}
+   851→
+   852→  Object.entries(parsed.calificaciones).forEach(([yearName, grades]) => {
+   853→    calificaciones[yearName] = grades.map(g => ({
+   854→      materia: g.materia,
+   855→      numero: g.numero,
+   856→      nota: g.nota,
+   857→      literal: g.literal,
+   858→      tipoEvaluacion: g.tipoEvaluacion || '',
+   859→      fechaMes: g.fechaMes,
+   860→      fechaAnio: g.fechaAnio,
+   861→      instEduc: g.instEduc || '',
+   862→    }))
+   863→  })
+   864→
+   865→  // Fill empty years if needed
+   866→  const planToUse = parsed.plan === 'derogado' ? PLAN_DEROGADO : planEMG
+   867→  planToUse.forEach(p => {
+   868→    if (!calificaciones[p.anio]) {
+   869→      calificaciones[p.anio] = p.materias.map(m => ({
+   870→        materia: m.nombre,
+   871→        numero: m.numero,
+   872→        nota: '',
+   873→        literal: '',
+   874→        tipoEvaluacion: '',
+   875→        fechaMes: '',
+   876→        fechaAnio: '',
+   877→        instEduc: '',
+   878→      }))
+   879→    }
+   880→  })
+   881→
+   882→  // Build institutions
+   883→  const instituciones: ParsedInstitucion[] = [...parsed.instituciones]
+   884→  while (instituciones.length < 5) {
+   885→    instituciones.push({
+   886→      numero: instituciones.length + 1,
+   887→      denominacion: '',
+   888→      localidad: '',
+   889→      ef: '',
+   890→    })
+   891→  }
+   892→
+   893→  // Orientación - pad to 5
+   894→  const orientacion = [...parsed.orientacion]
+   895→  while (orientacion.length < 5) {
+   896→    orientacion.push({ anio: '', literal: '' })
+   897→  }
+   898→
+   899→  // Grupos - pad to 5
+   900→  const grupos = [...parsed.grupos]
+   901→  while (grupos.length < 5) {
+   902→    grupos.push({ anio: '', grupo: '', literal: '' })
+   903→  }
+   904→
+   905→  return {
+   906→    lugar: schoolConfig.estado,
+   907→    fechaExpedicion: new Date().toISOString().split('T')[0],
+   908→    planEstudio: parsed.plan === 'derogado'
+   909→      ? 'EDUCACIÓN MEDIA GENERAL (PLAN DEROGADO)'
+   910→      : schoolConfig.planEstudio,
+   911→    od: schoolConfig.od,
+   912→    denominacion: schoolConfig.nombreCompleto,
+   913→    direccion: schoolConfig.direccion,
+   914→    telefono: schoolConfig.telefono,
+   915→    municipio: schoolConfig.municipio,
+   916→    estado: schoolConfig.estado,
+   917→    cdcce: schoolConfig.cdcceEstado,
+   918→    estudiante: {
+   919→      cedula: student.cedula || '',
+   920→      fechaNacimiento: formatDateVal(student.fechaNacimiento || ''),
+   921→      apellidos: student.apellidos || '',
+   922→      nombres: student.nombres || '',
+   923→      pais: student.pais || 'VENEZUELA',
+   924→      estado: student.estado || '',
+   925→      municipio: student.municipio || '',
+   926→    },
+   927→    instituciones: instituciones.slice(0, 5),
+   928→    calificaciones,
+   929→    orientacion: orientacion.slice(0, 5),
+   930→    grupos: grupos.slice(0, 5),
+   931→    observaciones: parsed.observacionCompleta || '',
+   932→    observacionesLines: (parsed.observaciones || []).slice(0, 4),
+   933→    promedioAcumulado: (() => {
+   934→      const allCalifs = Object.values(calificaciones).flat()
+   935→      const numericNotas = allCalifs
+   936→        .map(c => parseFloat(c.nota))
+   937→        .filter(n => !isNaN(n) && n > 0)
+   938→      if (numericNotas.length === 0) return ''
+   939→      const promedio = numericNotas.reduce((a, b) => a + b, 0) / numericNotas.length
+   940→      return promedio.toFixed(2)
+   941→    })(),
+   942→    director: {
+   943→      apellidosNombres: schoolConfig.director.apellidosNombres,
+   944→      cedula: schoolConfig.director.cedula,
+   945→    },
+   946→    directorCdcce: {
+   947→      apellidosNombres: schoolConfig.directorCdcce.apellidosNombres,
+   948→      cedula: schoolConfig.directorCdcce.cedula,
+   949→    },
+   950→    acta: parsed.acta,
+   951→    actaFecha: parsed.actaFecha,
+   952→    aniosEscolares: parsed.aniosEscolares,
+   953→    planTipo: parsed.plan,
+   954→  }
+   955→}
+   956→
+   957→export { PLAN_DEROGADO }

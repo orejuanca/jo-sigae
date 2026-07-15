@@ -82,9 +82,33 @@ function makeInitialAlign(rows: number, cols: number): Align[][] {
   return a
 }
 
+// localStorage persistence
+const STORAGE_KEY = (plan: string) => `jo-sigae-dashboard-${plan}`
+
+interface SheetState {
+  numRows: number; numCols: number
+  cells: string[][]; colWidths: number[]; rowHeights: number[]
+  bgColors: string[][]; textAligns: Align[][]; merges: Merge[]
+}
+
+function loadFromStorage(plan: string): SheetState | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(plan))
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch { return null }
+}
+
+function saveToStorage(plan: string, state: SheetState) {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(state)) } catch {}
+}
+
 export default function DashboardPage() {
   const [plan, setPlan] = useState<'vigente' | 'derogado'>('vigente')
   const [totalRecords, setTotalRecords] = useState(0)
+  const [loaded, setLoaded] = useState(false)
   const [numRows, setNumRows] = useState(INIT_ROWS)
   const [numCols, setNumCols] = useState(INIT_COLS)
 
@@ -99,6 +123,50 @@ export default function DashboardPage() {
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
   const [selectionEnd, setSelectionEnd] = useState<{r:number;c:number}|null>(null)
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
+  const [saveStatus, setSaveStatus] = useState<string>('')
+
+  // === LOAD FROM STORAGE ON MOUNT ===
+  useEffect(() => {
+    const saved = loadFromStorage(plan)
+    if (saved) {
+      if (saved.cells) setCells(saved.cells)
+      if (saved.colWidths) setColWidths(saved.colWidths)
+      if (saved.rowHeights) setRowHeights(saved.rowHeights)
+      if (saved.bgColors) setBgColors(saved.bgColors)
+      if (saved.textAligns) setTextAligns(saved.textAligns)
+      if (saved.merges) setMerges(saved.merges)
+      if (saved.numRows) setNumRows(saved.numRows)
+      if (saved.numCols) setNumCols(saved.numCols)
+    }
+    setLoaded(true)
+  }, []) // only on mount
+
+  // === AUTO-SAVE TO STORAGE on every state change ===
+  useEffect(() => {
+    if (!loaded) return
+    const timer = setTimeout(() => {
+      saveToStorage(plan, { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges })
+      setSaveStatus('Guardado')
+      setTimeout(() => setSaveStatus(''), 1500)
+    }, 300) // debounce 300ms
+    return () => clearTimeout(timer)
+  }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges])
+
+  // === RESTORE TO DEFAULTS ===
+  const handleRestore = () => {
+    if (!confirm('Restaurar todo al diseño original? Se perderan todos los cambios.')) return
+    localStorage.removeItem(STORAGE_KEY(plan))
+    setCells(makeInitialCells())
+    setColWidths(makeInitialWidths())
+    setRowHeights(makeInitialHeights(INIT_ROWS))
+    setBgColors(makeInitialBg(INIT_ROWS, INIT_COLS))
+    setTextAligns(makeInitialAlign(INIT_ROWS, INIT_COLS))
+    setMerges([])
+    setNumRows(INIT_ROWS)
+    setNumCols(INIT_COLS)
+    setSaveStatus('Restaurado')
+    setTimeout(() => setSaveStatus(''), 2000)
+  }
 
   // Helper: grow 2D arrays
   const growCells = useCallback((prev: string[][], rows: number, cols: number) => {
@@ -582,7 +650,29 @@ export default function DashboardPage() {
         {/* Toolbar Row 1 - Main actions */}
         <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-2">
           <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
-          <button onClick={() => { setPlan(p => p === 'vigente' ? 'derogado' : 'vigente'); loadCount() }}
+          <button onClick={() => {
+            const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'
+            setPlan(newPlan)
+            // Load saved state for new plan
+            const saved = loadFromStorage(newPlan)
+            if (saved) {
+              if (saved.cells) setCells(saved.cells)
+              if (saved.colWidths) setColWidths(saved.colWidths)
+              if (saved.rowHeights) setRowHeights(saved.rowHeights)
+              if (saved.bgColors) setBgColors(saved.bgColors)
+              if (saved.textAligns) setTextAligns(saved.textAligns)
+              if (saved.merges) setMerges(saved.merges)
+              if (saved.numRows) setNumRows(saved.numRows)
+              if (saved.numCols) setNumCols(saved.numCols)
+            } else {
+              setCells(makeInitialCells()); setColWidths(makeInitialWidths())
+              setRowHeights(makeInitialHeights(INIT_ROWS)); setBgColors(makeInitialBg(INIT_ROWS, INIT_COLS))
+              setTextAligns(makeInitialAlign(INIT_ROWS, INIT_COLS)); setMerges([])
+              setNumRows(INIT_ROWS); setNumCols(INIT_COLS)
+            }
+            setSelectionStart(null); setSelectionEnd(null); setSelectedCell(null)
+            loadCount()
+          }}
             className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">Cambiar Plan</button>
 
           <span className="text-gray-600">|</span>
@@ -672,6 +762,11 @@ export default function DashboardPage() {
             </span>
           )}
 
+          {saveStatus && <span className="text-green-400">{saveStatus}</span>}
+          <button onClick={handleRestore}
+            className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]" title="Restaurar al diseño original">
+            Restaurar Original
+          </button>
           <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
         </div>
 

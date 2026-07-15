@@ -3,14 +3,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
 
-const COLS = 40
-const ROWS = 51
+const INIT_COLS = 40
+const INIT_ROWS = 51
 
+type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
 
+function makeEmpty2D<T>(rows: number, cols: number, fill: T): T[][] {
+  const a: T[][] = []
+  for (let r = 0; r < rows; r++) { a[r] = []; for (let c = 0; c < cols; c++) a[r][c] = fill }
+  return a
+}
+
 function makeInitialCells(): string[][] {
-  const c: string[][] = []
-  for (let r = 0; r < ROWS; r++) { c[r] = []; for (let col = 0; col < COLS; col++) c[r][col] = '' }
+  const c = makeEmpty2D(INIT_ROWS, INIT_COLS, '')
   c[0][0] = 'AGREGAR DATOS, NOTAS Y OBSERVACIONES PARA CERTIFICACION DE CALIFICACIONES EMG 31059 - CONSTANCIA - BOLETIN - VALIDACION DE TITULO Y NOTAS'
   c[1][0] = 'DATOS PERSONALES'; c[1][7] = 'CIRCULAR N 05, (02/07/2003) (modificada al 30/03/2007)'
   c[2][0] = 'CEDULA:'; c[3][0] = 'FECHA DE NACIMIENTO:'; c[4][0] = 'APELLIDOS:'
@@ -48,42 +54,73 @@ function makeInitialCells(): string[][] {
 
 function makeInitialWidths(): number[] {
   const w = [30,160,80,30, 130,40,30,30,50,100, 130,40,30,30,50,100, 40,130,40,30, 130,40,30,30,50,100, 40,130,40,30, 30,50,100, 40,130,40,30,30,50,100]
-  while (w.length < COLS) w.push(80)
+  while (w.length < INIT_COLS) w.push(80)
   return w
 }
 
-function makeInitialHeights(): number[] {
+function makeInitialHeights(rows: number): number[] {
   const h: number[] = []
-  for (let r = 0; r < ROWS; r++) h[r] = r <= 1 ? 28 : r <= 11 ? 22 : 20
+  for (let r = 0; r < rows; r++) h[r] = r <= 1 ? 28 : r <= 11 ? 22 : 20
   return h
 }
 
-function makeInitialBg(): string[][] {
-  const b: string[][] = []
-  for (let r = 0; r < ROWS; r++) { b[r] = []; for (let c = 0; c < COLS; c++) {
+function makeInitialBg(rows: number, cols: number): string[][] {
+  const b = makeEmpty2D(rows, cols, '#ffffff')
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     if (r===0) b[r][c]='#0080ff'; else if (r===1) b[r][c]='#b3d9ff'; else if (r>=2&&r<=11) b[r][c]='#ffffcc'
     else if (r===12||r===17) b[r][c]='#b3d9ff'; else if (r>=13&&r<=25) b[r][c]='#ffffcc'
-    else if (r===26) b[r][c]='#b3d9ff'; else if (r===27) b[r][c]='#ffffcc'; else b[r][c]='#ffffff'
-  }}
+    else if (r===26) b[r][c]='#b3d9ff'; else if (r===27) b[r][c]='#ffffcc'
+  }
   return b
+}
+
+function makeInitialAlign(rows: number, cols: number): Align[][] {
+  const a = makeEmpty2D<Align>(rows, cols, 'left')
+  for (let r = 2; r <= 8; r++) a[r][0] = 'right'
+  for (let r = 0; r < rows; r++) a[r][0] = 'center'
+  for (let r = 2; r <= 8; r++) a[r][0] = 'right'
+  return a
 }
 
 export default function DashboardPage() {
   const [plan, setPlan] = useState<'vigente' | 'derogado'>('vigente')
   const [totalRecords, setTotalRecords] = useState(0)
+  const [numRows, setNumRows] = useState(INIT_ROWS)
+  const [numCols, setNumCols] = useState(INIT_COLS)
 
   const [cells, setCells] = useState<string[][]>(makeInitialCells)
   const [colWidths, setColWidths] = useState<number[]>(makeInitialWidths)
-  const [rowHeights, setRowHeights] = useState<number[]>(makeInitialHeights)
-  const [bgColors, setBgColors] = useState<string[][]>(makeInitialBg)
+  const [rowHeights, setRowHeights] = useState<number[]>(() => makeInitialHeights(INIT_ROWS))
+  const [bgColors, setBgColors] = useState<string[][]>(() => makeInitialBg(INIT_ROWS, INIT_COLS))
+  const [textAligns, setTextAligns] = useState<Align[][]>(() => makeInitialAlign(INIT_ROWS, INIT_COLS))
 
   // MERGE STATE
   const [merges, setMerges] = useState<Merge[]>([])
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
   const [selectionEnd, setSelectionEnd] = useState<{r:number;c:number}|null>(null)
-
-  // Which cell input is currently focused (for blur save)
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
+
+  // Helper: grow 2D arrays
+  const growCells = useCallback((prev: string[][], rows: number, cols: number) => {
+    const copy = prev.map(row => [...row])
+    while (copy.length < rows) { copy.push(new Array(cols).fill('')) }
+    for (let r = 0; r < rows; r++) while (copy[r].length < cols) copy[r].push('')
+    return copy
+  }, [])
+
+  const growBg = useCallback((prev: string[][], rows: number, cols: number) => {
+    const copy = prev.map(row => [...row])
+    while (copy.length < rows) { copy.push(new Array(cols).fill('#ffffff')) }
+    for (let r = 0; r < rows; r++) while (copy[r].length < cols) copy[r].push('#ffffff')
+    return copy
+  }, [])
+
+  const growAlign = useCallback((prev: Align[][], rows: number, cols: number) => {
+    const copy = prev.map(row => [...row]) as Align[][]
+    while (copy.length < rows) { copy.push(new Array(cols).fill('left') as Align[]) }
+    for (let r = 0; r < rows; r++) while (copy[r].length < cols) copy[r].push('left')
+    return copy
+  }, [])
 
   const isHidden = useCallback((r: number, c: number): boolean => {
     for (const m of merges) {
@@ -103,11 +140,11 @@ export default function DashboardPage() {
   }, [merges])
 
   const updateCell = useCallback((r: number, c: number, val: string) => {
-    setCells(prev => { const copy = prev.map(row => [...row]); copy[r][c] = val; return copy })
+    setCells(prev => { const copy = prev.map(row => [...row]); if (copy[r]) copy[r][c] = val; return copy })
   }, [])
 
   const updateBg = useCallback((r: number, c: number, color: string) => {
-    setBgColors(prev => { const copy = prev.map(row => [...row]); copy[r][c] = color; return copy })
+    setBgColors(prev => { const copy = prev.map(row => [...row]); if (copy[r]) copy[r][c] = color; return copy })
   }, [])
 
   const loadCount = useCallback(async () => {
@@ -143,7 +180,28 @@ export default function DashboardPage() {
     }
   }
 
-  // Focus the input inside a cell
+  // Click on row number -> select entire row
+  const handleRowHeaderClick = (r: number, shiftKey: boolean) => {
+    if (shiftKey && selectionStart) {
+      setSelectionEnd({ r, c: numCols - 1 })
+    } else {
+      setSelectionStart({ r, c: 0 })
+      setSelectionEnd({ r, c: numCols - 1 })
+      setSelectedCell({ r, c: 0 })
+    }
+  }
+
+  // Click on col header -> select entire column
+  const handleColHeaderClick = (c: number, shiftKey: boolean) => {
+    if (shiftKey && selectionStart) {
+      setSelectionEnd({ r: numRows - 1, c })
+    } else {
+      setSelectionStart({ r: 0, c })
+      setSelectionEnd({ r: numRows - 1, c })
+      setSelectedCell({ r: 0, c })
+    }
+  }
+
   const focusInput = (r: number, c: number) => {
     const td = tableRef.current?.querySelector(`[data-r="${r}"][data-c="${c}"]`)
     if (td) {
@@ -156,23 +214,20 @@ export default function DashboardPage() {
     if (!selectedCell) return
     const { r, c } = selectedCell
     let nr = r, nc = c
-    if (e.key === 'ArrowDown') { e.preventDefault(); nr = Math.min(r+1, ROWS-1) }
+    if (e.key === 'ArrowDown') { e.preventDefault(); nr = Math.min(r+1, numRows-1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); nr = Math.max(r-1, 0) }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); nc = Math.min(c+1, COLS-1) }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); nc = Math.min(c+1, numCols-1) }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); nc = Math.max(c-1, 0) }
-    else if (e.key === 'Tab') { e.preventDefault(); nr = r; nc = e.shiftKey ? Math.max(c-1,0) : Math.min(c+1, COLS-1) }
-    else if (e.key === 'Enter') { e.preventDefault(); nr = Math.min(r+1, ROWS-1); nc = c }
+    else if (e.key === 'Tab') { e.preventDefault(); nc = e.shiftKey ? Math.max(c-1,0) : Math.min(c+1, numCols-1) }
+    else if (e.key === 'Enter') { e.preventDefault(); nr = Math.min(r+1, numRows-1); nc = c }
     else return
 
-    // Skip hidden cells
     let tries = 0
-    while (isHidden(nr, nc) && tries < 200) {
-      if (nr > r) nr++; else if (nr < r) nr--;
+    while (isHidden(nr, nc) && tries < 500) {
+      if (nr > r) nr++; else if (nr < r) nr--
       else if (nc > c) nc++; else nc--
-      if (nr < 0) { nr = 0; nc = Math.max(nc-1, 0) }
-      if (nr >= ROWS) { nr = ROWS-1; nc = Math.min(nc+1, COLS-1) }
-      if (nc < 0) { nc = 0; nr = Math.max(nr-1, 0) }
-      if (nc >= COLS) { nc = COLS-1; nr = Math.min(nr+1, ROWS-1) }
+      nr = Math.max(0, Math.min(nr, numRows-1))
+      nc = Math.max(0, Math.min(nc, numCols-1))
       tries++
     }
 
@@ -194,6 +249,7 @@ export default function DashboardPage() {
 
   const hasSelection = selMinR >= 0 && (selMinR !== selMaxR || selMinC !== selMaxC)
 
+  // === MERGE ===
   const handleMerge = () => {
     if (!hasSelection) return
     const newMerge: Merge = { sr: selMinR, sc: selMinC, er: selMaxR, ec: selMaxC }
@@ -210,158 +266,464 @@ export default function DashboardPage() {
     setMerges(prev => prev.filter(m => !(m.sr === selectedCell.r && m.sc === selectedCell.c)))
   }
 
+  // === ALIGNMENT ===
+  const handleSetAlign = (align: Align) => {
+    if (selMinR < 0) return
+    setTextAligns(prev => {
+      const copy = prev.map(row => [...row]) as Align[][]
+      for (let r = selMinR; r <= selMaxR; r++)
+        for (let c = selMinC; c <= selMaxC; c++)
+          if (copy[r]) copy[r][c] = align
+      return copy
+    })
+  }
+
+  // === BACKGROUND COLOR ===
   const handleApplyBgToSelection = (color: string) => {
     if (selMinR < 0) return
     setBgColors(prev => {
       const copy = prev.map(row => [...row])
       for (let r = selMinR; r <= selMaxR; r++)
         for (let c = selMinC; c <= selMaxC; c++)
-          copy[r][c] = color
+          if (copy[r]) copy[r][c] = color
       return copy
     })
   }
 
-  // Save cell value on blur
+  // === INSERT ROW ===
+  const handleInsertRow = (after: boolean) => {
+    if (!selectedCell) return
+    const at = after ? selectedCell.r + 1 : selectedCell.r
+    const newRows = numRows + 1
+    setCells(prev => {
+      const copy = prev.map(row => [...row])
+      const emptyRow = new Array(numCols).fill('')
+      copy.splice(at, 0, emptyRow)
+      return copy
+    })
+    setRowHeights(prev => {
+      const copy = [...prev]
+      copy.splice(at, 0, 20)
+      return copy
+    })
+    setBgColors(prev => {
+      const copy = prev.map(row => [...row])
+      copy.splice(at, 0, new Array(numCols).fill('#ffffff'))
+      return copy
+    })
+    setTextAligns(prev => {
+      const copy = prev.map(row => [...row]) as Align[][]
+      copy.splice(at, 0, new Array(numCols).fill('left') as Align[])
+      return copy
+    })
+    // Adjust merges
+    setMerges(prev => prev.map(m => {
+      if (m.sr >= at) return { ...m, sr: m.sr + 1, er: m.er + 1 }
+      if (m.er >= at) return { ...m, er: m.er + 1 }
+      return m
+    }))
+    setNumRows(newRows)
+    // Update selection
+    const newStart = selectionStart && selectionStart.r >= at ? { ...selectionStart, r: selectionStart.r + 1 } : selectionStart
+    const newEnd = selectionEnd && selectionEnd.r >= at ? { ...selectionEnd, r: selectionEnd.r + 1 } : selectionEnd
+    setSelectionStart(newStart)
+    setSelectionEnd(newEnd)
+    if (selectedCell.r >= at) setSelectedCell({ ...selectedCell, r: selectedCell.r + 1 })
+  }
+
+  // === INSERT COLUMN ===
+  const handleInsertCol = (after: boolean) => {
+    if (!selectedCell) return
+    const at = after ? selectedCell.c + 1 : selectedCell.c
+    const newCols = numCols + 1
+    setCells(prev => {
+      const copy = prev.map(row => { const r = [...row]; r.splice(at, 0, ''); return r })
+      return copy
+    })
+    setColWidths(prev => {
+      const copy = [...prev]
+      copy.splice(at, 0, 80)
+      return copy
+    })
+    setBgColors(prev => {
+      const copy = prev.map(row => { const r = [...row]; r.splice(at, 0, '#ffffff'); return r })
+      return copy
+    })
+    setTextAligns(prev => {
+      const copy = prev.map(row => { const r = [...row] as Align[]; r.splice(at, 0, 'left'); return r }) as Align[][]
+      return copy
+    })
+    setMerges(prev => prev.map(m => {
+      if (m.sc >= at) return { ...m, sc: m.sc + 1, ec: m.ec + 1 }
+      if (m.ec >= at) return { ...m, ec: m.ec + 1 }
+      return m
+    }))
+    setNumCols(newCols)
+    const newStart = selectionStart && selectionStart.c >= at ? { ...selectionStart, c: selectionStart.c + 1 } : selectionStart
+    const newEnd = selectionEnd && selectionEnd.c >= at ? { ...selectionEnd, c: selectionEnd.c + 1 } : selectionEnd
+    setSelectionStart(newStart)
+    setSelectionEnd(newEnd)
+    if (selectedCell.c >= at) setSelectedCell({ ...selectedCell, c: selectedCell.c + 1 })
+  }
+
+  // === DELETE ROW ===
+  const handleDeleteRow = () => {
+    if (!selectedCell || numRows <= 1) return
+    const at = selectedCell.r
+    setCells(prev => { const copy = prev.map(row => [...row]); copy.splice(at, 1); return copy })
+    setRowHeights(prev => { const copy = [...prev]; copy.splice(at, 1); return copy })
+    setBgColors(prev => { const copy = prev.map(row => [...row]); copy.splice(at, 1); return copy })
+    setTextAligns(prev => { const copy = prev.map(row => [...row]) as Align[][]; copy.splice(at, 1); return copy })
+    setMerges(prev => prev
+      .filter(m => !(m.sr <= at && m.er >= at))
+      .map(m => {
+        if (m.sr > at) return { ...m, sr: m.sr - 1, er: m.er - 1 }
+        if (m.er > at) return { ...m, er: m.er - 1 }
+        return m
+      })
+    )
+    setNumRows(numRows - 1)
+    setSelectionStart(null); setSelectionEnd(null); setSelectedCell(null)
+  }
+
+  // === DELETE COLUMN ===
+  const handleDeleteCol = () => {
+    if (!selectedCell || numCols <= 1) return
+    const at = selectedCell.c
+    setCells(prev => prev.map(row => { const r = [...row]; r.splice(at, 1); return r }))
+    setColWidths(prev => { const copy = [...prev]; copy.splice(at, 1); return copy })
+    setBgColors(prev => prev.map(row => { const r = [...row]; r.splice(at, 1); return r }))
+    setTextAligns(prev => (prev.map(row => { const r = [...row] as Align[]; r.splice(at, 1); return r })) as Align[][])
+    setMerges(prev => prev
+      .filter(m => !(m.sc <= at && m.ec >= at))
+      .map(m => {
+        if (m.sc > at) return { ...m, sc: m.sc - 1, ec: m.ec - 1 }
+        if (m.ec > at) return { ...m, ec: m.ec - 1 }
+        return m
+      })
+    )
+    setNumCols(numCols - 1)
+    setSelectionStart(null); setSelectionEnd(null); setSelectedCell(null)
+  }
+
+  // === MOVE ROW ===
+  const handleMoveRow = (dir: 'up' | 'down') => {
+    if (!hasSelection || selMinR === selMaxR) return
+    const targetR = dir === 'up' ? selMinR - 1 : selMaxR + 1
+    if (targetR < 0 || targetR >= numRows) return
+
+    setCells(prev => {
+      const copy = prev.map(row => [...row])
+      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
+      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
+      copy.splice(insertAt, 0, ...moving)
+      return copy
+    })
+    setRowHeights(prev => {
+      const copy = [...prev]
+      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
+      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
+      copy.splice(insertAt, 0, ...moving)
+      return copy
+    })
+    setBgColors(prev => {
+      const copy = prev.map(row => [...row])
+      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
+      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
+      copy.splice(insertAt, 0, ...moving)
+      return copy
+    })
+    setTextAligns(prev => {
+      const copy = prev.map(row => [...row]) as Align[][]
+      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
+      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
+      copy.splice(insertAt, 0, ...moving)
+      return copy
+    })
+    const offset = dir === 'up' ? -1 : 1
+    setMerges(prev => prev.map(m => {
+      const sr = m.sr >= selMinR && m.sr <= selMaxR ? m.sr + offset : m.sr >= (dir === 'up' ? selMinR - 1 : selMaxR + 1) ? m.sr - (selMaxR - selMinR + 1) * (dir === 'up' ? -1 : 1) + offset : m.sr
+      // Simpler: just adjust all merges
+      let newSr = m.sr, newEr = m.er
+      if (m.sr >= selMinR && m.er <= selMaxR) {
+        newSr = m.sr + offset; newEr = m.er + offset
+      } else if (dir === 'up' && m.sr === selMinR - 1) {
+        newSr = m.sr + (selMaxR - selMinR + 1); newEr = m.sr + (selMaxR - selMinR + 1)
+      } else if (dir === 'down' && m.sr === selMaxR + 1) {
+        newSr = selMinR; newEr = selMinR
+      }
+      return { ...m, sr: newSr, er: newEr }
+    }))
+
+    const newStartR = dir === 'up' ? selMinR - 1 : selMinR + 1
+    const newEndR = dir === 'up' ? selMaxR - 1 : selMaxR + 1
+    setSelectionStart({ r: newStartR, c: selMinC })
+    setSelectionEnd({ r: newEndR, c: selMaxC })
+    setSelectedCell({ r: newStartR, c: selMinC })
+  }
+
+  // === MOVE COLUMN ===
+  const handleMoveCol = (dir: 'left' | 'right') => {
+    if (!hasSelection || selMinC === selMaxC) return
+    if (dir === 'left' && selMinC === 0) return
+    if (dir === 'right' && selMaxC >= numCols - 1) return
+
+    setCells(prev => prev.map(row => {
+      const r = [...row]
+      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
+      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
+      r.splice(insertAt, 0, ...moving)
+      return r
+    }))
+    setColWidths(prev => {
+      const r = [...prev]
+      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
+      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
+      r.splice(insertAt, 0, ...moving)
+      return r
+    })
+    setBgColors(prev => prev.map(row => {
+      const r = [...row]
+      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
+      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
+      r.splice(insertAt, 0, ...moving)
+      return r
+    }))
+    setTextAligns(prev => (prev.map(row => {
+      const r = [...row] as Align[]
+      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
+      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
+      r.splice(insertAt, 0, ...moving)
+      return r
+    })) as Align[][])
+
+    const offset = dir === 'left' ? -1 : 1
+    setMerges(prev => prev.map(m => {
+      let newSc = m.sc, newEc = m.ec
+      if (m.sc >= selMinC && m.ec <= selMaxC) {
+        newSc = m.sc + offset; newEc = m.ec + offset
+      } else if (dir === 'left' && m.sc === selMinC - 1) {
+        newSc = m.sc + (selMaxC - selMinC + 1); newEc = m.sc + (selMaxC - selMinC + 1)
+      } else if (dir === 'right' && m.sc === selMaxC + 1) {
+        newSc = selMinC; newEc = selMinC
+      }
+      return { ...m, sc: newSc, ec: newEc }
+    }))
+
+    const newStartC = dir === 'left' ? selMinC - 1 : selMinC + 1
+    const newEndC = dir === 'left' ? selMaxC - 1 : selMaxC + 1
+    setSelectionStart({ r: selMinR, c: newStartC })
+    setSelectionEnd({ r: selMaxR, c: newEndC })
+    setSelectedCell({ r: selMinR, c: newStartC })
+  }
+
+  // Input handlers
   const handleInputBlur = (r: number, c: number, value: string) => {
     updateCell(r, c, value)
     setActiveCell(null)
   }
 
-  // Save on Enter and move down
+  const navigateTo = (r: number, c: number) => {
+    let nr = r, nc = c
+    let tries = 0
+    while (isHidden(nr, nc) && tries < 500) {
+      if (nr > r) nr++; else if (nr < r) nr--
+      else if (nc > c) nc++; else nc--
+      nr = Math.max(0, Math.min(nr, numRows-1))
+      nc = Math.max(0, Math.min(nc, numCols-1))
+      tries++
+    }
+    setSelectedCell({ r: nr, c: nc })
+    setSelectionStart({ r: nr, c: nc }); setSelectionEnd({ r: nr, c: nc })
+    setTimeout(() => focusInput(nr, nc), 0)
+  }
+
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      e.stopPropagation()
-      const input = e.currentTarget
-      updateCell(r, c, input.value)
-      // Move down
-      let nr = Math.min(r+1, ROWS-1)
-      let nc = c
-      let tries = 0
-      while (isHidden(nr, nc) && tries < 200) {
-        nr = Math.min(nr+1, ROWS-1)
-        tries++
-      }
-      setSelectedCell({ r: nr, c: nc })
-      setSelectionStart({ r: nr, c: nc }); setSelectionEnd({ r: nr, c: nc })
-      setTimeout(() => focusInput(nr, nc), 0)
-    } else if (e.key === 'Tab') {
-      e.preventDefault()
-      e.stopPropagation()
-      const input = e.currentTarget
-      updateCell(r, c, input.value)
-      let nc = e.shiftKey ? Math.max(c-1, 0) : Math.min(c+1, COLS-1)
-      let nr = r
-      let tries = 0
-      while (isHidden(nr, nc) && tries < 200) {
-        nc = e.shiftKey ? Math.max(nc-1, 0) : Math.min(nc+1, COLS-1)
-        tries++
-      }
-      setSelectedCell({ r: nr, c: nc })
-      setSelectionStart({ r: nr, c: nc }); setSelectionEnd({ r: nr, c: nc })
-      setTimeout(() => focusInput(nr, nc), 0)
-    }
-    // Let Arrow keys propagate to table handler
-    else if (['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)) {
-      // Save current value first
+      e.preventDefault(); e.stopPropagation()
       updateCell(r, c, e.currentTarget.value)
-      // Don't stop propagation - let table handleKeyDown handle navigation
+      navigateTo(r + 1, c)
+    } else if (e.key === 'Tab') {
+      e.preventDefault(); e.stopPropagation()
+      updateCell(r, c, e.currentTarget.value)
+      navigateTo(r, e.shiftKey ? c - 1 : c + 1)
+    } else if (['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)) {
+      updateCell(r, c, e.currentTarget.value)
     }
   }
 
-  // Determine font color for a row
   const getFontColor = (r: number) => {
     if (r === 0) return 'white'
-    if (r === 1 || r === 12 || r === 17 || r === 26) return '#003366'
+    if ([1,12,17,26].includes(r)) return '#003366'
     return '#333'
   }
+  const isBoldRow = (r: number) => [0,1,11,12,17,26,27].includes(r)
 
-  const isBoldRow = (r: number) => {
-    return [0,1,11,12,17,26,27].includes(r)
-  }
-
-  const getTextAlign = (r: number, c: number) => {
-    if (r >= 2 && r <= 8 && c === 0) return 'right'
-    if (c === 0) return 'center'
-    return 'left'
-  }
+  // Check if entire row is selected
+  const isFullRowSelected = hasSelection && selMinC === 0 && selMaxC === numCols - 1
+  const isFullColSelected = hasSelection && selMinR === 0 && selMaxR === numRows - 1
 
   return (
     <AppShell>
       <div className="overflow-auto">
-        {/* Toolbar */}
-        <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-3">
-          <span className="font-bold">Plan: {plan.toUpperCase()}</span>
+        {/* Toolbar Row 1 - Main actions */}
+        <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-2">
+          <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
           <button onClick={() => { setPlan(p => p === 'vigente' ? 'derogado' : 'vigente'); loadCount() }}
             className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">Cambiar Plan</button>
 
-          <span className="text-gray-500">|</span>
+          <span className="text-gray-600">|</span>
 
+          {/* Alignment buttons */}
+          <button onClick={() => handleSetAlign('left')} title="Alinear izquierda"
+            className="bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded text-[9px] border border-gray-500">
+            <span style={{display:'inline-block',textAlign:'left',width:'14px'}}>▾</span> Izq
+          </button>
+          <button onClick={() => handleSetAlign('center')} title="Centrar"
+            className="bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded text-[9px] border border-gray-500">
+            <span style={{display:'inline-block',textAlign:'center',width:'14px'}}>▾</span> Ctr
+          </button>
+          <button onClick={() => handleSetAlign('right')} title="Alinear derecha"
+            className="bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded text-[9px] border border-gray-500">
+            <span style={{display:'inline-block',textAlign:'right',width:'14px'}}>▾</span> Der
+          </button>
+
+          <span className="text-gray-600">|</span>
+
+          {/* Merge */}
           <button onClick={handleMerge} disabled={!hasSelection}
             className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">
-            Combinar Celdas
+            Combinar
           </button>
           <button onClick={handleUnmerge} disabled={!selectedCell || !getMerge(selectedCell.r, selectedCell.c)}
             className="bg-orange-600 hover:bg-orange-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">
-            Descombinar
+            Descomb.
           </button>
 
-          <span className="text-gray-500">|</span>
+          <span className="text-gray-600">|</span>
+
+          {/* Insert/Delete Row/Col */}
+          <button onClick={() => handleInsertRow(false)} disabled={!selectedCell}
+            className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Insertar fila arriba">
+            +Fila
+          </button>
+          <button onClick={() => handleInsertRow(true)} disabled={!selectedCell}
+            className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Insertar fila abajo">
+            +Fila Abajo
+          </button>
+          <button onClick={() => handleInsertCol(false)} disabled={!selectedCell}
+            className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Insertar columna izquierda">
+            +Col
+          </button>
+          <button onClick={() => handleInsertCol(true)} disabled={!selectedCell}
+            className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Insertar columna derecha">
+            +Col Der
+          </button>
+          <button onClick={handleDeleteRow} disabled={!selectedCell || numRows <= 1}
+            className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Eliminar fila">
+            -Fila
+          </button>
+          <button onClick={handleDeleteCol} disabled={!selectedCell || numCols <= 1}
+            className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Eliminar columna">
+            -Col
+          </button>
+
+          <span className="text-gray-600">|</span>
+
+          {/* Move Row/Col */}
+          <button onClick={() => handleMoveRow('up')} disabled={!isFullRowSelected || selMinR === 0}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover fila arriba">
+            Fila ↑
+          </button>
+          <button onClick={() => handleMoveRow('down')} disabled={!isFullRowSelected || selMaxR >= numRows-1}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover fila abajo">
+            Fila ↓
+          </button>
+          <button onClick={() => handleMoveCol('left')} disabled={!isFullColSelected || selMinC === 0}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover col izquierda">
+            Col ←
+          </button>
+          <button onClick={() => handleMoveCol('right')} disabled={!isFullColSelected || selMaxC >= numCols-1}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover col derecha">
+            Col →
+          </button>
+
+          <span className="text-gray-600">|</span>
 
           {hasSelection && (
             <span className="text-yellow-300">
-              Seleccion: {colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)
+              {colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1}
+              ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)
+              {isFullRowSelected && <span className="text-green-300 ml-1">[FILA COMPLETA]</span>}
+              {isFullColSelected && <span className="text-green-300 ml-1">[COLUMNA COMPLETA]</span>}
             </span>
           )}
 
-          {selectedCell && (
-            <span className="text-gray-300 flex items-center gap-2 flex-wrap">
-              <span className="text-gray-500">|</span>
-              Celda: <b>{colLetter(selectedCell.c)}{selectedCell.r+1}</b>
-              Ancho: <input type="number" value={colWidths[selectedCell.c]}
-                onChange={e => { const w=[...colWidths]; w[selectedCell.c]=parseInt(e.target.value)||40; setColWidths(w) }}
-                className="w-14 bg-gray-700 text-white text-[9px] px-1 rounded text-center" />px
-              Alto: <input type="number" value={rowHeights[selectedCell.r]}
-                onChange={e => { const h=[...rowHeights]; h[selectedCell.r]=parseInt(e.target.value)||20; setRowHeights(h) }}
-                className="w-14 bg-gray-700 text-white text-[9px] px-1 rounded text-center" />px
-              Fondo: <input type="color" value={bgColors[selectedCell.r][selectedCell.c]}
-                onChange={e => { updateBg(selectedCell.r, selectedCell.c, e.target.value); handleApplyBgToSelection(e.target.value) }}
-                className="w-6 h-4 cursor-pointer" />
-              {hasSelection && <span className="text-[8px] text-gray-400">(se aplica a toda la seleccion)</span>}
-            </span>
-          )}
+          <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
         </div>
 
-        <table ref={tableRef} className="border-collapse" onKeyDown={handleKeyDown}>
+        {/* Toolbar Row 2 - Cell properties */}
+        {selectedCell && (
+          <div className="sticky top-7 z-30 bg-gray-700 text-white text-[10px] px-3 py-1 flex flex-wrap items-center gap-2">
+            Celda: <b>{colLetter(selectedCell.c)}{selectedCell.r+1}</b>
+            <span className="text-gray-500">|</span>
+            Ancho: <input type="number" value={colWidths[selectedCell.c] || 80}
+              onChange={e => { const w=[...colWidths]; w[selectedCell.c]=parseInt(e.target.value)||40; setColWidths(w) }}
+              className="w-14 bg-gray-600 text-white text-[9px] px-1 rounded text-center" />px
+            Alto: <input type="number" value={rowHeights[selectedCell.r] || 20}
+              onChange={e => { const h=[...rowHeights]; h[selectedCell.r]=parseInt(e.target.value)||20; setRowHeights(h) }}
+              className="w-14 bg-gray-600 text-white text-[9px] px-1 rounded text-center" />px
+            <span className="text-gray-500">|</span>
+            Alineacion: {textAligns[selectedCell.r]?.[selectedCell.c] || 'left'}
+            <span className="text-gray-500">|</span>
+            Fondo: <input type="color" value={bgColors[selectedCell.r]?.[selectedCell.c] || '#ffffff'}
+              onChange={e => { updateBg(selectedCell.r, selectedCell.c, e.target.value); handleApplyBgToSelection(e.target.value) }}
+              className="w-6 h-4 cursor-pointer" />
+            {hasSelection && <span className="text-[8px] text-gray-400">(se aplica a toda la seleccion)</span>}
+          </div>
+        )}
+
+        <table ref={tableRef} className="border-collapse" onKeyDown={handleKeyDown}
+          style={{ marginTop: selectedCell ? '52px' : '28px' }}>
           <colgroup>
-            <col className="w-[35px] bg-gray-100" />
+            <col style={{ width: '35px' }} />
             {colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}
           </colgroup>
           <tbody>
             {/* Column headers */}
             <tr>
-              <td className="border border-gray-400 bg-gray-200 text-[8px] text-center text-gray-500 sticky top-7 left-0 z-20"></td>
-              {Array.from({ length: COLS }).map((_, c) => (
-                <td key={c} className="border border-gray-400 bg-gray-200 text-[8px] text-center text-gray-500 font-mono sticky top-7 z-10">
-                  {colLetter(c)}
-                </td>
-              ))}
+              <td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20"
+                style={{ top: selectedCell ? '52px' : '28px' }}></td>
+              {Array.from({ length: numCols }).map((_, c) => {
+                const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1
+                return (
+                  <td key={c}
+                    onClick={(e) => handleColHeaderClick(c, e.shiftKey)}
+                    className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none
+                      ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                    style={{ top: selectedCell ? '52px' : '28px', position: 'sticky', zIndex: 15 }}>
+                    {colLetter(c)}
+                  </td>
+                )
+              })}
             </tr>
 
             {/* Data rows */}
-            {Array.from({ length: ROWS }).map((_, r) => (
-              <tr key={r} style={{ height: `${rowHeights[r]}px` }}>
-                <td className="border border-gray-400 bg-gray-200 text-[8px] text-center text-gray-500 sticky left-0 z-5">
+            {Array.from({ length: numRows }).map((_, r) => (
+              <tr key={r} style={{ height: `${rowHeights[r] || 20}px` }}>
+                <td
+                  onClick={(e) => handleRowHeaderClick(r, e.shiftKey)}
+                  className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5
+                    ${selMinR <= r && r <= selMaxR && selMinC === 0 && selMaxC === numCols - 1 ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
                   {r + 1}
                 </td>
-                {Array.from({ length: COLS }).map((_, c) => {
+                {Array.from({ length: numCols }).map((_, c) => {
                   if (isHidden(r, c)) return null
 
                   const merge = getMerge(r, c)
                   const colSpan = merge ? (merge.ec - merge.sc + 1) : 1
                   const rowSpan = merge ? (merge.er - merge.sr + 1) : 1
                   const selected = isInSelection(r, c)
-                  const isThisActive = activeCell?.r === r && activeCell?.c === c
 
                   return (
                     <td
@@ -369,23 +731,22 @@ export default function DashboardPage() {
                       data-r={r}
                       data-c={c}
                       onClick={(e) => handleCellClick(r, c, e.shiftKey)}
-                      onMouseDown={() => { setSelectedCell({r,c}); if (!selectionStart || !e.shiftKey) { setSelectionStart({r,c}); setSelectionEnd({r,c}) } }}
                       colSpan={colSpan > 1 ? colSpan : undefined}
                       rowSpan={rowSpan > 1 ? rowSpan : undefined}
                       className={`border text-[9px] p-0 relative
                         ${selected ? 'ring-2 ring-blue-400 z-10' : ''}
                         border-gray-400`}
                       style={{
-                        backgroundColor: selected ? '#bbdefb' : bgColors[r][c],
+                        backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
                         color: getFontColor(r),
                         fontWeight: isBoldRow(r) ? 'bold' : 'normal',
-                        textAlign: getTextAlign(r, c),
+                        textAlign: textAligns[r]?.[c] || 'left',
                         verticalAlign: 'middle',
                       }}
                     >
                       <input
                         type="text"
-                        defaultValue={cells[r][c]}
+                        defaultValue={cells[r]?.[c] || ''}
                         onBlur={(e) => handleInputBlur(r, c, e.target.value)}
                         onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
                         onKeyDown={(e) => handleInputKeyDown(e, r, c)}
@@ -394,8 +755,8 @@ export default function DashboardPage() {
                           color: 'inherit',
                           fontWeight: 'inherit',
                           textAlign: 'inherit',
-                          minHeight: `${rowHeights[r]}px`,
-                          lineHeight: `${rowHeights[r]}px`,
+                          minHeight: `${rowHeights[r] || 20}px`,
+                          lineHeight: `${rowHeights[r] || 20}px`,
                         }}
                       />
                     </td>

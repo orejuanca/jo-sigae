@@ -408,113 +408,126 @@ export default function DashboardPage() {
 
   // === MOVE ROW ===
   const handleMoveRow = (dir: 'up' | 'down') => {
-    if (!hasSelection || selMinR === selMaxR) return
-    const targetR = dir === 'up' ? selMinR - 1 : selMaxR + 1
-    if (targetR < 0 || targetR >= numRows) return
+    if (!selectedCell) return
+    const fromR = selMinR >= 0 ? selMinR : selectedCell.r
+    const toR = selMaxR >= 0 ? selMaxR : selectedCell.r
+    const count = toR - fromR + 1
+    if (dir === 'up' && fromR === 0) return
+    if (dir === 'down' && toR >= numRows - 1) return
 
+    const swapWith = dir === 'up' ? fromR - 1 : toR + 1
+
+    // Swap full rows in all arrays
     setCells(prev => {
       const copy = prev.map(row => [...row])
-      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
-      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
-      copy.splice(insertAt, 0, ...moving)
+      const block = copy.splice(fromR, count)
+      const neighbor = copy.splice(swapWith, 1)
+      if (dir === 'up') { copy.splice(swapWith, 0, ...block); copy.splice(swapWith + count, 0, ...neighbor) }
+      else { copy.splice(fromR, 0, ...neighbor); copy.splice(fromR + 1, 0, ...block) }
       return copy
     })
     setRowHeights(prev => {
       const copy = [...prev]
-      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
-      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
-      copy.splice(insertAt, 0, ...moving)
+      const block = copy.splice(fromR, count)
+      const neighbor = copy.splice(swapWith, 1)
+      if (dir === 'up') { copy.splice(swapWith, 0, ...block); copy.splice(swapWith + count, 0, ...neighbor) }
+      else { copy.splice(fromR, 0, ...neighbor); copy.splice(fromR + 1, 0, ...block) }
       return copy
     })
     setBgColors(prev => {
       const copy = prev.map(row => [...row])
-      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
-      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
-      copy.splice(insertAt, 0, ...moving)
+      const block = copy.splice(fromR, count)
+      const neighbor = copy.splice(swapWith, 1)
+      if (dir === 'up') { copy.splice(swapWith, 0, ...block); copy.splice(swapWith + count, 0, ...neighbor) }
+      else { copy.splice(fromR, 0, ...neighbor); copy.splice(fromR + 1, 0, ...block) }
       return copy
     })
     setTextAligns(prev => {
       const copy = prev.map(row => [...row]) as Align[][]
-      const moving = copy.splice(selMinR, selMaxR - selMinR + 1)
-      const insertAt = dir === 'up' ? selMinR - 1 : selMinR
-      copy.splice(insertAt, 0, ...moving)
+      const block = copy.splice(fromR, count)
+      const neighbor = copy.splice(swapWith, 1)
+      if (dir === 'up') { copy.splice(swapWith, 0, ...block); copy.splice(swapWith + count, 0, ...neighbor) }
+      else { copy.splice(fromR, 0, ...neighbor); copy.splice(fromR + 1, 0, ...block) }
       return copy
     })
-    const offset = dir === 'up' ? -1 : 1
+    // Adjust merges: swap row indices
     setMerges(prev => prev.map(m => {
-      const sr = m.sr >= selMinR && m.sr <= selMaxR ? m.sr + offset : m.sr >= (dir === 'up' ? selMinR - 1 : selMaxR + 1) ? m.sr - (selMaxR - selMinR + 1) * (dir === 'up' ? -1 : 1) + offset : m.sr
-      // Simpler: just adjust all merges
-      let newSr = m.sr, newEr = m.er
-      if (m.sr >= selMinR && m.er <= selMaxR) {
-        newSr = m.sr + offset; newEr = m.er + offset
-      } else if (dir === 'up' && m.sr === selMinR - 1) {
-        newSr = m.sr + (selMaxR - selMinR + 1); newEr = m.sr + (selMaxR - selMinR + 1)
-      } else if (dir === 'down' && m.sr === selMaxR + 1) {
-        newSr = selMinR; newEr = selMinR
+      let { sr, er, sc, ec } = m
+      if (sr >= fromR && er <= toR) {
+        // Merge inside moving block
+        sr += (dir === 'up' ? -1 : 1); er += (dir === 'up' ? -1 : 1)
+      } else if (sr === swapWith) {
+        // Merge in neighbor row
+        sr = dir === 'up' ? toR : fromR; er = sr
+      } else {
+        // Merge outside both blocks - no change needed
       }
-      return { ...m, sr: newSr, er: newEr }
+      return { sr, er, sc, ec }
     }))
 
-    const newStartR = dir === 'up' ? selMinR - 1 : selMinR + 1
-    const newEndR = dir === 'up' ? selMaxR - 1 : selMaxR + 1
-    setSelectionStart({ r: newStartR, c: selMinC })
-    setSelectionEnd({ r: newEndR, c: selMaxC })
-    setSelectedCell({ r: newStartR, c: selMinC })
+    const off = dir === 'up' ? -1 : 1
+    setSelectionStart({ r: fromR + off, c: selMinC >= 0 ? selMinC : 0 })
+    setSelectionEnd({ r: toR + off, c: selMaxC >= 0 ? selMaxC : numCols - 1 })
+    setSelectedCell({ r: fromR + off, c: selectedCell.c })
   }
 
   // === MOVE COLUMN ===
   const handleMoveCol = (dir: 'left' | 'right') => {
-    if (!hasSelection || selMinC === selMaxC) return
-    if (dir === 'left' && selMinC === 0) return
-    if (dir === 'right' && selMaxC >= numCols - 1) return
+    if (!selectedCell) return
+    const fromC = selMinC >= 0 ? selMinC : selectedCell.c
+    const toC = selMaxC >= 0 ? selMaxC : selectedCell.c
+    const count = toC - fromC + 1
+    if (dir === 'left' && fromC === 0) return
+    if (dir === 'right' && toC >= numCols - 1) return
+
+    const swapWith = dir === 'left' ? fromC - 1 : toC + 1
 
     setCells(prev => prev.map(row => {
       const r = [...row]
-      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
-      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
-      r.splice(insertAt, 0, ...moving)
+      const block = r.splice(fromC, count)
+      const neighbor = r.splice(swapWith, 1)
+      if (dir === 'left') { r.splice(swapWith, 0, ...block); r.splice(swapWith + count, 0, ...neighbor) }
+      else { r.splice(fromC, 0, ...neighbor); r.splice(fromC + 1, 0, ...block) }
       return r
     }))
     setColWidths(prev => {
       const r = [...prev]
-      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
-      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
-      r.splice(insertAt, 0, ...moving)
+      const block = r.splice(fromC, count)
+      const neighbor = r.splice(swapWith, 1)
+      if (dir === 'left') { r.splice(swapWith, 0, ...block); r.splice(swapWith + count, 0, ...neighbor) }
+      else { r.splice(fromC, 0, ...neighbor); r.splice(fromC + 1, 0, ...block) }
       return r
     })
     setBgColors(prev => prev.map(row => {
       const r = [...row]
-      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
-      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
-      r.splice(insertAt, 0, ...moving)
+      const block = r.splice(fromC, count)
+      const neighbor = r.splice(swapWith, 1)
+      if (dir === 'left') { r.splice(swapWith, 0, ...block); r.splice(swapWith + count, 0, ...neighbor) }
+      else { r.splice(fromC, 0, ...neighbor); r.splice(fromC + 1, 0, ...block) }
       return r
     }))
     setTextAligns(prev => (prev.map(row => {
       const r = [...row] as Align[]
-      const moving = r.splice(selMinC, selMaxC - selMinC + 1)
-      const insertAt = dir === 'left' ? selMinC - 1 : selMinC
-      r.splice(insertAt, 0, ...moving)
+      const block = r.splice(fromC, count)
+      const neighbor = r.splice(swapWith, 1)
+      if (dir === 'left') { r.splice(swapWith, 0, ...block); r.splice(swapWith + count, 0, ...neighbor) }
+      else { r.splice(fromC, 0, ...neighbor); r.splice(fromC + 1, 0, ...block) }
       return r
     })) as Align[][])
-
-    const offset = dir === 'left' ? -1 : 1
     setMerges(prev => prev.map(m => {
-      let newSc = m.sc, newEc = m.ec
-      if (m.sc >= selMinC && m.ec <= selMaxC) {
-        newSc = m.sc + offset; newEc = m.ec + offset
-      } else if (dir === 'left' && m.sc === selMinC - 1) {
-        newSc = m.sc + (selMaxC - selMinC + 1); newEc = m.sc + (selMaxC - selMinC + 1)
-      } else if (dir === 'right' && m.sc === selMaxC + 1) {
-        newSc = selMinC; newEc = selMinC
+      let { sr, er, sc, ec } = m
+      if (sc >= fromC && ec <= toC) {
+        sc += (dir === 'left' ? -1 : 1); ec += (dir === 'left' ? -1 : 1)
+      } else if (sc === swapWith) {
+        sc = dir === 'left' ? toC : fromC; ec = sc
       }
-      return { ...m, sc: newSc, ec: newEc }
+      return { sr, er, sc, ec }
     }))
 
-    const newStartC = dir === 'left' ? selMinC - 1 : selMinC + 1
-    const newEndC = dir === 'left' ? selMaxC - 1 : selMaxC + 1
-    setSelectionStart({ r: selMinR, c: newStartC })
-    setSelectionEnd({ r: selMaxR, c: newEndC })
-    setSelectedCell({ r: selMinR, c: newStartC })
+    const off = dir === 'left' ? -1 : 1
+    setSelectionStart({ r: selMinR >= 0 ? selMinR : 0, c: fromC + off })
+    setSelectionEnd({ r: selMaxR >= 0 ? selMaxR : numRows - 1, c: toC + off })
+    setSelectedCell({ r: selectedCell.r, c: fromC + off })
   }
 
   // Input handlers
@@ -631,20 +644,20 @@ export default function DashboardPage() {
           <span className="text-gray-600">|</span>
 
           {/* Move Row/Col */}
-          <button onClick={() => handleMoveRow('up')} disabled={!isFullRowSelected || selMinR === 0}
-            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover fila arriba">
+          <button onClick={() => handleMoveRow('up')} disabled={!selectedCell || selMinR === 0}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover fila(s) arriba">
             Fila ↑
           </button>
-          <button onClick={() => handleMoveRow('down')} disabled={!isFullRowSelected || selMaxR >= numRows-1}
-            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover fila abajo">
+          <button onClick={() => handleMoveRow('down')} disabled={!selectedCell || selMaxR >= numRows-1}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover fila(s) abajo">
             Fila ↓
           </button>
-          <button onClick={() => handleMoveCol('left')} disabled={!isFullColSelected || selMinC === 0}
-            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover col izquierda">
+          <button onClick={() => handleMoveCol('left')} disabled={!selectedCell || selMinC === 0}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover columna(s) izquierda">
             Col ←
           </button>
-          <button onClick={() => handleMoveCol('right')} disabled={!isFullColSelected || selMaxC >= numCols-1}
-            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover col derecha">
+          <button onClick={() => handleMoveCol('right')} disabled={!selectedCell || selMaxC >= numCols-1}
+            className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]" title="Mover columna(s) derecha">
             Col →
           </button>
 

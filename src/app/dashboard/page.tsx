@@ -175,6 +175,11 @@ export default function DashboardPage() {
   const [saveStatus, setSaveStatus] = useState<string>('')
 
   const [loadInfo, setLoadInfo] = useState<string>('')
+  const skipSaveRef = useRef(true)
+
+  // Ref que SIEMPRE tiene el estado actual (se actualiza en cada render, no es closure)
+  const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
+  stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
 
   // === LOAD FROM STORAGE ===
   useEffect(() => {
@@ -205,38 +210,43 @@ export default function DashboardPage() {
       setLoadInfo('Error al cargar cache')
     }
     setLoaded(true)
+    // Permitir save después de que el siguiente render actualice el ref con los datos cargados
+    setTimeout(() => { skipSaveRef.current = false }, 500)
   }, [])
 
-  // === AUTO-SAVE ===
+  // Función de save que lee del ref (siempre tiene el estado más reciente)
+  const doSave = useCallback((p: string) => {
+    try {
+      const json = JSON.stringify(stateRef.current)
+      localStorage.setItem(STORAGE_KEY(p), json)
+      setSaveStatus('Guardado')
+      return true
+    } catch (e) {
+      console.error('[SAVE ERROR]', e)
+      setSaveStatus('ERROR al guardar')
+      return false
+    }
+  }, [])
+
+  // === AUTO-SAVE (usa ref, solo se dispara cuando cells cambia) ===
   useEffect(() => {
-    if (!loaded) return
+    if (!loaded || skipSaveRef.current) return
     const timer = setTimeout(() => {
-      try {
-        const state = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
-        const json = JSON.stringify(state)
-        localStorage.setItem(STORAGE_KEY(plan), json)
-        setSaveStatus('Guardado')
-      } catch (e) {
-        console.error('[SAVE ERROR]', e)
-        setSaveStatus('ERROR al guardar')
-      }
+      doSave(plan)
       setTimeout(() => setSaveStatus(''), 2000)
     }, 300)
     return () => clearTimeout(timer)
-  }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells])
+  }, [loaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
-  // === SAVE ON BEFORE UNLOAD ===
+  // === SAVE ON BEFORE UNLOAD (usa ref) ===
   useEffect(() => {
     if (!loaded) return
     const handler = () => {
-      try {
-        const state = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
-        localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(state))
-      } catch {}
+      try { localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(stateRef.current)) } catch {}
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
-  }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells])
+  }, [loaded, plan])
 
   // === RESTORE ===
   const handleRestore = () => {

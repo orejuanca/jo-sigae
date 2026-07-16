@@ -127,9 +127,18 @@ function loadFromStorage(plan: string): SheetState | null {
   } catch { return null }
 }
 
-function saveToStorage(plan: string, state: SheetState) {
-  if (typeof window === 'undefined') return
-  try { localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(state)) } catch {}
+function saveToStorage(plan: string, state: SheetState): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const json = JSON.stringify(state)
+    localStorage.setItem(STORAGE_KEY(plan), json)
+    // Verify it was actually saved
+    const check = localStorage.getItem(STORAGE_KEY(plan))
+    return check === json
+  } catch (e) {
+    console.error('Error guardando:', e)
+    return false
+  }
 }
 
 export default function DashboardPage() {
@@ -179,9 +188,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loaded) return
     const timer = setTimeout(() => {
-      saveToStorage(plan, { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders })
-      setSaveStatus('Guardado')
-      setTimeout(() => setSaveStatus(''), 1500)
+      const ok = saveToStorage(plan, { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders })
+      setSaveStatus(ok ? 'Guardado' : 'ERROR al guardar')
+      setTimeout(() => setSaveStatus(''), 2000)
     }, 300)
     return () => clearTimeout(timer)
   }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders])
@@ -536,7 +545,7 @@ export default function DashboardPage() {
 
           {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
 
-          {saveStatus && <span className="text-green-400">{saveStatus}</span>}
+          {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
           <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
           <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
         </div>

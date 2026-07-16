@@ -187,6 +187,24 @@ export default function DashboardPage() {
     }
   }, [])
 
+  // === MIGRACION: limpiar borders del cache guardado ===
+  useEffect(() => {
+    if (!loaded) return
+    const key = STORAGE_KEY(plan)
+    try {
+      const raw = localStorage.getItem(key)
+      if (raw) {
+        const data = JSON.parse(raw)
+        if (data.borders) {
+          data.borders = makeEmpty2D(data.numRows || INIT_ROWS, data.numCols || INIT_COLS, false)
+          localStorage.setItem(key, JSON.stringify(data))
+        }
+      }
+    } catch {}
+  // Solo ejecutar una vez al montar
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // === AUTO-SAVE ===
   useEffect(() => {
     if (!loaded) return
@@ -589,7 +607,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <table ref={tableRef} className="border-collapse" onKeyDown={handleKeyDown}
+        <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown}
           style={{ marginTop: selectedCell ? '52px' : '28px' }}>
           <colgroup>
             <col style={{ width: '35px' }} />
@@ -630,7 +648,7 @@ export default function DashboardPage() {
                       onClick={(e) => handleCellClick(r, c, e.shiftKey)}
                       colSpan={colSpan > 1 ? colSpan : undefined}
                       rowSpan={rowSpan > 1 ? rowSpan : undefined}
-                      className={`p-0 relative ${selected ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : 'border border-transparent'}`}
+                      className={`p-0 relative ${selected ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
                       style={{
                         backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
                         color: fontColors[r]?.[c] || '#333',

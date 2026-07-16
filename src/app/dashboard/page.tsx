@@ -115,7 +115,7 @@ interface SheetState {
   cells: string[][]; colWidths: number[]; rowHeights: number[]
   bgColors: string[][]; textAligns: Align[][]; merges: Merge[]
   fontFamilies: string[][]; fontSizes: number[][]; fontColors: string[][]
-  borders: boolean[][]
+  borders: boolean[][]; boldCells: boolean[][]
 }
 
 function loadFromStorage(plan: string): SheetState | null {
@@ -130,13 +130,10 @@ function loadFromStorage(plan: string): SheetState | null {
 function saveToStorage(plan: string, state: SheetState): boolean {
   if (typeof window === 'undefined') return false
   try {
-    const json = JSON.stringify(state)
-    localStorage.setItem(STORAGE_KEY(plan), json)
-    // Verify it was actually saved
-    const check = localStorage.getItem(STORAGE_KEY(plan))
-    return check === json
+    localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(state))
+    return true
   } catch (e) {
-    console.error('Error guardando:', e)
+    console.error('SAVE ERROR:', e)
     return false
   }
 }
@@ -180,6 +177,7 @@ export default function DashboardPage() {
       if (saved.fontSizes) setFontSizes(saved.fontSizes)
       if (saved.fontColors) setFontColors(saved.fontColors)
       if (saved.borders) setBorders(saved.borders)
+      if (saved.boldCells) setBoldCells(saved.boldCells)
     }
     setLoaded(true)
   }, [])
@@ -188,7 +186,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loaded) return
     const timer = setTimeout(() => {
-      const ok = saveToStorage(plan, { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders })
+      const ok = saveToStorage(plan, { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
       setSaveStatus(ok ? 'Guardado' : 'ERROR al guardar')
       setTimeout(() => setSaveStatus(''), 2000)
     }, 300)
@@ -207,6 +205,7 @@ export default function DashboardPage() {
     setFontSizes(makeInitialFontSizes(INIT_ROWS, INIT_COLS))
     setFontColors(makeInitialFontColors(INIT_ROWS, INIT_COLS))
     setBorders(makeInitialBorders(INIT_ROWS, INIT_COLS))
+    setBoldCells(makeEmpty2D(INIT_ROWS, INIT_COLS, false))
     setSaveStatus('Restaurado')
     setTimeout(() => setSaveStatus(''), 2000)
   }

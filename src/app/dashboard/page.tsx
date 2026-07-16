@@ -118,101 +118,51 @@ interface SheetState {
   borders: boolean[][]; boldCells: boolean[][]
 }
 
-function loadFromStorage(plan: string): SheetState | null {
+function readSavedOnce(plan: string): SheetState | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY(plan))
-    if (!raw) { console.log(`[LOAD] No hay datos para ${plan}`); return null }
-    const parsed = JSON.parse(raw) as SheetState
-    console.log(`[LOAD] Datos cargados para ${plan}: ${parsed.numRows}f x ${parsed.numCols}c, boldCells=${!!parsed.boldCells}`)
-    return parsed
-  } catch (e) { console.error('[LOAD] Error cargando:', e); return null }
-}
-
-function saveToStorage(plan: string, state: SheetState): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const json = JSON.stringify(state)
-    console.log(`[SAVE] Guardando ${plan}: ${json.length} bytes`)
-    localStorage.setItem(STORAGE_KEY(plan), json)
-    // Verificar que se guardó correctamente
-    const check = localStorage.getItem(STORAGE_KEY(plan))
-    if (check !== json) { console.error('[SAVE] Verificacion fallida!'); return false }
-    console.log(`[SAVE] OK para ${plan}`)
-    return true
-  } catch (e) {
-    console.error('[SAVE] Error:', e)
-    return false
-  }
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
 }
 
 export default function DashboardPage() {
   const [plan, setPlan] = useState<'vigente' | 'derogado'>('vigente')
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
-  const [numRows, setNumRows] = useState(INIT_ROWS)
-  const [numCols, setNumCols] = useState(INIT_COLS)
 
-  const [cells, setCells] = useState<string[][]>(makeInitialCells)
-  const [colWidths, setColWidths] = useState<number[]>(makeInitialWidths)
-  const [rowHeights, setRowHeights] = useState<number[]>(() => makeInitialHeights(INIT_ROWS))
-  const [bgColors, setBgColors] = useState<string[][]>(() => makeInitialBg(INIT_ROWS, INIT_COLS))
-  const [textAligns, setTextAligns] = useState<Align[][]>(() => makeInitialAlign(INIT_ROWS, INIT_COLS))
-  const [fontFamilies, setFontFamilies] = useState<string[][]>(() => makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
-  const [fontSizes, setFontSizes] = useState<number[][]>(() => makeInitialFontSizes(INIT_ROWS, INIT_COLS))
-  const [fontColors, setFontColors] = useState<string[][]>(() => makeInitialFontColors(INIT_ROWS, INIT_COLS))
-  const [borders, setBorders] = useState<boolean[][]>(() => makeInitialBorders(INIT_ROWS, INIT_COLS))
+  const _saved = useRef(readSavedOnce('vigente'))
+  const sv = _saved.current
+
+  const [numRows, setNumRows] = useState(sv?.numRows ?? INIT_ROWS)
+  const [numCols, setNumCols] = useState(sv?.numCols ?? INIT_COLS)
+  const [cells, setCells] = useState<string[][]>(() => sv?.cells ?? makeInitialCells())
+  const [colWidths, setColWidths] = useState<number[]>(() => sv?.colWidths ?? makeInitialWidths())
+  const [rowHeights, setRowHeights] = useState<number[]>(() => sv?.rowHeights ?? makeInitialHeights(INIT_ROWS))
+  const [bgColors, setBgColors] = useState<string[][]>(() => sv?.bgColors ?? makeInitialBg(INIT_ROWS, INIT_COLS))
+  const [textAligns, setTextAligns] = useState<Align[][]>(() => sv?.textAligns ?? makeInitialAlign(INIT_ROWS, INIT_COLS))
+  const [fontFamilies, setFontFamilies] = useState<string[][]>(() => sv?.fontFamilies ?? makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
+  const [fontSizes, setFontSizes] = useState<number[][]>(() => sv?.fontSizes ?? makeInitialFontSizes(INIT_ROWS, INIT_COLS))
+  const [fontColors, setFontColors] = useState<string[][]>(() => sv?.fontColors ?? makeInitialFontColors(INIT_ROWS, INIT_COLS))
+  const [borders, setBorders] = useState<boolean[][]>(() => sv?.borders ?? makeInitialBorders(INIT_ROWS, INIT_COLS))
   const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
+    if (sv?.boldCells) return sv.boldCells
     const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)
     for (const r of [0,1,11,12,17,26,27]) for (let c = 0; c < INIT_COLS; c++) b[r][c] = true
     return b
   })
+  const [merges, setMerges] = useState<Merge[]>(() => sv?.merges ?? [])
 
-  const [merges, setMerges] = useState<Merge[]>([])
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
   const [selectionEnd, setSelectionEnd] = useState<{r:number;c:number}|null>(null)
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
   const [saveStatus, setSaveStatus] = useState<string>('')
+  const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Sin cache')
 
-  const [loadInfo, setLoadInfo] = useState<string>('')
-  const skipSaveRef = useRef(true)
-
-  // Ref que SIEMPRE tiene el estado actual (se actualiza en cada render, no es closure)
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
 
-  // === LOAD FROM STORAGE ===
-  useEffect(() => {
-    if (typeof window === 'undefined') { setLoaded(true); return }
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY(plan))
-      if (raw) {
-        const saved = JSON.parse(raw) as SheetState
-        if (saved.cells) setCells(saved.cells)
-        if (saved.colWidths) setColWidths(saved.colWidths)
-        if (saved.rowHeights) setRowHeights(saved.rowHeights)
-        if (saved.bgColors) setBgColors(saved.bgColors)
-        if (saved.textAligns) setTextAligns(saved.textAligns)
-        if (saved.merges) setMerges(saved.merges)
-        if (saved.numRows) setNumRows(saved.numRows)
-        if (saved.numCols) setNumCols(saved.numCols)
-        if (saved.fontFamilies) setFontFamilies(saved.fontFamilies)
-        if (saved.fontSizes) setFontSizes(saved.fontSizes)
-        if (saved.fontColors) setFontColors(saved.fontColors)
-        if (saved.borders) setBorders(saved.borders)
-        if (saved.boldCells) setBoldCells(saved.boldCells)
-        setLoadInfo(`Cache: ${(raw.length/1024).toFixed(0)}KB (${saved.numRows}f x ${saved.numCols}c)`)
-      } else {
-        setLoadInfo('Sin cache')
-      }
-    } catch (e) {
-      console.error('[LOAD ERROR]', e)
-      setLoadInfo('Error al cargar cache')
-    }
-    setLoaded(true)
-    // Permitir save después de que el siguiente render actualice el ref con los datos cargados
-    setTimeout(() => { skipSaveRef.current = false }, 500)
-  }, [])
+  useEffect(() => { setLoaded(true) }, [])
 
   // Función de save que lee del ref (siempre tiene el estado más reciente)
   const saveCountRef = useRef(0)
@@ -230,13 +180,10 @@ export default function DashboardPage() {
     }
   }, [])
 
-  // === AUTO-SAVE (usa ref, solo se dispara cuando cells cambia) ===
+  // === AUTO-SAVE ===
   useEffect(() => {
-    if (!loaded || skipSaveRef.current) return
-    const timer = setTimeout(() => {
-      doSave(plan)
-      setTimeout(() => setSaveStatus(''), 2000)
-    }, 300)
+    if (!loaded) return
+    const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
     return () => clearTimeout(timer)
   }, [loaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
@@ -525,7 +472,7 @@ export default function DashboardPage() {
           <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
           <button onClick={() => {
             const np = plan==='vigente'?'derogado':'vigente'; setPlan(np)
-            const s = loadFromStorage(np)
+            const s = readSavedOnce(np)
             if(s){if(s.cells)setCells(s.cells);if(s.colWidths)setColWidths(s.colWidths);if(s.rowHeights)setRowHeights(s.rowHeights);if(s.bgColors)setBgColors(s.bgColors);if(s.textAligns)setTextAligns(s.textAligns);if(s.merges)setMerges(s.merges);if(s.numRows)setNumRows(s.numRows);if(s.numCols)setNumCols(s.numCols);if(s.fontFamilies)setFontFamilies(s.fontFamilies);if(s.fontSizes)setFontSizes(s.fontSizes);if(s.fontColors)setFontColors(s.fontColors);if(s.borders)setBorders(s.borders);if(s.boldCells)setBoldCells(s.boldCells)}
             else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges([]);setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeEmpty2D(INIT_ROWS,INIT_COLS,false))}
             setSelectionStart(null);setSelectionEnd(null);setSelectedCell(null);loadCount()

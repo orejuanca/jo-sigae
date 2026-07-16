@@ -104,7 +104,7 @@ function makeInitialFontColors(rows: number, cols: number): string[][] {
 }
 
 function makeInitialBorders(rows: number, cols: number): boolean[][] {
-  return makeEmpty2D(rows, cols, true)
+  return makeEmpty2D(rows, cols, false)
 }
 
 // localStorage persistence
@@ -144,7 +144,14 @@ export default function DashboardPage() {
   const [fontFamilies, setFontFamilies] = useState<string[][]>(() => sv?.fontFamilies ?? makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
   const [fontSizes, setFontSizes] = useState<number[][]>(() => sv?.fontSizes ?? makeInitialFontSizes(INIT_ROWS, INIT_COLS))
   const [fontColors, setFontColors] = useState<string[][]>(() => sv?.fontColors ?? makeInitialFontColors(INIT_ROWS, INIT_COLS))
-  const [borders, setBorders] = useState<boolean[][]>(() => sv?.borders ?? makeInitialBorders(INIT_ROWS, INIT_COLS))
+  const [borders, setBorders] = useState<boolean[][]>(() => {
+    const saved = sv?.borders
+    if (saved && saved.length > 0) {
+      // Migrar: quitar todas las líneas predeterminadas (borde true → false)
+      return makeEmpty2D(saved.length, saved[0]?.length || INIT_COLS, false)
+    }
+    return makeInitialBorders(INIT_ROWS, INIT_COLS)
+  })
   const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
     if (sv?.boldCells) return sv.boldCells
     const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)

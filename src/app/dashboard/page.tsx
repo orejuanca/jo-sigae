@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
 
-const INIT_COLS = 40
-const INIT_ROWS = 51
+const INIT_COLS = 16
+const INIT_ROWS = 85
 
 type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
@@ -22,67 +22,182 @@ function makeEmpty2D<T>(rows: number, cols: number, fill: T): T[][] {
 
 function makeInitialCells(): string[][] {
   const c = makeEmpty2D(INIT_ROWS, INIT_COLS, '')
-  c[0][0] = 'AGREGAR DATOS, NOTAS Y OBSERVACIONES PARA CERTIFICACION DE CALIFICACIONES EMG 31059 - CONSTANCIA - BOLETIN - VALIDACION DE TITULO Y NOTAS'
-  c[1][0] = 'DATOS PERSONALES'; c[1][7] = 'CIRCULAR N 05, (02/07/2003) (modificada al 30/03/2007)'
-  c[2][0] = 'CEDULA:'; c[3][0] = 'FECHA DE NACIMIENTO:'; c[4][0] = 'APELLIDOS:'
-  c[5][0] = 'NOMBRES:'; c[6][0] = 'PAIS DE NACIMIENTO:'; c[6][1] = 'VENEZUELA'
-  c[7][0] = 'ESTADO:'; c[8][0] = 'MUNICIPIO:'
-  c[9][0] = 'Programacion y Diseno por Juan C. Orellana R.'
-  c[11][0] = 'N'; c[11][1] = 'NOMBRE DEL PLANTEL'; c[11][2] = 'LOCALIDAD'; c[11][3] = 'E.F.'
-  c[11][4] = 'PRIMER AO'; c[11][10] = 'SEGUNDO AO'; c[11][16] = 'SECCION'
-  c[12][4] = 'AREAS DE FORMACION'; c[12][5] = 'NOTA'; c[12][6] = 'T-E'; c[12][7] = 'FECHA'; c[12][8] = 'PLANTEL'
-  c[12][10] = 'AREAS DE FORMACION'; c[12][11] = 'NOTA'; c[12][12] = 'T-E'; c[12][13] = 'FECHA'; c[12][14] = 'PLANTEL'
-  c[12][16] = 'AREAS'; c[12][17] = 'OC'; c[12][18] = 'PG'
-  const m1 = ['Castellano', 'Matematicas', 'Educacion Fisica', 'Arte y Patrimonio', 'Ciencias Naturales']
-  const m2 = ['Ingles y otras Len. Extranj.', 'Matematicas', 'Educacion Fisica', 'Arte y Patrimonio', 'Ciencias Naturales']
-  for (let i = 0; i < 5; i++) { c[13+i][0] = String(i+1); c[13+i][4] = m1[i]; c[13+i][10] = m2[i] }
-  c[17][0] = 'TERCER AO'; c[17][4] = 'SECCION'; c[17][6] = 'AREAS DE FORMACION'; c[17][7] = 'NOTA'
-  c[17][8] = 'T-E'; c[17][9] = 'FECHA'; c[17][10] = 'PLANTEL'; c[17][11] = 'CUARTO AO'
-  c[17][15] = 'SECCION'; c[17][17] = 'AREAS DE FORMACION'; c[17][18] = 'NOTA'; c[17][19] = 'T-E'
-  c[17][20] = 'FECHA'; c[17][21] = 'PLANTEL'; c[17][22] = 'QUINTO AO'; c[17][26] = 'SECCION'
-  c[17][28] = 'AREAS DE FORMACION'; c[17][29] = 'NOTA'; c[17][30] = 'T-E'; c[17][31] = 'FECHA'
-  c[17][32] = 'PLANTEL'; c[17][33] = 'GRUPO'
-  const m3 = ['Castellano','Ingles y otras Len. Extranj.','Matematicas','Educacion Fisica','Fisica','Quimica','Biologia','Geografia, Hist. y Ciudad.','Form. para la Sober. Nal.']
-  const m4 = ['Ingles y otras Len. Extranj.','Matematicas','Educacion Fisica','Fisica','Quimica','Biologia','Geografia, Hist. y Ciudad.','Form. para la Sober. Nal.']
-  const m5 = ['Castellano','Ingles y otras Len. Extranj.','Matematicas','Educacion Fisica','Fisica','Quimica','Ciencias de la Tierra','Geografia, Hist. y Ciudad.']
-  for (let i = 0; i < 9; i++) {
-    if (i < m3.length) c[18+i][6] = m3[i]
-    if (i < m4.length) c[18+i][17] = m4[i]
-    if (i < m5.length) c[18+i][28] = m5[i]
+
+  // ROW 0: Título principal
+  c[0][0] = 'INGRESAR DATOS, NOTAS Y OBSERVACIONES PARA CERTIFICACION DE CALIFICACIONES EMG 31059 - CONSTANCIA - BOLETIN - VALIDACION DE TITULO Y NOTAS'
+
+  // ROW 1: DATOS PERSONALES + CIRCULAR
+  c[1][0] = 'DATOS PERSONALES'
+  c[1][8] = 'CIRCULAR N° 05, (02/07/2003) (modificada al 30/03/2007)'
+
+  // ROWS 2-8: Datos personales
+  c[2][1] = 'CEDULA:'; c[2][3] = '*'
+  c[3][1] = 'FECHA DE NACIMIENTO:'; c[3][3] = '*'
+  c[4][1] = 'APELLIDOS:'; c[4][3] = '*'
+  c[5][1] = 'NOMBRES:'; c[5][3] = '*'
+  c[6][1] = 'PAIS DE NACIMIENTO:'; c[6][3] = 'VENEZUELA'
+  c[7][1] = 'ESTADO:'; c[7][3] = '*'
+  c[8][1] = 'MUNICIPIO:'; c[8][3] = '*'
+
+  // ROW 9: Programación + Sección
+  c[9][1] = 'Programación y Diseño por Juan C. Orellana R.'
+  c[9][5] = 'SECCION = SS (otro Plantel)'
+
+  // ROW 10: Info y botones fila 1
+  c[10][7] = 'Cambio de fecha de expedición del documento.'
+  c[10][10] = '<Cambiar Apellidos, Nombres de Dir.'
+  c[10][11] = '<Cambiar Cédula de Dir.'
+  c[10][13] = 'Impresora'
+  c[10][14] = 'Wondershare PDF'
+  c[10][15] = 'IR A PLANES DEROGADOS'
+
+  // ROW 11: Botones fila 2
+  c[11][6] = 'Buscar/Edit Alumno'
+  c[11][9] = 'EXPORTAR BASE DE DATOS'
+  c[11][12] = 'Guardar Datos'
+  c[11][13] = 'Guardar Editado'
+  c[11][14] = 'Eliminar Datos'
+
+  // ROW 12: Separador vacío
+
+  // ROW 13: Encabezado tabla plantel
+  c[13][0] = 'N°'; c[13][1] = 'NOMBRE DEL PLANTEL'; c[13][2] = 'LOCALIDAD'; c[13][3] = 'E.F.'
+
+  // ROWS 14-18: Datos plantel (5 filas)
+  for (let i = 0; i < 5; i++) {
+    c[14 + i][0] = String(i + 1)
+    c[14 + i][1] = '*****'
+    c[14 + i][2] = '***'
+    c[14 + i][3] = '**'
   }
-  c[26][0] = 'VALIDACION TITULO / NOTAS'; c[26][1] = 'VALIDACION TITULO / NOTAS'
-  c[26][2] = 'Serial T.'; c[26][3] = 'Fecha Emision T.'; c[26][4] = 'Ao Egreso T.'
-  c[26][5] = 'Fecha Emision N.'; c[26][6] = 'Promedio Total'; c[26][7] = '*'
-  c[27][0] = 'Observaciones:'
+
+  // === PRIMER AÑO (filas 19-26) ===
+  c[19][1] = 'PRIMER AÑO'; c[19][2] = 'SECCION'
+  c[19][3] = 'AREAS DE FORMACION'; c[19][4] = 'NOTA'; c[19][5] = 'T-E'; c[19][6] = 'FECHA'; c[19][7] = 'PLANTEL'
+  const primer = ['Castellano', 'Inglés y otras Len. Extranj.', 'Matemáticas', 'Educación Física', 'Arte y Patrimonio', 'Ciencias Naturales', 'Geografía, Hist. y Ciudad.']
+  for (let i = 0; i < primer.length; i++) {
+    c[20 + i][3] = primer[i]; c[20 + i][4] = '**'; c[20 + i][5] = '**'; c[20 + i][6] = '**'; c[20 + i][7] = '***'
+  }
+
+  // === SEGUNDO AÑO (filas 27-34) ===
+  c[27][1] = 'SEGUNDO AÑO'; c[27][2] = 'SECCION'
+  c[27][3] = 'AREAS DE FORMACION'; c[27][4] = 'NOTA'; c[27][5] = 'T-E'; c[27][6] = 'FECHA'; c[27][7] = 'PLANTEL'
+  const segundo = ['Castellano', 'Inglés y otras Len. Extranj.', 'Matemáticas', 'Educación Física', 'Arte y Patrimonio', 'Ciencias Naturales', 'Geografía, Hist. y Ciudad.']
+  for (let i = 0; i < segundo.length; i++) {
+    c[28 + i][3] = segundo[i]; c[28 + i][4] = '**'; c[28 + i][5] = '**'; c[28 + i][6] = '**'; c[28 + i][7] = '***'
+  }
+
+  // === TABLA OC/PG (filas 35-40, lado derecho) ===
+  c[35][9] = 'AREAS DE FORMACION'; c[35][10] = 'OC'; c[35][11] = 'PG'
+  for (let i = 0; i < 5; i++) {
+    c[36 + i][9] = `${i + 1}°`; c[36 + i][10] = '*'; c[36 + i][11] = `${i + 1}°`
+  }
+
+  // === TERCER AÑO (filas 41-49) ===
+  c[41][1] = 'TERCER AÑO'; c[41][2] = 'SECCION'
+  c[41][3] = 'AREAS DE FORMACION'; c[41][4] = 'NOTA'; c[41][5] = 'T-E'; c[41][6] = 'FECHA'
+  const tercero = ['Castellano', 'Inglés y otras Len. Extranj.', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Geografía, Hist. y Ciudad.']
+  for (let i = 0; i < tercero.length; i++) {
+    c[42 + i][3] = tercero[i]; c[42 + i][4] = '**'; c[42 + i][5] = '**'; c[42 + i][6] = '***'
+  }
+
+  // === CUARTO AÑO (filas 50-59) ===
+  c[50][1] = 'CUARTO AÑO'; c[50][2] = 'SECCION'
+  c[50][3] = 'AREAS DE FORMACION'; c[50][4] = 'NOTA'; c[50][5] = 'T-E'; c[50][6] = 'FECHA'
+  const cuarto = ['Castellano', 'Inglés y otras Len. Extranj.', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Geografía, Hist. y Ciudad.', 'Form. para la Sober. Nal.']
+  for (let i = 0; i < cuarto.length; i++) {
+    c[51 + i][3] = cuarto[i]; c[51 + i][4] = '**'; c[51 + i][5] = '**'; c[51 + i][6] = '***'
+  }
+
+  // === QUINTO AÑO (filas 60-70) ===
+  c[60][1] = 'QUINTO AÑO'; c[60][2] = 'SECCION'
+  c[60][3] = 'AREAS DE FORMACION'; c[60][4] = 'NOTA'; c[60][5] = 'T-E'; c[60][6] = 'FECHA'
+  const quinto = ['Castellano', 'Inglés y otras Len. Extranj.', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Ciencias de la Tierra', 'Geografía, Hist. y Ciudad.', 'Form. para la Sober. Nal.']
+  for (let i = 0; i < quinto.length; i++) {
+    c[61 + i][3] = quinto[i]; c[61 + i][4] = '**'; c[61 + i][5] = '**'; c[61 + i][6] = '***'
+  }
+
+  // === TABLA GRUPO (filas 71-75, lado derecho) ===
+  c[71][9] = 'GRUPO'
+  c[72][9] = '1°'; c[72][10] = '*'; c[72][11] = '2°'
+  c[73][9] = '3°'; c[73][10] = '*'; c[73][11] = '3°'
+  c[74][9] = '4°'; c[74][10] = '*'; c[74][11] = '4°'
+  c[75][9] = '5°'; c[75][10] = '*'; c[75][11] = '5°'
+
+  // === VALIDACION TITULO / NOTAS (filas 76-80) ===
+  c[76][9] = 'VALIDACION TITULO / NOTAS'
+  c[77][9] = 'Serial T.'
+  c[78][9] = 'Fecha Emisión T.'; c[78][10] = 'Año Egreso T.'
+  c[79][9] = 'Fecha Emisión N.'
+  c[80][9] = 'Promedio Total'; c[80][10] = '*'
+
+  // === OBSERVACIONES (filas 81-83) ===
+  c[81][1] = 'Observaciones:'
+  c[81][2] = 'APLICACIÓN DEL PROCESO DE CONVERSIÓN Y TRANSFERENCIA DE ESTUDIOS DE ACUERDO AL MEMO-'
+  c[82][1] = 'RANDUM DE FECHA 17/11/2017.'
+  c[83][6] = '< 1 CARACTERES RESTANTES'
+  c[83][7] = '< 77 CARACTERES RESTANTES'
+  c[83][8] = '< 103 CARACTERES RESTANTES'
+  c[83][9] = '< 103 CARACTERES RESTANTES'
+  c[83][10] = 'OBSERVACIONES PARA CERTIFICACION'
+
+  // === BOTONES NAVEGACIÓN (fila 84) ===
+  c[84][0] = 'EMG 31059'; c[84][1] = 'CONSTANCIA DE NOTAS'; c[84][2] = 'VALIDAR NOTAS'
+  c[84][3] = 'VALIDAR TITULO'; c[84][4] = 'BOLETIN'; c[84][5] = 'TITULO'
+  c[84][6] = 'AGREGAR DATOS'; c[84][7] = 'CE'; c[84][8] = 'ALUMNOS'
+  c[84][9] = 'BOLETAS'; c[84][10] = 'TITULOS'
+
   return c
 }
 
 function makeInitialWidths(): number[] {
-  const w = [30,160,80,30, 130,40,30,30,50,100, 130,40,30,30,50,100, 40,130,40,30, 130,40,30,30,50,100, 40,130,40,30, 30,50,100, 40,130,40,30,30,50,100]
-  while (w.length < INIT_COLS) w.push(80)
-  return w
+  return [30, 180, 80, 150, 50, 40, 90, 110, 20, 150, 50, 50, 50, 50, 50, 50]
 }
 
 function makeInitialHeights(rows: number): number[] {
   const h: number[] = []
-  for (let r = 0; r < rows; r++) h[r] = r <= 1 ? 28 : r <= 11 ? 22 : 20
+  for (let r = 0; r < rows; r++) {
+    if (r === 0) h[r] = 30
+    else if (r === 1) h[r] = 25
+    else if (r >= 2 && r <= 9) h[r] = 22
+    else if (r >= 10 && r <= 11) h[r] = 28
+    else if (r === 12) h[r] = 10
+    else if (r === 13) h[r] = 22
+    else if (r >= 14 && r <= 18) h[r] = 20
+    else if ([19, 27, 35, 41, 50, 60, 71, 76].includes(r)) h[r] = 22
+    else h[r] = 20
+  }
   return h
 }
 
 function makeInitialBg(rows: number, cols: number): string[][] {
   const b = makeEmpty2D(rows, cols, '#ffffff')
+  const headerRows = [1, 13, 19, 27, 35, 41, 50, 60, 71, 76]
+  const dataRanges: [number, number][] = [
+    [2, 8], [14, 18], [20, 26], [28, 34], [36, 40],
+    [42, 49], [51, 59], [61, 70], [72, 75], [77, 80], [81, 83]
+  ]
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    if (r===0) b[r][c]='#0080ff'; else if (r===1) b[r][c]='#b3d9ff'; else if (r>=2&&r<=11) b[r][c]='#ffffcc'
-    else if (r===12||r===17) b[r][c]='#b3d9ff'; else if (r>=13&&r<=25) b[r][c]='#ffffcc'
-    else if (r===26) b[r][c]='#b3d9ff'; else if (r===27) b[r][c]='#ffffcc'
+    if (r === 0) b[r][c] = '#0080ff'
+    else if (headerRows.includes(r)) b[r][c] = '#b3d9ff'
+    else if (r === 9) b[r][c] = '#ffffcc'
+    else if (r >= 10 && r <= 11) b[r][c] = '#f0f0f0'
+    else if (dataRanges.some(([s, e]) => r >= s && r <= e)) b[r][c] = '#ffffcc'
+    else if (r === 84) b[r][c] = '#e8e8e8'
   }
   return b
 }
 
 function makeInitialAlign(rows: number, cols: number): Align[][] {
   const a = makeEmpty2D<Align>(rows, cols, 'left')
-  for (let r = 0; r < rows; r++) a[r][0] = 'center'
-  for (let r = 2; r <= 8; r++) a[r][0] = 'right'
+  const centerRows = [0, 1, 13, 19, 27, 35, 41, 50, 60, 71, 76, 84]
+  for (let r = 0; r < rows; r++) {
+    if (centerRows.includes(r)) { for (let c = 0; c < cols; c++) a[r][c] = 'center' }
+    a[r][0] = 'center'
+    if ([4, 5, 10, 11].includes(r) || r >= 36) { a[r][10] = 'center'; a[r][11] = 'center' }
+  }
+  for (let r = 2; r <= 8; r++) a[r][1] = 'right'
+  for (let r = 19; r <= 70; r++) { a[r][4] = 'center'; a[r][5] = 'center' }
   return a
 }
 
@@ -91,14 +206,17 @@ function makeInitialFontFamilies(rows: number, cols: number): string[][] {
 }
 
 function makeInitialFontSizes(rows: number, cols: number): number[][] {
-  return makeEmpty2D(rows, cols, 9)
+  const s = makeEmpty2D(rows, cols, 9)
+  for (let c = 0; c < cols; c++) { s[0][c] = 10; s[1][c] = 10 }
+  return s
 }
 
 function makeInitialFontColors(rows: number, cols: number): string[][] {
   const fc = makeEmpty2D(rows, cols, '#333333')
+  const darkBlueRows = [1, 13, 19, 27, 35, 41, 50, 60, 71, 76]
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    if (r === 0) fc[r][c] = 'white'
-    else if ([1,12,17,26].includes(r)) fc[r][c] = '#003366'
+    if (r === 0) fc[r][c] = '#ffffff'
+    else if (darkBlueRows.includes(r)) fc[r][c] = '#003366'
   }
   return fc
 }
@@ -107,8 +225,52 @@ function makeInitialBorders(rows: number, cols: number): boolean[][] {
   return makeEmpty2D(rows, cols, true)
 }
 
+function makeInitialBold(rows: number, cols: number): boolean[][] {
+  const b = makeEmpty2D(rows, cols, false)
+  const boldRows = [0, 1, 13, 19, 27, 35, 41, 50, 60, 71, 76]
+  for (const r of boldRows) for (let c = 0; c < cols; c++) b[r][c] = true
+  b[81][1] = true
+  for (let c = 0; c <= 10; c++) b[84][c] = true
+  return b
+}
+
+function makeInitialMerges(): Merge[] {
+  return [
+    // Título principal (toda la fila)
+    { sr: 0, sc: 0, er: 0, ec: 15 },
+    // DATOS PERSONALES + CIRCULAR
+    { sr: 1, sc: 0, er: 1, ec: 7 },
+    { sr: 1, sc: 8, er: 1, ec: 15 },
+    // PRIMER AÑO - etiqueta y sección (fusionadas verticalmente)
+    { sr: 19, sc: 1, er: 26, ec: 1 },
+    { sr: 19, sc: 2, er: 26, ec: 2 },
+    // SEGUNDO AÑO
+    { sr: 27, sc: 1, er: 34, ec: 1 },
+    { sr: 27, sc: 2, er: 34, ec: 2 },
+    // OC/PG - encabezados fusionados verticalmente
+    { sr: 35, sc: 9, er: 40, ec: 9 },
+    { sr: 35, sc: 10, er: 40, ec: 10 },
+    { sr: 35, sc: 11, er: 40, ec: 11 },
+    // TERCER AÑO
+    { sr: 41, sc: 1, er: 49, ec: 1 },
+    { sr: 41, sc: 2, er: 49, ec: 2 },
+    // CUARTO AÑO
+    { sr: 50, sc: 1, er: 59, ec: 1 },
+    { sr: 50, sc: 2, er: 59, ec: 2 },
+    // QUINTO AÑO
+    { sr: 60, sc: 1, er: 70, ec: 1 },
+    { sr: 60, sc: 2, er: 70, ec: 2 },
+    // GRUPO - encabezado fusionado verticalmente
+    { sr: 71, sc: 9, er: 75, ec: 9 },
+    // VALIDACION TITULO / NOTAS - etiqueta fusionada verticalmente
+    { sr: 76, sc: 9, er: 80, ec: 9 },
+    // Observaciones - texto fusionado horizontalmente
+    { sr: 81, sc: 2, er: 83, ec: 15 },
+  ]
+}
+
 // localStorage persistence
-const STORAGE_KEY = (plan: string) => `jo-sigae-dashboard-${plan}`
+const STORAGE_KEY = (plan: string) => `jo-sigae-dash-v2-${plan}`
 
 interface SheetState {
   numRows: number; numCols: number
@@ -123,7 +285,9 @@ function loadFromStorage(plan: string): SheetState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY(plan))
     if (!raw) return null
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw) as SheetState
+    if (parsed.numCols !== INIT_COLS || parsed.numRows !== INIT_ROWS) return null
+    return parsed
   } catch { return null }
 }
 
@@ -149,7 +313,7 @@ export default function DashboardPage() {
   const [fontColors, setFontColors] = useState<string[][]>(() => makeInitialFontColors(INIT_ROWS, INIT_COLS))
   const [borders, setBorders] = useState<boolean[][]>(() => makeInitialBorders(INIT_ROWS, INIT_COLS))
 
-  const [merges, setMerges] = useState<Merge[]>([])
+  const [merges, setMerges] = useState<Merge[]>(makeInitialMerges)
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
   const [selectionEnd, setSelectionEnd] = useState<{r:number;c:number}|null>(null)
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
@@ -188,16 +352,17 @@ export default function DashboardPage() {
 
   // === RESTORE ===
   const handleRestore = () => {
-    if (!confirm('Restaurar todo al diseño original? Se perderan todos los cambios.')) return
+    if (!confirm('Restaurar todo al diseño original? Se perderán todos los cambios.')) return
     localStorage.removeItem(STORAGE_KEY(plan))
     setCells(makeInitialCells()); setColWidths(makeInitialWidths())
     setRowHeights(makeInitialHeights(INIT_ROWS)); setBgColors(makeInitialBg(INIT_ROWS, INIT_COLS))
-    setTextAligns(makeInitialAlign(INIT_ROWS, INIT_COLS)); setMerges([])
+    setTextAligns(makeInitialAlign(INIT_ROWS, INIT_COLS)); setMerges(makeInitialMerges())
     setNumRows(INIT_ROWS); setNumCols(INIT_COLS)
     setFontFamilies(makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
     setFontSizes(makeInitialFontSizes(INIT_ROWS, INIT_COLS))
     setFontColors(makeInitialFontColors(INIT_ROWS, INIT_COLS))
     setBorders(makeInitialBorders(INIT_ROWS, INIT_COLS))
+    setBoldCells(makeInitialBold(INIT_ROWS, INIT_COLS))
     setSaveStatus('Restaurado')
     setTimeout(() => setSaveStatus(''), 2000)
   }
@@ -230,11 +395,11 @@ export default function DashboardPage() {
       const res = await fetch(`/api/stats?plan=${plan}`)
       const data = await res.json()
       setTotalRecords(data.totalStudents || 0)
-      updateCell(3, 7, `${data.totalStudents} Registros en la Base de Datos.`)
+      updateCell(10, 9, `${data.totalStudents} Registros en la Base de Datos.`)
       const today = new Date()
       const ds = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`
-      updateCell(2, 7, ds)
-      updateCell(2, 20, 'IR A ' + (plan === 'vigente' ? 'PLANES DEROGADOS' : 'PLAN VIGENTE'))
+      updateCell(10, 6, ds)
+      updateCell(10, 15, 'IR A ' + (plan === 'vigente' ? 'PLANES DEROGADOS' : 'PLAN VIGENTE'))
     } catch {}
   }, [plan, updateCell])
   useEffect(() => { loadCount() }, [loadCount])
@@ -331,11 +496,7 @@ export default function DashboardPage() {
   const handleToggleBorders = (val: boolean) => { if (selMinR < 0) return; applyToSelection(borders, val, setBorders) }
 
   // === BOLD TOGGLE ===
-  const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
-    const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)
-    for (const r of [0,1,11,12,17,26,27]) for (let c = 0; c < INIT_COLS; c++) b[r][c] = true
-    return b
-  })
+  const [boldCells, setBoldCells] = useState<boolean[][]>(() => makeInitialBold(INIT_ROWS, INIT_COLS))
   const handleToggleBold = () => {
     if (!selectedCell) return
     const current = boldCells[selectedCell.r]?.[selectedCell.c] ?? false
@@ -346,7 +507,6 @@ export default function DashboardPage() {
   const handleInsertRow = (after: boolean) => {
     if (!selectedCell) return
     const at = after ? selectedCell.r + 1 : selectedCell.r
-    const splicer = <T,>(arr: T[][], fill: T) => arr.map(row => [...row]).splice(at, 0, new Array(numCols).fill(fill)) && arr.map((row, i) => i === at ? new Array(numCols).fill(fill) : [...row])
     setCells(prev => { const c = prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('')); return c })
     setRowHeights(prev => { const c=[...prev]; c.splice(at,0,20); return c })
     setBgColors(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('#ffffff')); return c })
@@ -467,7 +627,7 @@ export default function DashboardPage() {
             const np = plan==='vigente'?'derogado':'vigente'; setPlan(np)
             const s = loadFromStorage(np)
             if(s){if(s.cells)setCells(s.cells);if(s.colWidths)setColWidths(s.colWidths);if(s.rowHeights)setRowHeights(s.rowHeights);if(s.bgColors)setBgColors(s.bgColors);if(s.textAligns)setTextAligns(s.textAligns);if(s.merges)setMerges(s.merges);if(s.numRows)setNumRows(s.numRows);if(s.numCols)setNumCols(s.numCols);if(s.fontFamilies)setFontFamilies(s.fontFamilies);if(s.fontSizes)setFontSizes(s.fontSizes);if(s.fontColors)setFontColors(s.fontColors);if(s.borders)setBorders(s.borders)}
-            else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges([]);setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeInitialBorders(INIT_ROWS,INIT_COLS).map(r=>r.map(()=>false)))}
+            else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges(makeInitialMerges());setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeInitialBold(INIT_ROWS,INIT_COLS))}
             setSelectionStart(null);setSelectionEnd(null);setSelectedCell(null);loadCount()
           }} className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">Cambiar Plan</button>
 

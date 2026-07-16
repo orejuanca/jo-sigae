@@ -205,9 +205,12 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Flag para saltar auto-save al cambiar de plan
+  const skipAutoSaveRef = useRef(false)
+
   // === AUTO-SAVE ===
   useEffect(() => {
-    if (!loaded) return
+    if (!loaded || skipAutoSaveRef.current) return
     const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
     return () => clearTimeout(timer)
   }, [loaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
@@ -496,11 +499,18 @@ export default function DashboardPage() {
         <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-1.5">
           <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
           <button onClick={() => {
-            const np = plan==='vigente'?'derogado':'vigente'; setPlan(np)
+            // 1) Guardar el plan actual ANTES de salir
+            doSave(plan)
+            // 2) Saltar auto-save durante el cambio para evitar sobreescribir
+            skipAutoSaveRef.current = true
+            const np = plan==='vigente'?'derogado':'vigente'
+            setPlan(np)
             const s = readSavedOnce(np)
             if(s){if(s.cells)setCells(s.cells);if(s.colWidths)setColWidths(s.colWidths);if(s.rowHeights)setRowHeights(s.rowHeights);if(s.bgColors)setBgColors(s.bgColors);if(s.textAligns)setTextAligns(s.textAligns);if(s.merges)setMerges(s.merges);if(s.numRows)setNumRows(s.numRows);if(s.numCols)setNumCols(s.numCols);if(s.fontFamilies)setFontFamilies(s.fontFamilies);if(s.fontSizes)setFontSizes(s.fontSizes);if(s.fontColors)setFontColors(s.fontColors);if(s.borders)setBorders(s.borders);if(s.boldCells)setBoldCells(s.boldCells)}
             else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges([]);setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeEmpty2D(INIT_ROWS,INIT_COLS,false))}
             setSelectionStart(null);setSelectionEnd(null);setSelectedCell(null);loadCount()
+            // 3) Re-habilitar auto-save despues de que React procese el batch
+            setTimeout(() => { skipAutoSaveRef.current = false }, 600)
           }} className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">Cambiar Plan</button>
 
           <span className="text-gray-600">|</span>

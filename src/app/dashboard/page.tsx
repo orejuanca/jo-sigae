@@ -598,6 +598,20 @@ export default function DashboardPage() {
 
           <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
           {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
+          <button onClick={() => {
+            try {
+              const json = JSON.stringify(stateRef.current)
+              localStorage.setItem(STORAGE_KEY(plan), json)
+              const back = localStorage.getItem(STORAGE_KEY(plan))
+              if (back === json) {
+                saveCountRef.current++
+                setSaveStatus(`GUARDADO #${saveCountRef.current} ${(json.length/1024).toFixed(0)}KB ✓`)
+              } else {
+                setSaveStatus('ERROR: no coincide')
+              }
+            } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }
+            setTimeout(() => setSaveStatus(''), 4000)
+          }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
           <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
           <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
         </div>

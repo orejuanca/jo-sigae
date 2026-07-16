@@ -104,7 +104,7 @@ function makeInitialFontColors(rows: number, cols: number): string[][] {
 }
 
 function makeInitialBorders(rows: number, cols: number): boolean[][] {
-  return makeEmpty2D(rows, cols, true)
+  return makeEmpty2D(rows, cols, false)
 }
 
 // localStorage persistence
@@ -354,7 +354,7 @@ export default function DashboardPage() {
     setFontFamilies(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('Arial')); return c })
     setFontSizes(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(9)); return c })
     setFontColors(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('#333333')); return c })
-    setBorders(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(true)); return c })
+    setBorders(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(false)); return c })
     setBoldCells(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(false)); return c })
     setMerges(prev => prev.map(m => { if (m.sr >= at) return { ...m, sr: m.sr + 1, er: m.er + 1 }; if (m.er >= at) return { ...m, er: m.er + 1 }; return m }))
     setNumRows(numRows + 1)
@@ -368,7 +368,7 @@ export default function DashboardPage() {
     setCells(ins(cells, '')); setColWidths(p => { const r=[...p]; r.splice(at,0,80); return r })
     setBgColors(ins(bgColors, '#ffffff')); setTextAligns(ins(textAligns, 'left') as any)
     setFontFamilies(ins(fontFamilies, 'Arial')); setFontSizes(ins(fontSizes, 9))
-    setFontColors(ins(fontColors, '#333333')); setBorders(ins(borders, true))
+    setFontColors(ins(fontColors, '#333333')); setBorders(ins(borders, false))
     setBoldCells(ins(boldCells, false))
     setMerges(prev => prev.map(m => { if (m.sc >= at) return { ...m, sc: m.sc + 1, ec: m.ec + 1 }; if (m.ec >= at) return { ...m, ec: m.ec + 1 }; return m }))
     setNumCols(numCols + 1)

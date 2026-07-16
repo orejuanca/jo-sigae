@@ -174,23 +174,35 @@ export default function DashboardPage() {
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
   const [saveStatus, setSaveStatus] = useState<string>('')
 
+  const [loadInfo, setLoadInfo] = useState<string>('')
+
   // === LOAD FROM STORAGE ===
   useEffect(() => {
-    const saved = loadFromStorage(plan)
-    if (saved) {
-      if (saved.cells) setCells(saved.cells)
-      if (saved.colWidths) setColWidths(saved.colWidths)
-      if (saved.rowHeights) setRowHeights(saved.rowHeights)
-      if (saved.bgColors) setBgColors(saved.bgColors)
-      if (saved.textAligns) setTextAligns(saved.textAligns)
-      if (saved.merges) setMerges(saved.merges)
-      if (saved.numRows) setNumRows(saved.numRows)
-      if (saved.numCols) setNumCols(saved.numCols)
-      if (saved.fontFamilies) setFontFamilies(saved.fontFamilies)
-      if (saved.fontSizes) setFontSizes(saved.fontSizes)
-      if (saved.fontColors) setFontColors(saved.fontColors)
-      if (saved.borders) setBorders(saved.borders)
-      if (saved.boldCells) setBoldCells(saved.boldCells)
+    if (typeof window === 'undefined') { setLoaded(true); return }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY(plan))
+      if (raw) {
+        const saved = JSON.parse(raw) as SheetState
+        if (saved.cells) setCells(saved.cells)
+        if (saved.colWidths) setColWidths(saved.colWidths)
+        if (saved.rowHeights) setRowHeights(saved.rowHeights)
+        if (saved.bgColors) setBgColors(saved.bgColors)
+        if (saved.textAligns) setTextAligns(saved.textAligns)
+        if (saved.merges) setMerges(saved.merges)
+        if (saved.numRows) setNumRows(saved.numRows)
+        if (saved.numCols) setNumCols(saved.numCols)
+        if (saved.fontFamilies) setFontFamilies(saved.fontFamilies)
+        if (saved.fontSizes) setFontSizes(saved.fontSizes)
+        if (saved.fontColors) setFontColors(saved.fontColors)
+        if (saved.borders) setBorders(saved.borders)
+        if (saved.boldCells) setBoldCells(saved.boldCells)
+        setLoadInfo(`Cache: ${(raw.length/1024).toFixed(0)}KB (${saved.numRows}f x ${saved.numCols}c)`)
+      } else {
+        setLoadInfo('Sin cache')
+      }
+    } catch (e) {
+      console.error('[LOAD ERROR]', e)
+      setLoadInfo('Error al cargar cache')
     }
     setLoaded(true)
   }, [])
@@ -199,11 +211,31 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loaded) return
     const timer = setTimeout(() => {
-      const ok = saveToStorage(plan, { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
-      setSaveStatus(ok ? 'Guardado' : 'ERROR al guardar')
+      try {
+        const state = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
+        const json = JSON.stringify(state)
+        localStorage.setItem(STORAGE_KEY(plan), json)
+        setSaveStatus('Guardado')
+      } catch (e) {
+        console.error('[SAVE ERROR]', e)
+        setSaveStatus('ERROR al guardar')
+      }
       setTimeout(() => setSaveStatus(''), 2000)
     }, 300)
     return () => clearTimeout(timer)
+  }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells])
+
+  // === SAVE ON BEFORE UNLOAD ===
+  useEffect(() => {
+    if (!loaded) return
+    const handler = () => {
+      try {
+        const state = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
+        localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(state))
+      } catch {}
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
   }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells])
 
   // === RESTORE ===
@@ -552,13 +584,9 @@ export default function DashboardPage() {
 
           {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
 
+          <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
           {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
           <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
-          <button onClick={() => {
-            if (!confirm('Limpiar cache de ' + plan.toUpperCase() + '? Se recargara la pagina.')) return
-            localStorage.removeItem(STORAGE_KEY(plan))
-            location.reload()
-          }} className="bg-yellow-700 hover:bg-yellow-600 px-2 py-0.5 rounded text-[9px]" title="Borrar datos guardados y recargar">Limpiar Cache</button>
           <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
         </div>
 

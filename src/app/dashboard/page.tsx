@@ -122,18 +122,26 @@ function loadFromStorage(plan: string): SheetState | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY(plan))
-    if (!raw) return null
-    return JSON.parse(raw)
-  } catch { return null }
+    if (!raw) { console.log(`[LOAD] No hay datos para ${plan}`); return null }
+    const parsed = JSON.parse(raw) as SheetState
+    console.log(`[LOAD] Datos cargados para ${plan}: ${parsed.numRows}f x ${parsed.numCols}c, boldCells=${!!parsed.boldCells}`)
+    return parsed
+  } catch (e) { console.error('[LOAD] Error cargando:', e); return null }
 }
 
 function saveToStorage(plan: string, state: SheetState): boolean {
   if (typeof window === 'undefined') return false
   try {
-    localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(state))
+    const json = JSON.stringify(state)
+    console.log(`[SAVE] Guardando ${plan}: ${json.length} bytes`)
+    localStorage.setItem(STORAGE_KEY(plan), json)
+    // Verificar que se guardó correctamente
+    const check = localStorage.getItem(STORAGE_KEY(plan))
+    if (check !== json) { console.error('[SAVE] Verificacion fallida!'); return false }
+    console.log(`[SAVE] OK para ${plan}`)
     return true
   } catch (e) {
-    console.error('SAVE ERROR:', e)
+    console.error('[SAVE] Error:', e)
     return false
   }
 }
@@ -154,6 +162,11 @@ export default function DashboardPage() {
   const [fontSizes, setFontSizes] = useState<number[][]>(() => makeInitialFontSizes(INIT_ROWS, INIT_COLS))
   const [fontColors, setFontColors] = useState<string[][]>(() => makeInitialFontColors(INIT_ROWS, INIT_COLS))
   const [borders, setBorders] = useState<boolean[][]>(() => makeInitialBorders(INIT_ROWS, INIT_COLS))
+  const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
+    const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)
+    for (const r of [0,1,11,12,17,26,27]) for (let c = 0; c < INIT_COLS; c++) b[r][c] = true
+    return b
+  })
 
   const [merges, setMerges] = useState<Merge[]>([])
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
@@ -191,7 +204,7 @@ export default function DashboardPage() {
       setTimeout(() => setSaveStatus(''), 2000)
     }, 300)
     return () => clearTimeout(timer)
-  }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders])
+  }, [loaded, plan, numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells])
 
   // === RESTORE ===
   const handleRestore = () => {
@@ -339,11 +352,6 @@ export default function DashboardPage() {
   const handleToggleBorders = (val: boolean) => { if (selMinR < 0) return; applyToSelection(borders, val, setBorders) }
 
   // === BOLD TOGGLE ===
-  const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
-    const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)
-    for (const r of [0,1,11,12,17,26,27]) for (let c = 0; c < INIT_COLS; c++) b[r][c] = true
-    return b
-  })
   const handleToggleBold = () => {
     if (!selectedCell) return
     const current = boldCells[selectedCell.r]?.[selectedCell.c] ?? false
@@ -474,8 +482,8 @@ export default function DashboardPage() {
           <button onClick={() => {
             const np = plan==='vigente'?'derogado':'vigente'; setPlan(np)
             const s = loadFromStorage(np)
-            if(s){if(s.cells)setCells(s.cells);if(s.colWidths)setColWidths(s.colWidths);if(s.rowHeights)setRowHeights(s.rowHeights);if(s.bgColors)setBgColors(s.bgColors);if(s.textAligns)setTextAligns(s.textAligns);if(s.merges)setMerges(s.merges);if(s.numRows)setNumRows(s.numRows);if(s.numCols)setNumCols(s.numCols);if(s.fontFamilies)setFontFamilies(s.fontFamilies);if(s.fontSizes)setFontSizes(s.fontSizes);if(s.fontColors)setFontColors(s.fontColors);if(s.borders)setBorders(s.borders)}
-            else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges([]);setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeInitialBorders(INIT_ROWS,INIT_COLS).map(r=>r.map(()=>false)))}
+            if(s){if(s.cells)setCells(s.cells);if(s.colWidths)setColWidths(s.colWidths);if(s.rowHeights)setRowHeights(s.rowHeights);if(s.bgColors)setBgColors(s.bgColors);if(s.textAligns)setTextAligns(s.textAligns);if(s.merges)setMerges(s.merges);if(s.numRows)setNumRows(s.numRows);if(s.numCols)setNumCols(s.numCols);if(s.fontFamilies)setFontFamilies(s.fontFamilies);if(s.fontSizes)setFontSizes(s.fontSizes);if(s.fontColors)setFontColors(s.fontColors);if(s.borders)setBorders(s.borders);if(s.boldCells)setBoldCells(s.boldCells)}
+            else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges([]);setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeEmpty2D(INIT_ROWS,INIT_COLS,false))}
             setSelectionStart(null);setSelectionEnd(null);setSelectedCell(null);loadCount()
           }} className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">Cambiar Plan</button>
 
@@ -546,6 +554,11 @@ export default function DashboardPage() {
 
           {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
           <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
+          <button onClick={() => {
+            if (!confirm('Limpiar cache de ' + plan.toUpperCase() + '? Se recargara la pagina.')) return
+            localStorage.removeItem(STORAGE_KEY(plan))
+            location.reload()
+          }} className="bg-yellow-700 hover:bg-yellow-600 px-2 py-0.5 rounded text-[9px]" title="Borrar datos guardados y recargar">Limpiar Cache</button>
           <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
         </div>
 

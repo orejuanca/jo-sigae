@@ -215,15 +215,17 @@ export default function DashboardPage() {
   }, [])
 
   // Función de save que lee del ref (siempre tiene el estado más reciente)
+  const saveCountRef = useRef(0)
   const doSave = useCallback((p: string) => {
     try {
       const json = JSON.stringify(stateRef.current)
       localStorage.setItem(STORAGE_KEY(p), json)
-      setSaveStatus('Guardado')
+      saveCountRef.current++
+      setSaveStatus(`Save#${saveCountRef.current} ${(json.length/1024).toFixed(0)}KB`)
       return true
     } catch (e) {
       console.error('[SAVE ERROR]', e)
-      setSaveStatus('ERROR al guardar')
+      setSaveStatus('ERROR SAVE')
       return false
     }
   }, [])

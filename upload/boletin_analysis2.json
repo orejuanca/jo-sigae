@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "1) **Columnas de la tabla de materias**: Sí, es correcto. Las columnas están en el orden exacto: **Áreas de Formación | Primer Lapso | IN | Segundo Lapso | IN | Tercer Lapso | IN | Final | Rev.**  \n\n2) **Filas cualitativas (\"Orientación y Convivencia\" y \"Participación en Grupos\")**: Están **dentro de la misma tabla de materias**, no separadas. Son filas adicionales después de las 7 materias numéricas (Castellano, Inglés, Matemáticas, etc.).  \n\n3) **Fila \"GRUPO\"**: Es una **fila separada dentro de la tabla de materias** (no fuera de ella). Contiene el valor \"EXONERADO\" en todas las columnas de lapsos y \"Final\".  \n\n4) **Filas \"PROMEDIO\" y \"Posición\"**: Están **dentro de la tabla de materias**, pero separadas por una línea punteada. La fila \"PROMEDIO\" muestra promedios por lapso (10,00; 11,14; 12,71; 11,29) y la fila \"Posición Según Prom.\" muestra posiciones (22; 20; 20; 21).  \n\n5) **Sección \"Materia Pendiente\"**: Sí, está bien. Las columnas son: **Primer Momento | Segundo Momento | Tercer Momento | Cuarto Momento**. Solo tiene una fila (\"Matemáticas\") con valores \"IN\" (excepto \"Cuarto Momento\" con \"10\").  \n\n6) **Layout de \"Orientación y Convivencia\"**:  \n   - Es una tabla con 2 columnas:  \n     - Columna 1: Título \"ORIENTACIÓN Y CONVIVENCIA\" (celda verticalmente centrada, abarca 2 filas).  \n     - Columna 2: Rangos de notas (A, B, C, D) con descripciones:  \n       - A: 20 a 17 pts (descripción: \"EVIDENCIA UN EXCELENTE DESARROLLO...\")  \n       - B: 16 a 14 pts (descripción: \"EVIDENCIA UN BUEN DESARROLLO...\")  \n       - C: 13 a 10 pts (descripción: \"EVIDENCIA UN SATISFACTORIO DESARROLLO...\")  \n       - D: 09 a 01 pts (descripción: \"EVIDENCIA UN ACEPTABLE DESARROLLO...\")  \n\n7) **Layout de \"Creación Recreación y Producción\"**:  \n   - Estructura idéntica a \"Orientación y Convivencia\":  \n     - Columna 1: Título \"CREACIÓN RECREACIÓN Y PRODUCCIÓN\" (celda verticalmente centrada, abarca 2 filas).  \n     - Columna 2: Rangos de notas (A, B, C, D) con las mismas descripciones que \"Orientación y Convivencia\".  \n\n8) **Fila \"LET_RAS\" o notas en letras**: No, no hay ninguna fila con notas en letras (como \"A\", \"B\", etc.) en la tabla principal. Las notas en letras solo aparecen en las secciones \"Orientación y Convivencia\" y \"Creación Recreación y Producción\" (como rangos, no como calificaciones del alumno).  \n\n9) **Dimensiones relativas de la tabla principal**:  \n   - La columna **\"Áreas de Formación\"** es la más ancha (aproximadamente 30% del ancho total).  \n   - Las columnas de **\"Primer Lapso\", \"Segundo Lapso\", \"Tercer Lapso\"** son de igual ancho (cada una ~12% del total).  \n   - Las columnas **\"IN\"** (entre lapsos) son las más estrechas (cada una ~3% del total).  \n   - Las columnas **\"Final\"** y **\"Rev.\"** son de igual ancho (cada una ~10% del total).  \n   - La fila \"GRUPO\" tiene la misma estructura de columnas que las materias, con \"EXONERADO\" en todas las celdas.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1780784051,
+  "id": "20260607061358e62799b855f24980",
+  "model": "glm-4.6v",
+  "object": "chat.completion",
+  "request_id": "20260607061358e62799b855f24980",
+  "usage": {
+    "completion_tokens": 961,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 6381,
+    "prompt_tokens_details": {
+      "cached_tokens": 4
+    },
+    "total_tokens": 7342
+  }
+}

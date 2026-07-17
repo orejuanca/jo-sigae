@@ -126,12 +126,15 @@ function readSavedOnce(plan: string): SheetState | null {
   } catch { return null }
 }
 
-export default function DashboardPage() {
-  const [plan, setPlan] = useState<'vigente' | 'derogado'>('vigente')
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  SheetEditor – manages its own state, loads/saves from localStorage[plan]  */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () => void }) {
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
 
-  const _saved = useRef(readSavedOnce('vigente'))
+  const _saved = useRef(readSavedOnce(plan))
   const sv = _saved.current
 
   const [numRows, setNumRows] = useState(sv?.numRows ?? INIT_ROWS)
@@ -205,12 +208,9 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Flag para saltar auto-save al cambiar de plan
-  const skipAutoSaveRef = useRef(false)
-
   // === AUTO-SAVE ===
   useEffect(() => {
-    if (!loaded || skipAutoSaveRef.current) return
+    if (!loaded) return
     const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
     return () => clearTimeout(timer)
   }, [loaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
@@ -492,201 +492,205 @@ export default function DashboardPage() {
   const isFullRowSelected = hasSelection && selMinC === 0 && selMaxC === numCols - 1
   const isFullColSelected = hasSelection && selMinR === 0 && selMaxR === numRows - 1
 
+  const switchBtnLabel = plan === 'vigente' ? 'IR A PLANES DEROGADOS' : 'IR A PLAN VIGENTE'
+
   return (
-    <AppShell>
-      <div className="overflow-auto">
-        {/* TOOLBAR ROW 1 */}
-        <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-1.5">
-          <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
-          <button onClick={() => {
-            // 1) Guardar el plan actual ANTES de salir
-            doSave(plan)
-            // 2) Saltar auto-save durante el cambio para evitar sobreescribir
-            skipAutoSaveRef.current = true
-            const np = plan==='vigente'?'derogado':'vigente'
-            setPlan(np)
-            const s = readSavedOnce(np)
-            if(s){if(s.cells)setCells(s.cells);if(s.colWidths)setColWidths(s.colWidths);if(s.rowHeights)setRowHeights(s.rowHeights);if(s.bgColors)setBgColors(s.bgColors);if(s.textAligns)setTextAligns(s.textAligns);if(s.merges)setMerges(s.merges);if(s.numRows)setNumRows(s.numRows);if(s.numCols)setNumCols(s.numCols);if(s.fontFamilies)setFontFamilies(s.fontFamilies);if(s.fontSizes)setFontSizes(s.fontSizes);if(s.fontColors)setFontColors(s.fontColors);if(s.borders)setBorders(s.borders);if(s.boldCells)setBoldCells(s.boldCells)}
-            else{setCells(makeInitialCells());setColWidths(makeInitialWidths());setRowHeights(makeInitialHeights(INIT_ROWS));setBgColors(makeInitialBg(INIT_ROWS,INIT_COLS));setTextAligns(makeInitialAlign(INIT_ROWS,INIT_COLS));setMerges([]);setNumRows(INIT_ROWS);setNumCols(INIT_COLS);setFontFamilies(makeInitialFontFamilies(INIT_ROWS,INIT_COLS));setFontSizes(makeInitialFontSizes(INIT_ROWS,INIT_COLS));setFontColors(makeInitialFontColors(INIT_ROWS,INIT_COLS));setBorders(makeInitialBorders(INIT_ROWS,INIT_COLS));setBoldCells(makeEmpty2D(INIT_ROWS,INIT_COLS,false))}
-            setSelectionStart(null);setSelectionEnd(null);setSelectedCell(null);loadCount()
-            // 3) Re-habilitar auto-save despues de que React procese el batch
-            setTimeout(() => { skipAutoSaveRef.current = false }, 600)
-          }} className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">Cambiar Plan</button>
+    <div className="overflow-auto">
+      {/* TOOLBAR ROW 1 */}
+      <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-1.5">
+        <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
+        <button onClick={() => {
+          doSave(plan)
+          onSwitchPlan()
+        }} className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">{switchBtnLabel}</button>
 
-          <span className="text-gray-600">|</span>
+        <span className="text-gray-600">|</span>
 
-          {/* B */}
-          <button onClick={handleToggleBold} disabled={!selectedCell}
-            className="bg-gray-700 hover:bg-gray-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px] font-bold border border-gray-500" title="Negrita">B</button>
+        {/* B */}
+        <button onClick={handleToggleBold} disabled={!selectedCell}
+          className="bg-gray-700 hover:bg-gray-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px] font-bold border border-gray-500" title="Negrita">B</button>
 
-          {/* Alignment */}
-          <button onClick={() => handleSetAlign('left')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Izquierda">
-            <span className="inline-block w-3" style={{textAlign:'left'}}>▸</span>
-          </button>
-          <button onClick={() => handleSetAlign('center')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Centrar">
-            <span className="inline-block w-3" style={{textAlign:'center'}}>▸</span>
-          </button>
-          <button onClick={() => handleSetAlign('right')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Derecha">
-            <span className="inline-block w-3" style={{textAlign:'right'}}>◂</span>
-          </button>
+        {/* Alignment */}
+        <button onClick={() => handleSetAlign('left')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Izquierda">
+          <span className="inline-block w-3" style={{textAlign:'left'}}>▸</span>
+        </button>
+        <button onClick={() => handleSetAlign('center')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Centrar">
+          <span className="inline-block w-3" style={{textAlign:'center'}}>▸</span>
+        </button>
+        <button onClick={() => handleSetAlign('right')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Derecha">
+          <span className="inline-block w-3" style={{textAlign:'right'}}>◂</span>
+        </button>
 
-          <span className="text-gray-600">|</span>
+        <span className="text-gray-600">|</span>
 
-          {/* Font */}
-          <select onChange={e => handleSetFont(e.target.value)} disabled={!selectedCell}
-            className="bg-gray-700 text-white text-[9px] px-1 py-0.5 rounded border border-gray-500 disabled:opacity-40"
-            title="Tipo de fuente" style={{maxWidth:'110px'}}>
-            {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-          </select>
-          <input type="number" value={selectedCell ? (fontSizes[selectedCell.r]?.[selectedCell.c] || 9) : 9}
-            onChange={e => handleSetFontSize(parseInt(e.target.value) || 9)} disabled={!selectedCell}
-            className="w-10 bg-gray-700 text-white text-[9px] px-1 rounded text-center border border-gray-500 disabled:opacity-40" title="Tamaño fuente" />px
+        {/* Font */}
+        <select onChange={e => handleSetFont(e.target.value)} disabled={!selectedCell}
+          className="bg-gray-700 text-white text-[9px] px-1 py-0.5 rounded border border-gray-500 disabled:opacity-40"
+          title="Tipo de fuente" style={{maxWidth:'110px'}}>
+          {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <input type="number" value={selectedCell ? (fontSizes[selectedCell.r]?.[selectedCell.c] || 9) : 9}
+          onChange={e => handleSetFontSize(parseInt(e.target.value) || 9)} disabled={!selectedCell}
+          className="w-10 bg-gray-700 text-white text-[9px] px-1 rounded text-center border border-gray-500 disabled:opacity-40" title="Tamaño fuente" />px
 
-          {/* Font Color */}
-          <span title="Color de texto" className="relative">
-            <span className="text-[9px]">A</span>
-            <input type="color" value={selectedCell ? (fontColors[selectedCell.r]?.[selectedCell.c] || '#333333') : '#333333'}
-              onChange={e => handleSetFontColor(e.target.value)} disabled={!selectedCell}
-              className="w-5 h-4 cursor-pointer absolute -top-0.5 left-3 opacity-60" />
-          </span>
+        {/* Font Color */}
+        <span title="Color de texto" className="relative">
+          <span className="text-[9px]">A</span>
+          <input type="color" value={selectedCell ? (fontColors[selectedCell.r]?.[selectedCell.c] || '#333333') : '#333333'}
+            onChange={e => handleSetFontColor(e.target.value)} disabled={!selectedCell}
+            className="w-5 h-4 cursor-pointer absolute -top-0.5 left-3 opacity-60" />
+        </span>
 
-          <span className="text-gray-600">|</span>
+        <span className="text-gray-600">|</span>
 
-          {/* Merge */}
-          <button onClick={handleMerge} disabled={!hasSelection} className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">Combinar</button>
-          <button onClick={handleUnmerge} disabled={!selectedCell||!getMerge(selectedCell.r,selectedCell.c)} className="bg-orange-600 hover:bg-orange-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">Descomb.</button>
+        {/* Merge */}
+        <button onClick={handleMerge} disabled={!hasSelection} className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">Combinar</button>
+        <button onClick={handleUnmerge} disabled={!selectedCell||!getMerge(selectedCell.r,selectedCell.c)} className="bg-orange-600 hover:bg-orange-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">Descomb.</button>
 
-          <span className="text-gray-600">|</span>
+        <span className="text-gray-600">|</span>
 
-          {/* Insert/Delete */}
-          <button onClick={()=>handleInsertRow(false)} disabled={!selectedCell} className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar fila arriba">+F</button>
-          <button onClick={()=>handleInsertRow(true)} disabled={!selectedCell} className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar fila abajo">+F↓</button>
-          <button onClick={()=>handleInsertCol(false)} disabled={!selectedCell} className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar columna izquierda">+C</button>
-          <button onClick={()=>handleInsertCol(true)} disabled={!selectedCell} className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar columna derecha">+C→</button>
-          <button onClick={handleDeleteRow} disabled={!selectedCell||numRows<=1} className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">-F</button>
-          <button onClick={handleDeleteCol} disabled={!selectedCell||numCols<=1} className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">-C</button>
+        {/* Insert/Delete */}
+        <button onClick={()=>handleInsertRow(false)} disabled={!selectedCell} className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar fila arriba">+F</button>
+        <button onClick={()=>handleInsertRow(true)} disabled={!selectedCell} className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar fila abajo">+F↓</button>
+        <button onClick={()=>handleInsertCol(false)} disabled={!selectedCell} className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar columna izquierda">+C</button>
+        <button onClick={()=>handleInsertCol(true)} disabled={!selectedCell} className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar columna derecha">+C→</button>
+        <button onClick={handleDeleteRow} disabled={!selectedCell||numRows<=1} className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">-F</button>
+        <button onClick={handleDeleteCol} disabled={!selectedCell||numCols<=1} className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">-C</button>
 
-          <span className="text-gray-600">|</span>
+        <span className="text-gray-600">|</span>
 
-          {/* Move */}
-          <button onClick={()=>handleMoveRow('up')} disabled={!selectedCell||selMinR===0} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">F↑</button>
-          <button onClick={()=>handleMoveRow('down')} disabled={!selectedCell||selMaxR>=numRows-1} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">F↓</button>
-          <button onClick={()=>handleMoveCol('left')} disabled={!selectedCell||selMinC===0} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">C←</button>
-          <button onClick={()=>handleMoveCol('right')} disabled={!selectedCell||selMaxC>=numCols-1} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">C→</button>
+        {/* Move */}
+        <button onClick={()=>handleMoveRow('up')} disabled={!selectedCell||selMinR===0} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">F↑</button>
+        <button onClick={()=>handleMoveRow('down')} disabled={!selectedCell||selMaxR>=numRows-1} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">F↓</button>
+        <button onClick={()=>handleMoveCol('left')} disabled={!selectedCell||selMinC===0} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">C←</button>
+        <button onClick={()=>handleMoveCol('right')} disabled={!selectedCell||selMaxC>=numCols-1} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">C→</button>
 
-          <span className="text-gray-600">|</span>
+        <span className="text-gray-600">|</span>
 
-          {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
+        {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
 
-          <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
-          {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
-          <button onClick={() => {
-            try {
-              const json = JSON.stringify(stateRef.current)
-              localStorage.setItem(STORAGE_KEY(plan), json)
-              const back = localStorage.getItem(STORAGE_KEY(plan))
-              if (back === json) {
-                saveCountRef.current++
-                setSaveStatus(`GUARDADO #${saveCountRef.current} ${(json.length/1024).toFixed(0)}KB ✓`)
-              } else {
-                setSaveStatus('ERROR: no coincide')
-              }
-            } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }
-            setTimeout(() => setSaveStatus(''), 4000)
-          }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
-          <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
-          <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
+        <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
+        {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
+        <button onClick={() => {
+          try {
+            const json = JSON.stringify(stateRef.current)
+            localStorage.setItem(STORAGE_KEY(plan), json)
+            const back = localStorage.getItem(STORAGE_KEY(plan))
+            if (back === json) {
+              saveCountRef.current++
+              setSaveStatus(`GUARDADO #${saveCountRef.current} ${(json.length/1024).toFixed(0)}KB ✓`)
+            } else {
+              setSaveStatus('ERROR: no coincide')
+            }
+          } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }
+          setTimeout(() => setSaveStatus(''), 4000)
+        }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
+        <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
+        <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
+      </div>
+
+      {/* TOOLBAR ROW 2 - Cell props */}
+      {selectedCell && (
+        <div className="sticky top-7 z-30 bg-gray-700 text-white text-[10px] px-3 py-1 flex flex-wrap items-center gap-2">
+          <b>{colLetter(selectedCell.c)}{selectedCell.r+1}</b>
+          <span className="text-gray-500">|</span>
+          Ancho: <input type="number" value={colWidths[selectedCell.c]||80} onChange={e=>{const w=[...colWidths];w[selectedCell.c]=parseInt(e.target.value)||40;setColWidths(w)}} className="w-12 bg-gray-600 text-white text-[9px] px-1 rounded text-center" />px
+          Alto: <input type="number" value={rowHeights[selectedCell.r]||20} onChange={e=>{const h=[...rowHeights];h[selectedCell.r]=parseInt(e.target.value)||20;setRowHeights(h)}} className="w-12 bg-gray-600 text-white text-[9px] px-1 rounded text-center" />px
+          <span className="text-gray-500">|</span>
+          Fondo: <input type="color" value={bgColors[selectedCell.r]?.[selectedCell.c]||'#ffffff'} onChange={e=>{updateBg(selectedCell.r,selectedCell.c,e.target.value);handleApplyBgToSelection(e.target.value)}} className="w-5 h-4 cursor-pointer" />
+          <span className="text-gray-500">|</span>
+          Texto: <input type="color" value={fontColors[selectedCell.r]?.[selectedCell.c]||'#333333'} onChange={e=>handleSetFontColor(e.target.value)} className="w-5 h-4 cursor-pointer" />
+          <span className="text-gray-500">|</span>
+          Bordes:
+          <button onClick={()=>handleToggleBorders(true)} className="bg-green-800 hover:bg-green-700 px-1.5 py-0.5 rounded text-[9px]" title="Mostrar bordes">ON</button>
+          <button onClick={()=>handleToggleBorders(false)} className="bg-gray-600 hover:bg-gray-500 px-1.5 py-0.5 rounded text-[9px]" title="Ocultar bordes">OFF</button>
+          {hasSelection && <span className="text-[8px] text-gray-400">(a seleccion)</span>}
         </div>
+      )}
 
-        {/* TOOLBAR ROW 2 - Cell props */}
-        {selectedCell && (
-          <div className="sticky top-7 z-30 bg-gray-700 text-white text-[10px] px-3 py-1 flex flex-wrap items-center gap-2">
-            <b>{colLetter(selectedCell.c)}{selectedCell.r+1}</b>
-            <span className="text-gray-500">|</span>
-            Ancho: <input type="number" value={colWidths[selectedCell.c]||80} onChange={e=>{const w=[...colWidths];w[selectedCell.c]=parseInt(e.target.value)||40;setColWidths(w)}} className="w-12 bg-gray-600 text-white text-[9px] px-1 rounded text-center" />px
-            Alto: <input type="number" value={rowHeights[selectedCell.r]||20} onChange={e=>{const h=[...rowHeights];h[selectedCell.r]=parseInt(e.target.value)||20;setRowHeights(h)}} className="w-12 bg-gray-600 text-white text-[9px] px-1 rounded text-center" />px
-            <span className="text-gray-500">|</span>
-            Fondo: <input type="color" value={bgColors[selectedCell.r]?.[selectedCell.c]||'#ffffff'} onChange={e=>{updateBg(selectedCell.r,selectedCell.c,e.target.value);handleApplyBgToSelection(e.target.value)}} className="w-5 h-4 cursor-pointer" />
-            <span className="text-gray-500">|</span>
-            Texto: <input type="color" value={fontColors[selectedCell.r]?.[selectedCell.c]||'#333333'} onChange={e=>handleSetFontColor(e.target.value)} className="w-5 h-4 cursor-pointer" />
-            <span className="text-gray-500">|</span>
-            Bordes:
-            <button onClick={()=>handleToggleBorders(true)} className="bg-green-800 hover:bg-green-700 px-1.5 py-0.5 rounded text-[9px]" title="Mostrar bordes">ON</button>
-            <button onClick={()=>handleToggleBorders(false)} className="bg-gray-600 hover:bg-gray-500 px-1.5 py-0.5 rounded text-[9px]" title="Ocultar bordes">OFF</button>
-            {hasSelection && <span className="text-[8px] text-gray-400">(a seleccion)</span>}
-          </div>
-        )}
+      <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown}
+        style={{ marginTop: selectedCell ? '52px' : '28px' }}>
+        <colgroup>
+          <col style={{ width: '35px' }} />
+          {colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}
+        </colgroup>
+        <tbody>
+          <tr>
+            <td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20"
+              style={{ top: selectedCell ? '52px' : '28px' }}></td>
+            {Array.from({ length: numCols }).map((_, c) => {
+              const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1
+              return (
+                <td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)}
+                  className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                  style={{ top: selectedCell ? '52px' : '28px', position: 'sticky', zIndex: 15 }}>
+                  {colLetter(c)}
+                </td>
+              )
+            })}
+          </tr>
 
-        <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown}
-          style={{ marginTop: selectedCell ? '52px' : '28px' }}>
-          <colgroup>
-            <col style={{ width: '35px' }} />
-            {colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}
-          </colgroup>
-          <tbody>
-            <tr>
-              <td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20"
-                style={{ top: selectedCell ? '52px' : '28px' }}></td>
+          {Array.from({ length: numRows }).map((_, r) => (
+            <tr key={r} style={{ height: `${rowHeights[r] || 20}px` }}>
+              <td onClick={(e) => handleRowHeaderClick(r, e.shiftKey)}
+                className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5 ${selMinR<=r&&r<=selMaxR&&selMinC===0&&selMaxC===numCols-1?'bg-blue-400 text-white':'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
+                {r + 1}
+              </td>
               {Array.from({ length: numCols }).map((_, c) => {
-                const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1
+                if (isHidden(r, c)) return null
+                const merge = getMerge(r, c)
+                const colSpan = merge ? (merge.ec - merge.sc + 1) : 1
+                const rowSpan = merge ? (merge.er - merge.sr + 1) : 1
+                const selected = isInSelection(r, c)
+                const cellBorder = borders[r]?.[c] !== false
+
                 return (
-                  <td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)}
-                    className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
-                    style={{ top: selectedCell ? '52px' : '28px', position: 'sticky', zIndex: 15 }}>
-                    {colLetter(c)}
+                  <td key={c} data-r={r} data-c={c}
+                    onClick={(e) => handleCellClick(r, c, e.shiftKey)}
+                    colSpan={colSpan > 1 ? colSpan : undefined}
+                    rowSpan={rowSpan > 1 ? rowSpan : undefined}
+                    className={`p-0 relative ${selected ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
+                    style={{
+                      backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
+                      color: fontColors[r]?.[c] || '#333',
+                      fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal',
+                      fontStyle: 'normal',
+                      fontSize: `${fontSizes[r]?.[c] || 9}px`,
+                      fontFamily: fontFamilies[r]?.[c] || 'Arial',
+                      textAlign: textAligns[r]?.[c] || 'left',
+                      verticalAlign: 'middle',
+                    }}>
+                    <input type="text" defaultValue={cells[r]?.[c] || ''}
+                      onBlur={(e) => handleInputBlur(r, c, e.target.value)}
+                      onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
+                      onKeyDown={(e) => handleInputKeyDown(e, r, c)}
+                      className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5"
+                      style={{
+                        color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit',
+                        fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit',
+                        minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px`,
+                      }} />
                   </td>
                 )
               })}
             </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
-            {Array.from({ length: numRows }).map((_, r) => (
-              <tr key={r} style={{ height: `${rowHeights[r] || 20}px` }}>
-                <td onClick={(e) => handleRowHeaderClick(r, e.shiftKey)}
-                  className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5 ${selMinR<=r&&r<=selMaxR&&selMinC===0&&selMaxC===numCols-1?'bg-blue-400 text-white':'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
-                  {r + 1}
-                </td>
-                {Array.from({ length: numCols }).map((_, c) => {
-                  if (isHidden(r, c)) return null
-                  const merge = getMerge(r, c)
-                  const colSpan = merge ? (merge.ec - merge.sc + 1) : 1
-                  const rowSpan = merge ? (merge.er - merge.sr + 1) : 1
-                  const selected = isInSelection(r, c)
-                  const cellBorder = borders[r]?.[c] !== false
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  DashboardPage – thin wrapper that manages plan state                      */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
-                  return (
-                    <td key={c} data-r={r} data-c={c}
-                      onClick={(e) => handleCellClick(r, c, e.shiftKey)}
-                      colSpan={colSpan > 1 ? colSpan : undefined}
-                      rowSpan={rowSpan > 1 ? rowSpan : undefined}
-                      className={`p-0 relative ${selected ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
-                      style={{
-                        backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
-                        color: fontColors[r]?.[c] || '#333',
-                        fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal',
-                        fontStyle: 'normal',
-                        fontSize: `${fontSizes[r]?.[c] || 9}px`,
-                        fontFamily: fontFamilies[r]?.[c] || 'Arial',
-                        textAlign: textAligns[r]?.[c] || 'left',
-                        verticalAlign: 'middle',
-                      }}>
-                      <input type="text" defaultValue={cells[r]?.[c] || ''}
-                        onBlur={(e) => handleInputBlur(r, c, e.target.value)}
-                        onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
-                        onKeyDown={(e) => handleInputKeyDown(e, r, c)}
-                        className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5"
-                        style={{
-                          color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit',
-                          fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit',
-                          minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px`,
-                        }} />
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+export default function DashboardPage() {
+  const [plan, setPlan] = useState<'vigente' | 'derogado'>('vigente')
+  const handleSwitch = () => setPlan(p => p === 'vigente' ? 'derogado' : 'vigente')
+  return (
+    <AppShell>
+      <SheetEditor key={plan} plan={plan} onSwitchPlan={handleSwitch} />
     </AppShell>
   )
 }

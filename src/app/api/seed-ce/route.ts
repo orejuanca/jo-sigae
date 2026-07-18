@@ -5,15 +5,20 @@ import { prisma } from '@/lib/prisma'
 const EF_MAP: Record<string, string> = {
   'AM': 'AMAZONAS', 'AN': 'ANZOÁTEGUI', 'AP': 'APURE', 'AR': 'ARAGUA',
   'BA': 'BARINAS', 'BO': 'BOLÍVAR', 'CA': 'CARABOBO', 'CO': 'COJEDES',
-  'DA': 'DELTA AMACURO', 'DC': 'DISTRITO CAPITAL', 'FA': 'FALCÓN',
-  'GU': 'GUÁRICO', 'LA': 'LARA', 'ME': 'MÉRIDA', 'MI': 'MIRANDA',
-  'MO': 'MONAGAS', 'NE': 'NUEVA ESPARTA', 'PO': 'PORTUGUESA',
-  'SU': 'SUCRE', 'TA': 'TÁCHIRA', 'TU': 'TRUJILLO', 'VA': 'VARGAS',
+  'DA': 'DELTA AMACURO', 'DC': 'DISTRITO CAPITAL', 'DF': 'DISTRITO CAPITAL',
+  'FA': 'FALCÓN', 'GU': 'GUÁRICO', 'LA': 'LARA', 'ME': 'MÉRIDA',
+  'MI': 'MIRANDA', 'MO': 'MONAGAS', 'NE': 'NUEVA ESPARTA', 'PO': 'PORTUGUESA',
+  'SU': 'SUCRE', 'TA': 'TÁCHIRA', 'TR': 'TRUJILLO', 'VA': 'VARGAS',
   'YA': 'YARACUY', 'ZU': 'ZULIA',
 }
+const EF_CODES = new Set(Object.keys(EF_MAP))
 
 function cleanName(val: string): string {
   return val.replace(/^[\s*]+|[\s*]+$/g, '').trim()
+}
+function isEFCode(val: string): boolean {
+  const upper = val.toUpperCase().trim()
+  return upper.length <= 3 && EF_CODES.has(upper)
 }
 
 // POST /api/seed-ce — Extrae centros escolares únicos del rawData de todos los alumnos
@@ -41,8 +46,13 @@ export async function POST(request: NextRequest) {
       for (const [nameKey, locKey, efKey] of instSlots) {
         const nombre = cleanName(String(data[String(nameKey)] || ''))
         if (!nombre || /^\*+$/.test(nombre)) continue
+        // Saltar si el "nombre" es en realidad un código EF (datos desplazados)
+        if (isEFCode(nombre)) continue
 
         const localidad = cleanName(String(data[String(locKey)] || ''))
+        // Si la localidad parece un código EF, los datos están desplazados
+        if (isEFCode(localidad)) continue
+
         const efRaw = cleanName(String(data[String(efKey)] || '')).toUpperCase()
         const estado = EF_MAP[efRaw] || efRaw || ''
 
@@ -96,7 +106,6 @@ export async function POST(request: NextRequest) {
       totalFound: unique.length,
       alreadyExist: unique.length - toInsert.length,
       inserted,
-      centros: toInsert,
     })
   } catch (error) {
     console.error('Error seeding CE:', error)

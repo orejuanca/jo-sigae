@@ -117,7 +117,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, plan, rawData } = body
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData } = body
+    const plan = body.plan || 'vigente'
 
     if (!cedula || !apellidos || !nombres) {
       return NextResponse.json(
@@ -126,7 +127,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const plan = body.plan || 'vigente'
     const db = getDb(plan)
 
     const student = await db.student.create({
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         pais: pais?.trim() || 'VENEZUELA',
         estado: estado?.trim() || '',
         municipio: municipio?.trim() || '',
-        plan: plan || 'vigente',
+        plan,
         rawData: rawData || '{}',
       },
     })

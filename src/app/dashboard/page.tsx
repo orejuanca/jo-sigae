@@ -147,14 +147,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [fontFamilies, setFontFamilies] = useState<string[][]>(() => sv?.fontFamilies ?? makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
   const [fontSizes, setFontSizes] = useState<number[][]>(() => sv?.fontSizes ?? makeInitialFontSizes(INIT_ROWS, INIT_COLS))
   const [fontColors, setFontColors] = useState<string[][]>(() => sv?.fontColors ?? makeInitialFontColors(INIT_ROWS, INIT_COLS))
-  const [borders, setBorders] = useState<boolean[][]>(() => {
-    const saved = sv?.borders
-    if (saved && saved.length > 0) {
-      // Migrar: quitar todas las líneas predeterminadas (borde true → false)
-      return makeEmpty2D(saved.length, saved[0]?.length || INIT_COLS, false)
-    }
-    return makeInitialBorders(INIT_ROWS, INIT_COLS)
-  })
+  const [borders, setBorders] = useState<boolean[][]>(() => sv?.borders ?? makeInitialBorders(INIT_ROWS, INIT_COLS))
   const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
     if (sv?.boldCells) return sv.boldCells
     const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)
@@ -190,23 +183,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
   }, [])
 
-  // === MIGRACION: limpiar borders del cache guardado ===
-  useEffect(() => {
-    if (!loaded) return
-    const key = STORAGE_KEY(plan)
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) {
-        const data = JSON.parse(raw)
-        if (data.borders) {
-          data.borders = makeEmpty2D(data.numRows || INIT_ROWS, data.numCols || INIT_COLS, false)
-          localStorage.setItem(key, JSON.stringify(data))
-        }
-      }
-    } catch {}
-  // Solo ejecutar una vez al montar
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+
 
   // === AUTO-SAVE ===
   useEffect(() => {
@@ -389,7 +366,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setFontFamilies(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('Arial')); return c })
     setFontSizes(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(9)); return c })
     setFontColors(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('#333333')); return c })
-    setBorders(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(true)); return c })
+    setBorders(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(false)); return c })
     setBoldCells(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill(false)); return c })
     setMerges(prev => prev.map(m => { if (m.sr >= at) return { ...m, sr: m.sr + 1, er: m.er + 1 }; if (m.er >= at) return { ...m, er: m.er + 1 }; return m }))
     setNumRows(numRows + 1)
@@ -403,7 +380,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setCells(ins(cells, '')); setColWidths(p => { const r=[...p]; r.splice(at,0,80); return r })
     setBgColors(ins(bgColors, '#ffffff')); setTextAligns(ins(textAligns, 'left') as any)
     setFontFamilies(ins(fontFamilies, 'Arial')); setFontSizes(ins(fontSizes, 9))
-    setFontColors(ins(fontColors, '#333333')); setBorders(ins(borders, true))
+    setFontColors(ins(fontColors, '#333333')); setBorders(ins(borders, false))
     setBoldCells(ins(boldCells, false))
     setMerges(prev => prev.map(m => { if (m.sc >= at) return { ...m, sc: m.sc + 1, ec: m.ec + 1 }; if (m.ec >= at) return { ...m, ec: m.ec + 1 }; return m }))
     setNumCols(numCols + 1)

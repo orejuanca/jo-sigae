@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
 // Convertir fecha de cualquier formato a DD/MM/YYYY
 function normalizeFecha(fecha: string): string {
@@ -33,10 +33,12 @@ export async function GET(request: NextRequest) {
 
     const planFilter = { plan }
 
+    const db = getDb(plan)
+
     if (!q) {
       const [students, total] = await Promise.all([
-        prisma.student.findMany({ where: planFilter, take: limit, skip: (page - 1) * limit, orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }] }),
-        prisma.student.count({ where: planFilter }),
+        db.student.findMany({ where: planFilter, take: limit, skip: (page - 1) * limit, orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }] }),
+        db.student.count({ where: planFilter }),
       ])
       return NextResponse.json({ students, total, page, limit, totalPages: Math.ceil(total / limit) })
     }
@@ -54,20 +56,20 @@ export async function GET(request: NextRequest) {
     }
 
     const [students, total] = await Promise.all([
-      prisma.student.findMany({
+      db.student.findMany({
         where,
         take: limit,
         skip: (page - 1) * limit,
         orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }],
       }),
-      prisma.student.count({ where }),
+      db.student.count({ where }),
     ])
 
     // If no results with strict search, try normalized cedula matching
     if (students.length === 0 && normalized.length >= 4) {
       // Get all students and filter by normalized cedula on the app side
       // This is a fallback for when the user types "V12345678" but DB has "V 12345678"
-      const allStudents = await prisma.student.findMany({
+      const allStudents = await db.student.findMany({
         where: {
           ...planFilter,
           OR: [
@@ -84,7 +86,7 @@ export async function GET(request: NextRequest) {
       )
 
       if (filtered.length > 0) {
-        const totalFiltered = await prisma.student.count({
+        const totalFiltered = await db.student.count({
           where: { id: { in: filtered.map(s => s.id) } },
         })
 
@@ -124,7 +126,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const student = await prisma.student.create({
+    const plan = body.plan || 'vigente'
+    const db = getDb(plan)
+
+    const student = await db.student.create({
       data: {
         cedula: cedula.trim(),
         apellidos: apellidos.trim(),

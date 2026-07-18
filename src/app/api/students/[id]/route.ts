@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
 // Convertir fecha de cualquier formato a DD/MM/YYYY
 function normalizeFecha(fecha: string): string {
@@ -26,7 +26,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const student = await prisma.student.findUnique({
+    const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+    const student = await db.student.findUnique({
       where: { id },
       include: { certifications: { orderBy: { fechaEmision: 'desc' } } },
     })
@@ -51,8 +53,9 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData } = body
-
-    const student = await prisma.student.update({
+    const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+    const student = await db.student.update({
       where: { id },
       data: {
         ...(cedula && { cedula: cedula.trim() }),
@@ -87,7 +90,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    await prisma.student.delete({ where: { id } })
+    const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+    await db.student.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const err = error as { code?: string }

@@ -125,3 +125,19 @@ model CertLayout {
 
   @@index([nombre])
 }
+
+// Centros Escolares / Planteles (compartido entre ambos planes)
+model CentroEscolar {
+  id        String   @id @default(cuid())
+  codigo    String   @unique  // Codigo del plantel (ej: "0001")
+  nombre    String   // Nombre del plantel
+  localidad String   @default("")  // Localidad/ubicacion
+  estado    String   @default("")  // Estado
+  municipio String   @default("")  // Municipio
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([codigo])
+  @@index([nombre])
+}

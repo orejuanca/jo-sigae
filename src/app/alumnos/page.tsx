@@ -91,12 +91,25 @@ export default function AlumnosPage() {
   const [formEstado, setFormEstado] = useState('')
   const [formMunicipio, setFormMunicipio] = useState('')
 
+  const [plan, setPlan] = useState('vigente')
+
+  useEffect(() => {
+    const p = localStorage.getItem('jo-sigae-current-plan')
+    if (p === 'derogado') setPlan('derogado')
+    const handler = () => {
+      const stored = localStorage.getItem('jo-sigae-current-plan')
+      setPlan(stored === 'derogado' ? 'derogado' : 'vigente')
+    }
+    window.addEventListener('plan-changed', handler)
+    return () => window.removeEventListener('plan-changed', handler)
+  }, [])
+
   const { toast } = useToast()
 
   const fetchStudents = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`)
+      const res = await fetch(`/api/students?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}&plan=${plan}`)
       const data = await res.json()
       setStudents(data.students || [])
       setTotal(data.total || 0)
@@ -109,7 +122,7 @@ export default function AlumnosPage() {
 
   useEffect(() => {
     fetchStudents()
-  }, [searchQuery, page])
+  }, [searchQuery, page, plan])
 
   const totalPages = Math.ceil(total / limit)
 
@@ -155,10 +168,10 @@ export default function AlumnosPage() {
       }
 
       if (editingStudent) {
-        const res = await fetch(`/api/students/${editingStudent.id}`, {
+      const res = await fetch(`/api/students/${editingStudent.id}?plan=${plan}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ ...body, plan }),
         })
         if (!res.ok) {
           const data = await res.json()
@@ -169,7 +182,7 @@ export default function AlumnosPage() {
         const res = await fetch('/api/students', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ ...body, plan }),
         })
         if (!res.ok) {
           const data = await res.json()
@@ -188,7 +201,7 @@ export default function AlumnosPage() {
   const handleDelete = async () => {
     if (!deletingId) return
     try {
-      await fetch(`/api/students/${deletingId}`, { method: 'DELETE' })
+      await fetch(`/api/students/${deletingId}?plan=${plan}`, { method: 'DELETE' })
       toast({ title: 'Eliminado', description: 'Alumno eliminado' })
       setDeleteDialogOpen(false)
       setDeletingId(null)

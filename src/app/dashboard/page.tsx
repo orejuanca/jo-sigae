@@ -251,7 +251,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       const today = new Date()
       const ds = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`
       updateCell(2, 7, ds)
-      updateCell(2, 20, 'IR A ' + (plan === 'vigente' ? 'PLANES DEROGADOS' : 'PLAN VIGENTE'))
+
     } catch {}
   }, [plan, updateCell])
   useEffect(() => { loadCount() }, [loadCount])
@@ -469,19 +469,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const isFullRowSelected = hasSelection && selMinC === 0 && selMaxC === numCols - 1
   const isFullColSelected = hasSelection && selMinR === 0 && selMaxR === numRows - 1
 
-  const switchBtnLabel = plan === 'vigente' ? 'IR A PLANES DEROGADOS' : 'IR A PLAN VIGENTE'
+  const SWITCH_ROW = 5, SWITCH_COL = 34 // celda AI6
+  const switchBtnLabel = plan === 'vigente' ? 'IR A PLAN DEROGADO' : 'IR A PLAN VIGENTE'
 
   return (
     <div className="overflow-auto">
       {/* TOOLBAR ROW 1 */}
       <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-1.5">
         <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
-        <button onClick={() => {
-          doSave(plan)
-          onSwitchPlan()
-        }} className="bg-blue-600 hover:bg-blue-500 px-2 py-0.5 rounded text-[9px]">{switchBtnLabel}</button>
 
-        <span className="text-gray-600">|</span>
 
         {/* B */}
         <button onClick={handleToggleBold} disabled={!selectedCell}
@@ -621,22 +617,29 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const selected = isInSelection(r, c)
                 const cellBorder = borders[r]?.[c] !== false
 
+                const isSwitchCell = r === SWITCH_ROW && c === SWITCH_COL
                 return (
                   <td key={c} data-r={r} data-c={c}
-                    onClick={(e) => handleCellClick(r, c, e.shiftKey)}
+                    onClick={(e) => { if (!isSwitchCell) handleCellClick(r, c, e.shiftKey) }}
                     colSpan={colSpan > 1 ? colSpan : undefined}
                     rowSpan={rowSpan > 1 ? rowSpan : undefined}
-                    className={`p-0 relative ${selected ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
+                    className={`p-0 relative ${selected && !isSwitchCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
                     style={{
-                      backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
-                      color: fontColors[r]?.[c] || '#333',
+                      backgroundColor: isSwitchCell ? '#2563eb' : (selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff')),
+                      color: isSwitchCell ? '#fff' : (fontColors[r]?.[c] || '#333'),
                       fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal',
                       fontStyle: 'normal',
-                      fontSize: `${fontSizes[r]?.[c] || 9}px`,
+                      fontSize: isSwitchCell ? '9px' : `${fontSizes[r]?.[c] || 9}px`,
                       fontFamily: fontFamilies[r]?.[c] || 'Arial',
                       textAlign: textAligns[r]?.[c] || 'left',
                       verticalAlign: 'middle',
                     }}>
+                    {isSwitchCell ? (
+                      <button onClick={(e) => { e.stopPropagation(); doSave(plan); onSwitchPlan() }}
+                        className="w-full h-full bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold px-1 py-0.5 rounded transition cursor-pointer">
+                        {switchBtnLabel}
+                      </button>
+                    ) : (
                     <input type="text" defaultValue={cells[r]?.[c] || ''}
                       onBlur={(e) => handleInputBlur(r, c, e.target.value)}
                       onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
@@ -647,6 +650,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit',
                         minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px`,
                       }} />
+                    )}
                   </td>
                 )
               })}

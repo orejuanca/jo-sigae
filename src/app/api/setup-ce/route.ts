@@ -16,9 +16,13 @@ export async function POST() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "CentroEscolar_codigo_key" UNIQUE ("codigo")
-      );
-      CREATE INDEX IF NOT EXISTS "CentroEscolar_codigo_idx" ON "CentroEscolar"("codigo");
-      CREATE INDEX IF NOT EXISTS "CentroEscolar_nombre_idx" ON "CentroEscolar"("nombre");
+      )
+    `)
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "CentroEscolar_codigo_idx" ON "CentroEscolar"("codigo")
+    `)
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "CentroEscolar_nombre_idx" ON "CentroEscolar"("nombre")
     `)
     return NextResponse.json({ success: true, message: 'Tabla CentroEscolar creada/verificada' })
   } catch (error) {

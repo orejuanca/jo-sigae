@@ -6,21 +6,31 @@ const globalForDb = globalThis as unknown as {
   dbDerogado: PrismaClient | undefined
 }
 
+/** Asegura que la URL tenga parámetros SSL necesarios para Vercel Postgres */
+function ensureSSL(url: string): string {
+  if (!url) return url
+  if (!url.includes('sslmode')) {
+    url += (url.includes('?') ? '&' : '?') + 'sslmode=require'
+  }
+  return url
+}
+
 /** Prisma client para BD (Plan Vigente) */
 export const dbVigente =
   globalForDb.dbVigente ??
   new PrismaClient({
-    datasources: { db: { url: process.env.DATABASE_URL } }
+    datasources: { db: { url: ensureSSL(process.env.DATABASE_URL || '') } }
   })
 
 if (process.env.NODE_ENV !== 'production') globalForDb.dbVigente = dbVigente
 
 /** Prisma client para BD2 (Planes Derogados) */
+const db2Url = process.env.DATABASE_URL_2
 export const dbDerogado =
   globalForDb.dbDerogado ??
   new PrismaClient({
     datasources: {
-      db: { url: process.env.DATABASE_URL_2 || process.env.DATABASE_URL }
+      db: { url: db2Url ? ensureSSL(db2Url) : ensureSSL(process.env.DATABASE_URL || '') }
     }
   })
 

@@ -21,10 +21,16 @@ export async function POST() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "Student_cedula_key" UNIQUE ("cedula")
-      );
-      CREATE INDEX IF NOT EXISTS "Student_cedula_idx" ON "Student"("cedula");
-      CREATE INDEX IF NOT EXISTS "Student_apellidos_idx" ON "Student"("apellidos");
-      CREATE INDEX IF NOT EXISTS "Student_nombres_idx" ON "Student"("nombres");
+      )
+    `)
+    await dbDerogado.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Student_cedula_idx" ON "Student"("cedula")
+    `)
+    await dbDerogado.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Student_apellidos_idx" ON "Student"("apellidos")
+    `)
+    await dbDerogado.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "Student_nombres_idx" ON "Student"("nombres")
     `)
     return NextResponse.json({ success: true, message: 'Tablas BD2 creadas/verificadas' })
   } catch (error) {

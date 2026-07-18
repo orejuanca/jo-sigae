@@ -2,9 +2,9 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { useEffect, ReactNode } from 'react'
+import { useEffect, useState, ReactNode } from 'react'
 
-const navItems = [
+const navVigente = [
   { href: '/dashboard', label: 'AGREGAR DATOS', bg: 'bg-emerald-600 hover:bg-emerald-500' },
   { href: '/certificaciones', label: 'EMG 31059', bg: 'bg-blue-600 hover:bg-blue-500' },
   { href: '/constancias', label: 'CONSTANCIA DE NOTAS', bg: 'bg-amber-600 hover:bg-amber-500' },
@@ -19,9 +19,41 @@ const navItems = [
   { href: '/alumnos', label: 'ALUMNOS', bg: 'bg-slate-600 hover:bg-slate-500' },
 ]
 
+const navDerogado = [
+  { href: '/dashboard', label: 'AGREGAR ANTIGUOS', bg: 'bg-emerald-600 hover:bg-emerald-500' },
+  { href: '/validar', label: 'VALIDAR NOTAS ANTI.', bg: 'bg-purple-600 hover:bg-purple-500' },
+  { href: '/validar-titulo', label: 'III Etapa Basica', bg: 'bg-pink-600 hover:bg-pink-500' },
+  { href: '/centros-escolares', label: 'CE', bg: 'bg-teal-600 hover:bg-teal-500' },
+  { href: '/boletin', label: 'Media Diver.', bg: 'bg-orange-600 hover:bg-orange-500' },
+  { href: '/titulos', label: 'Formato Basica', bg: 'bg-cyan-600 hover:bg-cyan-500' },
+  { href: '/titulos-lista', label: 'Formato Diversificado', bg: 'bg-indigo-600 hover:bg-indigo-500' },
+  { href: '/editor-formatos', label: 'FORMATO UNIVERSAL', bg: 'bg-rose-600 hover:bg-rose-500' },
+  { href: '/alumnos', label: 'ALUMNOS', bg: 'bg-slate-600 hover:bg-slate-500' },
+]
+
+function useCurrentPlan() {
+  const [plan, setPlan] = useState<string>('vigente')
+
+  useEffect(() => {
+    const stored = localStorage.getItem('jo-sigae-current-plan')
+    if (stored === 'derogado') setPlan('derogado')
+
+    const handler = () => {
+      const p = localStorage.getItem('jo-sigae-current-plan')
+      setPlan(p === 'derogado' ? 'derogado' : 'vigente')
+    }
+    window.addEventListener('plan-changed', handler)
+    return () => window.removeEventListener('plan-changed', handler)
+  }, [])
+
+  return plan
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuth()
   const router = useRouter()
+  const plan = useCurrentPlan()
+  const navItems = plan === 'derogado' ? navDerogado : navVigente
 
   useEffect(() => {
     if (!isAuthenticated) router.push('/')
@@ -33,7 +65,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-gray-900">
       {/* Top bar */}
       <div className="bg-gray-950 text-white px-4 py-2 flex items-center justify-between">
-        <span className="text-sm font-bold tracking-wide">JO-SIGAE</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold tracking-wide">JO-SIGAE</span>
+          {plan === 'derogado' && (
+            <span className="text-[10px] bg-yellow-600 text-white px-2 py-0.5 rounded font-bold">PLAN DEROGADO</span>
+          )}
+        </div>
         <button
           onClick={logout}
           className="px-3 py-1 text-xs bg-red-700 hover:bg-red-600 rounded transition"
@@ -49,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="hidden lg:flex flex-wrap gap-1.5">
             {navItems.map(item => (
               <button
-                key={item.href}
+                key={item.href + item.label}
                 onClick={() => router.push(item.href)}
                 className={`${item.bg} text-white text-[11px] font-bold px-3 py-2 rounded transition shadow-sm`}
               >
@@ -62,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="lg:hidden grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             {navItems.map(item => (
               <button
-                key={item.href}
+                key={item.href + item.label}
                 onClick={() => router.push(item.href)}
                 className={`${item.bg} text-white text-[10px] font-bold px-2 py-2 rounded transition shadow-sm text-center`}
               >

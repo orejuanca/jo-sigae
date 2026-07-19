@@ -214,6 +214,7 @@ function GridTable({
                       fontSize: `${cell.fontSize}pt`,
                       fontWeight: cell.fontWeight,
                       fontStyle: cell.fontStyle,
+                      textDecoration: cell.textDecoration === 'underline' ? 'underline' : undefined,
                       textAlign: cell.textAlign,
                       verticalAlign: cell.verticalAlign,
                       color: cell.color || undefined,
@@ -1252,7 +1253,7 @@ export default function CertificacionesVisualPage() {
           ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
           : ''
         const text = imgTag || (content || '')
-        cellsHtml += `<td${csAttr}${rsAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
+        cellsHtml += `<td${csAttr}${rsAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }

@@ -21,6 +21,7 @@ export interface CellConfig {
   whiteSpace: 'normal' | 'nowrap' | 'pre'
   padding: string           // Default '1px 2px'
   fontStyle: 'normal' | 'italic'
+  textDecoration: 'none' | 'underline'
 }
 
 export interface GridRow {
@@ -41,7 +42,7 @@ export function emptyCell(overrides?: Partial<CellConfig>): CellConfig {
     textAlign: 'left', verticalAlign: 'middle',
     borderTop: true, borderRight: true, borderBottom: true, borderLeft: true,
     borderColor: '#000000', bgColor: '', color: '', whiteSpace: 'normal',
-    padding: '1px 2px', fontStyle: 'normal',
+    padding: '1px 2px', fontStyle: 'normal', textDecoration: 'none',
     ...overrides,
   }
 }

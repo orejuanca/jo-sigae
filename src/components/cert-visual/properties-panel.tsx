@@ -368,6 +368,12 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
                   onCheckedChange={(checked) => onUpdate({ fontStyle: checked ? 'italic' : 'normal' })}
                 />
               </FieldRow>
+              <FieldRow label="Subrayado:">
+                <Switch
+                  checked={cell.textDecoration === 'underline'}
+                  onCheckedChange={(checked) => onUpdate({ textDecoration: checked ? 'underline' : 'none' })}
+                />
+              </FieldRow>
               <FieldRow label="Alineación Horiz.:">
                 <Select
                   value={cell.textAlign}

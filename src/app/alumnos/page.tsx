@@ -91,11 +91,15 @@ export default function AlumnosPage() {
   const [formEstado, setFormEstado] = useState('')
   const [formMunicipio, setFormMunicipio] = useState('')
 
-  const [plan, setPlan] = useState('vigente')
+  const [plan, setPlan] = useState<'vigente' | 'derogado'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('jo-sigae-current-plan')
+      return stored === 'derogado' ? 'derogado' : 'vigente'
+    }
+    return 'vigente'
+  })
 
   useEffect(() => {
-    const p = localStorage.getItem('jo-sigae-current-plan')
-    if (p === 'derogado') setPlan('derogado')
     const handler = () => {
       const stored = localStorage.getItem('jo-sigae-current-plan')
       setPlan(stored === 'derogado' ? 'derogado' : 'vigente')

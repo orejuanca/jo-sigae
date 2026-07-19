@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, ReactNode } from 'react'
 
 const navVigente = [
@@ -52,8 +52,10 @@ function useCurrentPlan() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const plan = useCurrentPlan()
   const navItems = plan === 'derogado' ? navDerogado : navVigente
+  const showPlanLabel = pathname !== '/dashboard'
 
   useEffect(() => {
     if (!isAuthenticated) router.push('/')
@@ -67,6 +69,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="bg-gray-950 text-white px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold tracking-wide">JO-SIGAE</span>
+          {showPlanLabel && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${plan === 'derogado' ? 'bg-orange-500' : 'bg-green-600'} text-white`}>
+              PLAN {plan === 'derogado' ? 'DEROGADO' : 'VIGENTE'}
+            </span>
+          )}
         </div>
         <button
           onClick={logout}

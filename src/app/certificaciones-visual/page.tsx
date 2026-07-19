@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -481,12 +482,39 @@ export default function CertificacionesVisualPage() {
   const [savedLayouts, setSavedLayouts] = useState<SavedLayout[]>([])
   const [loadingLayouts, setLoadingLayouts] = useState(false)
   const [loadingLayout, setLoadingLayout] = useState(false)
+  const searchParams = useSearchParams()
 
-  // Load grid from localStorage on mount
+  // Load grid from localStorage on mount (or from ?layout= param)
   useEffect(() => {
-    setGridConfig(loadGridConfig())
-    setGridInitialized(true)
-  }, [])
+    const layoutId = searchParams.get('layout')
+    if (layoutId) {
+      // Load layout from DB
+      setLoadingLayout(true)
+      fetch(`/api/cert-layouts/${layoutId}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Layout no encontrado')
+          return res.json()
+        })
+        .then(layout => {
+          const parsed: GridConfig = typeof layout.datos === 'string'
+            ? JSON.parse(layout.datos) : layout.datos
+          if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) {
+            setGridConfig(patchDataBindings(parsed))
+            toast({ title: 'Layout cargado', description: `"${layout.nombre}"` })
+          }
+        })
+        .catch(() => {
+          setGridConfig(loadGridConfig())
+        })
+        .finally(() => {
+          setLoadingLayout(false)
+          setGridInitialized(true)
+        })
+    } else {
+      setGridConfig(loadGridConfig())
+      setGridInitialized(true)
+    }
+  }, [searchParams, toast])
 
   // Persist grid changes to localStorage (debounced auto-save)
   useEffect(() => {

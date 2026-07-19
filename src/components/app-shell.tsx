@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, ReactNode } from 'react'
 
 const navVigente = [
-  { href: '/dashboard', label: 'AGREGAR DATOS', bg: 'bg-emerald-600 hover:bg-emerald-500' },
+  { href: '/dashboard', label: 'AGREGAR DATOS', bg: 'bg-emerald-600 hover:bg-emerald-500', setPlan: 'vigente' },
   { href: '/certificaciones', label: 'EMG 31059', bg: 'bg-blue-600 hover:bg-blue-500' },
   { href: '/constancias', label: 'CONSTANCIA DE NOTAS', bg: 'bg-amber-600 hover:bg-amber-500' },
   { href: '/validar', label: 'VALIDAR NOTAS', bg: 'bg-purple-600 hover:bg-purple-500' },
@@ -20,7 +20,7 @@ const navVigente = [
 ]
 
 const navDerogado = [
-  { href: '/dashboard', label: 'AGREGAR ANTIGUOS', bg: 'bg-emerald-600 hover:bg-emerald-500' },
+  { href: '/dashboard', label: 'AGREGAR ANTIGUOS', bg: 'bg-emerald-600 hover:bg-emerald-500', setPlan: 'derogado' },
   { href: '/validar', label: 'VALIDAR NOTAS ANTI.', bg: 'bg-purple-600 hover:bg-purple-500' },
   { href: '/validar-titulo', label: 'III Etapa Basica', bg: 'bg-pink-600 hover:bg-pink-500' },
   { href: '/centros-escolares', label: 'CE', bg: 'bg-teal-600 hover:bg-teal-500' },
@@ -67,9 +67,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="bg-gray-950 text-white px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold tracking-wide">JO-SIGAE</span>
-          {plan === 'derogado' && (
-            <span className="text-[10px] bg-yellow-600 text-white px-2 py-0.5 rounded font-bold">PLAN DEROGADO</span>
-          )}
         </div>
         <button
           onClick={logout}
@@ -87,7 +84,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             {navItems.map(item => (
               <button
                 key={item.href + item.label}
-                onClick={() => router.push(item.href)}
+                onClick={() => {
+                  if (item.setPlan) {
+                    localStorage.setItem('jo-sigae-current-plan', item.setPlan)
+                    window.dispatchEvent(new Event('plan-changed'))
+                  }
+                  router.push(item.href)
+                }}
                 className={`${item.bg} text-white text-[11px] font-bold px-3 py-2 rounded transition shadow-sm`}
               >
                 {item.label}
@@ -100,7 +103,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             {navItems.map(item => (
               <button
                 key={item.href + item.label}
-                onClick={() => router.push(item.href)}
+                onClick={() => {
+                  if (item.setPlan) {
+                    localStorage.setItem('jo-sigae-current-plan', item.setPlan)
+                    window.dispatchEvent(new Event('plan-changed'))
+                  }
+                  router.push(item.href)
+                }}
                 className={`${item.bg} text-white text-[10px] font-bold px-2 py-2 rounded transition shadow-sm text-center`}
               >
                 {item.label}

@@ -667,7 +667,13 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 export default function DashboardPage() {
-  const [plan, setPlan] = useState<'vigente' | 'derogado'>('vigente')
+  const [plan, setPlan] = useState<'vigente' | 'derogado'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('jo-sigae-current-plan')
+      return stored === 'derogado' ? 'derogado' : 'vigente'
+    }
+    return 'vigente'
+  })
   const handleSwitch = () => {
     const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'
     setPlan(newPlan)

@@ -1,12 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 
-// ─── Base de datos única (Postgres / Neon) ───
-// Ambos planes (vigente y derogado) comparten la misma BD.
-// La separación de datos se hace mediante el campo `plan` en cada registro.
+// ─── Dos bases de datos independientes ───
+// BD (DATABASE_URL) → Plan Vigente
+// BD2 (DATABASE_URL_2) → Plan Derogado
 
-const globalForDb = globalThis as unknown as { db: PrismaClient | undefined }
+const globalForDb = globalThis as unknown as {
+  dbVigente: PrismaClient | undefined
+  dbDerogado: PrismaClient | undefined
+}
 
-/** Asegura que la URL tenga parámetros SSL necesarios para Vercel Postgres */
+/** Asegura que la URL tenga sslmode=require */
 function ensureSSL(url: string): string {
   if (!url) return url
   if (!url.includes('sslmode')) {
@@ -15,20 +18,31 @@ function ensureSSL(url: string): string {
   return url
 }
 
-/** Prisma client único — conecta a la BD principal */
-export const db =
-  globalForDb.db ??
+/** Prisma client para BD (Plan Vigente) */
+export const dbVigente =
+  globalForDb.dbVigente ??
   new PrismaClient({
     datasources: { db: { url: ensureSSL(process.env.DATABASE_URL || '') } }
   })
 
-if (process.env.NODE_ENV !== 'production') globalForDb.db = db
+if (process.env.NODE_ENV !== 'production') globalForDb.dbVigente = dbVigente
+
+/** Prisma client para BD2 (Plan Derogado) */
+export const dbDerogado =
+  globalForDb.dbDerogado ??
+  new PrismaClient({
+    datasources: {
+      db: { url: ensureSSL(process.env.DATABASE_URL_2 || process.env.DATABASE_URL || '') }
+    }
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForDb.dbDerogado = dbDerogado
 
 /**
- * Obtiene el Prisma client.
- * Ambos planes usan la misma BD; la separación se hace
- * filtrando por el campo `plan` en las consultas.
+ * Obtiene el Prisma client correspondiente al plan.
+ * - "vigente"  → BD  (DATABASE_URL)
+ * - "derogado" → BD2 (DATABASE_URL_2)
  */
-export function getDb(_plan: string): PrismaClient {
-  return db
+export function getDb(plan: string): PrismaClient {
+  return plan === 'derogado' ? dbDerogado : dbVigente
 }

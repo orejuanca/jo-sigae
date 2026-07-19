@@ -120,15 +120,9 @@ export default function AlumnosPage() {
     }
   }
 
-  // Setup BD2 tables y luego cargar alumnos (solo al cambiar plan)
+  // Cargar alumnos al cambiar de plan
   useEffect(() => {
-    const load = async () => {
-      if (plan === 'derogado') {
-        await fetch('/api/setup-db2', { method: 'POST' }).catch(() => {})
-      }
-      fetchStudents()
-    }
-    load()
+    fetchStudents()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plan])
 

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -184,6 +185,7 @@ const emptyCertData = (planTipo?: string): CertData => {
 // === MAIN COMPONENT ===
 
 export default function CertificacionesPage() {
+  const plan = useCurrentPlan()
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certifications, setCertifications] = useState<Certification[]>([])
   const [previewCert, setPreviewCert] = useState<Certification | null>(null)
@@ -206,7 +208,7 @@ export default function CertificacionesPage() {
   const fetchCertifications = async (studentId: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/certifications/${studentId}`)
+      const res = await fetch(`/api/certifications/${studentId}?plan=${plan}`)
       if (!res.ok) { setCertifications([]); return }
       const data = await res.json()
       setCertifications(Array.isArray(data) ? data.filter((c: Certification) => c.tipo === 'CERTIFICACION_CALIFICACIONES') : [])
@@ -219,7 +221,7 @@ export default function CertificacionesPage() {
     setLoadingData(true)
     setDataLoaded(false)
     try {
-      const res = await fetch(`/api/students/${student.id}/cert-data`)
+      const res = await fetch(`/api/students/${student.id}/cert-data?plan=${plan}`)
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
         console.error('cert-data API error:', res.status, errorData)
@@ -384,7 +386,7 @@ export default function CertificacionesPage() {
       const res = await fetch('/api/certifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'CERTIFICACION_CALIFICACIONES', studentId: selectedStudent.id, datos: certData }),
+        body: JSON.stringify({ tipo: 'CERTIFICACION_CALIFICACIONES', studentId: selectedStudent.id, datos: certData, plan }),
       })
       if (!res.ok) throw new Error('Error al generar')
       const cert = await res.json()
@@ -425,7 +427,7 @@ export default function CertificacionesPage() {
     setSavingTab(tabName)
     setLastSavedTab(null)
     try {
-      const res = await fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+      const res = await fetch(`/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datos: certData }),
@@ -443,7 +445,7 @@ export default function CertificacionesPage() {
   // Cargar borrador guardado previamente
   const loadDraft = async (studentId: string): Promise<CertData | null> => {
     try {
-      const res = await fetch(`/api/students/${studentId}/cert-draft`)
+      const res = await fetch(`/api/students/${studentId}/cert-draft?plan=${plan}`)
       if (!res.ok) return null
       const { draft } = await res.json()
       if (!draft) return null
@@ -619,7 +621,7 @@ export default function CertificacionesPage() {
             <CardTitle className="text-base">Buscar Alumno</CardTitle>
           </CardHeader>
           <CardContent>
-            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cédula, apellidos o nombres (BD y BD2)..." />
+            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cédula, apellidos o nombres..." plan={plan} />
           </CardContent>
         </Card>
 

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -441,6 +442,7 @@ function SavedLayoutsDialog({
 
 // === Main Page Component ===
 export default function CertificacionesVisualPage() {
+  const plan = useCurrentPlan()
   const { toast } = useToast()
 
   // Grid state
@@ -530,7 +532,7 @@ export default function CertificacionesVisualPage() {
     setDraftOverrides({})
     setLoadingData(true)
     try {
-      const res = await fetch(`/api/students/${student.id}/cert-data`)
+      const res = await fetch(`/api/students/${student.id}/cert-data?plan=${plan}`)
       if (!res.ok) {
         toast({ title: 'Sin datos', description: `No se encontraron datos de calificaciones para ${student.cedula}.`, variant: 'destructive' })
         setLoadingData(false)
@@ -540,7 +542,7 @@ export default function CertificacionesVisualPage() {
       if (result.certData) {
         // Load draft overrides if they exist
         try {
-          const draftRes = await fetch(`/api/students/${student.id}/cert-draft`)
+          const draftRes = await fetch(`/api/students/${student.id}/cert-draft?plan=${plan}`)
           if (draftRes.ok) {
             const draftData = await draftRes.json()
             if (draftData.draft?.overrides) {
@@ -596,7 +598,7 @@ export default function CertificacionesVisualPage() {
     if (selectedStudent) {
       const updated = { ...draftOverrides, [binding]: newValue }
       setSavingDraft(true)
-      fetch(`/api/students/${selectedStudent.id}/cert-draft`, {
+      fetch(`/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datos: { overrides: updated } }),
@@ -1471,6 +1473,7 @@ img{max-width:100%;height:auto}
                 <StudentSearch
                   onSelect={handleSelectStudent}
                   placeholder="Buscar alumno por cédula, apellidos o nombres..."
+                  plan={plan}
                 />
               </div>
               {selectedStudent && (

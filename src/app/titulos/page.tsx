@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,7 @@ interface Student {
 }
 
 export default function TitulosPage() {
+  const plan = useCurrentPlan()
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [grado, setGrado] = useState('5to Año')
   const [tituloObtenido, setTituloObtenido] = useState('Tecnico Medio en Ciencias')
@@ -71,7 +73,7 @@ export default function TitulosPage() {
       const res = await fetch('/api/certifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'TITULO', studentId: selectedStudent.id, datos }),
+        body: JSON.stringify({ tipo: 'TITULO', studentId: selectedStudent.id, datos, plan }),
       })
 
       if (!res.ok) throw new Error('Error al generar')
@@ -97,7 +99,7 @@ export default function TitulosPage() {
             <CardTitle className="text-base">Buscar Alumno</CardTitle>
           </CardHeader>
           <CardContent>
-            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cedula, apellidos o nombres..." />
+            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cedula, apellidos o nombres..." plan={plan} />
           </CardContent>
         </Card>
 

@@ -21,9 +21,10 @@ interface StudentSearchProps {
   onSelect: (student: Student) => void
   placeholder?: string
   autoFocus?: boolean
+  plan?: string
 }
 
-export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, apellidos o nombres...', autoFocus = false }: StudentSearchProps) {
+export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, apellidos o nombres...', autoFocus = false, plan }: StudentSearchProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Student[]>([])
   const [loading, setLoading] = useState(false)
@@ -52,7 +53,8 @@ export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, ape
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q)}&limit=10`)
+      const planParam = plan ? `&plan=${plan}` : ''
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q)}&limit=10${planParam}`)
       const data = await res.json()
       setResults(data.students || [])
       setIsOpen(true)

@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useRef, useMemo } from 'react'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -175,6 +176,7 @@ function getNotaBgClass(value: string): string {
 
 // ── Page Component ─────────────────────────────────────────────────────
 export default function BoletasPage() {
+  const plan = useCurrentPlan()
   const [anioEscolar, setAnioEscolar] = useState('2025-2026')
   const [grado, setGrado] = useState('1')
   const [seccion, setSeccion] = useState('A')
@@ -234,7 +236,7 @@ export default function BoletasPage() {
     setLoading(true)
     setSearched(true)
     try {
-      const params = new URLSearchParams({ anioEscolar, grado, seccion })
+      const params = new URLSearchParams({ anioEscolar, grado, seccion, plan })
       const res = await fetch(`/api/boletas?${params}`)
       if (!res.ok) throw new Error('Error en la búsqueda')
       const data = await res.json()
@@ -335,7 +337,7 @@ export default function BoletasPage() {
         }
         extrasPayload.push({ studentId: student.id, ...(extrasMap[student.id] || EXTRAS_DEFAULT) })
       }
-      const res = await fetch('/api/boletas', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ anioEscolar, grado, seccion, notas: notasPayload, extras: extrasPayload }) })
+      const res = await fetch('/api/boletas', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ anioEscolar, grado, seccion, notas: notasPayload, extras: extrasPayload, plan }) })
       if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Error al guardar') }
       toast({ title: 'Notas Guardadas', description: `Se guardaron las notas de ${students.length} alumno(s) correctamente.` })
     } catch (e: unknown) {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -65,6 +66,7 @@ const tipoColors: Record<string, string> = {
 }
 
 export default function ValidarPage() {
+  const plan = useCurrentPlan()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certifications, setCertifications] = useState<Certification[]>([])
@@ -80,7 +82,7 @@ export default function ValidarPage() {
   const loadCertifications = async (studentId: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/certifications/${studentId}`)
+      const res = await fetch(`/api/certifications/${studentId}?plan=${plan}`)
       if (!res.ok) {
         console.error('Error loading certifications:', res.status)
         setCertifications([])
@@ -137,7 +139,7 @@ export default function ValidarPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar por cédula, apellidos o nombres..." />
+            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar por cédula, apellidos o nombres..." plan={plan} />
           </CardContent>
         </Card>
 

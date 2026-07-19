@@ -62,7 +62,9 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { anioEscolar, grado, seccion, notas, extras } = body
+    const { anioEscolar, grado, seccion, notas, extras, plan: bodyPlan } = body
+    const plan = bodyPlan || 'vigente'
+    const db = getDb(plan)
 
     if (!anioEscolar || !grado || !notas || !Array.isArray(notas)) {
       return NextResponse.json(

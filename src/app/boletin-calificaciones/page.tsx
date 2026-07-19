@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -542,6 +543,7 @@ function BoletinContent({
 
 // ── Search Wrapper Component ────────────────────────────────────────────
 function BoletinCalificacionesSearch() {
+  const plan = useCurrentPlan()
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
@@ -570,7 +572,7 @@ function BoletinCalificacionesSearch() {
   const loadData = useCallback(async (anio: string, grd: string, sec: string, studentId?: string) => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ anioEscolar: anio, grado: grd, seccion: sec })
+      const params = new URLSearchParams({ anioEscolar: anio, grado: grd, seccion: sec, plan })
       const res = await fetch(`/api/boletas?${params}`)
       if (!res.ok) throw new Error('Error en la búsqueda')
       const data = await res.json()

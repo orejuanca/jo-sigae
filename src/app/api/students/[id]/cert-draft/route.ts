@@ -36,6 +36,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+  const db = getDb(plan)
   const body = await request.json()
   const { datos } = body
 

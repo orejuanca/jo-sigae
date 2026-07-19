@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AppShell } from '@/components/app-shell'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StudentSearch } from '@/components/student-search'
@@ -30,6 +31,7 @@ interface Certification {
 }
 
 export default function ConstanciasPage() {
+  const plan = useCurrentPlan()
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certifications, setCertifications] = useState<Certification[]>([])
   const [previewCert, setPreviewCert] = useState<Certification | null>(null)
@@ -40,7 +42,7 @@ export default function ConstanciasPage() {
   const fetchCertifications = async (studentId: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/certifications/${studentId}`)
+      const res = await fetch(`/api/certifications/${studentId}?plan=${plan}`)
       if (!res.ok) { setCertifications([]); return }
       const data = await res.json()
       const all = Array.isArray(data) ? data : []
@@ -83,7 +85,7 @@ export default function ConstanciasPage() {
       const res = await fetch('/api/certifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'CONSTANCIA', studentId: selectedStudent.id, datos }),
+        body: JSON.stringify({ tipo: 'CONSTANCIA', studentId: selectedStudent.id, datos, plan }),
       })
 
       if (!res.ok) throw new Error('Error al generar')
@@ -116,7 +118,7 @@ export default function ConstanciasPage() {
             <CardTitle className="text-base">Buscar Alumno</CardTitle>
           </CardHeader>
           <CardContent>
-            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cedula, apellidos o nombres..." />
+            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cedula, apellidos o nombres..." plan={plan} />
           </CardContent>
         </Card>
 

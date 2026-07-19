@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db-helper';
 
 // Subject names by grade level
 const MATERIAS = [
@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
+    const plan = searchParams.get('plan') || 'vigente';
+    const db = getDb(plan);
 
     if (!studentId) {
       return NextResponse.json({ error: 'ID de alumno requerido' }, { status: 400 });

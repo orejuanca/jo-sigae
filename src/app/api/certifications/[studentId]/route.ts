@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
-// GET /api/certifications/[studentId]
+// GET /api/certifications/[studentId]?plan=vigente
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> }
 ) {
   try {
     const { studentId } = await params
-    const certifications = await prisma.certification.findMany({
+    const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+    const certifications = await db.certification.findMany({
       where: { studentId },
       orderBy: { fechaEmision: 'desc' },
     })

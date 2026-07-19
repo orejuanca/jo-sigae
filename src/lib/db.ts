@@ -1,11 +1,3 @@
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as {
-  db: PrismaClient | undefined
-}
-
-export const db =
-  globalForPrisma.db ??
-  new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.db = db
+// Re-exportar la BD vigente como `db` para compatibilidad
+// con rutas que no necesitan selección de plan (CE, layouts, etc.)
+export { dbVigente as db } from './db-helper'

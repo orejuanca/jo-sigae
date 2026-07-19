@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
 // GET — Cargar el borrador de certificación del estudiante
 export async function GET(
@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const student = await prisma.student.findUnique({
+  const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+  const db = getDb(plan)
+  const student = await db.student.findUnique({
     where: { id },
     select: { certDraft: true },
   })
@@ -42,7 +44,7 @@ export async function PUT(
   }
 
   try {
-    const student = await prisma.student.update({
+    const student = await db.student.update({
       where: { id },
       data: {
         certDraft: typeof datos === 'string' ? datos : JSON.stringify(datos),

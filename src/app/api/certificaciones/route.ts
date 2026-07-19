@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db-helper';
 
 // POST /api/certificaciones — generate a certification document
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { studentId, observaciones } = body;
+    const { studentId, observaciones, plan: bodyPlan } = body;
+    const plan = bodyPlan || 'vigente';
+    const db = getDb(plan);
 
     if (!studentId) {
       return NextResponse.json({ error: 'ID de alumno requerido' }, { status: 400 });

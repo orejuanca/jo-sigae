@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db-helper';
 
 const SCHOOL_DATA = {
   codigo: 'OD16751520',
@@ -14,7 +14,9 @@ const SCHOOL_DATA = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { studentId, grado, anioEscolar } = body;
+    const { studentId, grado, anioEscolar, plan: bodyPlan } = body;
+    const plan = bodyPlan || 'vigente';
+    const db = getDb(plan);
 
     if (!studentId) {
       return NextResponse.json({ error: 'ID de alumno requerido' }, { status: 400 });

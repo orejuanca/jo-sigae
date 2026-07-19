@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
 // GET /api/boletas?anioEscolar=2024-2025&grado=2&seccion=A
 export async function GET(request: NextRequest) {
@@ -8,13 +8,15 @@ export async function GET(request: NextRequest) {
     const anioEscolar = searchParams.get('anioEscolar') || ''
     const grado = searchParams.get('grado') || ''
     const seccion = searchParams.get('seccion') || ''
+    const plan = searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
 
     if (!anioEscolar || !grado) {
       return NextResponse.json({ students: [], materias: [] })
     }
 
     // Fetch students with boletaNotas and boletaExtras, ordered by cedula -> seccion -> apellidos
-    const studentsWithNotas = await prisma.student.findMany({
+    const studentsWithNotas = await db.student.findMany({
       where: {
         boletaNotas: {
           some: {
@@ -75,7 +77,7 @@ export async function PUT(request: NextRequest) {
       const { studentId, materia, lapso1, lapso2, lapso3, revision } = nota
       if (!studentId || !materia) continue
 
-      const upserted = await prisma.boletaNota.upsert({
+      const upserted = await db.boletaNota.upsert({
         where: {
           studentId_anioEscolar_grado_seccion_materia: {
             studentId,
@@ -121,7 +123,7 @@ export async function PUT(request: NextRequest) {
         } = extra
         if (!studentId) continue
 
-        await prisma.boletaExtra.upsert({
+        await db.boletaExtra.upsert({
           where: {
             studentId_anioEscolar_grado_seccion: {
               studentId,

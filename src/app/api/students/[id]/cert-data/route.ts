@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 import { parseCertData, parsedToCertData } from '@/lib/parse-rawdata'
 
 // GET /api/students/[id]/cert-data — Retorna datos de certificación parseados del rawData del estudiante
@@ -9,7 +9,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const student = await prisma.student.findUnique({
+    const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+    const student = await db.student.findUnique({
       where: { id },
     })
 

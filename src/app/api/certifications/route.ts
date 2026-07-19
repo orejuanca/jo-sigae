@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
-// GET /api/certifications
+// GET /api/certifications?plan=vigente&tipo=...
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const tipo = searchParams.get('tipo') || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+    const plan = searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
 
     const where = tipo ? { tipo } : {}
 
     const [certifications, total] = await Promise.all([
-      prisma.certification.findMany({
+      db.certification.findMany({
         where,
         include: { student: true },
         take: limit,
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
           { student: { apellidos: 'asc' } },
         ],
       }),
-      prisma.certification.count({ where }),
+      db.certification.count({ where }),
     ])
 
     return NextResponse.json({
@@ -44,7 +46,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { tipo, studentId, datos, numero } = body
+    const { tipo, studentId, datos, numero, plan: bodyPlan } = body
+    const plan = bodyPlan || 'vigente'
+    const db = getDb(plan)
 
     if (!tipo || !studentId) {
       return NextResponse.json(
@@ -54,10 +58,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate sequential number
-    const count = await prisma.certification.count({ where: { tipo } })
+    const count = await db.certification.count({ where: { tipo } })
     const certNumero = numero || `${tipo.substring(0, 3).toUpperCase()}-${String(count + 1).padStart(6, '0')}`
 
-    const certification = await prisma.certification.create({
+    const certification = await db.certification.create({
       data: {
         tipo,
         studentId,

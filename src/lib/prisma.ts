@@ -1,9 +1,3 @@
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
-
-export const prisma = globalForPrisma.prisma || new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-
-export default prisma
+// Re-exportar la BD vigente como `prisma` para compatibilidad
+export { dbVigente as prisma } from './db-helper'
+export { dbVigente as default } from './db-helper'

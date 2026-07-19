@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db-helper';
 
 // School data for the exit certificate
 const SCHOOL_DATA = {
@@ -15,7 +15,9 @@ const SCHOOL_DATA = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { studentId, fechaEgreso, razon } = body;
+    const { studentId, fechaEgreso, razon, plan: bodyPlan } = body;
+    const plan = bodyPlan || 'vigente';
+    const db = getDb(plan);
 
     if (!studentId) {
       return NextResponse.json({ error: 'ID de alumno requerido' }, { status: 400 });

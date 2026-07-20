@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
-// GET /api/cert-layouts/[id] — Obtener un layout completo por ID
+// GET /api/cert-layouts/[id]?plan=derogado
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    const layout = await prisma.certLayout.findUnique({
+    const { searchParams } = new URL(request.url)
+    const plan = searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+
+    const layout = await db.certLayout.findUnique({
       where: { id },
     })
 
@@ -26,14 +30,18 @@ export async function GET(
   }
 }
 
-// DELETE /api/cert-layouts/[id] — Eliminar (soft-delete) un layout
+// DELETE /api/cert-layouts/[id]?plan=derogado
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    await prisma.certLayout.update({
+    const { searchParams } = new URL(request.url)
+    const plan = searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+
+    await db.certLayout.update({
       where: { id },
       data: { activo: false },
     })

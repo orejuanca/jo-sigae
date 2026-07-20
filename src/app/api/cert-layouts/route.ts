@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getDb } from '@/lib/db-helper'
 
-// GET /api/cert-layouts — Listar todos los layouts guardados
-export async function GET() {
+// GET /api/cert-layouts?plan=derogado — Listar layouts del plan indicado
+export async function GET(request: NextRequest) {
   try {
-    const layouts = await prisma.certLayout.findMany({
+    const { searchParams } = new URL(request.url)
+    const plan = searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+
+    const layouts = await db.certLayout.findMany({
       where: { activo: true },
       orderBy: { updatedAt: 'desc' },
       select: {
@@ -21,9 +25,13 @@ export async function GET() {
   }
 }
 
-// POST /api/cert-layouts — Crear un nuevo layout
+// POST /api/cert-layouts?plan=derogado — Crear layout en el plan indicado
 export async function POST(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const plan = searchParams.get('plan') || 'vigente'
+    const db = getDb(plan)
+
     const body = await request.json()
     const { nombre, datos } = body
 
@@ -40,7 +48,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const layout = await prisma.certLayout.create({
+    const layout = await db.certLayout.create({
       data: {
         nombre: nombre.trim(),
         datos: typeof datos === 'string' ? datos : JSON.stringify(datos),

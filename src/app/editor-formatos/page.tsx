@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import {
   FolderOpen, Trash2, Eye, Upload, Loader2, Plus, FileText,
   Clock, CalendarDays,
@@ -31,6 +32,7 @@ interface SavedLayout {
 export default function EditorFormatosPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const plan = useCurrentPlan()
   const [layouts, setLayouts] = useState<SavedLayout[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -38,7 +40,7 @@ export default function EditorFormatosPage() {
   const loadLayouts = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/cert-layouts')
+      const res = await fetch(`/api/cert-layouts?plan=${plan}`)
       if (res.ok) {
         const data = await res.json()
         setLayouts(data)
@@ -53,13 +55,13 @@ export default function EditorFormatosPage() {
   useEffect(() => { loadLayouts() }, [])
 
   const handleOpenInEditor = (id: string) => {
-    router.push(`/certificaciones-visual?layout=${id}`)
+    router.push(`/certificaciones-visual?layout=${id}&plan=${plan}`)
   }
 
   const handleDelete = async () => {
     if (!deleteId) return
     try {
-      const res = await fetch(`/api/cert-layouts/${deleteId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/cert-layouts/${deleteId}?plan=${plan}`, { method: 'DELETE' })
       if (res.ok) {
         setLayouts(prev => prev.filter(l => l.id !== deleteId))
         toast({ title: 'Layout eliminado' })

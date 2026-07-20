@@ -92,81 +92,8 @@ function generateCalifBindings() {
   return groups
 }
 
-export const DATA_BINDINGS = [
-  { group: 'Estudiante', bindings: [
-    { value: 'student.cedula', label: 'Cédula de Identidad' },
-    { value: 'student.apellidos', label: 'Apellidos' },
-    { value: 'student.nombres', label: 'Nombres' },
-    { value: 'student.fechaNacimiento', label: 'Fecha de Nacimiento' },
-    { value: 'student.pais', label: 'País de Nacimiento' },
-    { value: 'student.estado', label: 'Estado de Nacimiento' },
-    { value: 'student.municipio', label: 'Municipio de Nacimiento' },
-  ]},
-  { group: 'Institución (Escuela)', bindings: [
-    { value: 'school.codigo', label: 'Código OD' },
-    { value: 'school.denominacion', label: 'Denominación' },
-    { value: 'school.direccion', label: 'Dirección' },
-    { value: 'school.telefono', label: 'Teléfono' },
-    { value: 'school.municipio', label: 'Municipio' },
-    { value: 'school.estado', label: 'Estado' },
-    { value: 'school.cdcce', label: 'CDCEE' },
-  ]},
-  { group: 'Documento', bindings: [
-    { value: 'doc.planEstudio', label: 'Plan de Estudio' },
-    { value: 'doc.codigo', label: 'Código Plan' },
-    { value: 'doc.lugar', label: 'Lugar' },
-    { value: 'doc.fechaExpedicion', label: 'Fecha de Expedición' },
-    { value: 'doc.observaciones', label: 'Observaciones (completo)' },
-    { value: 'doc.promedioAcumulado', label: 'Promedio Acumulado' },
-    { value: 'doc.acta', label: 'Acta' },
-    { value: 'doc.actaFecha', label: 'Acta — Fecha' },
-    { value: 'doc.actaAnio', label: 'Acta — Año' },
-  ]},
-  { group: 'Observaciones Certificación (OBS.CERT)', bindings: [
-    { value: 'obsCert.0', label: 'OBS.CERT.L1 — Línea 1' },
-    { value: 'obsCert.1', label: 'OBS.CERT.L2 — Línea 2' },
-    { value: 'obsCert.2', label: 'OBS.CERT.L3 — Línea 3' },
-    { value: 'obsCert.3', label: 'OBS.CERT.L4 — Línea 4' },
-  ]},
-  { group: 'Literales Finales', bindings: [
-    { value: 'doc.literalFinal.0', label: 'Literal Final — 1° Año' },
-    { value: 'doc.literalFinal.1', label: 'Literal Final — 2° Año' },
-    { value: 'doc.literalFinal.2', label: 'Literal Final — 3° Año' },
-    { value: 'doc.literalFinal.3', label: 'Literal Final — 4° Año' },
-    { value: 'doc.literalFinal.4', label: 'Literal Final — 5° Año' },
-  ]},
-  { group: 'Director', bindings: [
-    { value: 'director.nombre', label: 'Nombre del Director' },
-    { value: 'director.cedula', label: 'Cédula del Director' },
-  ]},
-  { group: 'Director CDCEE', bindings: [
-    { value: 'cdcee.nombre', label: 'Nombre Director CDCEE' },
-    { value: 'cdcee.cedula', label: 'Cédula Director CDCEE' },
-  ]},
-  { group: 'Instituciones Educativas', bindings: [
-    ...[0,1,2,3,4].flatMap(i => [
-      { value: `inst.${i}.denominacion`, label: `Institución ${i+1} — Denominación` },
-      { value: `inst.${i}.localidad`, label: `Institución ${i+1} — Localidad` },
-      { value: `inst.${i}.ef`, label: `Institución ${i+1} — E.F.` },
-    ])
-  ]},
-  // Calificaciones por año — generadas dinámicamente
-  ...generateCalifBindings(),
-  // Orientación y Convivencia
-  { group: 'Orientación y Convivencia', bindings: [
-    ...[0,1,2,3,4].flatMap(i => [
-      { value: `orient.${i}.anio`, label: `${YEAR_SHORT[i]} Año — Año Escolar` },
-      { value: `orient.${i}.literal`, label: `${YEAR_SHORT[i]} Año — Literal` },
-    ])
-  ]},
-  // Grupos de Creación/Recreación
-  { group: 'Grupos (Creación/Recreación)', bindings: [
-    ...[0,1,2,3,4].flatMap(i => [
-      { value: `grupo.${i}.anio`, label: `${YEAR_SHORT[i]} Año — Año Escolar` },
-      { value: `grupo.${i}.grupo`, label: `${YEAR_SHORT[i]} Año — Nombre Grupo` },
-      { value: `grupo.${i}.literal`, label: `${YEAR_SHORT[i]} Año — Literal` },
-    ])
-  ]},
+export const DATA_BINDINGS: { group: string; bindings: { value: string; label: string }[] }[] = [
+  // Catálogo vacío — se llenará con los campos del plan correspondiente cuando se definan
 ]
 
 // === Display Data Interface (for preview) ===

@@ -493,7 +493,7 @@ export default function CertificacionesVisualPage() {
     if (layoutId) {
       // Load layout from DB
       setLoadingLayout(true)
-      fetch(`/api/cert-layouts/${layoutId}`)
+      fetch(`/api/cert-layouts/${layoutId}?plan=${plan}`)
         .then(res => {
           if (!res.ok) throw new Error('Layout no encontrado')
           return res.json()
@@ -1115,7 +1115,7 @@ export default function CertificacionesVisualPage() {
 
     setSaving(true)
     try {
-      const res = await fetch('/api/cert-layouts', {
+      const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1147,7 +1147,7 @@ export default function CertificacionesVisualPage() {
     setShowLayoutsDialog(true)
     setLoadingLayouts(true)
     try {
-      const res = await fetch('/api/cert-layouts')
+      const res = await fetch(`/api/cert-layouts?plan=${plan}`)
       if (res.ok) {
         const data = await res.json()
         setSavedLayouts(data)
@@ -1162,7 +1162,7 @@ export default function CertificacionesVisualPage() {
   const handleLoadLayoutFromDB = async (id: string) => {
     setLoadingLayout(true)
     try {
-      const res = await fetch(`/api/cert-layouts/${id}`)
+      const res = await fetch(`/api/cert-layouts/${id}?plan=${plan}`)
       if (!res.ok) {
         throw new Error('Layout no encontrado')
       }
@@ -1189,7 +1189,7 @@ export default function CertificacionesVisualPage() {
 
   const handleDeleteLayout = async (id: string) => {
     try {
-      const res = await fetch(`/api/cert-layouts/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/cert-layouts/${id}?plan=${plan}`, { method: 'DELETE' })
       if (res.ok) {
         setSavedLayouts((prev) => prev.filter((l) => l.id !== id))
         toast({ title: 'Layout eliminado' })

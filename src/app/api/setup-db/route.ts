@@ -1,35 +1,30 @@
 import { NextResponse } from 'next/server'
 import { dbVigente, dbDerogado } from '@/lib/db-helper'
 
-// Crear tabla DashboardState si no existe en ambas BD
-const CREATE_TABLE_SQL = `
-CREATE TABLE IF NOT EXISTS "DashboardState" (
+const SQL_1 = `CREATE TABLE IF NOT EXISTS "DashboardState" (
   "id" TEXT NOT NULL,
   "plan" TEXT NOT NULL,
   "datos" TEXT NOT NULL,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "DashboardState_pkey" PRIMARY KEY ("id")
-);
-CREATE UNIQUE INDEX IF NOT EXISTS "DashboardState_plan_key" ON "DashboardState"("plan");
-`
+)`
+
+const SQL_2 = `CREATE UNIQUE INDEX IF NOT EXISTS "DashboardState_plan_key" ON "DashboardState"("plan")`
+
+async function setupDb(db: any, name: string): Promise<string> {
+  try {
+    await db.$executeRawUnsafe(SQL_1)
+    await db.$executeRawUnsafe(SQL_2)
+    return 'OK'
+  } catch (e: unknown) {
+    return `ERROR: ${e instanceof Error ? e.message : 'unknown'}`
+  }
+}
 
 export async function GET() {
   const results: Record<string, string> = {}
-
-  try {
-    await dbVigente.$executeRawUnsafe(CREATE_TABLE_SQL)
-    results.vigente = 'OK'
-  } catch (e: unknown) {
-    results.vigente = `ERROR: ${e instanceof Error ? e.message : 'unknown'}`
-  }
-
-  try {
-    await dbDerogado.$executeRawUnsafe(CREATE_TABLE_SQL)
-    results.derogado = 'OK'
-  } catch (e: unknown) {
-    results.derogado = `ERROR: ${e instanceof Error ? e.message : 'unknown'}`
-  }
-
+  results.vigente = await setupDb(dbVigente, 'vigente')
+  results.derogado = await setupDb(dbDerogado, 'derogado')
   return NextResponse.json({ message: 'Tablas DashboardState creadas', results })
 }

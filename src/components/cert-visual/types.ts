@@ -57,42 +57,6 @@ export function emptyRow(totalCols: number): GridRow {
   return { cells }
 }
 
-// === Data Bindings for Dropdown ===
-
-const YEAR_NAMES = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
-const YEAR_SHORT = ['1°', '2°', '3°', '4°', '5°']
-const MATERIAS_VIGENTE: Record<number, string[]> = {
-  1: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Arte y Patrimonio', 'Ciencias Naturales', 'Geografía, Historia y Ciudadanía'],
-  2: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Arte y Patrimonio', 'Ciencias Naturales', 'Geografía, Historia y Ciudadanía'],
-  3: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Geografía, Historia y Ciudadanía', 'Formación Soberanía Nacional'],
-  4: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Geografía, Historia y Ciudadanía', 'Formación Soberanía Nacional'],
-  5: ['Castellano', 'Inglés', 'Matemáticas', 'Educación Física', 'Física', 'Química', 'Biología', 'Ciencias de la Tierra', 'Geografía, Historia y Ciudadanía', 'Formación Soberanía Nacional'],
-}
-
-// Generar bindings de calificaciones por año
-function generateCalifBindings() {
-  const groups: { group: string; bindings: { value: string; label: string }[] }[] = []
-  for (let y = 1; y <= 5; y++) {
-    const materias = MATERIAS_VIGENTE[y] || []
-    const bindings: { value: string; label: string }[] = []
-    for (let s = 0; s < materias.length; s++) {
-      const nombre = materias[s]
-      bindings.push(
-        { value: `calif.${y}.${s}.materia`, label: `${s + 1}. ${nombre}` },
-        { value: `calif.${y}.${s}.nota`, label: `${s + 1}. ${nombre} — Nota` },
-        { value: `calif.${y}.${s}.literal`, label: `${s + 1}. ${nombre} — Literal` },
-        { value: `calif.${y}.${s}.te`, label: `${s + 1}. ${nombre} — T-E` },
-        { value: `calif.${y}.${s}.mes`, label: `${s + 1}. ${nombre} — Mes` },
-        { value: `calif.${y}.${s}.anio`, label: `${s + 1}. ${nombre} — Año` },
-        { value: `calif.${y}.${s}.inst`, label: `${s + 1}. ${nombre} — Inst. Educ.` },
-        { value: `calif.${y}.${s}.numero`, label: `${s + 1}. ${nombre} — N°` },
-      )
-    }
-    groups.push({ group: `Calificaciones — ${YEAR_NAMES[y - 1]}`, bindings })
-  }
-  return groups
-}
-
 export function getDataBindings(plan: string): { group: string; bindings: { value: string; label: string }[] }[] {
   return plan === 'derogado' ? DATA_BINDINGS_DEROGADO : DATA_BINDINGS_VIGENTE
 }

@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Settings2, ChevronDown, Search, Check } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CellConfig } from './types'
 import { getDataBindings } from './types'
 
@@ -124,6 +124,10 @@ function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: stri
   const effectiveIsDirect = dataBinding !== '' && !isCatalogBinding(dataBinding, plan)
   const effectiveMode = !dataBinding ? 'none' : effectiveIsDirect ? 'direct' : 'catalog'
 
+  useEffect(() => {
+    setMode(effectiveMode)
+  }, [effectiveMode])
+
   const handleModeChange = (newMode: 'none' | 'catalog' | 'direct') => {
     setMode(newMode)
     if (newMode === 'none') {
@@ -145,7 +149,7 @@ function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: stri
     onUpdate({ dataBinding: v })
   }
 
-  const currentMode = effectiveMode
+  const currentMode = mode
 
   return (
     <div className="space-y-2.5">

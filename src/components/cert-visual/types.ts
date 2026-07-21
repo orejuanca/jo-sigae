@@ -1,4 +1,5 @@
 // === Cell-by-Cell Grid Builder Types ===
+import { DATA_BINDINGS_VIGENTE, DATA_BINDINGS_DEROGADO } from './bindings-generated'
 
 export interface CellConfig {
   content: string           // Static text label (e.g., "Código:")
@@ -92,9 +93,12 @@ function generateCalifBindings() {
   return groups
 }
 
-export const DATA_BINDINGS: { group: string; bindings: { value: string; label: string }[] }[] = [
-  // Catálogo vacío — se llenará con los campos del plan correspondiente cuando se definan
-]
+export function getDataBindings(plan: string): { group: string; bindings: { value: string; label: string }[] }[] {
+  return plan === 'derogado' ? DATA_BINDINGS_DEROGADO : DATA_BINDINGS_VIGENTE
+}
+
+// Legacy export for backward compatibility (defaults to vigente)
+export const DATA_BINDINGS = DATA_BINDINGS_VIGENTE
 
 // === Display Data Interface (for preview) ===
 export interface InstitucionEducativa {

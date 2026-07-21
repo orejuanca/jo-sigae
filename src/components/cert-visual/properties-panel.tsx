@@ -12,13 +12,14 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Settings2, ChevronDown, Search, Check } from 'lucide-react'
 import { useState } from 'react'
 import type { CellConfig } from './types'
-import { DATA_BINDINGS } from './types'
+import { getDataBindings } from './types'
 
 interface PropertiesPanelProps {
   cell: CellConfig | null
   row: number
   col: number
   onUpdate: (updates: Partial<CellConfig>) => void
+  plan?: string
 }
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -49,10 +50,11 @@ function SectionHeader({ title, defaultOpen, children }: { title: string; defaul
   )
 }
 
-function BindingCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function BindingCombobox({ value, onChange, plan }: { value: string; onChange: (v: string) => void; plan: string }) {
   const [open, setOpen] = useState(false)
+  const bindings = getDataBindings(plan)
   const selected = value
-    ? DATA_BINDINGS.flatMap(g => g.bindings).find(b => b.value === value)
+    ? bindings.flatMap(g => g.bindings).find(b => b.value === value)
     : null
 
   return (
@@ -76,7 +78,7 @@ function BindingCombobox({ value, onChange }: { value: string; onChange: (v: str
           <CommandInput placeholder="Buscar campo..." className="h-8 text-xs" />
           <CommandList className="max-h-[300px]">
             <CommandEmpty className="text-xs py-2 px-2">Sin resultados</CommandEmpty>
-            {DATA_BINDINGS.map((group) => (
+            {bindings.map((group) => (
               <CommandGroup key={group.group} heading={group.group}>
                 <CommandItem
                   value="__none__"
@@ -106,20 +108,20 @@ function BindingCombobox({ value, onChange }: { value: string; onChange: (v: str
 }
 
 // Helper: check if a binding path exists in the DATA_BINDINGS catalog
-function isCatalogBinding(value: string): boolean {
+function isCatalogBinding(value: string, plan: string): boolean {
   if (!value) return false
-  return DATA_BINDINGS.some(g => g.bindings.some(b => b.value === value))
+  return getDataBindings(plan).some(g => g.bindings.some(b => b.value === value))
 }
 
 // Mutually-exclusive binding mode: catalog dropdown OR free-text direct path
-function BindingModeSection({ dataBinding, onUpdate }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void }) {
-  const isDirect = dataBinding !== '' && !isCatalogBinding(dataBinding)
+function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void; plan: string }) {
+  const isDirect = dataBinding !== '' && !isCatalogBinding(dataBinding, plan)
   const [mode, setMode] = useState<'none' | 'catalog' | 'direct'>(
     !dataBinding ? 'none' : isDirect ? 'direct' : 'catalog'
   )
 
   // Sync mode when dataBinding changes externally (e.g. patchDataBindings)
-  const effectiveIsDirect = dataBinding !== '' && !isCatalogBinding(dataBinding)
+  const effectiveIsDirect = dataBinding !== '' && !isCatalogBinding(dataBinding, plan)
   const effectiveMode = !dataBinding ? 'none' : effectiveIsDirect ? 'direct' : 'catalog'
 
   const handleModeChange = (newMode: 'none' | 'catalog' | 'direct') => {
@@ -191,6 +193,7 @@ function BindingModeSection({ dataBinding, onUpdate }: { dataBinding: string; on
           <BindingCombobox
             value={dataBinding}
             onChange={handleCatalogChange}
+            plan={plan}
           />
         </FieldRow>
       )}
@@ -209,7 +212,7 @@ function BindingModeSection({ dataBinding, onUpdate }: { dataBinding: string; on
   )
 }
 
-export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelProps) {
+export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente' }: PropertiesPanelProps) {
   if (!cell) {
     return (
       <Card className="h-full">
@@ -250,6 +253,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate }: PropertiesPanelPro
               <BindingModeSection
                 dataBinding={cell.dataBinding}
                 onUpdate={onUpdate}
+                plan={plan}
               />
             </SectionHeader>
 

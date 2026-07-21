@@ -1531,6 +1531,7 @@ img{max-width:100%;height:auto}
               row={selectedCell.row}
               col={selectedCell.col}
               onUpdate={handleCellUpdate}
+              plan={plan}
             />
           </div>
         )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
@@ -442,7 +442,7 @@ function SavedLayoutsDialog({
 }
 
 // === Main Page Component ===
-export default function CertificacionesVisualPage() {
+function CertVisualEditorContent() {
   const plan = useCurrentPlan()
   const { toast } = useToast()
 
@@ -1629,5 +1629,17 @@ img{max-width:100%;height:auto}
         </DialogContent>
       </Dialog>
     </AppShell>
+  )
+}
+
+export default function CertificacionesVisualPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen w-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <CertVisualEditorContent />
+    </Suspense>
   )
 }

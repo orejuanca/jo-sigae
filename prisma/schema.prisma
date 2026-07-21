@@ -126,6 +126,15 @@ model CertLayout {
   @@index([nombre])
 }
 
+// Estado del dashboard (hoja de datos) por plan — un solo registro por plan
+model DashboardState {
+  id        String   @id @default(cuid())
+  plan      String   @unique  // "vigente" o "derogado"
+  datos     String   // JSON string con todo el SheetState completo
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Centros Escolares / Planteles (compartido entre ambos planes)
 model CentroEscolar {
   id        String   @id @default(cuid())

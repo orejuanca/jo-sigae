@@ -126,6 +126,30 @@ function readSavedOnce(plan: string): SheetState | null {
   } catch { return null }
 }
 
+/** Cargar estado desde la base de datos (fuente principal) */
+async function loadFromDb(plan: string): Promise<SheetState | null> {
+  try {
+    const res = await fetch(`/api/dashboard-state?plan=${plan}`)
+    const data = await res.json()
+    if (data.found && data.datos) {
+      return typeof data.datos === 'string' ? JSON.parse(data.datos) : data.datos
+    }
+    return null
+  } catch { return null }
+}
+
+/** Guardar estado en la base de datos */
+async function saveToDb(plan: string, state: SheetState): Promise<boolean> {
+  try {
+    await fetch('/api/dashboard-state?plan=' + plan, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datos: state }),
+    })
+    return true
+  } catch { return false }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 /*  SheetEditor – manages its own state, loads/saves from localStorage[plan]  */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -133,7 +157,9 @@ function readSavedOnce(plan: string): SheetState | null {
 function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () => void }) {
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
+  const [dbLoaded, setDbLoaded] = useState(false)
 
+  // Caché localStorage como respaldo inmediato (carga rápida)
   const _saved = useRef(readSavedOnce(plan))
   const sv = _saved.current
 
@@ -160,14 +186,42 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [selectionEnd, setSelectionEnd] = useState<{r:number;c:number}|null>(null)
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
   const [saveStatus, setSaveStatus] = useState<string>('')
-  const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Sin cache')
+  const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Cargando...')
 
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
 
   useEffect(() => { setLoaded(true) }, [])
 
-  // Función de save que lee del ref (siempre tiene el estado más reciente)
+  // === CARGAR DESDE BD (fuente principal) al montar ===
+  useEffect(() => {
+    if (!loaded) return
+    loadFromDb(plan).then(dbState => {
+      if (dbState) {
+        // La BD tiene datos → usar esos como fuente de verdad
+        setNumRows(dbState.numRows); setNumCols(dbState.numCols)
+        setCells(dbState.cells); setColWidths(dbState.colWidths)
+        setRowHeights(dbState.rowHeights); setBgColors(dbState.bgColors)
+        setTextAligns(dbState.textAligns); setMerges(dbState.merges)
+        setFontFamilies(dbState.fontFamilies); setFontSizes(dbState.fontSizes)
+        setFontColors(dbState.fontColors); setBorders(dbState.borders)
+        setBoldCells(dbState.boldCells)
+        // Sincronizar caché localStorage con la BD
+        localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(dbState))
+        setLoadInfo(`BD: ${(JSON.stringify(dbState).length/1024).toFixed(0)}KB (${dbState.numRows}f x ${dbState.numCols}c)`)
+      } else if (sv) {
+        // No hay datos en BD pero sí en localStorage → subirlos a la BD
+        saveToDb(plan, sv).then(() => {
+          setLoadInfo(`Cache→BD: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)`)
+        })
+      } else {
+        setLoadInfo('Plantilla por defecto')
+      }
+      setDbLoaded(true)
+    })
+  }, [loaded, plan]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Función de save: guarda en localStorage (rápido) y en BD (permanente)
   const saveCountRef = useRef(0)
   const doSave = useCallback((p: string) => {
     try {
@@ -183,29 +237,47 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
   }, [])
 
-
-
-  // === AUTO-SAVE ===
+  // === AUTO-SAVE (localStorage inmediato + BD con debounce) ===
   useEffect(() => {
-    if (!loaded) return
-    const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
+    if (!loaded || !dbLoaded) return
+    // Guardar en localStorage inmediatamente (caché rápido)
+    const timer = setTimeout(() => {
+      doSave(plan)
+      setTimeout(() => setSaveStatus(''), 2000)
+    }, 300)
     return () => clearTimeout(timer)
-  }, [loaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
+  }, [loaded, dbLoaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
-  // === SAVE ON BEFORE UNLOAD (usa ref) ===
+  // === GUARDAR EN BD con debounce de 3 segundos (no en cada cambio) ===
   useEffect(() => {
-    if (!loaded) return
+    if (!loaded || !dbLoaded) return
+    const timer = setTimeout(() => {
+      saveToDb(plan, stateRef.current)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [loaded, dbLoaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
+
+  // === SAVE ON BEFORE UNLOAD (guarda en ambos) ===
+  useEffect(() => {
+    if (!loaded || !dbLoaded) return
     const handler = () => {
-      try { localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(stateRef.current)) } catch {}
+      try {
+        const json = JSON.stringify(stateRef.current)
+        localStorage.setItem(STORAGE_KEY(plan), json)
+        // Enviar a BD con sendBeacon (no bloquea el cierre)
+        navigator.sendBeacon(`/api/dashboard-state?plan=${plan}`, JSON.stringify({ datos: stateRef.current }))
+      } catch {}
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
-  }, [loaded, plan])
+  }, [loaded, dbLoaded, plan])
 
-  // === RESTORE ===
+  // === RESTORE (restaurar plantilla original y limpiar BD + localStorage) ===
   const handleRestore = () => {
     if (!confirm('Restaurar todo al diseño original? Se perderan todos los cambios.')) return
     localStorage.removeItem(STORAGE_KEY(plan))
+    // Limpiar de la BD también
+    fetch(`/api/dashboard-state?plan=${plan}`, { method: 'DELETE' }).catch(() => {})
     setCells(makeInitialCells()); setColWidths(makeInitialWidths())
     setRowHeights(makeInitialHeights(INIT_ROWS)); setBgColors(makeInitialBg(INIT_ROWS, INIT_COLS))
     setTextAligns(makeInitialAlign(INIT_ROWS, INIT_COLS)); setMerges([])
@@ -544,17 +616,14 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
         <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
         {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
-        <button onClick={() => {
+        <button onClick={async () => {
           try {
             const json = JSON.stringify(stateRef.current)
             localStorage.setItem(STORAGE_KEY(plan), json)
-            const back = localStorage.getItem(STORAGE_KEY(plan))
-            if (back === json) {
-              saveCountRef.current++
-              setSaveStatus(`GUARDADO #${saveCountRef.current} ${(json.length/1024).toFixed(0)}KB ✓`)
-            } else {
-              setSaveStatus('ERROR: no coincide')
-            }
+            // Guardar en BD también
+            await saveToDb(plan, stateRef.current)
+            saveCountRef.current++
+            setSaveStatus(`GUARDADO #${saveCountRef.current} (BD+Cache) ${(json.length/1024).toFixed(0)}KB ✓`)
           } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }
           setTimeout(() => setSaveStatus(''), 4000)
         }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>

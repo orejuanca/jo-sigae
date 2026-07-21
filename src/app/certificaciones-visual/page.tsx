@@ -231,6 +231,7 @@ function GridTable({
                           : cell.bgColor || undefined,
                       userSelect: 'none',
                       position: 'relative',
+                      overflow: 'hidden',
                     }}
                     onMouseDown={() => !isPreview && onCellMouseDown(r, c)}
                     onMouseEnter={() => !isPreview && onCellMouseEnter(r, c)}
@@ -287,11 +288,13 @@ function GridTable({
                         {displayContent}
                       </span>
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
-                      <img
-                        src="/logo-gob-mppe.png"
-                        alt="Logo Gobierno Bolivariano"
-                        style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
-                      />
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img
+                          src="/logo-gob-mppe.png"
+                          alt="Logo Gobierno Bolivariano"
+                          style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
+                        />
+                      </div>
                     ) : (
                       displayContent
                     )}

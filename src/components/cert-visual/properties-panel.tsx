@@ -20,6 +20,7 @@ interface PropertiesPanelProps {
   col: number
   onUpdate: (updates: Partial<CellConfig>) => void
   plan?: string
+  isRangeMode?: boolean
 }
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -216,7 +217,7 @@ function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: stri
   )
 }
 
-export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente' }: PropertiesPanelProps) {
+export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', isRangeMode = false }: PropertiesPanelProps) {
   if (!cell) {
     return (
       <Card className="h-full">
@@ -245,45 +246,55 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente' }: 
       <Separator />
       <CardContent className="p-3 overflow-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
           <div className="space-y-3 pr-2" style={{ minWidth: 340 }}>
-            {/* CONTENIDO */}
-            <SectionHeader title="Contenido" defaultOpen>
-              <FieldRow label="Texto estático:">
-                <Input
-                  value={cell.content}
-                  onChange={(e) => onUpdate({ content: e.target.value })}
-                  className="h-7 text-xs"
-                />
-              </FieldRow>
-              <BindingModeSection
-                dataBinding={cell.dataBinding}
-                onUpdate={onUpdate}
-                plan={plan}
-              />
-            </SectionHeader>
+            {isRangeMode && (
+              <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary">
+                Modo selección activo: los cambios de formato se aplicarán a todas las celdas seleccionadas. Contenido y combinación no se modifican en lote.
+              </div>
+            )}
 
-            <Separator />
+            {/* CONTENIDO - hidden in range mode */}
+            {!isRangeMode && (
+              <>
+                <SectionHeader title="Contenido" defaultOpen>
+                  <FieldRow label="Texto estático:">
+                    <Input
+                      value={cell.content}
+                      onChange={(e) => onUpdate({ content: e.target.value })}
+                      className="h-7 text-xs"
+                    />
+                  </FieldRow>
+                  <BindingModeSection
+                    dataBinding={cell.dataBinding}
+                    onUpdate={onUpdate}
+                    plan={plan}
+                  />
+                </SectionHeader>
 
-            {/* COMBINACIÓN DE CELDAS */}
-            <SectionHeader title="Combinación de Celdas" defaultOpen>
-              <FieldRow label="Columnas (colspan):">
-                <Input
-                  type="number"
-                  min={1}
-                  value={cell.colspan}
-                  onChange={(e) => onUpdate({ colspan: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="h-7 text-xs w-20"
-                />
-              </FieldRow>
-              <FieldRow label="Filas (rowspan):">
-                <Input
-                  type="number"
-                  min={1}
-                  value={cell.rowspan}
-                  onChange={(e) => onUpdate({ rowspan: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="h-7 text-xs w-20"
-                />
-              </FieldRow>
-            </SectionHeader>
+                <Separator />
+
+                {/* COMBINACIÓN DE CELDAS - hidden in range mode */}
+                <SectionHeader title="Combinación de Celdas" defaultOpen>
+                  <FieldRow label="Columnas (colspan):">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={cell.colspan}
+                      onChange={(e) => onUpdate({ colspan: Math.max(1, parseInt(e.target.value) || 1) })}
+                      className="h-7 text-xs w-20"
+                    />
+                  </FieldRow>
+                  <FieldRow label="Filas (rowspan):">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={cell.rowspan}
+                      onChange={(e) => onUpdate({ rowspan: Math.max(1, parseInt(e.target.value) || 1) })}
+                      className="h-7 text-xs w-20"
+                    />
+                  </FieldRow>
+                </SectionHeader>
+              </>
+            )}
 
             <Separator />
 

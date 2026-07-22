@@ -840,6 +840,40 @@ function CertVisualEditorContent() {
     setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, updates))
   }, [selectedCell])
 
+  // Apply format updates to ALL cells in the current selection range
+  const handleCellUpdateRange = useCallback((updates: Partial<CellConfig>) => {
+    if (!selectionRange) return
+    const minR = Math.min(selectionRange.r1, selectionRange.r2)
+    const maxR = Math.max(selectionRange.r1, selectionRange.r2)
+    const minC = Math.min(selectionRange.c1, selectionRange.c2)
+    const maxC = Math.max(selectionRange.c1, selectionRange.c2)
+    setGridConfig((prev) => {
+      let updated = prev
+      for (let r = minR; r <= maxR; r++) {
+        for (let c = minC; c <= maxC; c++) {
+          // Skip cells that are occupied by a rowspan/colspan from another cell
+          const row = updated.rows[r]
+          if (!row) continue
+          const cell = row.cells[c]
+          if (!cell) continue
+          // Skip cells that are purely occupied (no content/binding of their own)
+          // They are part of a merged cell from another origin
+          updated = updateCellInConfig(updated, r, c, updates)
+        }
+      }
+      return updated
+    })
+  }, [selectionRange])
+
+  // Unified update handler: uses range if active, otherwise single cell
+  const handleFormatUpdate = useCallback((updates: Partial<CellConfig>) => {
+    if (selectionRange) {
+      handleCellUpdateRange(updates)
+    } else if (selectedCell) {
+      handleCellUpdate(updates)
+    }
+  }, [selectionRange, selectedCell, handleCellUpdate, handleCellUpdateRange])
+
   const handleApplyColumns = () => {
     const n = parseInt(colInput)
     if (isNaN(n) || n < 1 || n > 100) {
@@ -1606,12 +1640,21 @@ img{max-width:100%;height:auto}
         {/* Properties Panel (only in designer mode, when cell selected) */}
         {!isPreview && selectedCell && (
           <div className="w-[320px] shrink-0">
+            {selectionRange && (
+              <div className="mb-1.5 px-1">
+                <Badge variant="default" className="text-[10px] gap-1">
+                  <Group className="h-3 w-3" />
+                  Formato a {Math.abs(selectionRange.r2 - selectionRange.r1) + 1}×{Math.abs(selectionRange.c2 - selectionRange.c1) + 1} celdas
+                </Badge>
+              </div>
+            )}
             <PropertiesPanel
               cell={selectedCellData}
               row={selectedCell.row}
               col={selectedCell.col}
-              onUpdate={handleCellUpdate}
+              onUpdate={handleFormatUpdate}
               plan={plan}
+              isRangeMode={!!selectionRange}
             />
           </div>
         )}

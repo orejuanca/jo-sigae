@@ -1,12 +1,13 @@
-// Convierte rawData estructurado de BD2 (plan derogado) a un mapa plano
+// Convierte rawData de BD2 (plan derogado) a un mapa plano
 // con las claves que los bindings del editor visual esperan:
 //   rawData.INST.BASICA.1, rawData.NOTA.CA.1, rawData.EVAL.CA.1, etc.
 //
-// El rawData estructurado tiene arrays como calificaciones e instituciones,
-// pero los bindings usan claves nombradas basadas en los códigos reales de materia.
+// Maneja DOS formatos de entrada:
+//   A) Formato estructurado (desde importDerogadoFromJSON): tiene arrays "instituciones", "calificaciones"
+//   B) Formato crudo BD2 (desde seed.ts): tiene claves planas "9°"-"38" para instituciones,
+//      claves numéricas 39-293 para calificaciones, etc.
 
 // Códigos de materia CORRECTOS por año escolar (del Excel BD2 real)
-// Cada código de 2-4 letras corresponde a una materia específica
 const SUBJECT_CODES_BY_YEAR: Record<number, string[]> = {
   1: ['CA', 'IN', 'MA', 'EN', 'HV', 'EFC', 'GG', 'EA', 'EF', 'EPT'],
   2: ['CA', 'IN', 'MA', 'EPS', 'CB', 'HV', 'HU', 'EA', 'EF', 'ET'],
@@ -42,6 +43,28 @@ function formatFecha(val: unknown): string {
   return s
 }
 
+/** Check if a value is effectively empty (asterisks, blanks, etc.) */
+function isBlank(val: unknown): boolean {
+  if (!val) return true
+  const v = String(val).trim()
+  return v === '' || /^\*+$/.test(v) || /^\*\s+\*/.test(v)
+}
+
+/** Clean a string value: trim and remove leading asterisk */
+function cleanVal(val: unknown): string {
+  if (!val) return ''
+  return String(val).trim().replace(/^\*\s*/, '')
+}
+
+/** Pad a month number to 2 digits */
+function padMonth(val: string): string {
+  const trimmed = val.trim()
+  if (/^\d{1,2}$/.test(trimmed)) {
+    return trimmed.padStart(2, '0')
+  }
+  return trimmed
+}
+
 export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<string, string> {
   const map: Record<string, string> = {}
 
@@ -58,27 +81,51 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     map['FECHA'] = formatFecha(rawData['FECHA'])
   }
 
-  // 2. Instituciones
+  // 2. Instituciones — manejar ambos formatos
   const instituciones: Array<{ denominacion: string; localidad: string; ef: string }> = rawData['instituciones'] || []
-  // Las primeras 5 van a BASICA (educación básica), las siguientes a DIV (diversificado)
-  const basicaCount = Math.min(instituciones.length, 5)
-  for (let i = 0; i < instituciones.length && i < 10; i++) {
-    const inst = instituciones[i]
-    const prefix = i < 5 ? 'BASICA' : 'DIV'
-    const num = i < 5 ? i + 1 : i - 4
-    if (inst.denominacion) map[`INST.${prefix}.${num}`] = inst.denominacion
-    if (inst.localidad) map[`LOCAL.${prefix}.${num}`] = inst.localidad
-    if (inst.ef) map[`EF.${prefix}.${num}`] = inst.ef
+
+  if (instituciones.length > 0) {
+    // FORMATO A: Estructurado (array "instituciones")
+    for (let i = 0; i < instituciones.length && i < 10; i++) {
+      const inst = instituciones[i]
+      const prefix = i < 5 ? 'BASICA' : 'DIV'
+      const num = i < 5 ? i + 1 : i - 4
+      if (inst.denominacion && !isBlank(inst.denominacion)) map[`INST.${prefix}.${num}`] = cleanVal(inst.denominacion)
+      if (inst.localidad && !isBlank(inst.localidad)) map[`LOCAL.${prefix}.${num}`] = cleanVal(inst.localidad)
+      if (inst.ef && !isBlank(inst.ef)) map[`EF.${prefix}.${num}`] = cleanVal(inst.ef)
+    }
+  } else {
+    // FORMATO B: Crudo BD2 — claves "9°","10","11" (inst1), "12","13","14" (inst2), etc.
+    // Son 10 instituciones × 3 campos = 30 claves desde "9°" hasta "38"
+    const bd2InstSlots = [
+      ['9°', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
+      ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
+      ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
+      ['36', '37', '38'],
+    ]
+    for (let i = 0; i < bd2InstSlots.length; i++) {
+      const [nameKey, locKey, efKey] = bd2InstSlots[i]
+      const nombre = rawData[nameKey]
+      const localidad = rawData[locKey]
+      const ef = rawData[efKey]
+      if (!isBlank(nombre)) {
+        const prefix = i < 5 ? 'BASICA' : 'DIV'
+        const num = i < 5 ? i + 1 : i - 4
+        map[`INST.${prefix}.${num}`] = cleanVal(nombre)
+        if (!isBlank(localidad)) map[`LOCAL.${prefix}.${num}`] = cleanVal(localidad)
+        if (!isBlank(ef)) map[`EF.${prefix}.${num}`] = cleanVal(ef)
+      }
+    }
   }
 
-  // 3. Calificaciones — mapear desde structured a claves planas
+  // 3. Calificaciones — mapear a claves planas
   const calificaciones: Array<{
     materia: string; abrev: string; anioEscolar: number;
     nota: string; eval: string; mes: string; anio: string; inst: string;
   }> = rawData['calificaciones'] || []
 
   if (calificaciones.length > 0) {
-    // Agrupar por anioEscolar
+    // FORMATO A: Estructurado (array "calificaciones" con anioEscolar)
     const byYear: Record<number, typeof calificaciones> = {}
     for (const c of calificaciones) {
       const y = c.anioEscolar || 1
@@ -86,7 +133,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       byYear[y].push(c)
     }
 
-    // Para cada año, usar los códigos correctos de materia según posición
     for (const [yearStr, grades] of Object.entries(byYear)) {
       const year = parseInt(yearStr)
       const codes = SUBJECT_CODES_BY_YEAR[year]
@@ -99,16 +145,14 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
 
         if (g.nota && g.nota !== '' && g.nota !== '*') map[`NOTA${suffix}`] = g.nota
         if (g.eval && g.eval !== '' && g.eval !== '*') map[`EVAL${suffix}`] = g.eval
-        if (g.mes && g.mes !== '' && g.mes !== '*') map[`MES${suffix}`] = g.mes
+        if (g.mes && g.mes !== '' && g.mes !== '*') map[`MES${suffix}`] = padMonth(String(g.mes))
         if (g.anio && g.anio !== '' && g.anio !== '*') map[`AÑO${suffix}`] = g.anio
         if (g.inst && g.inst !== '' && g.inst !== '*') map[`INST${suffix}`] = g.inst
       }
     }
   } else {
-    // Si no hay calificaciones estructuradas, intentar con formato plano (claves numéricas)
-    // Claves numéricas 39-293 en grupos de 5: nota, tipo, mes, año, inst
+    // FORMATO B: Crudo BD2 — claves numéricas 39-293 en grupos de 5: nota, tipo, mes, año, inst
     const flatGrades: { year: number; code: string; nota: string; eval: string; mes: string; anio: string; inst: string }[] = []
-    // 10 materias por año, 5 campos cada una = 50 grupos por año
     const gradesPerYear = 10
     let key = 39
     let yearNum = 1
@@ -136,7 +180,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       const suffix = `.${g.code}.${g.year}`
       map[`NOTA${suffix}`] = g.nota
       if (g.eval && g.eval !== '*') map[`EVAL${suffix}`] = g.eval
-      if (g.mes && g.mes !== '*') map[`MES${suffix}`] = g.mes
+      if (g.mes && g.mes !== '*') map[`MES${suffix}`] = padMonth(g.mes)
       if (g.anio && g.anio !== '*') map[`AÑO${suffix}`] = g.anio
       if (g.inst && g.inst !== '*') map[`INST${suffix}`] = g.inst
     }
@@ -176,12 +220,22 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-  // 8. Literales finales
+  // 8. Literales finales (estructurado o crudo claves 294-298)
   const literales = rawData['literalesFinales'] || []
-  for (let i = 0; i < literales.length && i < 5; i++) {
-    const val = String(literales[i] || '').trim()
-    if (val && val !== '*') {
-      map[`LITERAL.FINAL.${i + 1}`] = val
+  if (literales.length > 0) {
+    for (let i = 0; i < literales.length && i < 5; i++) {
+      const val = String(literales[i] || '').trim()
+      if (val && val !== '*') {
+        map[`LITERAL.FINAL.${i + 1}`] = val
+      }
+    }
+  } else {
+    // Crudo BD2: claves 294-298
+    for (let i = 0; i < 5; i++) {
+      const val = rawData[String(294 + i)]
+      if (val && !isBlank(val)) {
+        map[`LITERAL.FINAL.${i + 1}`] = cleanVal(val)
+      }
     }
   }
 

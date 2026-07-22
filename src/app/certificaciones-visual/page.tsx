@@ -645,6 +645,50 @@ function CertVisualEditorContent() {
     })
   }
 
+  // Helper: build instituciones array from rawDataMap flat keys (plan derogado)
+  // rawDataMap has INST.BASICA.1-5, LOCAL.BASICA.1-5, EF.BASICA.1-5
+  // and INST.DIV.1-5, LOCAL.DIV.1-5, EF.DIV.1-5
+  function buildInstitucionesFromRaw(rm: Record<string, string>): { numero: number; denominacion: string; localidad: string; ef: string }[] {
+    const result: { numero: number; denominacion: string; localidad: string; ef: string }[] = []
+    // Collect all institution entries (BASICA first, then DIV)
+    const allEntries: { denominacion: string; localidad: string; ef: string }[] = []
+    for (let i = 1; i <= 5; i++) {
+      allEntries.push({
+        denominacion: rm[`INST.BASICA.${i}`] || '',
+        localidad: rm[`LOCAL.BASICA.${i}`] || '',
+        ef: rm[`EF.BASICA.${i}`] || '',
+      })
+    }
+    for (let i = 1; i <= 5; i++) {
+      const denom = rm[`INST.DIV.${i}`] || ''
+      const loc = rm[`LOCAL.DIV.${i}`] || ''
+      const ef = rm[`EF.DIV.${i}`] || ''
+      // Only add DIV entries if they have data and aren't duplicates of BASICA
+      if (denom && !allEntries.some(e => e.denominacion === denom)) {
+        allEntries.push({ denominacion: denom, localidad: loc, ef })
+      }
+    }
+    // Fallback: check top-level flat keys (INSTITUCION1-5, LOCALIDAD1-5, EF1-5)
+    if (allEntries.every(e => !e.denominacion)) {
+      for (let i = 1; i <= 5; i++) {
+        allEntries.push({
+          denominacion: rm[`INSTITUCION${i}`] || '',
+          localidad: rm[`LOCALIDAD${i}`] || '',
+          ef: rm[`EF${i}`] || '',
+        })
+      }
+    }
+    // Build final result with numbering, skip empty entries
+    let num = 1
+    for (const entry of allEntries) {
+      if (entry.denominacion) {
+        result.push({ numero: num++, ...entry })
+      }
+      if (result.length >= 5) break
+    }
+    return result
+  }
+
   // Helper: apply draft overrides to calificaciones (nested by year key)
   function applyCalifOverrides(
     cals: Record<string, any[]> | undefined, ov: Record<string, string>
@@ -693,7 +737,7 @@ function CertVisualEditorContent() {
           lugar: '', fechaExpedicion: '', planEstudio: '', planCodigo: schoolConfig.planCodigo,
           od: '', denominacion: '', direccion: '', telefono: '', municipio: '', estado: '', cdcce: '',
           estudiante: { cedula: rawDataMap.CEDULA || '', fechaNacimiento: rawDataMap.FECHA || '', apellidos: rawDataMap.APELLIDOS || '', nombres: rawDataMap.NOMBRES || '', pais: rawDataMap.PAIS || '', estado: rawDataMap.ESTADO || '', municipio: rawDataMap.MUNICIPIO || '' },
-          instituciones: [], calificaciones: {}, orientacion: [], grupos: [],
+          instituciones: buildInstitucionesFromRaw(rawDataMap), calificaciones: {}, orientacion: [], grupos: [],
           observaciones: '', observacionesLines: [], promedioAcumulado: '',
           director: { apellidosNombres: '', cedula: '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
           acta: '', actaFecha: '', actaAnio: '', literalesFinales: [],

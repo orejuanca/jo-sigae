@@ -189,7 +189,12 @@ export function resolveBinding(path: string, data: DisplayData): string {
       // Plan derogado: resolve flat keys like rawData.CEDULA, rawData.NOTA.CA.1
       if (!data.rawDataMap) return ''
       const key = rest.join('.')
-      return data.rawDataMap[key] || ''
+      const val = data.rawDataMap[key] || ''
+      // Pad MES values to 2 digits (01-12)
+      if (key.startsWith('MES.') && /^\d{1,2}$/.test(val)) {
+        return val.padStart(2, '0')
+      }
+      return val
     }
     default: return ''
   }

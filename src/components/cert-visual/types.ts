@@ -106,6 +106,8 @@ export interface DisplayData {
   actaFecha: string
   actaAnio: string
   literalesFinales: string[]
+  /** Flat map of rawData fields for plan derogado bindings (e.g. rawData.CEDULA, rawData.NOTA.CA.1) */
+  rawDataMap?: Record<string, string>
 }
 
 // === Data Resolution for Preview ===
@@ -182,6 +184,12 @@ export function resolveBinding(path: string, data: DisplayData): string {
     case 'obsCert': {
       const idx = parseInt(rest[0])
       return data.observacionesLines?.[idx] || ''
+    }
+    case 'rawData': {
+      // Plan derogado: resolve flat keys like rawData.CEDULA, rawData.NOTA.CA.1
+      if (!data.rawDataMap) return ''
+      const key = rest.join('.')
+      return data.rawDataMap[key] || ''
     }
     default: return ''
   }

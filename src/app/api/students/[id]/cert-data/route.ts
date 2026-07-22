@@ -63,6 +63,8 @@ export async function GET(
       parsed,
       certData,
       gradeCount,
+      // For plan derogado: expose raw field map (e.g. { CEDULA: "...", NOTA.CA.1: "..." })
+      rawDataFlat: plan === 'derogado' && student.rawData ? JSON.parse(student.rawData) : null,
     })
   } catch (error) {
     console.error('Error parsing cert data:', error)

@@ -472,6 +472,7 @@ function CertVisualEditorContent() {
   // Student / data state
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certData, setCertData] = useState<CertData | null>(null)
+  const [rawDataFlat, setRawDataFlat] = useState<Record<string, string> | null>(null)
   const [loadingData, setLoadingData] = useState(false)
 
   // Inline editing: overrides per dataBinding path
@@ -533,6 +534,7 @@ function CertVisualEditorContent() {
   const handleSelectStudent = useCallback(async (student: Student) => {
     setSelectedStudent(student)
     setCertData(null)
+    setRawDataFlat(null)
     setDraftOverrides({})
     setLoadingData(true)
     try {
@@ -581,6 +583,15 @@ function CertVisualEditorContent() {
           }
         }
         setCertData(cd)
+        // Store rawData flat map for plan derogado bindings
+        if (result.rawDataFlat) {
+          const flat: Record<string, string> = {}
+          for (const [k, v] of Object.entries(result.rawDataFlat)) {
+            if (typeof v === 'string') flat[k] = v
+            else if (v !== null && v !== undefined) flat[k] = String(v)
+          }
+          setRawDataFlat(flat)
+        }
         // Apply draft overrides to displayData later (via useMemo)
         const allCals = Object.values(cd.calificaciones || {}).flat() as CalificacionRow[]
         const gradeCount = allCals.filter(c => c.nota && c.nota !== '').length
@@ -731,8 +742,11 @@ function CertVisualEditorContent() {
         get('doc.literalFinal.3') ?? (certData.literalesFinales?.[3] || ''),
         get('doc.literalFinal.4') ?? (certData.literalesFinales?.[4] || ''),
       ],
+      rawDataMap: rawDataFlat ? { ...rawDataFlat, ...Object.fromEntries(
+        Object.entries(draftOverrides).filter(([k]) => k.startsWith('rawData.')).map(([k, v]) => [k.replace('rawData.', ''), v])
+      ) } : undefined,
     }
-  }, [certData, draftOverrides])
+  }, [certData, draftOverrides, rawDataFlat])
 
   // === Grid Operations ===
   // Mouse handlers for range selection

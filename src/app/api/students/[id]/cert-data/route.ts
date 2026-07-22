@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
 import { parseCertData, parsedToCertData } from '@/lib/parse-rawdata'
+import { buildDerogadoFlatMap } from '@/lib/build-derogado-flatmap'
 
 // GET /api/students/[id]/cert-data — Retorna datos de certificación parseados del rawData del estudiante
 export async function GET(
@@ -33,8 +34,12 @@ export async function GET(
     // Parsear rawData del estudiante
     const parsed = parseCertData(student.rawData, student.plan)
 
-    // For plan derogado: always expose raw field map even if parsing fails
-    const rawDataFlat = plan === 'derogado' && student.rawData ? JSON.parse(student.rawData) : null
+    // For plan derogado: build flat key map from structured/raw data
+    let rawDataFlat: Record<string, string> | null = null
+    if (plan === 'derogado' && student.rawData) {
+      const rawObj = JSON.parse(student.rawData)
+      rawDataFlat = buildDerogadoFlatMap(rawObj)
+    }
 
     if (!parsed) {
       // If we have rawDataFlat for derogado, return it anyway (frontend can use rawData.* bindings)

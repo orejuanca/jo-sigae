@@ -43,17 +43,16 @@ function formatFecha(val: unknown): string {
   return s
 }
 
-/** Check if a value is effectively empty (asterisks, blanks, etc.) */
+/** Check if a value is effectively empty (blanks only — asterisks are valid data) */
 function isBlank(val: unknown): boolean {
   if (!val) return true
-  const v = String(val).trim()
-  return v === '' || /^\*+$/.test(v) || /^\*\s+\*/.test(v)
+  return String(val).trim() === ''
 }
 
-/** Clean a string value: trim and remove leading asterisk */
+/** Clean a string value: trim only — asterisks are valid data */
 function cleanVal(val: unknown): string {
   if (!val) return ''
-  return String(val).trim().replace(/^\*\s*/, '')
+  return String(val).trim()
 }
 
 /** Pad a month number to 2 digits */
@@ -143,11 +142,11 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
         const g = grades[i]
         const suffix = `.${code}.${year}`
 
-        if (g.nota && g.nota !== '' && g.nota !== '*') map[`NOTA${suffix}`] = g.nota
-        if (g.eval && g.eval !== '' && g.eval !== '*') map[`EVAL${suffix}`] = g.eval
-        if (g.mes && g.mes !== '' && g.mes !== '*') map[`MES${suffix}`] = padMonth(String(g.mes))
-        if (g.anio && g.anio !== '' && g.anio !== '*') map[`AÑO${suffix}`] = g.anio
-        if (g.inst && g.inst !== '' && g.inst !== '*') map[`INST${suffix}`] = g.inst
+        if (g.nota && g.nota !== '') map[`NOTA${suffix}`] = g.nota
+        if (g.eval && g.eval !== '') map[`EVAL${suffix}`] = g.eval
+        if (g.mes && g.mes !== '') map[`MES${suffix}`] = padMonth(String(g.mes))
+        if (g.anio && g.anio !== '') map[`AÑO${suffix}`] = g.anio
+        if (g.inst && g.inst !== '') map[`INST${suffix}`] = g.inst
       }
     }
   } else {
@@ -176,13 +175,13 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       }
     }
     for (const g of flatGrades) {
-      if (!g.nota || g.nota === '' || g.nota === '*') continue
+      if (!g.nota || g.nota === '') continue
       const suffix = `.${g.code}.${g.year}`
       map[`NOTA${suffix}`] = g.nota
-      if (g.eval && g.eval !== '*') map[`EVAL${suffix}`] = g.eval
-      if (g.mes && g.mes !== '*') map[`MES${suffix}`] = padMonth(g.mes)
-      if (g.anio && g.anio !== '*') map[`AÑO${suffix}`] = g.anio
-      if (g.inst && g.inst !== '*') map[`INST${suffix}`] = g.inst
+      if (g.eval && g.eval !== '') map[`EVAL${suffix}`] = g.eval
+      if (g.mes && g.mes !== '') map[`MES${suffix}`] = padMonth(g.mes)
+      if (g.anio && g.anio !== '') map[`AÑO${suffix}`] = g.anio
+      if (g.inst && g.inst !== '') map[`INST${suffix}`] = g.inst
     }
   }
 
@@ -190,7 +189,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   const secciones = rawData['secciones'] || rawData['SECCION'] || {}
   for (let i = 1; i <= 5; i++) {
     const val = secciones[i] || secciones[String(i)] || rawData[`SECCION.${i}`]
-    if (val && String(val).trim() && String(val).trim() !== '*') {
+    if (val && String(val).trim()) {
       map[`SECCION.${i}`] = String(val).trim()
     }
   }
@@ -200,22 +199,22 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   for (let i = 0; i < especializaciones.length && i < 12; i++) {
     const e = especializaciones[i]
     const num = i + 1
-    if (e.anio && e.anio !== '*') map[`EPT.GRADO.${num}`] = String(e.anio).trim()
-    if (e.especialidad && e.especialidad !== '*') map[`EPT.NOMBRE.${num}`] = String(e.especialidad).trim()
-    if (e.periodo && e.periodo !== '*') map[`EPT.HORAS.${num}`] = String(e.periodo).trim()
+    if (e.anio && e.anio !== '') map[`EPT.GRADO.${num}`] = String(e.anio).trim()
+    if (e.especialidad && e.especialidad !== '') map[`EPT.NOMBRE.${num}`] = String(e.especialidad).trim()
+    if (e.periodo && e.periodo !== '') map[`EPT.HORAS.${num}`] = String(e.periodo).trim()
   }
 
   // 6. Observaciones Diversificado
   const obsDiv = rawData['observaciones'] || []
   for (let i = 0; i < obsDiv.length && i < 5; i++) {
     const val = String(obsDiv[i] || '').trim()
-    if (val && val !== '*') map[`OBS.DIV.L${i + 1}`] = val
+    if (val && val !== '') map[`OBS.DIV.L${i + 1}`] = val
   }
 
   // 7. Observaciones Básica (buscar en rawData plano si existen)
   for (let i = 1; i <= 5; i++) {
     const val = rawData[`OBS.BASICA.L${i}`]
-    if (val && String(val).trim() && String(val).trim() !== '*') {
+    if (val && String(val).trim()) {
       map[`OBS.BASICA.L${i}`] = String(val).trim()
     }
   }
@@ -225,7 +224,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   if (literales.length > 0) {
     for (let i = 0; i < literales.length && i < 5; i++) {
       const val = String(literales[i] || '').trim()
-      if (val && val !== '*') {
+      if (val && val !== '') {
         map[`LITERAL.FINAL.${i + 1}`] = val
       }
     }

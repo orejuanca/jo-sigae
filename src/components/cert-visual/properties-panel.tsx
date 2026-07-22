@@ -248,53 +248,49 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
           <div className="space-y-3 pr-2" style={{ minWidth: 340 }}>
             {isRangeMode && (
               <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary">
-                Modo selección activo: los cambios de formato se aplicarán a todas las celdas seleccionadas. Contenido y combinación no se modifican en lote.
+                Modo selección activo: los cambios de formato se aplicarán a todas las celdas seleccionadas.
               </div>
             )}
 
-            {/* CONTENIDO - hidden in range mode */}
-            {!isRangeMode && (
-              <>
-                <SectionHeader title="Contenido" defaultOpen>
-                  <FieldRow label="Texto estático:">
-                    <Input
-                      value={cell.content}
-                      onChange={(e) => onUpdate({ content: e.target.value })}
-                      className="h-7 text-xs"
-                    />
-                  </FieldRow>
-                  <BindingModeSection
-                    dataBinding={cell.dataBinding}
-                    onUpdate={onUpdate}
-                    plan={plan}
-                  />
-                </SectionHeader>
+            {/* CONTENIDO */}
+            <SectionHeader title="Contenido" defaultOpen>
+              <FieldRow label="Texto estático:">
+                <Input
+                  value={cell.content}
+                  onChange={(e) => onUpdate({ content: e.target.value })}
+                  className="h-7 text-xs"
+                />
+              </FieldRow>
+              <BindingModeSection
+                dataBinding={cell.dataBinding}
+                onUpdate={onUpdate}
+                plan={plan}
+              />
+            </SectionHeader>
 
-                <Separator />
+            <Separator />
 
-                {/* COMBINACIÓN DE CELDAS - hidden in range mode */}
-                <SectionHeader title="Combinación de Celdas" defaultOpen>
-                  <FieldRow label="Columnas (colspan):">
-                    <Input
-                      type="number"
-                      min={1}
-                      value={cell.colspan}
-                      onChange={(e) => onUpdate({ colspan: Math.max(1, parseInt(e.target.value) || 1) })}
-                      className="h-7 text-xs w-20"
-                    />
-                  </FieldRow>
-                  <FieldRow label="Filas (rowspan):">
-                    <Input
-                      type="number"
-                      min={1}
-                      value={cell.rowspan}
-                      onChange={(e) => onUpdate({ rowspan: Math.max(1, parseInt(e.target.value) || 1) })}
-                      className="h-7 text-xs w-20"
-                    />
-                  </FieldRow>
-                </SectionHeader>
-              </>
-            )}
+            {/* COMBINACIÓN DE CELDAS */}
+            <SectionHeader title="Combinación de Celdas" defaultOpen>
+              <FieldRow label="Columnas (colspan):">
+                <Input
+                  type="number"
+                  min={1}
+                  value={cell.colspan}
+                  onChange={(e) => onUpdate({ colspan: Math.max(1, parseInt(e.target.value) || 1) })}
+                  className="h-7 text-xs w-20"
+                />
+              </FieldRow>
+              <FieldRow label="Filas (rowspan):">
+                <Input
+                  type="number"
+                  min={1}
+                  value={cell.rowspan}
+                  onChange={(e) => onUpdate({ rowspan: Math.max(1, parseInt(e.target.value) || 1) })}
+                  className="h-7 text-xs w-20"
+                />
+              </FieldRow>
+            </SectionHeader>
 
             <Separator />
 

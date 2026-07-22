@@ -865,14 +865,46 @@ function CertVisualEditorContent() {
     })
   }, [selectionRange])
 
-  // Unified update handler: uses range if active, otherwise single cell
+  // Properties that should apply to the range in batch (format-only, NOT content/binding/merge)
+  const FORMAT_ONLY_KEYS = new Set([
+    'fontSize', 'fontWeight', 'fontStyle', 'textDecoration', 'textAlign', 'verticalAlign',
+    'color', 'whiteSpace', 'padding', 'bgColor',
+    'borderTop', 'borderRight', 'borderBottom', 'borderLeft', 'borderColor',
+    'width', 'height',
+  ])
+
+  // Unified update handler: format props go to range, content/binding/merge go to single cell
   const handleFormatUpdate = useCallback((updates: Partial<CellConfig>) => {
-    if (selectionRange) {
+    if (!selectedCell) return
+
+    // Check if updates contain only format properties
+    const keys = Object.keys(updates)
+    const hasOnlyFormat = keys.every(k => FORMAT_ONLY_KEYS.has(k))
+    const hasNonFormat = keys.some(k => !FORMAT_ONLY_KEYS.has(k))
+
+    if (selectionRange && hasOnlyFormat) {
+      // Pure format change → apply to all cells in range
       handleCellUpdateRange(updates)
-    } else if (selectedCell) {
-      handleCellUpdate(updates)
     }
-  }, [selectionRange, selectedCell, handleCellUpdate, handleCellUpdateRange])
+
+    if (hasNonFormat) {
+      // Content/binding/merge → always apply to single selected cell only
+      const nonFormatUpdates: Partial<CellConfig> = {}
+      for (const k of keys) {
+        if (!FORMAT_ONLY_KEYS.has(k)) {
+          ;(nonFormatUpdates as any)[k] = (updates as any)[k]
+        }
+      }
+      if (Object.keys(nonFormatUpdates).length > 0) {
+        setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, nonFormatUpdates))
+      }
+    }
+
+    // If only format keys AND no range, apply to single cell
+    if (!selectionRange && hasOnlyFormat) {
+      setGridConfig((prev) => updateCellInConfig(prev, selectedCell.row, selectedCell.col, updates))
+    }
+  }, [selectionRange, selectedCell, handleCellUpdateRange])
 
   const handleApplyColumns = () => {
     const n = parseInt(colInput)

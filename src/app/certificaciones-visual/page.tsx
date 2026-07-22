@@ -545,6 +545,15 @@ function CertVisualEditorContent() {
         return
       }
       const result = await res.json()
+      // Always set rawDataFlat if available (plan derogado uses it directly)
+      if (result.rawDataFlat) {
+        const flat: Record<string, string> = {}
+        for (const [k, v] of Object.entries(result.rawDataFlat)) {
+          if (typeof v === 'string') flat[k] = v
+          else if (v !== null && v !== undefined) flat[k] = String(v)
+        }
+        setRawDataFlat(flat)
+      }
       if (result.certData) {
         // Load draft overrides if they exist
         try {
@@ -583,15 +592,6 @@ function CertVisualEditorContent() {
           }
         }
         setCertData(cd)
-        // Store rawData flat map for plan derogado bindings
-        if (result.rawDataFlat) {
-          const flat: Record<string, string> = {}
-          for (const [k, v] of Object.entries(result.rawDataFlat)) {
-            if (typeof v === 'string') flat[k] = v
-            else if (v !== null && v !== undefined) flat[k] = String(v)
-          }
-          setRawDataFlat(flat)
-        }
         // Apply draft overrides to displayData later (via useMemo)
         const allCals = Object.values(cd.calificaciones || {}).flat() as CalificacionRow[]
         const gradeCount = allCals.filter(c => c.nota && c.nota !== '').length
@@ -681,7 +681,28 @@ function CertVisualEditorContent() {
 
   // Convert CertData to DisplayData for the grid
   const displayData: DisplayData | null = useMemo(() => {
-    if (!certData) return null
+    // Build rawDataMap from rawDataFlat + draft overrides (used by plan derogado rawData.* bindings)
+    const rawDataMap = rawDataFlat ? { ...rawDataFlat, ...Object.fromEntries(
+      Object.entries(draftOverrides).filter(([k]) => k.startsWith('rawData.')).map(([k, v]) => [k.replace('rawData.', ''), v])
+    ) } : undefined
+
+    // For plan derogado with only rawDataFlat (no parsed certData), return minimal DisplayData with rawDataMap
+    if (!certData) {
+      if (rawDataMap && Object.keys(rawDataMap).length > 0) {
+        return {
+          lugar: '', fechaExpedicion: '', planEstudio: '', planCodigo: schoolConfig.planCodigo,
+          od: '', denominacion: '', direccion: '', telefono: '', municipio: '', estado: '', cdcce: '',
+          estudiante: { cedula: rawDataMap.CEDULA || '', fechaNacimiento: rawDataMap.FECHA || '', apellidos: rawDataMap.APELLIDOS || '', nombres: rawDataMap.NOMBRES || '', pais: rawDataMap.PAIS || '', estado: rawDataMap.ESTADO || '', municipio: rawDataMap.MUNICIPIO || '' },
+          instituciones: [], calificaciones: {}, orientacion: [], grupos: [],
+          observaciones: '', observacionesLines: [], promedioAcumulado: '',
+          director: { apellidosNombres: '', cedula: '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
+          acta: '', actaFecha: '', actaAnio: '', literalesFinales: [],
+          rawDataMap,
+        }
+      }
+      return null
+    }
+
     // Convert YYYY-MM-DD → DD/MM/YYYY
     let fechaExp = certData.fechaExpedicion
     if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
@@ -742,9 +763,7 @@ function CertVisualEditorContent() {
         get('doc.literalFinal.3') ?? (certData.literalesFinales?.[3] || ''),
         get('doc.literalFinal.4') ?? (certData.literalesFinales?.[4] || ''),
       ],
-      rawDataMap: rawDataFlat ? { ...rawDataFlat, ...Object.fromEntries(
-        Object.entries(draftOverrides).filter(([k]) => k.startsWith('rawData.')).map(([k, v]) => [k.replace('rawData.', ''), v])
-      ) } : undefined,
+      rawDataMap,
     }
   }, [certData, draftOverrides, rawDataFlat])
 

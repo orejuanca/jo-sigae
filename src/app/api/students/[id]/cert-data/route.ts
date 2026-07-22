@@ -32,14 +32,30 @@ export async function GET(
 
     // Parsear rawData del estudiante
     const parsed = parseCertData(student.rawData, student.plan)
+
+    // For plan derogado: always expose raw field map even if parsing fails
+    const rawDataFlat = plan === 'derogado' && student.rawData ? JSON.parse(student.rawData) : null
+
     if (!parsed) {
+      // If we have rawDataFlat for derogado, return it anyway (frontend can use rawData.* bindings)
+      if (rawDataFlat && Object.keys(rawDataFlat).length > 0) {
+        console.warn(`[cert-data] parseCertData failed for ${student.cedula} but rawDataFlat has ${Object.keys(rawDataFlat).length} keys, returning rawDataFlat only`)
+        return NextResponse.json({
+          student: {
+            id: student.id, cedula: student.cedula,
+            apellidos: student.apellidos, nombres: student.nombres,
+            fechaNacimiento: student.fechaNacimiento, pais: student.pais,
+            estado: student.estado, municipio: student.municipio, plan: student.plan,
+          },
+          certData: null,
+          gradeCount: 0,
+          rawDataFlat,
+        })
+      }
       console.error(`[cert-data] Failed to parse rawData for student ${student.cedula} (${student.id}), rawData length: ${student.rawData.length}, plan: ${student.plan}`)
       return NextResponse.json({
         error: 'No se pudieron extraer datos de calificaciones del rawData',
-        studentId: student.id,
-        cedula: student.cedula,
-        reason: 'parse_error',
-        rawDataLength: student.rawData.length,
+        studentId: student.id, cedula: student.cedula, reason: 'parse_error', rawDataLength: student.rawData.length,
       }, { status: 404 })
     }
 
@@ -63,8 +79,7 @@ export async function GET(
       parsed,
       certData,
       gradeCount,
-      // For plan derogado: expose raw field map (e.g. { CEDULA: "...", NOTA.CA.1: "..." })
-      rawDataFlat: plan === 'derogado' && student.rawData ? JSON.parse(student.rawData) : null,
+      rawDataFlat,
     })
   } catch (error) {
     console.error('Error parsing cert data:', error)

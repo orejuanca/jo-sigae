@@ -32,49 +32,17 @@ export async function GET(
     }
 
     // Parsear rawData del estudiante
-<<<<<<< HEAD
-     const parsed = parseCertData(JSON.stringify(normalizedObj), student.plan)
-=======
     const parsed = parseCertData(student.rawData, student.plan)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
 
     // For plan derogado: build flat key map from structured/raw data
     let rawDataFlat: Record<string, string> | null = null
     if (plan === 'derogado' && student.rawData) {
       const rawObj = JSON.parse(student.rawData)
-<<<<<<< HEAD
       // Normalizar claves: quitar símbolo de grado (°) para que coincidan con "9", "10", etc.
       const normalizedObj: Record<string, any> = {}
       for (const [k, v] of Object.entries(rawObj)) { normalizedObj[k.replace(/\u00b0/g, '')] = v }
       rawDataFlat = buildDerogadoFlatMap(normalizedObj)
     }
-
-    if (!parsed) {
-      if (rawDataFlat && Object.keys(rawDataFlat).length > 0) {
-        console.warn(`[cert-data] parseCertData failed for ${student.cedula} but rawDataFlat has ${Object.keys(rawDataFlat).length} keys, returning rawDataFlat only`)
-        return NextResponse.json({
-          student: {
-            id: student.id, cedula: student.cedula,
-            apellidos: student.apellidos, nombres: student.nombres,
-            fechaNacimiento: student.fechaNacimiento, pais: student.pais,
-            estado: student.estado, municipio: student.municipio, plan: student.plan,
-          },
-          certData: null,
-          gradeCount: 0,
-          rawDataFlat,
-        })
-      }
-      console.error(`[cert-data] Failed to parse rawData for student ${student.cedula} (${student.id}), rawData length: ${student.rawData.length}, plan: ${student.plan}`)
-      return NextResponse.json({
-        error: 'No se pudieron extraer datos de calificaciones del rawData',
-        studentId: student.id, cedula: student.cedula, reason: 'parse_error', rawDataLength: student.rawData.length,
-      }, { status: 404 })
-    }
-=======
-      rawDataFlat = buildDerogadoFlatMap(rawObj)
-    }
-
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
     if (!parsed) {
       // If we have rawDataFlat for derogado, return it anyway (frontend can use rawData.* bindings)
       if (rawDataFlat && Object.keys(rawDataFlat).length > 0) {

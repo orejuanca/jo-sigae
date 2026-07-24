@@ -618,9 +618,9 @@ function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData 
     literalesFinales: [],
   }
 
-  // ---- Instituciones en BD2 - keys "9°"-"38" ----
+  // ---- Instituciones en BD2 - keys "9"-"38" ----
   const bd2InstSlots = [
-    ['9°', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
+    ['9', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
     ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
     ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
     ['36', '37', '38'],
@@ -770,8 +770,8 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
     }
 
     // Detectar formato plano por claves numéricas
-    const isBD2 = rawData['9°'] !== undefined || (plan === 'derogado')
-    const isBD = rawData['8'] !== undefined && !rawData['9°']
+    const isBD2 = rawData['9'] !== undefined || (plan === 'derogado')
+    const isBD = rawData['8'] !== undefined && !rawData['9']
 
     if (isBD2) return parseBD2RawDataLegacy(rawData)
     if (isBD) return parseBDRawDataLegacy(rawData)

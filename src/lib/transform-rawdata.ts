@@ -100,9 +100,9 @@ export function isFlatRawData(rawData: Record<string, unknown>): boolean {
   return numKeys.length > 0
 }
 
-// Detecta si rawData es BD2 (derogado) por la presencia de claves como "9°"
+// Detecta si rawData es BD2 (derogado) por la presencia de claves como "9"
 export function isBD2Format(rawData: Record<string, unknown>): boolean {
-  return rawData['9°'] !== undefined
+  return rawData['9'] !== undefined
 }
 
 /**
@@ -284,9 +284,9 @@ export function transformBDDerogado(flat: Record<string, string>): Record<string
     }
   }
 
-  // 2. Instituciones BD2 (keys "9°"-"38", grupos de 3)
+  // 2. Instituciones BD2 (keys "9"-"38", grupos de 3)
   const bd2InstSlots = [
-    ['9°', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
+    ['9', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
     ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
     ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
     ['36', '37', '38'],

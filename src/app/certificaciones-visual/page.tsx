@@ -167,12 +167,12 @@ function GridTable({
 
   return (
     <div
-      className="overflow-auto flex-1 bg-white p-2 rounded border"
-      style={{ maxHeight: 'calc(100vh - 200px)' }}
+      className="bg-white p-2 rounded border"
+      style={{ maxWidth: '860px', margin: '0 auto', overflow: 'visible' }}
       onMouseUp={() => !isPreview && onCellMouseUp()}
     >
-      <div style={{ width: '816px', height: '1344px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflow: 'hidden' }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%', height: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
+      <div style={{ width: '816px', minHeight: '1728px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', paddingBottom: '20px', overflow: 'visible' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
           <colgroup>
             {config.columnWidths.map((w, i) => (
               <col key={i} style={{ width: w || `${100 / config.totalCols}%` }} />
@@ -210,7 +210,7 @@ function GridTable({
                       borderBottom: borderStyle(cell.borderBottom),
                       borderLeft: borderStyle(cell.borderLeft),
                       width: cell.width || undefined,
-                      height: cell.height || undefined,
+                      height: cell.height || '24px',
                       fontSize: `${cell.fontSize}pt`,
                       fontWeight: cell.fontWeight,
                       fontStyle: cell.fontStyle,
@@ -224,7 +224,8 @@ function GridTable({
                       outline: cellIsSelected ? '2px solid #3b82f6' : undefined,
                       outlineOffset: '-2px',
                       minWidth: hasContent ? undefined : '0px',
-                      background: cellInRange
+                      minHeight: '24px',
+		      background: cellInRange
                         ? 'rgba(59,130,246,0.15)'
                         : cellIsSelected
                           ? 'rgba(59,130,246,0.06)'
@@ -1413,10 +1414,12 @@ function CertVisualEditorContent() {
     const { tableHtml } = buildTableHtml()
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
-@page{margin:5mm}
+/* FORZAMOS EL TAMAÑO LEGAL EN LA IMPRESORA */
+@page{size: Legal; margin:5mm}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
-table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
+/* La tabla sigue teniendo el tamaño ARCH B internamente */
+table{border-collapse:collapse;width:816px;height:1728px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -1463,6 +1466,12 @@ img{max-width:100%;height:auto}
 
   return (
     <AppShell>
+      {/* ---- PRUEBA DE FUEGO ---- */}
+      <h1 style={{ color: 'red', fontSize: '50px', textAlign: 'center' }}>
+        ESTOY EDITANDO EL ARCHIVO CORRECTO
+      </h1>
+      {/* ------------------------- */}
+
       <div className="space-y-3 print:hidden">
         {/* Header */}
         <div>
@@ -1626,7 +1635,7 @@ img{max-width:100%;height:auto}
               {selectedStudent && (
                 <div className="flex items-center gap-2">
                   <Badge variant={selectedStudent.plan === 'derogado' ? 'destructive' : 'default'}>
-                    {selectedStudent.plan === 'derogado' ? 'BD2' : 'BD'}
+                    {selectedStudent.plan === 'derogado' ? 'BD2 — Plan Derogado' : 'BD — Plan Vigente'}
                   </Badge>
                   <span className="text-sm font-medium">{selectedStudent.apellidos}, {selectedStudent.nombres}</span>
                   <span className="text-xs text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</span>
@@ -1652,9 +1661,12 @@ img{max-width:100%;height:auto}
       </div>
 
       {/* Main Area: Grid + Properties Panel */}
-      <div className="flex gap-3 mt-3" style={{ minHeight: 'calc(100vh - 280px)' }}>
+      {/* Agrega overflowY: 'auto' y overflowX: 'hidden' */}
+      <div className="flex gap-3 mt-3" style={{ minHeight: 'calc(100vh - 280px)', overflowY: 'auto', overflowX: 'hidden' }}>
+        
         {/* Grid */}
-        <div className="flex-1 min-w-0">
+        {/* Agrega overflow: 'visible' */}
+        <div className="flex-1 min-w-0" style={{ overflow: 'visible' }}>
           <GridTable
             config={gridConfig}
             selectedCell={selectedCell}

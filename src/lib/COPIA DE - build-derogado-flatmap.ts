@@ -1,17 +1,7 @@
 // Convierte rawData de BD2 (plan derogado) a un mapa plano
 // con las claves que los bindings del editor visual esperan:
 //   rawData.INST.BASICA.1, rawData.NOTA.CA.1, rawData.EVAL.CA.1, etc.
-<<<<<<< HEAD
 
-=======
-//
-// Maneja DOS formatos de entrada:
-//   A) Formato estructurado (desde importDerogadoFromJSON): tiene arrays "instituciones", "calificaciones"
-//   B) Formato crudo BD2 (desde seed.ts): tiene claves planas "9°"-"38" para instituciones,
-//      claves numéricas 39-293 para calificaciones, etc.
-
-// Códigos de materia CORRECTOS por año escolar (del Excel BD2 real)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
 const SUBJECT_CODES_BY_YEAR: Record<number, string[]> = {
   1: ['CA', 'IN', 'MA', 'EN', 'HV', 'EFC', 'GG', 'EA', 'EF', 'EPT'],
   2: ['CA', 'IN', 'MA', 'EPS', 'CB', 'HV', 'HU', 'EA', 'EF', 'ET'],
@@ -24,20 +14,10 @@ function formatFecha(val: unknown): string {
   if (!val) return ''
   const s = String(val).trim()
   if (!s) return ''
-<<<<<<< HEAD
-=======
-
-  // Already DD/MM/YYYY
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
     const parts = s.split('/')
     return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
   }
-<<<<<<< HEAD
-=======
-
-  // ISO format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   if (/^\d{4}-\d{2}-\d{2}/.test(s) || s.includes('T')) {
     try {
       const d = new Date(s)
@@ -49,23 +29,14 @@ function formatFecha(val: unknown): string {
       }
     } catch { /* ignore */ }
   }
-<<<<<<< HEAD
   return s
 }
 
-=======
-
-  return s
-}
-
-/** Check if a value is effectively empty (blanks only — asterisks are valid data) */
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
 function isBlank(val: unknown): boolean {
   if (!val) return true
   return String(val).trim() === ''
 }
 
-<<<<<<< HEAD
 function isAsterisksOnly(val: unknown): boolean {
   if (!val) return true
   const s = String(val).trim()
@@ -73,18 +44,11 @@ function isAsterisksOnly(val: unknown): boolean {
   return s.replace(/[\*\s]/g, '') === ''
 }
 
-=======
-/** Clean a string value: trim only — asterisks are valid data */
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
 function cleanVal(val: unknown): string {
   if (!val) return ''
   return String(val).trim()
 }
 
-<<<<<<< HEAD
-=======
-/** Pad a month number to 2 digits */
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
 function padMonth(val: string): string {
   const trimmed = val.trim()
   if (/^\d{1,2}$/.test(trimmed)) {
@@ -96,10 +60,6 @@ function padMonth(val: string): string {
 export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<string, string> {
   const map: Record<string, string> = {}
 
-<<<<<<< HEAD
-=======
-  // 1. Datos personales (top-level keys that already match)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   const personalKeys = ['CEDULA', 'APELLIDOS', 'NOMBRES', 'PAIS', 'ESTADO', 'MUNICIPIO', 'LUGAR']
   for (const key of personalKeys) {
     if (rawData[key] !== undefined && rawData[key] !== null) {
@@ -107,27 +67,14 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-<<<<<<< HEAD
-=======
-  // FECHA: convertir a DD/MM/AAAA
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   if (rawData['FECHA'] !== undefined && rawData['FECHA'] !== null) {
     map['FECHA'] = formatFecha(rawData['FECHA'])
   }
 
-<<<<<<< HEAD
-  // Preferir claves planas BD2 (FORMATO B) cuando existan, ya que son la fuente de verdad
-  const hasFlatInstKeys = Object.keys(rawData).some(k => { const n = parseInt(k); return n >= 8 && n <= 38 })
-
-  if (!hasFlatInstKeys && instituciones.length > 0) {    for (let i = 0; i < instituciones.length && i < 10; i++) {
-=======
-  // 2. Instituciones — manejar ambos formatos
   const instituciones: Array<{ denominacion: string; localidad: string; ef: string }> = rawData['instituciones'] || []
 
   if (instituciones.length > 0) {
-    // FORMATO A: Estructurado (array "instituciones")
     for (let i = 0; i < instituciones.length && i < 10; i++) {
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
       const inst = instituciones[i]
       const prefix = i < 5 ? 'BASICA' : 'DIV'
       const num = i < 5 ? i + 1 : i - 4
@@ -136,20 +83,12 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       if (inst.ef && !isBlank(inst.ef)) map[`EF.${prefix}.${num}`] = cleanVal(inst.ef)
     }
   } else {
-<<<<<<< HEAD
     const bd2InstSlots = [
       ['9', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
-=======
-    // FORMATO B: Crudo BD2 — claves "9°","10","11" (inst1), "12","13","14" (inst2), etc.
-    // Son 10 instituciones × 3 campos = 30 claves desde "9°" hasta "38"
-    const bd2InstSlots = [
-      ['9°', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
       ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
       ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
       ['36', '37', '38'],
     ]
-<<<<<<< HEAD
     const realInsts: { nombre: string; localidad: string; ef: string }[] = []
     for (let i = 0; i < bd2InstSlots.length; i++) {
       const [nameKey, locKey, efKey] = bd2InstSlots[i]
@@ -172,60 +111,26 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-=======
-    for (let i = 0; i < bd2InstSlots.length; i++) {
-      const [nameKey, locKey, efKey] = bd2InstSlots[i]
-      const nombre = rawData[nameKey]
-      const localidad = rawData[locKey]
-      const ef = rawData[efKey]
-      if (!isBlank(nombre)) {
-        const prefix = i < 5 ? 'BASICA' : 'DIV'
-        const num = i < 5 ? i + 1 : i - 4
-        map[`INST.${prefix}.${num}`] = cleanVal(nombre)
-        if (!isBlank(localidad)) map[`LOCAL.${prefix}.${num}`] = cleanVal(localidad)
-        if (!isBlank(ef)) map[`EF.${prefix}.${num}`] = cleanVal(ef)
-      }
-    }
-  }
-
-  // 3. Calificaciones — mapear a claves planas
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   const calificaciones: Array<{
     materia: string; abrev: string; anioEscolar: number;
     nota: string; eval: string; mes: string; anio: string; inst: string;
   }> = rawData['calificaciones'] || []
 
   if (calificaciones.length > 0) {
-<<<<<<< HEAD
-=======
-    // FORMATO A: Estructurado (array "calificaciones" con anioEscolar)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
     const byYear: Record<number, typeof calificaciones> = {}
     for (const c of calificaciones) {
       const y = c.anioEscolar || 1
       if (!byYear[y]) byYear[y] = []
       byYear[y].push(c)
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
     for (const [yearStr, grades] of Object.entries(byYear)) {
       const year = parseInt(yearStr)
       const codes = SUBJECT_CODES_BY_YEAR[year]
       if (!codes) continue
-<<<<<<< HEAD
-=======
-
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
       for (let i = 0; i < grades.length && i < codes.length; i++) {
         const code = codes[i]
         const g = grades[i]
         const suffix = `.${code}.${year}`
-<<<<<<< HEAD
-=======
-
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
         if (g.nota && g.nota !== '') map[`NOTA${suffix}`] = g.nota
         if (g.eval && g.eval !== '') map[`EVAL${suffix}`] = g.eval
         if (g.mes && g.mes !== '') map[`MES${suffix}`] = padMonth(String(g.mes))
@@ -234,10 +139,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       }
     }
   } else {
-<<<<<<< HEAD
-=======
-    // FORMATO B: Crudo BD2 — claves numéricas 39-293 en grupos de 5: nota, tipo, mes, año, inst
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
     const flatGrades: { year: number; code: string; nota: string; eval: string; mes: string; anio: string; inst: string }[] = []
     const gradesPerYear = 10
     let key = 39
@@ -272,10 +173,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-<<<<<<< HEAD
-=======
-  // 4. Secciones
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   const secciones = rawData['secciones'] || rawData['SECCION'] || {}
   for (let i = 1; i <= 5; i++) {
     const val = secciones[i] || secciones[String(i)] || rawData[`SECCION.${i}`]
@@ -284,10 +181,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-<<<<<<< HEAD
-=======
-  // 5. EPT (Educación para el Trabajo - especializaciones)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   const especializaciones: Array<{ anio: string; especialidad: string; periodo: string }> = rawData['especializaciones'] || []
   for (let i = 0; i < especializaciones.length && i < 12; i++) {
     const e = especializaciones[i]
@@ -297,20 +190,12 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     if (e.periodo && e.periodo !== '') map[`EPT.HORAS.${num}`] = String(e.periodo).trim()
   }
 
-<<<<<<< HEAD
-=======
-  // 6. Observaciones Diversificado
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   const obsDiv = rawData['observaciones'] || []
   for (let i = 0; i < obsDiv.length && i < 5; i++) {
     const val = String(obsDiv[i] || '').trim()
     if (val && val !== '') map[`OBS.DIV.L${i + 1}`] = val
   }
 
-<<<<<<< HEAD
-=======
-  // 7. Observaciones Básica (buscar en rawData plano si existen)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   for (let i = 1; i <= 5; i++) {
     const val = rawData[`OBS.BASICA.L${i}`]
     if (val && String(val).trim()) {
@@ -318,10 +203,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-<<<<<<< HEAD
-=======
-  // 8. Literales finales (estructurado o crudo claves 294-298)
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   const literales = rawData['literalesFinales'] || []
   if (literales.length > 0) {
     for (let i = 0; i < literales.length && i < 5; i++) {
@@ -331,10 +212,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       }
     }
   } else {
-<<<<<<< HEAD
-=======
-    // Crudo BD2: claves 294-298
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
     for (let i = 0; i < 5; i++) {
       const val = rawData[String(294 + i)]
       if (val && !isBlank(val)) {
@@ -343,22 +220,11 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-<<<<<<< HEAD
   if (rawData['acta']) map['ACTA'] = String(rawData['acta']).trim()
-=======
-  // 9. Acta
-  if (rawData['acta']) map['ACTA'] = String(rawData['acta']).trim()
-
-  // 10. Validación título/notas
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53
   if (rawData['SERIALTITULO']) map['SERIALTITULO'] = String(rawData['SERIALTITULO']).trim()
   if (rawData['FECHAEMISIONT']) map['FECHAEMISIONT'] = formatFecha(rawData['FECHAEMISIONT'])
   if (rawData['EGRESOAÑO']) map['EGRESOAÑO'] = String(rawData['EGRESOAÑO']).trim()
   if (rawData['FECHAEMISIONN']) map['FECHAEMISIONN'] = formatFecha(rawData['FECHAEMISIONN'])
 
   return map
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ab6f05df2f97ba1b34e5b279cd32188ff3e3cb53

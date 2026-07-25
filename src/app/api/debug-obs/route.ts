@@ -49,7 +49,7 @@ export async function GET() {
       results.push({
         cedula: student.cedula,
         nombre: `${student.apellidos}, ${student.nombres}`,
-        maxNumericKey,
+        maxNumericKey: maxKey,
         keys290plus: highKeys,
         specialKeys,
         totalKeys: Object.keys(normalized).length,

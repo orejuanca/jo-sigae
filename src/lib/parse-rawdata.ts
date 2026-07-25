@@ -770,11 +770,17 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
     }
 
     // Detectar formato plano por claves numéricas
-    const isBD2 = rawData['9'] !== undefined || (plan === 'derogado')
-    const isBD = rawData['8'] !== undefined && !rawData['9']
+    // PRIORIDAD 1: Usar el parámetro plan si está disponible
+    if (plan === 'derogado') return parseBD2RawDataLegacy(rawData)
+    if (plan === 'vigente') return parseBDRawDataLegacy(rawData)
 
-    if (isBD2) return parseBD2RawDataLegacy(rawData)
-    if (isBD) return parseBDRawDataLegacy(rawData)
+    // PRIORIDAD 2: Auto-detect por estructura de claves
+    // BD vigente tiene key '8' (nombre 1ra institución), BD2 no tiene key '8' (empieza en '9')
+    const hasKey8 = rawData['8'] !== undefined
+    const hasKey9 = rawData['9'] !== undefined
+
+    if (hasKey8) return parseBDRawDataLegacy(rawData)
+    if (hasKey9) return parseBD2RawDataLegacy(rawData)
 
     // Fallback: buscar claves numéricas
     const numKeys = Object.keys(rawData).filter(k => {

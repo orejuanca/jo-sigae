@@ -332,5 +332,23 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   if (rawData['EGRESOAÑO'] && !hasFlatInstKeys) map['EGRESOAÑO'] = String(rawData['EGRESOAÑO']).trim()
   if (rawData['FECHAEMISIONN'] && !hasFlatInstKeys) map['FECHAEMISIONN'] = formatFecha(rawData['FECHAEMISIONN'])
 
+  // 11. Promedio Académico — suma notas válidas (10-20) / cantidad, 2 decimales
+  let sumaNotas = 0
+  let countNotas = 0
+  for (const [key, val] of Object.entries(map)) {
+    if (key.startsWith('NOTA.')) {
+      const num = parseFloat(val)
+      if (!isNaN(num) && num >= 10 && num <= 20) {
+        sumaNotas += num
+        countNotas++
+      }
+    }
+  }
+  if (countNotas > 0) {
+    map['PROMEDIO.ACADEMICO'] = (sumaNotas / countNotas).toFixed(2)
+  } else {
+    map['PROMEDIO.ACADEMICO'] = 'No Hay'
+  }
+
   return map
 }

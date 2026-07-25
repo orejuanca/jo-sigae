@@ -757,6 +757,11 @@ function CertVisualEditorContent() {
       const yyyy = today.getFullYear()
       dashboardExtra['EXPEDICION.FECHA'] = z4 || `${dd}/${mm}/${yyyy}`
       dashboardExtra['EXPEDICION.LUGAR'] = ah4 || 'MIRANDA'
+      // Z6 (row 5, col 25) = Nombre del Director, Z7 (row 6, col 25) = Cédula del Director
+      const z6 = dashboardCells[5]?.[25]?.trim() || ''
+      const z7 = dashboardCells[6]?.[25]?.trim() || ''
+      dashboardExtra['DIRECTOR.NOMBRE'] = z6 || 'PAREDES HURTADO, RAQUEL'
+      dashboardExtra['DIRECTOR.CEDULA'] = z7 || 'V 64194399'
     }
 
     // Build rawDataMap from rawDataFlat + dashboard + draft overrides

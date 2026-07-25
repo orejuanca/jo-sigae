@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
 
-// GET /api/debug-obs — Inspeccionar rawData de BD2 para encontrar claves de EPT y observaciones
+// GET /api/debug-obs — Find students with real observation data in BD2
 export async function GET() {
   try {
     const db = getDb('derogado')
     const students = await db.student.findMany({
       where: { rawData: { not: '' } },
-      take: 3,
+      take: 200,
       orderBy: { apellidos: 'asc' },
     })
 
-    const results: any[] = []
+    // Find students with real text in keys 320-363
+    const withRealObs: any[] = []
     for (const student of students) {
       const rawObj = JSON.parse(student.rawData)
       const normalized: Record<string, any> = {}
@@ -19,44 +20,39 @@ export async function GET() {
         normalized[k.replace(/\u00b0/g, '')] = v
       }
 
-      // Mostrar TODAS las claves numéricas desde 290 en adelante
-      const highKeys: Record<string, any> = {}
-      const allNumericKeys = Object.keys(normalized)
-        .map(k => parseInt(k))
-        .filter(n => !isNaN(n))
-        .sort((a, b) => a - b)
-      
-      const maxKey = Math.max(...allNumericKeys, 0)
-      
-      for (let i = 290; i <= maxKey + 5; i++) {
+      // Check keys 290-363 for real text (not null, not "", not "*" variants)
+      const realEntries: Record<string, any> = {}
+      for (let i = 290; i <= 363; i++) {
         const k = String(i)
-        if (normalized[k] !== undefined) {
-          highKeys[k] = normalized[k]
-        } else {
-          highKeys[k] = undefined
-        }
+        const val = normalized[k]
+        if (val === null || val === undefined) continue
+        const s = String(val).trim()
+        if (s === '' || /^\*+$/.test(s)) continue
+        realEntries[k] = s
       }
 
-      // También mostrar las claves no-numéricas que tengan "especial" o "obs" o "ept"
-      const specialKeys: Record<string, any> = {}
+      // Also check for non-numeric keys
+      const nonNumericReal: Record<string, any> = {}
       for (const [k, v] of Object.entries(normalized)) {
-        const lk = k.toLowerCase()
-        if (lk.includes('espec') || lk.includes('obs') || lk.includes('ept') || lk.includes('literal') || lk.includes('observ')) {
-          specialKeys[k] = v
-        }
+        if (/^\d+$/.test(k)) continue
+        if (v === null || v === undefined) continue
+        const s = String(v).trim()
+        if (s === '') continue
+        nonNumericReal[k] = s
       }
 
-      results.push({
-        cedula: student.cedula,
-        nombre: `${student.apellidos}, ${student.nombres}`,
-        maxNumericKey: maxKey,
-        keys290plus: highKeys,
-        specialKeys,
-        totalKeys: Object.keys(normalized).length,
-      })
+      if (Object.keys(realEntries).length > 0 || Object.keys(nonNumericReal).length > 0) {
+        withRealObs.push({
+          cedula: student.cedula,
+          nombre: `${student.apellidos}, ${student.nombres}`,
+          realKeys290to363: realEntries,
+          nonNumericKeys: nonNumericReal,
+        })
+        if (withRealObs.length >= 10) break
+      }
     }
 
-    return NextResponse.json({ results })
+    return NextResponse.json({ count: withRealObs.length, students: withRealObs })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }

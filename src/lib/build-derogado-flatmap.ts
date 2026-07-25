@@ -332,23 +332,28 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   if (rawData['EGRESOAÑO'] && !hasFlatInstKeys) map['EGRESOAÑO'] = String(rawData['EGRESOAÑO']).trim()
   if (rawData['FECHAEMISIONN'] && !hasFlatInstKeys) map['FECHAEMISIONN'] = formatFecha(rawData['FECHAEMISIONN'])
 
-  // 11. Promedio Académico — suma notas válidas (10-20) / cantidad, 2 decimales
-  let sumaNotas = 0
-  let countNotas = 0
-  for (const [key, val] of Object.entries(map)) {
-    if (key.startsWith('NOTA.')) {
-      const num = parseFloat(val)
-      if (!isNaN(num) && num >= 10 && num <= 20) {
-        sumaNotas += num
-        countNotas++
+  // 11. Promedios Académicos — separar Básica (años 1-3) y Diversificado (años 4-5)
+  //     Cada NOTA.* tiene formato NOTA.{codigo}.{año} → último segmento = año escolar
+  function calcPromedio(years: number[]): string {
+    let suma = 0
+    let count = 0
+    for (const [key, val] of Object.entries(map)) {
+      if (key.startsWith('NOTA.')) {
+        const parts = key.split('.')
+        const year = parseInt(parts[parts.length - 1])
+        if (years.includes(year)) {
+          const num = parseFloat(val)
+          if (!isNaN(num) && num >= 10 && num <= 20) {
+            suma += num
+            count++
+          }
+        }
       }
     }
+    return count > 0 ? (suma / count).toFixed(2) : 'No Hay'
   }
-  if (countNotas > 0) {
-    map['PROMEDIO.ACADEMICO'] = (sumaNotas / countNotas).toFixed(2)
-  } else {
-    map['PROMEDIO.ACADEMICO'] = 'No Hay'
-  }
+  map['PROMEDIO.BASICA'] = calcPromedio([1, 2, 3])
+  map['PROMEDIO.DIVERSIFICADO'] = calcPromedio([4, 5])
 
   return map
 }

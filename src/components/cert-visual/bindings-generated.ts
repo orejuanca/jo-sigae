@@ -141,7 +141,8 @@ export const DATA_BINDINGS_DEROGADO: { group: string; bindings: { value: string;
     { value: 'rawData.ESTADO', label: 'Estado' },
     { value: 'rawData.MUNICIPIO', label: 'Municipio' },
     { value: 'rawData.LUGAR', label: 'Lugar' },
-    { value: 'rawData.PROMEDIO.ACADEMICO', label: 'Promedio Académico' },
+    { value: 'rawData.PROMEDIO.BASICA', label: 'Promedio Académico Básica' },
+    { value: 'rawData.PROMEDIO.DIVERSIFICADO', label: 'Promedio Académico Diversificado' },
   ]},
   { group: 'Educación Básica', bindings: [
     { value: 'rawData.INST.BASICA.1', label: 'Institución Básica 1' },

@@ -6,8 +6,9 @@
 //   A) Formato estructurado (desde importDerogadoFromJSON): tiene arrays "instituciones", "calificaciones"
 //   B) Formato crudo BD2 (desde seed.ts): tiene claves planas "9"-"38" para instituciones,
 //      claves numéricas 39-293 para calificaciones, etc.
-//   Nota: el caller (cert-data/route.ts) normaliza las claves quitando el símbolo de grado (°)
-//         antes de pasar el objeto a esta función.
+//
+// IMPORTANTE: Al final se hace passthrough de TODOS los valores del rawData.
+// Los asteriscos (*) son datos válidos y NUNCA se filtran.
 
 // Códigos de materia CORRECTOS por año escolar (del Excel BD2 real)
 const SUBJECT_CODES_BY_YEAR: Record<number, string[]> = {
@@ -45,6 +46,7 @@ function formatFecha(val: unknown): string {
   return s
 }
 
+/** Returns true only if the value is truly empty (null, undefined, or whitespace-only) */
 function isBlank(val: unknown): boolean {
   if (!val) return true
   return String(val).trim() === ''
@@ -68,7 +70,26 @@ function padMonth(val: string): string {
 export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<string, string> {
   const map: Record<string, string> = {}
 
-  // 1. Datos personales (top-level keys that already match)
+  // ═══════════════════════════════════════════════════════════════
+  // PASSTHROUGH COMPLETO: copiar TODOS los valores del rawData.
+  // Esto garantiza que NINGÚN campo se pierda (filas 1-84 y más).
+  // Los asteriscos se preservan como datos válidos.
+  // Los mapeos estructurados abajo sobreescriben estos cuando aplican.
+  // ═══════════════════════════════════════════════════════════════
+  for (const [key, val] of Object.entries(rawData)) {
+    if (typeof val === 'string' || typeof val === 'number') {
+      const strVal = String(val).trim()
+      if (strVal !== '') {
+        map[key] = strVal
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MAPEOS ESTRUCTURADOS (sobreescriben el passthrough arriba)
+  // ═══════════════════════════════════════════════════════════════
+
+  // 1. Datos personales (top-level keys que ya coinciden)
   const personalKeys = ['CEDULA', 'APELLIDOS', 'NOMBRES', 'PAIS', 'ESTADO', 'MUNICIPIO', 'LUGAR']
   for (const key of personalKeys) {
     if (rawData[key] !== undefined && rawData[key] !== null) {
@@ -81,8 +102,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     map['FECHA'] = formatFecha(rawData['FECHA'])
   }
 
-  // 2. Instituciones — manejar ambos formatos
-  // Preferir claves planas BD2 (FORMATO B) cuando existan, ya que son la fuente de verdad
+  // 2. Instituciones — mapear a claves estructuradas INST.BASICA.N, LOCAL.BASICA.N, EF.BASICA.N
   const hasFlatInstKeys = Object.keys(rawData).some(k => { const n = parseInt(k); return n >= 8 && n <= 38 })
   const instituciones: Array<{ denominacion: string; localidad: string; ef: string }> = rawData['instituciones'] || []
 
@@ -98,7 +118,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   } else {
     // FORMATO B: Crudo BD2 — claves "9","10","11" (inst1), "12","13","14" (inst2), etc.
-    // Son 10 instituciones × 3 campos = 30 claves desde "9" hasta "38"
     const bd2InstSlots = [
       ['9', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
       ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
@@ -107,14 +126,12 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     ]
     for (let i = 0; i < bd2InstSlots.length; i++) {
       const [nameKey, locKey, efKey] = bd2InstSlots[i]
-      const nombre = rawData[nameKey]
-      if (!isBlank(nombre)) {
-        const prefix = i < 5 ? 'BASICA' : 'DIV'
-        const num = i < 5 ? i + 1 : i - 4
-        map[`INST.${prefix}.${num}`] = cleanVal(nombre)
-        if (!isBlank(rawData[locKey])) map[`LOCAL.${prefix}.${num}`] = cleanVal(rawData[locKey])
-        if (!isBlank(rawData[efKey])) map[`EF.${prefix}.${num}`] = cleanVal(rawData[efKey])
-      }
+      const prefix = i < 5 ? 'BASICA' : 'DIV'
+      const num = i < 5 ? i + 1 : i - 4
+      // Mapear SIEMPRE que haya datos (incluyendo asteriscos)
+      if (!isBlank(rawData[nameKey])) map[`INST.${prefix}.${num}`] = cleanVal(rawData[nameKey])
+      if (!isBlank(rawData[locKey])) map[`LOCAL.${prefix}.${num}`] = cleanVal(rawData[locKey])
+      if (!isBlank(rawData[efKey])) map[`EF.${prefix}.${num}`] = cleanVal(rawData[efKey])
     }
   }
 
@@ -151,7 +168,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   } else {
     // FORMATO B: Crudo BD2 — claves numéricas 39-293 en grupos de 5: nota, tipo, mes, año, inst
-    const flatGrades: { year: number; code: string; nota: string; eval: string; mes: string; anio: string; inst: string }[] = []
     const gradesPerYear = 10
     let key = 39
     let yearNum = 1
@@ -159,29 +175,23 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     while (key <= 293 && yearNum <= 5) {
       const codes = SUBJECT_CODES_BY_YEAR[yearNum]
       const code = codes?.[subjectIdx] || `M${subjectIdx + 1}`
-      flatGrades.push({
-        year: yearNum, code,
-        nota: String(rawData[String(key)] || '').trim(),
-        eval: String(rawData[String(key + 1)] || '').trim(),
-        mes: String(rawData[String(key + 2)] || '').trim(),
-        anio: String(rawData[String(key + 3)] || '').trim(),
-        inst: String(rawData[String(key + 4)] || '').trim(),
-      })
+      const suffix = `.${code}.${yearNum}`
+      const nota = String(rawData[String(key)] || '').trim()
+      if (nota !== '') map[`NOTA${suffix}`] = nota
+      const ev = String(rawData[String(key + 1)] || '').trim()
+      if (ev !== '') map[`EVAL${suffix}`] = ev
+      const mes = String(rawData[String(key + 2)] || '').trim()
+      if (mes !== '') map[`MES${suffix}`] = padMonth(mes)
+      const anio = String(rawData[String(key + 3)] || '').trim()
+      if (anio !== '') map[`AÑO${suffix}`] = anio
+      const inst = String(rawData[String(key + 4)] || '').trim()
+      if (inst !== '') map[`INST${suffix}`] = inst
       subjectIdx++
       key += 5
       if (subjectIdx >= gradesPerYear) {
         subjectIdx = 0
         yearNum++
       }
-    }
-    for (const g of flatGrades) {
-      if (!g.nota || g.nota === '') continue
-      const suffix = `.${g.code}.${g.year}`
-      map[`NOTA${suffix}`] = g.nota
-      if (g.eval && g.eval !== '') map[`EVAL${suffix}`] = g.eval
-      if (g.mes && g.mes !== '') map[`MES${suffix}`] = padMonth(g.mes)
-      if (g.anio && g.anio !== '') map[`AÑO${suffix}`] = g.anio
-      if (g.inst && g.inst !== '') map[`INST${suffix}`] = g.inst
     }
   }
 
@@ -211,7 +221,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     if (val && val !== '') map[`OBS.DIV.L${i + 1}`] = val
   }
 
-  // 7. Observaciones Básica (buscar en rawData plano si existen)
+  // 7. Observaciones Básica
   for (let i = 1; i <= 5; i++) {
     const val = rawData[`OBS.BASICA.L${i}`]
     if (val && String(val).trim()) {

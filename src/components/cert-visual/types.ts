@@ -143,10 +143,14 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       return docMap[rest[0]] || ''
     }
     case 'director': {
+      if (!data.rawDataMap) return ''
       if (rest[0] === 'nombre') {
-        return data.director?.apellidosNombres || data.rawDataMap?.['DIRECTOR.NOMBRE'] || ''
+        return data.rawDataMap['DIRECTOR.NOMBRE'] || ''
       }
-      return data.director?.cedula || data.rawDataMap?.['DIRECTOR.CEDULA'] || ''
+      if (rest[0] === 'cedula') {
+        return data.rawDataMap['DIRECTOR.CEDULA'] || ''
+      }
+      return ''
     }
     case 'cdcee':
       return rest[0] === 'nombre' ? (data.directorCdcce?.apellidosNombres || '') : (data.directorCdcce?.cedula || '')

@@ -114,6 +114,7 @@ function GridTable({
   displayData,
   onCellEdit,
   savingDraft,
+  draftOverrides,
 }: {
   config: GridConfig
   selectedCell: { row: number; col: number } | null
@@ -125,6 +126,7 @@ function GridTable({
   displayData: DisplayData | null
   onCellEdit?: (binding: string, newValue: string) => void
   savingDraft?: boolean
+  draftOverrides?: Record<string, string>
 }) {
   // Recompute occupied set on every render to track rowspan AND colspan correctly
   const occupied = useMemo(() => {
@@ -188,7 +190,10 @@ function GridTable({
                 const cell = gridRow.cells[c] || emptyCell()
 
                 let displayContent = cell.content
-                if (isPreview && cell.dataBinding && displayData) { displayContent = resolveBinding(cell.dataBinding, displayData, config) }
+                if (isPreview && cell.dataBinding && displayData) {
+                  const ov = draftOverrides?.[cell.dataBinding]
+                  displayContent = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config)
+                }
 
                 const borderStyle = (enabled: boolean) =>
                   enabled ? `1px solid ${cell.borderColor}` : 'none'
@@ -269,7 +274,7 @@ function GridTable({
                         onBlur={(e) => {
                           e.currentTarget.setAttribute('contentEditable', 'false')
                           const newVal = e.currentTarget.textContent || ''
-                          if (newVal !== resolveBinding(cell.dataBinding!, displayData!, config)) {
+                          if (newVal !== displayContent) {
                             onCellEdit(cell.dataBinding, newVal)
                           }
                         }}
@@ -1676,6 +1681,7 @@ img{max-width:100%;height:auto}
             displayData={displayData}
             onCellEdit={handleCellEdit}
             savingDraft={savingDraft}
+            draftOverrides={draftOverrides}
           />
         </div>
 

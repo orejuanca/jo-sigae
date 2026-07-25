@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
+import { buildDerogadoFlatMap } from '@/lib/build-derogado-flatmap'
 
-// GET /api/debug-obs — Find students with real observation data in BD2
+// GET /api/debug-obs — Check flatmap output for OBS keys
 export async function GET() {
   try {
     const db = getDb('derogado')
     const students = await db.student.findMany({
       where: { rawData: { not: '' } },
-      take: 200,
+      take: 3,
       orderBy: { apellidos: 'asc' },
     })
 
-    // Find students with real text in keys 320-363
-    const withRealObs: any[] = []
+    const results: any[] = []
     for (const student of students) {
       const rawObj = JSON.parse(student.rawData)
       const normalized: Record<string, any> = {}
@@ -20,39 +20,32 @@ export async function GET() {
         normalized[k.replace(/\u00b0/g, '')] = v
       }
 
-      // Check keys 290-363 for real text (not null, not "", not "*" variants)
-      const realEntries: Record<string, any> = {}
-      for (let i = 290; i <= 363; i++) {
-        const k = String(i)
-        const val = normalized[k]
-        if (val === null || val === undefined) continue
-        const s = String(val).trim()
-        if (s === '' || /^\*+$/.test(s)) continue
-        realEntries[k] = s
+      const flatmap = buildDerogadoFlatMap(normalized)
+
+      // Extract only OBS and EPT keys from flatmap
+      const obsKeys: Record<string, string> = {}
+      const eptKeys: Record<string, string> = {}
+      for (const [k, v] of Object.entries(flatmap)) {
+        if (k.startsWith('OBS.')) obsKeys[k] = v
+        if (k.startsWith('EPT.')) eptKeys[k] = v
       }
 
-      // Also check for non-numeric keys
-      const nonNumericReal: Record<string, any> = {}
-      for (const [k, v] of Object.entries(normalized)) {
-        if (/^\d+$/.test(k)) continue
-        if (v === null || v === undefined) continue
-        const s = String(v).trim()
-        if (s === '') continue
-        nonNumericReal[k] = s
+      // Also check the raw values at expected positions
+      const raw320to329: Record<string, any> = {}
+      for (let i = 320; i <= 329; i++) {
+        raw320to329[String(i)] = normalized[String(i)]
       }
 
-      if (Object.keys(realEntries).length > 0 || Object.keys(nonNumericReal).length > 0) {
-        withRealObs.push({
-          cedula: student.cedula,
-          nombre: `${student.apellidos}, ${student.nombres}`,
-          realKeys290to363: realEntries,
-          nonNumericKeys: nonNumericReal,
-        })
-        if (withRealObs.length >= 10) break
-      }
+      results.push({
+        cedula: student.cedula,
+        nombre: `${student.apellidos}, ${student.nombres}`,
+        raw320to329,
+        flatmapObsKeys: obsKeys,
+        flatmapEptKeys: eptKeys,
+      })
     }
 
-    return NextResponse.json({ count: withRealObs.length, students: withRealObs })
+    return NextResponse.json({ results })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }

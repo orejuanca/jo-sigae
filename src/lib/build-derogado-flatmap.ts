@@ -206,26 +206,56 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
 
   // 5. EPT (Educación para el Trabajo - especializaciones)
   const especializaciones: Array<{ anio: string; especialidad: string; periodo: string }> = rawData['especializaciones'] || []
-  for (let i = 0; i < especializaciones.length && i < 12; i++) {
-    const e = especializaciones[i]
-    const num = i + 1
-    if (e.anio && e.anio !== '') map[`EPT.GRADO.${num}`] = String(e.anio).trim()
-    if (e.especialidad && e.especialidad !== '') map[`EPT.NOMBRE.${num}`] = String(e.especialidad).trim()
-    if (e.periodo && e.periodo !== '') map[`EPT.HORAS.${num}`] = String(e.periodo).trim()
+  if (especializaciones.length > 0) {
+    // FORMATO A: Estructurado (array "especializaciones")
+    for (let i = 0; i < especializaciones.length && i < 12; i++) {
+      const e = especializaciones[i]
+      const num = i + 1
+      if (e.anio && e.anio !== '') map[`EPT.GRADO.${num}`] = String(e.anio).trim()
+      if (e.especialidad && e.especialidad !== '') map[`EPT.NOMBRE.${num}`] = String(e.especialidad).trim()
+      if (e.periodo && e.periodo !== '') map[`EPT.HORAS.${num}`] = String(e.periodo).trim()
+    }
+  } else {
+    // FORMATO B: Crudo BD2 — claves 299+ en grupos de 3: [grado, nombre, horas]
+    for (let i = 0; i < 12; i++) {
+      const baseKey = 299 + (i * 3)
+      const grado = rawData[String(baseKey)]
+      const nombre = rawData[String(baseKey + 1)]
+      const horas = rawData[String(baseKey + 2)]
+      const num = i + 1
+      if (!isBlank(grado)) map[`EPT.GRADO.${num}`] = cleanVal(grado)
+      if (!isBlank(nombre)) map[`EPT.NOMBRE.${num}`] = cleanVal(nombre)
+      if (!isBlank(horas)) map[`EPT.HORAS.${num}`] = cleanVal(horas)
+    }
   }
 
-  // 6. Observaciones Diversificado
+  // 7. Observaciones
   const obsDiv = rawData['observaciones'] || []
-  for (let i = 0; i < obsDiv.length && i < 5; i++) {
-    const val = String(obsDiv[i] || '').trim()
-    if (val && val !== '') map[`OBS.DIV.L${i + 1}`] = val
-  }
-
-  // 7. Observaciones Básica
-  for (let i = 1; i <= 5; i++) {
-    const val = rawData[`OBS.BASICA.L${i}`]
-    if (val && String(val).trim()) {
-      map[`OBS.BASICA.L${i}`] = String(val).trim()
+  if (obsDiv.length > 0) {
+    // FORMATO A: Estructurado (array "observaciones")
+    for (let i = 0; i < obsDiv.length && i < 5; i++) {
+      const val = String(obsDiv[i] || '').trim()
+      if (val && val !== '') map[`OBS.DIV.L${i + 1}`] = val
+    }
+  } else if (hasFlatInstKeys) {
+    // FORMATO B: Crudo BD2 — claves 320+ para observaciones
+    // Claves 320-324 → OBS.BASICA.L1-L5
+    for (let i = 0; i < 5; i++) {
+      const val = rawData[String(320 + i)]
+      if (!isBlank(val)) map[`OBS.BASICA.L${i + 1}`] = cleanVal(val)
+    }
+    // Claves 325-329 → OBS.DIV.L1-L5
+    for (let i = 0; i < 5; i++) {
+      const val = rawData[String(325 + i)]
+      if (!isBlank(val)) map[`OBS.DIV.L${i + 1}`] = cleanVal(val)
+    }
+  } else {
+    // Sin observaciones estructuradas ni crudas, buscar claves nombradas
+    for (let i = 1; i <= 5; i++) {
+      const val = rawData[`OBS.BASICA.L${i}`]
+      if (val && String(val).trim()) map[`OBS.BASICA.L${i}`] = String(val).trim()
+      const valD = rawData[`OBS.DIV.L${i}`]
+      if (valD && String(valD).trim()) map[`OBS.DIV.L${i}`] = String(valD).trim()
     }
   }
 

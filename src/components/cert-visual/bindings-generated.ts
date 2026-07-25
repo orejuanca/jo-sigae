@@ -143,6 +143,8 @@ export const DATA_BINDINGS_DEROGADO: { group: string; bindings: { value: string;
     { value: 'rawData.LUGAR', label: 'Lugar' },
     { value: 'rawData.PROMEDIO.BASICA', label: 'Promedio Académico Básica' },
     { value: 'rawData.PROMEDIO.DIVERSIFICADO', label: 'Promedio Académico Diversificado' },
+    { value: 'expedicion.fecha', label: 'Fecha de Expedición (Z4 / hoy)' },
+    { value: 'expedicion.lugar', label: 'Lugar de Expedición (AH4 / MIRANDA)' },
   ]},
   { group: 'Educación Básica', bindings: [
     { value: 'rawData.INST.BASICA.1', label: 'Institución Básica 1' },

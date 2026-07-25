@@ -188,9 +188,7 @@ function GridTable({
                 const cell = gridRow.cells[c] || emptyCell()
 
                 let displayContent = cell.content
-                if (isPreview && cell.dataBinding && displayData) {
-                  displayContent = resolveBinding(cell.dataBinding, displayData)
-                }
+                if (isPreview && cell.dataBinding && displayData) { displayContent = resolveBinding(cell.dataBinding, displayData, config) }
 
                 const borderStyle = (enabled: boolean) =>
                   enabled ? `1px solid ${cell.borderColor}` : 'none'
@@ -225,7 +223,7 @@ function GridTable({
                       outlineOffset: '-2px',
                       minWidth: hasContent ? undefined : '0px',
                       minHeight: '24px',
-		      background: cellInRange
+                      background: cellInRange
                         ? 'rgba(59,130,246,0.15)'
                         : cellIsSelected
                           ? 'rgba(59,130,246,0.06)'
@@ -271,7 +269,7 @@ function GridTable({
                         onBlur={(e) => {
                           e.currentTarget.setAttribute('contentEditable', 'false')
                           const newVal = e.currentTarget.textContent || ''
-                          if (newVal !== resolveBinding(cell.dataBinding!, displayData!)) {
+                          if (newVal !== resolveBinding(cell.dataBinding!, displayData!, config)) {
                             onCellEdit(cell.dataBinding, newVal)
                           }
                         }}
@@ -1392,7 +1390,7 @@ function CertVisualEditorContent() {
         const cell = gridRow.cells[c] || emptyCell()
         let content = cell.content
         if (cell.dataBinding && data) {
-          content = resolveBinding(cell.dataBinding, data) || ''
+          content = resolveBinding(cell.dataBinding, data, cfg) || ''
         }
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''

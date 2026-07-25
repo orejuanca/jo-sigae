@@ -116,40 +116,6 @@ const YEAR_NAME_MAP: Record<string, string> = {
   '4': 'Cuarto Año', '5': 'Quinto Año',
 }
 
-/** Convierte referencia Excel (ej. "Z4", "AH4") a [rowIndex, colIndex] (0-based) */
-function parseCellRef(ref: string): [number, number] | null {
-  const match = /^([A-Z]+)(\d+)$/i.exec(ref.trim())
-  if (!match) return null
-  const colStr = match[1].toUpperCase()
-  const rowNum = parseInt(match[2], 10)
-  // Convertir letras a índice de columna: A=0, B=1, ..., Z=25, AA=26, AH=33
-  let col = 0
-  for (let i = 0; i < colStr.length; i++) {
-    col = col * 26 + (colStr.charCodeAt(i) - 64)
-  }
-  return [rowNum - 1, col - 1] // Convertir a 0-based
-}
-
-/** Lee el contenido estático de una celda del grid por referencia Excel (ej. "Z4") */
-function readGridCell(gridConfig: GridConfig | undefined, cellRef: string): string {
-  if (!gridConfig) return ''
-  const pos = parseCellRef(cellRef)
-  if (!pos) return ''
-  const [r, c] = pos
-  const row = gridConfig.rows[r]
-  if (!row) return ''
-  const cell = row.cells[c]
-  return cell?.content?.trim() || ''
-}
-
-/** Formatea fecha actual como DD/MM/YYYY */
-function todayFormatted(): string {
-  const d = new Date()
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  return `${day}/${month}/${d.getFullYear()}`
-}
-
 export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
   if (!path || !data) return ''
   const [domain, ...rest] = path.split('.')
@@ -230,19 +196,15 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       }
       return val
     }
-    case 'gridCell': {
-      // Lee contenido estático de una celda del grid: gridCell.Z4, gridCell.AH4
-      return readGridCell(gridConfig, rest[0])
-    }
     case 'expedicion': {
-      // Datos en caliente del grid con valores por defecto
+      if (!data.rawDataMap) return ''
       if (rest[0] === 'fecha') {
-        const val = readGridCell(gridConfig, 'Z4')
-        return val || todayFormatted()
+        const val = data.rawDataMap['EXPEDICION.FECHA'] || ''
+        return val
       }
       if (rest[0] === 'lugar') {
-        const val = readGridCell(gridConfig, 'AH4')
-        return val || 'MIRANDA'
+        const val = data.rawDataMap['EXPEDICION.LUGAR'] || ''
+        return val
       }
       return ''
     }

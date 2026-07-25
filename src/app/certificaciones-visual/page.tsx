@@ -479,6 +479,9 @@ function CertVisualEditorContent() {
   const [rawDataFlat, setRawDataFlat] = useState<Record<string, string> | null>(null)
   const [loadingData, setLoadingData] = useState(false)
 
+  // Datos del tablero (celdas Z4 y AH4 para expedición)
+  const [dashboardCells, setDashboardCells] = useState<string[][] | null>(null)
+
   // Inline editing: overrides per dataBinding path
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
   const [savingDraft, setSavingDraft] = useState(false)
@@ -533,6 +536,20 @@ function CertVisualEditorContent() {
     const timer = setTimeout(() => saveGridConfig(gridConfig), 500)
     return () => clearTimeout(timer)
   }, [gridConfig, gridInitialized])
+
+  // Cargar celdas del tablero para plan derogado (Z4=fecha, AH4=lugar de expedición)
+  useEffect(() => {
+    if (plan !== 'derogado') return
+    fetch(`/api/dashboard-state?plan=derogado`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.found && data.datos) {
+          const state = typeof data.datos === 'string' ? JSON.parse(data.datos) : data.datos
+          if (state.cells) setDashboardCells(state.cells)
+        }
+      })
+      .catch(() => {})
+  }, [plan])
 
   // === Student selection + data fetching ===
   const handleSelectStudent = useCallback(async (student: Student) => {
@@ -729,8 +746,21 @@ function CertVisualEditorContent() {
 
   // Convert CertData to DisplayData for the grid
   const displayData: DisplayData | null = useMemo(() => {
-    // Build rawDataMap from rawDataFlat + draft overrides (used by plan derogado rawData.* bindings)
-    const rawDataMap = rawDataFlat ? { ...rawDataFlat, ...Object.fromEntries(
+    // Extraer datos del tablero: Z4 (col 25, row 3) = fecha expedición, AH4 (col 33, row 3) = lugar
+    const dashboardExtra: Record<string, string> = {}
+    if (dashboardCells) {
+      const z4 = dashboardCells[3]?.[25]?.trim() || ''
+      const ah4 = dashboardCells[3]?.[33]?.trim() || ''
+      const today = new Date()
+      const dd = String(today.getDate()).padStart(2, '0')
+      const mm = String(today.getMonth() + 1).padStart(2, '0')
+      const yyyy = today.getFullYear()
+      dashboardExtra['EXPEDICION.FECHA'] = z4 || `${dd}/${mm}/${yyyy}`
+      dashboardExtra['EXPEDICION.LUGAR'] = ah4 || 'MIRANDA'
+    }
+
+    // Build rawDataMap from rawDataFlat + dashboard + draft overrides
+    const rawDataMap = rawDataFlat ? { ...rawDataFlat, ...dashboardExtra, ...Object.fromEntries(
       Object.entries(draftOverrides).filter(([k]) => k.startsWith('rawData.')).map(([k, v]) => [k.replace('rawData.', ''), v])
     ) } : undefined
 
@@ -813,7 +843,7 @@ function CertVisualEditorContent() {
       ],
       rawDataMap,
     }
-  }, [certData, draftOverrides, rawDataFlat])
+  }, [certData, draftOverrides, rawDataFlat, dashboardCells])
 
   // === Grid Operations ===
   // Mouse handlers for range selection

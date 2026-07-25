@@ -774,7 +774,7 @@ function CertVisualEditorContent() {
       const z6 = dashboardCells[5]?.[25]?.trim() || ''
       const z7 = dashboardCells[6]?.[25]?.trim() || ''
       dashboardExtra['DIRECTOR.NOMBRE'] = z6 || 'PAREDES HURTADO, RAQUEL'
-      dashboardExtra['DIRECTOR.CEDULA'] = z7 || 'V 64194399'
+      dashboardExtra['DIRECTOR.CEDULA'] = z7 || 'V 6419439'
     }
 
     // Build rawDataMap from rawDataFlat + dashboard + draft overrides

@@ -75,8 +75,10 @@ export const DATA_BINDINGS_VIGENTE: { group: string; bindings: { value: string; 
     { value: 'doc.literalFinal.4', label: 'Literal Final — 5to Año' },
   ]},
   { group: 'Director', bindings: [
-    { value: 'director.nombre', label: 'Nombre del Director' },
-    { value: 'director.cedula', label: 'Cédula del Director' },
+    { value: 'director.nombre', label: 'Nombre del Director (Z6)' },
+    { value: 'director.cedula', label: 'Cédula del Director (Z7)' },
+    { value: 'expedicion.fecha', label: 'Fecha de Expedición (Z4 / hoy)' },
+    { value: 'expedicion.lugar', label: 'Lugar de Expedición (AH4 / MIRANDA)' },
   ]},
   { group: 'Director CDCEE', bindings: [
     { value: 'cdcee.nombre', label: 'Nombre Director CDCEE' },

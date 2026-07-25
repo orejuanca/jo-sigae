@@ -143,12 +143,11 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       return docMap[rest[0]] || ''
     }
     case 'director': {
-      if (!data.rawDataMap) return ''
       if (rest[0] === 'nombre') {
-        return data.rawDataMap['DIRECTOR.NOMBRE'] || ''
+        return data.rawDataMap?.['DIRECTOR.NOMBRE'] || data.director?.apellidosNombres || ''
       }
       if (rest[0] === 'cedula') {
-        return data.rawDataMap['DIRECTOR.CEDULA'] || ''
+        return data.rawDataMap?.['DIRECTOR.CEDULA'] || data.director?.cedula || ''
       }
       return ''
     }
@@ -205,14 +204,11 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       return val
     }
     case 'expedicion': {
-      if (!data.rawDataMap) return ''
       if (rest[0] === 'fecha') {
-        const val = data.rawDataMap['EXPEDICION.FECHA'] || ''
-        return val
+        return data.rawDataMap?.['EXPEDICION.FECHA'] || data.fechaExpedicion || ''
       }
       if (rest[0] === 'lugar') {
-        const val = data.rawDataMap['EXPEDICION.LUGAR'] || ''
-        return val
+        return data.rawDataMap?.['EXPEDICION.LUGAR'] || data.lugar || ''
       }
       return ''
     }

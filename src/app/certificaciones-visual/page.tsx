@@ -537,10 +537,9 @@ function CertVisualEditorContent() {
     return () => clearTimeout(timer)
   }, [gridConfig, gridInitialized])
 
-  // Cargar celdas del tablero para plan derogado (datos en caliente)
+  // Cargar celdas del tablero para datos en caliente (ambos planes)
   const reloadDashboardCells = useCallback(() => {
-    if (plan !== 'derogado') return
-    fetch(`/api/dashboard-state?plan=derogado`)
+    fetch(`/api/dashboard-state?plan=${plan}`)
       .then(res => res.json())
       .then(data => {
         if (data.found && data.datos) {
@@ -814,9 +813,15 @@ function CertVisualEditorContent() {
       return (v === undefined || v === null || v === '') ? undefined : v
     }
 
+    // Datos del tablero para inyectar en displayData (para resolveBinding)
+    const dashLugar = dashboardExtra['EXPEDICION.LUGAR'] || ''
+    const dashFecha = dashboardExtra['EXPEDICION.FECHA'] || ''
+    const dashDirectorNombre = dashboardExtra['DIRECTOR.NOMBRE'] || ''
+    const dashDirectorCedula = dashboardExtra['DIRECTOR.CEDULA'] || ''
+
     return {
-      lugar: get('doc.lugar') ?? certData.lugar,
-      fechaExpedicion: get('doc.fechaExpedicion') ?? fechaExp,
+      lugar: get('doc.lugar') ?? (dashLugar || certData.lugar),
+      fechaExpedicion: get('doc.fechaExpedicion') ?? (dashFecha || fechaExp),
       planEstudio: get('doc.planEstudio') ?? certData.planEstudio,
       planCodigo: schoolConfig.planCodigo,
       od: get('school.codigo') ?? certData.od,
@@ -847,7 +852,10 @@ function CertVisualEditorContent() {
         get('obsCert.3') ?? (certData.observacionesLines?.[3] || ''),
       ],
       promedioAcumulado: get('doc.promedioAcumulado') ?? certData.promedioAcumulado,
-      director: certData.director,
+      director: {
+        apellidosNombres: dashDirectorNombre || certData.director?.apellidosNombres || '',
+        cedula: dashDirectorCedula || certData.director?.cedula || '',
+      },
       directorCdcce: certData.directorCdcce,
       acta: get('doc.acta') ?? (certData.acta || ''),
       actaFecha: get('doc.actaFecha') ?? (certData.actaFecha || ''),

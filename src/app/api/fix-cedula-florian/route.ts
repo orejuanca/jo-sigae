@@ -1,62 +1,46 @@
 import { NextResponse } from 'next/server'
 import { dbVigente, dbDerogado } from '@/lib/db-helper'
 
-const OLD_CEDULA = 'E843975379'
-const NEW_CEDULA = 'E 84397537'
+const CORRECT_CEDULA = 'E 84397537'
+// All possible wrong variants that need fixing
+const WRONG_VARIANTS = ['E843975379', 'E 843975379']
 
-// One-time fix: correct cedula for FLORIAN VILLARREAL, DIANA MARCELA
-// Searches both databases (vigente and derogado)
-// v2: replaces ALL occurrences of old cedula inside rawData (not just top-level CEDULA key)
+// One-time fix v3: correct cedula for FLORIAN VILLARREAL, DIANA MARCELA
+// Handles case where v1 already added space but left the extra "9"
 export async function GET() {
   const results: Record<string, unknown>[] = []
 
   for (const [label, db] of [['BD (vigente)', dbVigente], ['BD2 (derogado)', dbDerogado]] as const) {
     try {
-      const student = await db.student.findUnique({ where: { cedula: OLD_CEDULA } })
+      // Search by name since cedula field may be in any of the wrong variants
+      const student = await db.student.findFirst({
+        where: {
+          apellidos: { contains: 'FLORIAN VILLARREAL' },
+          nombres: { contains: 'DIANA MARCELA' },
+        },
+      })
 
       if (!student) {
-        // Also try searching by name in case cedula was already fixed but rawData wasn't
-        const byName = await db.student.findFirst({
-          where: {
-            apellidos: { contains: 'FLORIAN VILLARREAL' },
-            nombres: { contains: 'DIANA MARCELA' },
-          },
-        })
-        if (byName) {
-          // Fix rawData only
-          let rawDataFixed = false
-          let updatedRawData = byName.rawData
-          if (updatedRawData && updatedRawData.includes(OLD_CEDULA)) {
-            updatedRawData = updatedRawData.replaceAll(OLD_CEDULA, NEW_CEDULA)
-            rawDataFixed = true
-          }
-          if (rawDataFixed) {
-            await db.student.update({
-              where: { id: byName.id },
-              data: { rawData: updatedRawData },
-            })
-            results.push({ db: label, status: 'rawdata_fixed', id: byName.id, cedula: byName.cedula, nombre: `${byName.apellidos}, ${byName.nombres}` })
-          } else {
-            results.push({ db: label, status: 'already_ok', id: byName.id, cedula: byName.cedula, nombre: `${byName.apellidos}, ${byName.nombres}`, rawDataSnippet: byName.rawData?.substring(0, 200) })
-          }
-        } else {
-          results.push({ db: label, status: 'not_found', searched: OLD_CEDULA })
-        }
+        results.push({ db: label, status: 'not_found', searched: 'FLORIAN VILLARREAL' })
         continue
       }
 
-      // Fix rawData: replace ALL occurrences of old cedula string
+      // Fix rawData: replace ALL wrong variants
       let updatedRawData = student.rawData
       let rawDataFixed = false
-      if (updatedRawData && updatedRawData.includes(OLD_CEDULA)) {
-        updatedRawData = updatedRawData.replaceAll(OLD_CEDULA, NEW_CEDULA)
-        rawDataFixed = true
+      if (updatedRawData) {
+        for (const wrong of WRONG_VARIANTS) {
+          if (updatedRawData.includes(wrong)) {
+            updatedRawData = updatedRawData.replaceAll(wrong, CORRECT_CEDULA)
+            rawDataFixed = true
+          }
+        }
       }
 
       const updated = await db.student.update({
         where: { id: student.id },
         data: {
-          cedula: NEW_CEDULA,
+          cedula: CORRECT_CEDULA,
           rawData: updatedRawData,
         },
       })
@@ -65,7 +49,7 @@ export async function GET() {
         db: label,
         status: 'updated',
         id: updated.id,
-        oldCedula: OLD_CEDULA,
+        oldCedula: student.cedula,
         newCedula: updated.cedula,
         nombre: `${updated.apellidos}, ${updated.nombres}`,
         rawDataFixed,
@@ -78,7 +62,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    action: 'fix_cedula_florian_v2',
+    action: 'fix_cedula_florian_v3',
     timestamp: new Date().toISOString(),
     results,
   })

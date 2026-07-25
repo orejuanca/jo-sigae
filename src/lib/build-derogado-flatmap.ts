@@ -50,14 +50,7 @@ function isBlank(val: unknown): boolean {
   return String(val).trim() === ''
 }
 
-function isAsterisksOnly(val: unknown): boolean {
-  if (!val) return true
-  const s = String(val).trim()
-  if (!s) return true
-  return s.replace(/[\*\s]/g, '') === ''
-}
-
-/** Clean a string value: trim */
+/** Clean a string value: trim — asterisks are valid data, never filter them */
 function cleanVal(val: unknown): string {
   if (!val) return ''
   return String(val).trim()
@@ -112,25 +105,16 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
       ['36', '37', '38'],
     ]
-    const realInsts: { nombre: string; localidad: string; ef: string }[] = []
     for (let i = 0; i < bd2InstSlots.length; i++) {
       const [nameKey, locKey, efKey] = bd2InstSlots[i]
       const nombre = rawData[nameKey]
-      if (!isBlank(nombre) && !isAsterisksOnly(nombre)) {
-        realInsts.push({
-          nombre: cleanVal(nombre),
-          localidad: cleanVal(rawData[locKey]),
-          ef: cleanVal(rawData[efKey]),
-        })
+      if (!isBlank(nombre)) {
+        const prefix = i < 5 ? 'BASICA' : 'DIV'
+        const num = i < 5 ? i + 1 : i - 4
+        map[`INST.${prefix}.${num}`] = cleanVal(nombre)
+        if (!isBlank(rawData[locKey])) map[`LOCAL.${prefix}.${num}`] = cleanVal(rawData[locKey])
+        if (!isBlank(rawData[efKey])) map[`EF.${prefix}.${num}`] = cleanVal(rawData[efKey])
       }
-    }
-    for (let j = 0; j < realInsts.length; j++) {
-      const inst = realInsts[j]
-      const prefix = j < 5 ? 'BASICA' : 'DIV'
-      const num = j < 5 ? j + 1 : j - 4
-      map[`INST.${prefix}.${num}`] = inst.nombre
-      if (!isBlank(inst.localidad) && !isAsterisksOnly(inst.localidad)) map[`LOCAL.${prefix}.${num}`] = inst.localidad
-      if (!isBlank(inst.ef) && !isAsterisksOnly(inst.ef)) map[`EF.${prefix}.${num}`] = inst.ef
     }
   }
 

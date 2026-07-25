@@ -537,8 +537,8 @@ function CertVisualEditorContent() {
     return () => clearTimeout(timer)
   }, [gridConfig, gridInitialized])
 
-  // Cargar celdas del tablero para plan derogado (Z4=fecha, AH4=lugar de expedición)
-  useEffect(() => {
+  // Cargar celdas del tablero para plan derogado (datos en caliente)
+  const reloadDashboardCells = useCallback(() => {
     if (plan !== 'derogado') return
     fetch(`/api/dashboard-state?plan=derogado`)
       .then(res => res.json())
@@ -551,6 +551,16 @@ function CertVisualEditorContent() {
       .catch(() => {})
   }, [plan])
 
+  // Al montar o cambiar de plan
+  useEffect(() => { reloadDashboardCells() }, [reloadDashboardCells])
+
+  // Al volver a la pestaña (datos en caliente)
+  useEffect(() => {
+    const onFocus = () => reloadDashboardCells()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [reloadDashboardCells])
+
   // === Student selection + data fetching ===
   const handleSelectStudent = useCallback(async (student: Student) => {
     setSelectedStudent(student)
@@ -558,6 +568,7 @@ function CertVisualEditorContent() {
     setRawDataFlat(null)
     setDraftOverrides({})
     setLoadingData(true)
+    reloadDashboardCells() // datos en caliente del tablero
     try {
       const res = await fetch(`/api/students/${student.id}/cert-data?plan=${plan}`)
       if (!res.ok) {
@@ -623,7 +634,7 @@ function CertVisualEditorContent() {
     } finally {
       setLoadingData(false)
     }
-  }, [toast])
+  }, [toast, plan, reloadDashboardCells])
 
   // Inline edit handler: update a single dataBinding value and auto-save
   const handleCellEdit = useCallback((binding: string, newValue: string) => {

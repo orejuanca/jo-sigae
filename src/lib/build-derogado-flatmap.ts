@@ -58,6 +58,39 @@ function cleanVal(val: unknown): string {
   return String(val).trim()
 }
 
+/** Convierte una nota numérica a su literal en español
+ *  "01" → "CERO UNO", "10" → "DIEZ", "20" → "VEINTE"
+ *  "**" → "**", "*" → "*", "PE" → "PENDIENTE"
+ */
+function notaToLiteral(nota: string): string {
+  const s = nota.trim().toUpperCase()
+  if (!s) return ''
+  // Asteriscos: se devuelven tal cual
+  if (/^\*+$/.test(s)) return s
+  // Textos especiales
+  if (s === 'PE') return 'PENDIENTE'
+  if (s === 'AP') return 'APROBADO'
+  if (s === 'RP') return 'REPROBADO'
+  if (s === 'EQ') return 'EQUIVALENTE'
+  // Número: convertir a literal
+  const num = parseInt(s, 10)
+  if (isNaN(num) || num < 0 || num > 20) return s
+  const LITERALES: Record<number, string> = {
+    0: 'CERO', 1: 'UNO', 2: 'DOS', 3: 'TRES', 4: 'CUATRO',
+    5: 'CINCO', 6: 'SEIS', 7: 'SIETE', 8: 'OCHO', 9: 'NUEVE',
+    10: 'DIEZ', 11: 'ONCE', 12: 'DOCE', 13: 'TRECE', 14: 'CATORCE',
+    15: 'QUINCE', 16: 'DIECISEIS', 17: 'DIECISIETE', 18: 'DIECIOCHO',
+    19: 'DIECINUEVE', 20: 'VEINTE',
+  }
+  const literal = LITERALES[num]
+  if (!literal) return s
+  // Si la nota original tiene cero a la izquierda (01-09), prefijar con CERO
+  if (/^0\d$/.test(s)) {
+    return `CERO ${literal}`
+  }
+  return literal
+}
+
 /** Pad a month number to 2 digits */
 function padMonth(val: string): string {
   const trimmed = val.trim()
@@ -160,6 +193,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
         const g = grades[i]
         const suffix = `.${code}.${year}`
         if (g.nota && g.nota !== '') map[`NOTA${suffix}`] = g.nota
+        if (g.nota && g.nota !== '') map[`LITERAL${suffix}`] = notaToLiteral(g.nota)
         if (g.eval && g.eval !== '') map[`EVAL${suffix}`] = g.eval
         if (g.mes && g.mes !== '') map[`MES${suffix}`] = padMonth(String(g.mes))
         if (g.anio && g.anio !== '') map[`AÑO${suffix}`] = g.anio
@@ -178,6 +212,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       const suffix = `.${code}.${yearNum}`
       const nota = String(rawData[String(key)] || '').trim()
       if (nota !== '') map[`NOTA${suffix}`] = nota
+      if (nota !== '') map[`LITERAL${suffix}`] = notaToLiteral(nota)
       const ev = String(rawData[String(key + 1)] || '').trim()
       if (ev !== '') map[`EVAL${suffix}`] = ev
       const mes = String(rawData[String(key + 2)] || '').trim()

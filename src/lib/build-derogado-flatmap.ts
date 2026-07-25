@@ -230,6 +230,10 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   }
 
   // 7. Observaciones
+  //    Estructura BD2 después de EPT (299-334) y metadatos (335-338):
+  //      335 = ACTA, 336 = FECHAEMISIONT, 337 = FECHAEMISIONN, 338 = EGRESOAÑO
+  //      339-343 = OBS.BASICA.L1-L5
+  //      344-348 = OBS.DIV.L1-L5
   const obsDiv = rawData['observaciones'] || []
   if (obsDiv.length > 0) {
     // FORMATO A: Estructurado (array "observaciones")
@@ -238,15 +242,14 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       if (val && val !== '') map[`OBS.DIV.L${i + 1}`] = val
     }
   } else if (hasFlatInstKeys) {
-    // FORMATO B: Crudo BD2 — claves 320+ para observaciones
-    // Claves 320-324 → OBS.BASICA.L1-L5
+    // FORMATO B: Crudo BD2 — claves 339-343 → OBS.BASICA.L1-L5
     for (let i = 0; i < 5; i++) {
-      const val = rawData[String(320 + i)]
+      const val = rawData[String(339 + i)]
       if (!isBlank(val)) map[`OBS.BASICA.L${i + 1}`] = cleanVal(val)
     }
-    // Claves 325-329 → OBS.DIV.L1-L5
+    // Claves 344-348 → OBS.DIV.L1-L5
     for (let i = 0; i < 5; i++) {
-      const val = rawData[String(325 + i)]
+      const val = rawData[String(344 + i)]
       if (!isBlank(val)) map[`OBS.DIV.L${i + 1}`] = cleanVal(val)
     }
   } else {
@@ -278,14 +281,21 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-  // 9. Acta
+  // 9. Acta y metadatos BD2 (claves 335-338)
+  //    335 = ACTA, 336 = FECHAEMISIONT, 337 = FECHAEMISIONN, 338 = EGRESOAÑO
   if (rawData['acta']) map['ACTA'] = String(rawData['acta']).trim()
+  if (hasFlatInstKeys) {
+    if (!isBlank(rawData['335'])) map['ACTA'] = cleanVal(rawData['335'])
+    if (!isBlank(rawData['336'])) map['FECHAEMISIONT'] = formatFecha(rawData['336'])
+    if (!isBlank(rawData['337'])) map['FECHAEMISIONN'] = formatFecha(rawData['337'])
+    if (!isBlank(rawData['338'])) map['EGRESOAÑO'] = cleanVal(rawData['338'])
+  }
 
-  // 10. Validación título/notas
+  // 10. Validación título/notas (structured format overrides)
   if (rawData['SERIALTITULO']) map['SERIALTITULO'] = String(rawData['SERIALTITULO']).trim()
-  if (rawData['FECHAEMISIONT']) map['FECHAEMISIONT'] = formatFecha(rawData['FECHAEMISIONT'])
-  if (rawData['EGRESOAÑO']) map['EGRESOAÑO'] = String(rawData['EGRESOAÑO']).trim()
-  if (rawData['FECHAEMISIONN']) map['FECHAEMISIONN'] = formatFecha(rawData['FECHAEMISIONN'])
+  if (rawData['FECHAEMISIONT'] && !hasFlatInstKeys) map['FECHAEMISIONT'] = formatFecha(rawData['FECHAEMISIONT'])
+  if (rawData['EGRESOAÑO'] && !hasFlatInstKeys) map['EGRESOAÑO'] = String(rawData['EGRESOAÑO']).trim()
+  if (rawData['FECHAEMISIONN'] && !hasFlatInstKeys) map['FECHAEMISIONN'] = formatFecha(rawData['FECHAEMISIONN'])
 
   return map
 }

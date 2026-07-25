@@ -594,9 +594,11 @@ function CertVisualEditorContent() {
             const draftData = await draftRes.json()
             if (draftData.draft?.overrides) {
               // Filter out empty-string overrides — they were blocking real data
+              // Also skip dashboard-sourced bindings (display-only, edited in tablero)
+              const dashboardBindings = ['director.nombre', 'director.cedula', 'expedicion.fecha', 'expedicion.lugar']
               const clean: Record<string, string> = {}
               for (const [k, v] of Object.entries(draftData.draft.overrides)) {
-                if (v !== undefined && v !== null && v !== '') clean[k] = v as string
+                if (v !== undefined && v !== null && v !== '' && !dashboardBindings.includes(k)) clean[k] = v as string
               }
               setDraftOverrides(clean)
             } else {

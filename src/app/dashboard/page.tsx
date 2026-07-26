@@ -319,7 +319,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       const res = await fetch(`/api/stats?plan=${plan}`)
       const data = await res.json()
       setTotalRecords(data.totalStudents || 0)
-      updateCell(3, 7, `${data.totalStudents} Registros en la Base de Datos.`)
+      updateCell(4, 25, `${data.totalStudents} Registros en la Base de Datos.`)
       const today = new Date()
       const ds = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`
       updateCell(2, 7, ds)

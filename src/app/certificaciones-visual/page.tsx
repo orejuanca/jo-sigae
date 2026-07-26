@@ -481,6 +481,8 @@ function CertVisualEditorContent() {
 
   // Datos del tablero (celdas Z4 y AH4 para expedición)
   const [dashboardCells, setDashboardCells] = useState<string[][] | null>(null)
+  // Z5: Contador de registros en la base de datos
+  const [dbRecordCount, setDbRecordCount] = useState<number | null>(null)
 
   // Inline editing: overrides per dataBinding path
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})

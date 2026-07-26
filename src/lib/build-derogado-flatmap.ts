@@ -202,7 +202,6 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   } else {
     // FORMATO B: Crudo BD2 — claves numéricas 39-293 en grupos de 5: nota, tipo, mes, año, inst
-    const gradesPerYear = 10
     let key = 39
     let yearNum = 1
     let subjectIdx = 0
@@ -223,7 +222,8 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       if (inst !== '') map[`INST${suffix}`] = inst
       subjectIdx++
       key += 5
-      if (subjectIdx >= gradesPerYear) {
+      const gradesThisYear = codes?.length || 10
+      if (subjectIdx >= gradesThisYear) {
         subjectIdx = 0
         yearNum++
       }

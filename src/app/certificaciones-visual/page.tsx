@@ -1525,12 +1525,6 @@ img{max-width:100%;height:auto}
 
   return (
     <AppShell>
-      {/* ---- PRUEBA DE FUEGO ---- */}
-      <h1 style={{ color: 'red', fontSize: '50px', textAlign: 'center' }}>
-        ESTOY EDITANDO EL ARCHIVO CORRECTO
-      </h1>
-      {/* ------------------------- */}
-
       <div className="space-y-3 print:hidden">
         {/* Header */}
         <div>

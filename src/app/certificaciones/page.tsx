@@ -609,8 +609,7 @@ export default function CertificacionesPage() {
 
   return (
     <AppShell>
-      	<h1 style={{ color: 'red', fontSize: '50px', textAlign: 'center' }}>ESTOY EDITANDO EL ARCHIVO CORRECTO</h1>
-	<div className="space-y-6">
+        <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Certificación de Calificaciones</h1>
           <p className="text-muted-foreground">Generar Certificación de Calificaciones — BD (Plan Vigente) y BD2 (Planes Derogados)</p>

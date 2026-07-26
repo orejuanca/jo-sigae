@@ -609,6 +609,7 @@ export default function CertificacionesPage() {
 
   return (
     <AppShell>
+      <style>{`@page { size: Legal; margin: 5mm; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
         <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Certificación de Calificaciones</h1>

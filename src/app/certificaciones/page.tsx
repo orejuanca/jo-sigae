@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -270,26 +270,6 @@ export default function CertificacionesPage() {
       setLoadingData(false)
     }
   }
-
-  // Imprimir escalando el contenido para que quepa en una hoja Legal
-  const handlePrint = useCallback(() => {
-    const el = document.getElementById('cert-preview')
-    if (!el) { window.print(); return }
-    // Legal: 216mm x 356mm, con 5mm margen cada lado = 206mm x 346mm usable
-    const pageUsableH = 346 // mm
-    const contentH = el.getBoundingClientRect().height / 3.7795 // px to mm (96dpi)
-    const scale = Math.min(1, pageUsableH / contentH)
-    el.style.transform = `scale(${scale})`
-    el.style.transformOrigin = 'top left'
-    el.style.width = `${216 / scale}mm`
-    window.onafterprint = () => {
-      el.style.transform = ''
-      el.style.transformOrigin = ''
-      el.style.width = '216mm'
-      window.onafterprint = null
-    }
-    window.print()
-  }, [])
 
   const handleSelectStudent = async (student: Student) => {
     setSelectedStudent(student)
@@ -629,16 +609,6 @@ export default function CertificacionesPage() {
 
   return (
     <AppShell>
-      <style>{`
-        @page { size: Legal; margin: 5mm; }
-        @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
-          #cert-preview {
-            overflow: visible !important;
-          }
-          .print\:hidden, [data-print-hidden] { display: none !important; }
-        }
-      `}</style>
         <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Certificación de Calificaciones</h1>
@@ -1038,7 +1008,7 @@ export default function CertificacionesPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">Vista Previa — Documento Oficial</CardTitle>
-                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                      <Button variant="outline" size="sm" onClick={() => window.print()}>
                         <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
                       </Button>
                     </div>
@@ -1046,9 +1016,9 @@ export default function CertificacionesPage() {
                   <CardContent>
                     {/* Main preview container — Excel format: Arial 9pt, thin borders, NO background colors */}
                     <div
-                      className="border border-black bg-white text-black mx-auto"
+                      className="border border-black bg-white text-black mx-auto overflow-x-auto"
                       id="cert-preview"
-                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', width: '216mm', padding: '0' }}
+                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', maxWidth: '260mm', padding: '0' }}
                     >
                       {/* ====== ROW 1-3: ENCABEZADO (Title, Plan, Lugar/Fecha) ====== */}
                       {/* Excel: Row 1: title M1:AA1, Row 2: plan M2:V2 + code W2:AA2, Row 3: lugar M3:S3 + T3:V3 + fecha W3:AA3 */}

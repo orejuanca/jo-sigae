@@ -1017,9 +1017,9 @@ export default function CertificacionesPage() {
                   <CardContent>
                     {/* Main preview container — Excel format: Arial 9pt, thin borders, NO background colors */}
                     <div
-                      className="border border-black bg-white text-black mx-auto overflow-x-auto"
+                      className="border border-black bg-white text-black mx-auto"
                       id="cert-preview"
-                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', maxWidth: '260mm', padding: '0' }}
+                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', width: '216mm', minHeight: '356mm', maxHeight: '356mm', overflow: 'auto', padding: '0' }}
                     >
                       {/* ====== ROW 1-3: ENCABEZADO (Title, Plan, Lugar/Fecha) ====== */}
                       {/* Excel: Row 1: title M1:AA1, Row 2: plan M2:V2 + code W2:AA2, Row 3: lugar M3:S3 + T3:V3 + fecha W3:AA3 */}

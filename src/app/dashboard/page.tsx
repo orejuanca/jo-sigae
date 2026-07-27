@@ -8,6 +8,12 @@ const INIT_ROWS = 51
 
 type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
+interface CmdButton {
+  sr: number; sc: number; label: string; color: string; bgColor: string; fontSize: number
+  disabledColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean
+  hoverColor1?: string; hoverColor2?: string; hoverShadowColor?: string; downShadowColor?: string
+  mergeSpan?: { er: number; ec: number }
+}
 
 const FONTS = [
   'Arial','Verdana','Tahoma','Georgia','Times New Roman',
@@ -220,6 +226,64 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setDbLoaded(true)
     })
   }, [loaded, plan]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Asegurar merges de botones de comando tras cargar BD
+  useEffect(() => {
+    if (!dbLoaded) return
+    for (const btn of CMD_BUTTONS) {
+      if (!btn.mergeSpan) continue
+      const ms = btn.mergeSpan
+      const exists = merges.some(m => m.sr === btn.sr && m.sc === btn.sc && m.er === ms.er && m.ec === ms.ec)
+      if (!exists) {
+        setMerges(prev => {
+          const nm: Merge = { sr: btn.sr, sc: btn.sc, er: ms.er, ec: ms.ec }
+          const filtered = prev.filter(m => {
+            const overlap = !(m.er < nm.sr || m.sr > nm.er || m.ec < nm.sc || m.sc > nm.ec)
+            return !overlap
+          })
+          return [...filtered, nm]
+        })
+        setCells(prev => { const copy = prev.map(r => [...r]); if (copy[btn.sr]) copy[btn.sr][btn.sc] = btn.label; return copy })
+      }
+    }
+    // Forzar merge del botón switch AJ6:AL7 (row 5, col 35-37)
+    const switchMerge: Merge = { sr: 5, sc: 35, er: 6, ec: 37 }
+    const switchExists = merges.some(m => m.sr === 5 && m.sc === 35 && m.er === 6 && m.ec === 37)
+    if (!switchExists) {
+      setMerges(prev => {
+        const filtered = prev.filter(m => {
+          const overlap = !(m.er < switchMerge.sr || m.sr > switchMerge.er || m.ec < switchMerge.sc || m.sc > switchMerge.ec)
+          return !overlap
+        })
+        return [...filtered, switchMerge]
+      })
+    }
+    // Limpiar merge dañado del botón IMPRIMIR que se guardó incorrectamente
+    const hasBadMerge = merges.some(m => m.sr === 6 && m.sc === 30 && m.er === 7 && m.ec === 33)
+    if (hasBadMerge) {
+      setMerges(prev => prev.filter(m => !(m.sr === 6 && m.sc === 30 && m.er === 7 && m.ec === 33)))
+      setCells(prev => { const copy = prev.map(r => [...r]); if (copy[6]) copy[6][30] = ''; return copy })
+    }
+    // Forzar merge del botón imprimir AE6:AH7 (row 5, col 30-33)
+    const printMerge: Merge = { sr: 5, sc: 30, er: 6, ec: 33 }
+    const printExists = merges.some(m => m.sr === 5 && m.sc === 30 && m.er === 6 && m.ec === 33)
+    if (!printExists) {
+      setMerges(prev => {
+        const filtered = prev.filter(m => {
+          const overlap = !(m.er < printMerge.sr || m.sr > printMerge.er || m.ec < printMerge.sc || m.sc > printMerge.ec)
+          return !overlap
+        })
+        return [...filtered, printMerge]
+      })
+      setCells(prev => { const copy = prev.map(r => [...r]); if (copy[5]) copy[5][30] = 'IMPRIMIR'; return copy })
+    }
+  }, [dbLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Guardar snapshot del estado inicial (después de cargar BD)
+  useEffect(() => {
+    if (!dbLoaded || initialCellsRef.current) return
+    initialCellsRef.current = cells.map(r => [...r])
+  }, [dbLoaded, cells]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Función de save: guarda en localStorage (rápido) y en BD (permanente)
   const saveCountRef = useRef(0)
@@ -541,8 +605,245 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const isFullRowSelected = hasSelection && selMinC === 0 && selMaxC === numCols - 1
   const isFullColSelected = hasSelection && selMinR === 0 && selMaxR === numRows - 1
 
-  const SWITCH_ROW = 5, SWITCH_COL = 34 // celda AI6
-  const switchBtnLabel = plan === 'vigente' ? 'IR A PLAN DEROGADO' : 'IR A PLAN VIGENTE'
+  const SWITCH_ROW = 5, SWITCH_COL = 35 // celda AJ6
+  const PRINT_ROW = 5, PRINT_COL = 30 // celda AE6
+  const switchBtnLabel = plan === 'vigente' ? 'Plan\nDerogado' : 'Plan\nVigente'
+
+  // Estado para botones con activación condicional
+  const [editMode, setEditMode] = useState(false)
+  const [btnHover, setBtnHover] = useState<string | null>(null)
+  const [btnDown, setBtnDown] = useState<string | null>(null)
+
+  // === ESTADO DE BÚSQUEDA Y EDICIÓN ===
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Array<{id:string;cedula:string;apellidos:string;nombres:string}>>([])
+  const [searching, setSearching] = useState(false)
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
+  const initialCellsRef = useRef<string[][] | null>(null)
+  const initialRawDataRef = useRef<string | null>(null)
+
+  // Botones de comando
+  const CMD_BUTTONS: CmdButton[] = [
+    { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
+      hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)' },
+    { sr: 9, sc: 25, label: 'Guardar Editado', color: '#90EE90', bgColor: '#ffffff', fontSize: 16,
+      disabledColor: '#999999', activeColor: '#32CD32', requiresEdit: true,
+      hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)' },
+    { sr: 7, sc: 30, label: 'Guardar Datos', color: '#5BA8FF', bgColor: '#ffffff', fontSize: 16,
+      disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true,
+      hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)' },
+    { sr: 9, sc: 30, label: 'Eliminar Datos', color: '#FF4444', bgColor: '#ffffff', fontSize: 16,
+      disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
+      hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)' },
+    { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
+      hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
+      mergeSpan: { er: 10, ec: 29 } },
+  ]
+
+  // Busca botón de comando por posición exacta o por texto en celdas combinadas
+  const isCmdBtn = (r: number, c: number, cellText?: string) => {
+    const posBtn = CMD_BUTTONS.find(b => b.sr === r && b.sc === c)
+    if (posBtn) return posBtn
+    if (cellText) {
+      const textBtn = CMD_BUTTONS.find(b => cellText.trim() === b.label)
+      if (textBtn) return textBtn
+    }
+    return null
+  }
+
+  // === FUNCIÓN DE CELDA: convierte 'M5' → {r:4, c:12} ===
+  const cellRef = (ref: string): {r:number;c:number} | null => {
+    const match = ref.trim().match(/^([A-Z]+)(\d+)$/)
+    if (!match) return null
+    let col = 0
+    for (let i = 0; i < match[1].length; i++) col = col * 26 + (match[1].charCodeAt(i) - 64)
+    return { r: parseInt(match[2]) - 1, c: col - 1 }
+  }
+
+  // === MAPEO CAMPO_BD → CELDA DASHBOARD ===
+  const FIELD_MAP: [string, string][] = [
+    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
+    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
+    ['INST.1','G15'],['LOCAL.1','I15'],['EF.1','L15'],
+    ['INST.2','G16'],['LOCAL.2','I16'],['EF.2','L16'],
+    ['INST.3','G17'],['LOCAL.3','I17'],['EF.3','L17'],
+    ['INST.4','G18'],['LOCAL.4','I18'],['EF.4','L18'],
+    ['INST.5','G19'],['LOCAL.5','I19'],['EF.5','L19'],
+    ['NOTA.CA.1','T15'],['EVAL.CA.1','U15'],['MES.CA.1','V15'],['AÑO.CA.1','W15'],['INST.CA.1','X15'],
+    ['NOTA.IN.1','T16'],['EVAL.IN.1','U16'],['MES.IN.1','V16'],['AÑO.IN.1','W16'],['INST.IN.1','X16'],
+    ['NOTA.MA.1','T17'],['EVAL.MA.1','U17'],['MES.MA.1','V17'],['AÑO.MA.1','W17'],['INST.MA.1','X17'],
+    ['NOTA.EF.1','T18'],['EVAL.EF.1','U18'],['MES.EF.1','V18'],['AÑO.EF.1','W18'],['INST.EF.1','X18'],
+    ['NOTA.AP.1','T19'],['EVAL.AP.1','U19'],['MES.AP.1','V19'],['AÑO.AP.1','W19'],['INST.AP.1','X19'],
+    ['NOTA.CN.1','T20'],['EVAL.CN.1','U20'],['MES.CN.1','V20'],['AÑO.CN.1','W20'],['INST.CN.1','X20'],
+    ['NOTA.GH.1','T21'],['EVAL.GH.1','U21'],['MES.GH.1','V21'],['AÑO.GH.1','W21'],['INST.GH.1','X21'],
+    ['NOTA.CA.2','AA15'],['EVAL.CA.2','AB15'],['MES.CA.2','AC15'],['AÑO.CA.2','AD15'],['INST.CA.2','AE15'],
+    ['NOTA.IN.2','AA16'],['EVAL.IN.2','AB16'],['MES.IN.2','AC16'],['AÑO.IN.2','AD16'],['INST.IN.2','AE16'],
+    ['NOTA.MA.2','AA17'],['EVAL.MA.2','AB17'],['MES.MA.2','AC17'],['AÑO.MA.2','AD17'],['INST.MA.2','AE17'],
+    ['NOTA.EF.2','AA18'],['EVAL.EF.2','AB18'],['MES.EF.2','AC18'],['AÑO.EF.2','AD18'],['INST.EF.2','AE18'],
+    ['NOTA.AP.2','AA19'],['EVAL.AP.2','AB19'],['MES.AP.2','AC19'],['AÑO.AP.2','AD19'],['INST.AP.2','AE19'],
+    ['NOTA.CN.2','AA20'],['EVAL.CN.2','AB20'],['MES.CN.2','AC20'],['AÑO.CN.2','AD20'],['INST.CN.2','AE20'],
+    ['NOTA.GH.2','AA21'],['EVAL.GH.2','AB21'],['MES.GH.2','AC21'],['AÑO.GH.2','AD21'],['INST.GH.2','AE21'],
+    ['NOTA.CA.3','H25'],['EVAL.CA.3','I25'],['MES.CA.3','J25'],['AÑO.CA.3','K25'],['INST.CA.3','L25'],
+    ['NOTA.IN.3','H26'],['EVAL.IN.3','I26'],['MES.IN.3','J26'],['AÑO.IN.3','K26'],['INST.IN.3','L26'],
+    ['NOTA.MA.3','H27'],['EVAL.MA.3','I27'],['MES.MA.3','J27'],['AÑO.MA.3','K27'],['INST.MA.3','L27'],
+    ['NOTA.EF.3','H28'],['EVAL.EF.3','I28'],['MES.EF.3','J28'],['AÑO.EF.3','K28'],['INST.EF.3','L28'],
+    ['NOTA.FI.3','H29'],['EVAL.FI.3','I29'],['MES.FI.3','J29'],['AÑO.FI.3','K29'],['INST.FI.3','L29'],
+    ['NOTA.QU.3','H30'],['EVAL.QU.3','I30'],['MES.QU.3','J30'],['AÑO.QU.3','K30'],['INST.QU.3','L30'],
+    ['NOTA.BI.3','H31'],['EVAL.BI.3','I31'],['MES.BI.3','J31'],['AÑO.BI.3','K31'],['INST.BI.3','L31'],
+    ['NOTA.GH.3','H32'],['EVAL.GH.3','I32'],['MES.GH.3','J32'],['AÑO.GH.3','K32'],['INST.GH.3','L32'],
+    ['NOTA.FS.3','H33'],['EVAL.FS.3','I33'],['MES.FS.3','J33'],['AÑO.FS.3','K33'],['INST.FS.3','L33'],
+    ['NOTA.CA.4','T25'],['EVAL.CA.4','U25'],['MES.CA.4','V25'],['AÑO.CA.4','W25'],['INST.CA.4','X25'],
+    ['NOTA.IN.4','T26'],['EVAL.IN.4','U26'],['MES.IN.4','V26'],['AÑO.IN.4','W26'],['INST.IN.4','X26'],
+    ['NOTA.MA.4','T27'],['EVAL.MA.4','U27'],['MES.MA.4','V27'],['AÑO.MA.4','W27'],['INST.MA.4','X27'],
+    ['NOTA.EF.4','T28'],['EVAL.EF.4','U28'],['MES.EF.4','V28'],['AÑO.EF.4','W28'],['INST.EF.4','X28'],
+    ['NOTA.FI.4','T29'],['EVAL.FI.4','U29'],['MES.FI.4','V29'],['AÑO.FI.4','W29'],['INST.FI.4','X29'],
+    ['NOTA.QU.4','T30'],['EVAL.QU.4','U30'],['MES.QU.4','V30'],['AÑO.QU.4','W30'],['INST.QU.4','X30'],
+    ['NOTA.BI.4','T31'],['EVAL.BI.4','U31'],['MES.BI.4','V31'],['AÑO.BI.4','W31'],['INST.BI.4','X31'],
+    ['NOTA.GH.4','T32'],['EVAL.GH.4','U32'],['MES.GH.4','V32'],['AÑO.GH.4','W32'],['INST.GH.4','X32'],
+    ['NOTA.FS.4','T33'],['EVAL.FS.4','U33'],['MES.FS.4','V33'],['AÑO.FS.4','W33'],['INST.FS.4','X33'],
+    ['NOTA.CA.5','AA25'],['EVAL.CA.5','AB25'],['MES.CA.5','AC25'],['AÑO.CA.5','AD25'],['INST.CA.5','AE25'],
+    ['NOTA.IN.5','AA26'],['EVAL.IN.5','AB26'],['MES.IN.5','AC26'],['AÑO.IN.5','AD26'],['INST.IN.5','AE26'],
+    ['NOTA.MA.5','AA27'],['EVAL.MA.5','AB27'],['MES.MA.5','AC27'],['AÑO.MA.5','AD27'],['INST.MA.5','AE27'],
+    ['NOTA.EF.5','AA28'],['EVAL.EF.5','AB28'],['MES.EF.5','AC28'],['AÑO.EF.5','AD28'],['INST.EF.5','AE28'],
+    ['NOTA.FI.5','AA29'],['EVAL.FI.5','AB29'],['MES.FI.5','AC29'],['AÑO.FI.5','AD29'],['INST.FI.5','AE29'],
+    ['NOTA.QU.5','AA30'],['EVAL.QU.5','AB30'],['MES.QU.5','AC30'],['AÑO.QU.5','AD30'],['INST.QU.5','AE30'],
+    ['NOTA.BI.5','AA31'],['EVAL.BI.5','AB31'],['MES.BI.5','AC31'],['AÑO.BI.5','AD31'],['INST.BI.5','AE31'],
+    ['NOTA.CT.5','AA32'],['EVAL.CT.5','AB32'],['MES.CT.5','AC32'],['AÑO.CT.5','AD32'],['INST.CT.5','AE32'],
+    ['NOTA.GH.5','AA33'],['EVAL.GH.5','AB33'],['MES.GH.5','AC33'],['AÑO.GH.5','AD33'],['INST.GH.5','AE33'],
+    ['NOTA.FS.5','AA34'],['EVAL.FS.5','AB34'],['MES.FS.5','AC34'],['AÑO.FS.5','AD34'],['INST.FS.5','AE34'],
+    ['OC.LITERAL.1','AH15'],['OC.LITERAL.2','AH16'],['OC.LITERAL.3','AH17'],['OC.LITERAL.4','AH18'],['OC.LITERAL.5','AH19'],
+    ['PG.GRUPO.1','AH24'],['PG.GRUPO.2','AH25'],['PG.GRUPO.3','AH26'],['PG.GRUPO.4','AH27'],['PG.GRUPO.5','AH28'],
+    ['PG.LITERAL.1','AL15'],['PG.LITERAL.2','AL16'],['PG.LITERAL.3','AL17'],['PG.LITERAL.4','AL18'],['PG.LITERAL.5','AL19'],
+    ['OBS.CERT.L1','F35'],['OBS.CERT.L2','B36'],['OBS.NOTAS.L1','F39'],['OBS.NOTAS.L2','B40'],['OBS.NOTAS.L3','B41'],
+    ['SECCION.1','X13'],['SECCION.2','AE13'],['SECCION.3','L23'],['SECCION.4','X23'],['SECCION.5','AE23'],
+    ['TITULO.SERIAL','AJ31'],['TITULO.EXPEDICION','AJ32'],['TITULO.EGRESO','AJ33'],['CERT.EXPEDICION','AJ34'],
+    ['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'],
+    ['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'],
+  ]
+  const PROMEDIO_CELL = cellRef('AJ35')
+
+  // === BUSCAR ESTUDIANTE ===
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setSearchResults([]); return }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
+      const data = await res.json()
+      setSearchResults(data.students || [])
+    } catch { setSearchResults([]) }
+    setSearching(false)
+  }, [])
+
+  // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
+  const loadStudentToDashboard = useCallback(async (studentId: string) => {
+    try {
+      const res = await fetch(`/api/students/${studentId}?plan=vigente`)
+      const student = await res.json()
+      if (!student || student.error) { restoreInitialState(); return }
+
+      setEditingStudentId(student.id)
+      setShowSearchModal(false)
+      setSearchQuery('')
+      setSearchResults([])
+
+      // Parsear rawData
+      let rawData: Record<string, string> = {}
+      try { rawData = typeof student.rawData === 'string' ? JSON.parse(student.rawData) : (student.rawData || {}) } catch { rawData = {} }
+      initialRawDataRef.current = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
+
+      // Construir mapa campo→valor
+      const vals: Record<string, string> = {}
+      vals['CEDULA'] = student.cedula || ''
+      vals['FECHA'] = student.fechaNacimiento || ''
+      vals['APELLIDOS'] = student.apellidos || ''
+      vals['NOMBRES'] = student.nombres || ''
+      vals['PAIS'] = student.pais || ''
+      vals['ESTADO'] = student.estado || ''
+      vals['MUNICIPIO'] = student.municipio || ''
+
+      for (const [campo] of FIELD_MAP) {
+        if (vals[campo] === undefined && rawData[campo] !== undefined) {
+          vals[campo] = String(rawData[campo] || '')
+        }
+      }
+
+      // Aplicar valores a las celdas (usar setCells funcional para evitar stale closure)
+      let notaSum = 0
+      let notaCount = 0
+      // Pre-calcular valores y posiciones
+      const fieldPositions: Array<[string, string, {r:number;c:number}|null]> = []
+      for (const [campo, celda] of FIELD_MAP) {
+        const pos = cellRef(celda)
+        fieldPositions.push([campo, vals[campo] || '', pos])
+        if (campo.startsWith('NOTA.')) {
+          const n = parseFloat(vals[campo] || '')
+          if (!isNaN(n) && n >= 1 && n <= 20) { notaSum += n; notaCount++ }
+        }
+      }
+      const promedioVal = PROMEDIO_CELL && notaCount > 0 ? (notaSum / notaCount).toFixed(2) : ''
+
+      setCells(prev => {
+        const newCells = prev.map(row => [...row])
+        for (const [, val, pos] of fieldPositions) {
+          if (pos && newCells[pos.r]) newCells[pos.r][pos.c] = val
+        }
+        if (PROMEDIO_CELL && promedioVal) {
+          newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal
+        }
+        return newCells
+      })
+
+      setEditMode(true)
+    } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
+  }, [restoreInitialState])
+
+  // === RESTAURAR ESTADO INICIAL ===
+  const restoreInitialState = useCallback(() => {
+    if (initialCellsRef.current) {
+      setCells(initialCellsRef.current.map(r => [...r]))
+    }
+    setEditingStudentId(null)
+    initialRawDataRef.current = null
+    setEditMode(false)
+    setShowSearchModal(false)
+  }, [])
+
+  // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
+  const saveEditedStudent = useCallback(async () => {
+    if (!editingStudentId) return
+    try {
+      const currentCells = stateRef.current.cells
+      const rawObj: Record<string, string> = {}
+      for (const [campo, celda] of FIELD_MAP) {
+        const pos = cellRef(celda)
+        if (!pos) continue
+        rawObj[campo] = currentCells[pos.r]?.[pos.c] || ''
+      }
+      const m5 = cellRef('M5'), m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8')
+      const m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
+      const updateData: Record<string, string> = {}
+      if (m5) updateData.cedula = currentCells[m5.r]?.[m5.c] || ''
+      if (m6) updateData.fechaNacimiento = currentCells[m6.r]?.[m6.c] || ''
+      if (m7) updateData.apellidos = currentCells[m7.r]?.[m7.c] || ''
+      if (m8) updateData.nombres = currentCells[m8.r]?.[m8.c] || ''
+      if (m9) updateData.pais = currentCells[m9.r]?.[m9.c] || ''
+      if (m10) updateData.estado = currentCells[m10.r]?.[m10.c] || ''
+      if (m11) updateData.municipio = currentCells[m11.r]?.[m11.c] || ''
+      updateData.rawData = JSON.stringify(rawObj)
+
+      await fetch(`/api/students/${editingStudentId}?plan=vigente`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData)
+      })
+      restoreInitialState()
+      setSaveStatus('DATOS GUARDADOS ✓')
+      setTimeout(() => setSaveStatus(''), 3000)
+    } catch (e) {
+      console.error('[SAVE EDITED ERROR]', e)
+      setSaveStatus('ERROR AL GUARDAR')
+      setTimeout(() => setSaveStatus(''), 3000)
+    }
+  }, [editingStudentId, restoreInitialState])
 
   return (
     <div className="overflow-auto">
@@ -687,12 +988,19 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const cellBorder = borders[r]?.[c] !== false
 
                 const isSwitchCell = r === SWITCH_ROW && c === SWITCH_COL
+                const isPrintCell = r === PRINT_ROW && c === PRINT_COL
+                const cmdBtn = isCmdBtn(r, c, cells[r]?.[c])
+                const isBtnCell = isSwitchCell || isPrintCell || !!cmdBtn
+                const cmdDisabled = cmdBtn ? ((cmdBtn.requiresEdit && !editMode) || (cmdBtn.disableOnEdit && editMode)) : false
+                const btnKey = `${r}-${c}`
+                const isHov = btnHover === btnKey
+                const isDn = btnDown === btnKey
                 return (
                   <td key={c} data-r={r} data-c={c}
-                    onClick={(e) => { if (!isSwitchCell) handleCellClick(r, c, e.shiftKey) }}
+                    onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }}
                     colSpan={colSpan > 1 ? colSpan : undefined}
                     rowSpan={rowSpan > 1 ? rowSpan : undefined}
-                    className={`p-0 relative ${selected && !isSwitchCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
+                    className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
                     style={{
                       backgroundColor: isSwitchCell ? '#2563eb' : (selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff')),
                       color: isSwitchCell ? '#fff' : (fontColors[r]?.[c] || '#333'),
@@ -707,6 +1015,48 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       <button onClick={(e) => { e.stopPropagation(); doSave(plan); onSwitchPlan() }}
                         className="w-full h-full bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold px-1 py-0.5 rounded transition cursor-pointer">
                         {switchBtnLabel}
+                      </button>
+                    ) : isPrintCell ? (
+                      <button onClick={(e) => { e.stopPropagation(); window.print() }}
+                        onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
+                        onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
+                        className="w-full h-full flex items-center justify-center cursor-pointer"
+                        style={{
+                          backgroundColor: '#ffffff', color: '#000000', fontSize: '12px',
+                          fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #333333',
+                          borderRadius: '2px', userSelect: 'none', whiteSpace: 'nowrap',
+                          boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : '1px 1px 3px rgba(0,0,0,0.3)',
+                          transform: isDn ? 'translateY(1px)' : 'none',
+                        }}>
+                        IMPRIMIR
+                      </button>
+                    ) : cmdBtn ? (
+                      <button
+                        disabled={cmdDisabled}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
+                          else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
+                        }}
+                        onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
+                        onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
+                        className="w-full h-full flex items-center justify-center"
+                        style={{
+                          backgroundColor: cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')),
+                          color: cmdDisabled ? (cmdBtn.disabledColor || '#999999') : cmdBtn.color,
+                          fontSize: `${cmdBtn.fontSize}px`, fontFamily: 'Arial', fontWeight: 'bold',
+                          textAlign: 'center', verticalAlign: 'middle', lineHeight: 'normal',
+                          border: `2px solid ${cmdDisabled ? '#cccccc' : cmdBtn.color}`,
+                          borderRadius: '4px',
+                          boxShadow: cmdDisabled ? 'none' : (isDn
+                            ? `inset 0 1px 3px ${cmdBtn.downShadowColor || 'rgba(0,0,0,0.15)'}`
+                            : (isHov ? `2px 2px 6px ${cmdBtn.hoverShadowColor || 'rgba(0,0,0,0.2)'}` : '1px 1px 3px rgba(0,0,0,0.2)')),
+                          transform: isDn ? 'translateY(1px)' : 'none',
+                          userSelect: 'none', whiteSpace: 'pre-line',
+                          opacity: cmdDisabled ? 0.6 : 1,
+                          cursor: cmdDisabled ? 'not-allowed' : 'pointer',
+                        }}>
+                        {cmdBtn.label}
                       </button>
                     ) : (
                     <input type="text" defaultValue={cells[r]?.[c] || ''}
@@ -727,6 +1077,45 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           ))}
         </tbody>
       </table>
+
+      {/* MODAL DE BÚSQUEDA DE ALUMNO */}
+      {showSearchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
+          <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-bold text-gray-800">Buscar / Editar Alumno</h3>
+              <button onClick={() => { setShowSearchModal(false); setSearchQuery(''); setSearchResults([]) }}
+                className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
+            </div>
+            <div className="space-y-2">
+              <input type="text" placeholder="Cedula o Nombre del alumno..."
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); if (e.target.value.length >= 2) doSearch(e.target.value) }}
+                onKeyDown={e => { if (e.key === 'Enter') doSearch(searchQuery) }}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                autoFocus />
+              {searching && <div className="text-xs text-gray-500 text-center py-2">Buscando...</div>}
+              {searchResults.length > 0 && (
+                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded">
+                  {searchResults.map(s => (
+                    <button key={s.id}
+                      onClick={() => loadStudentToDashboard(s.id)}
+                      className="w-full text-left px-3 py-2 hover:bg-blue-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer">
+                      <span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
+                <div className="text-xs text-red-500 text-center py-2">No se encontraron alumnos</div>
+              )}
+              {searchQuery.length < 2 && (
+                <div className="text-xs text-gray-400 text-center py-2">Escriba al menos 2 caracteres para buscar</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

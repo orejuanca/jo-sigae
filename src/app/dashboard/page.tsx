@@ -723,114 +723,200 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   ]
   const PROMEDIO_CELL = cellRef('AJ35')
 
-  // === CONVERTIR structured_v1 RAWDATA → CLAVES PLANAS DEL FIELD_MAP ===
+  // === CONVERTIR RAWDATA → CLAVES PLANAS DEL FIELD_MAP ===
+  // Maneja: structured_v1, legacy numérico, y fallback directo
   const flattenRawData = (raw: Record<string, unknown>): Record<string, string> => {
     const out: Record<string, string> = {}
-    if (!raw) return out
+    if (!raw || typeof raw !== 'object') return out
 
-    // Formato estructurado (_format: structured_v1)
+    // Normalización de abreviaturas: rawData usa 'FSN' pero FIELD_MAP usa 'FS'
+    const ABBREV_NORM: Record<string, string> = { FSN: 'FS' }
+    const norm = (abrev: string): string => {
+      const a = (abrev || '').toUpperCase().trim()
+      return ABBREV_NORM[a] || a
+    }
+
+    // ─── 1) FORMATO ESTRUCTURADO (_format: structured_v1) ───
     if (raw._format === 'structured_v1') {
       // Instituciones → INST.1..5, LOCAL.1..5, EF.1..5
-      const insts = raw.instituciones as Array<{denominacion:string;localidad:string;ef:string}> | undefined
+      const insts = raw.instituciones
       if (Array.isArray(insts)) {
         for (let i = 0; i < Math.min(insts.length, 5); i++) {
-          out[`INST.${i+1}`] = insts[i].denominacion || ''
-          out[`LOCAL.${i+1}`] = insts[i].localidad || ''
-          out[`EF.${i+1}`] = insts[i].ef || ''
+          const inst = insts[i] as Record<string, string> | null
+          if (!inst) continue
+          if (inst.denominacion) out[`INST.${i+1}`] = String(inst.denominacion).trim()
+          if (inst.localidad)  out[`LOCAL.${i+1}`] = String(inst.localidad).trim()
+          if (inst.ef)          out[`EF.${i+1}`]    = String(inst.ef).trim()
         }
       }
 
       // Calificaciones → NOTA.{abrev}.{year}, EVAL..., MES..., AÑO..., INST...
-      const cals = raw.calificaciones as Array<{abrev:string;anioEscolar:number;nota:string;eval:string;mes:string;anio:string;inst:string}> | undefined
+      const cals = raw.calificaciones
       if (Array.isArray(cals)) {
         for (const c of cals) {
-          const y = c.anioEscolar
+          const cal = c as Record<string, unknown>
+          const y = Number(cal.anioEscolar)
           if (!y || y < 1 || y > 5) continue
-          const a = c.abrev || ''
-          if (c.nota)  out[`NOTA.${a}.${y}`]  = String(c.nota)
-          if (c.eval)  out[`EVAL.${a}.${y}`]  = String(c.eval)
-          if (c.mes)   out[`MES.${a}.${y}`]   = String(c.mes)
-          if (c.anio)  out[`AÑO.${a}.${y}`]  = String(c.anio)
-          if (c.inst)  out[`INST.${a}.${y}`]  = String(c.inst)
+          const a = norm(String(cal.abrev || ''))
+          if (!a) continue
+          if (cal.nota) out[`NOTA.${a}.${y}`]  = String(cal.nota).trim()
+          if (cal.eval) out[`EVAL.${a}.${y}`]  = String(cal.eval).trim()
+          if (cal.mes)  out[`MES.${a}.${y}`]   = String(cal.mes).trim()
+          if (cal.anio) out[`AÑO.${a}.${y}`]  = String(cal.anio).trim()
+          if (cal.inst) out[`INST.${a}.${y}`]  = String(cal.inst).trim()
         }
       }
 
       // Orientación → OC.LITERAL.1..5
-      const oris = raw.orientacion as Array<{literal:string}> | undefined
+      const oris = raw.orientacion
       if (Array.isArray(oris)) {
         for (let i = 0; i < Math.min(oris.length, 5); i++) {
-          out[`OC.LITERAL.${i+1}`] = oris[i].literal || ''
+          const o = oris[i] as Record<string, string> | null
+          if (o?.literal) out[`OC.LITERAL.${i+1}`] = String(o.literal).trim()
         }
       }
 
       // Grupos → PG.GRUPO.1..5, PG.LITERAL.1..5
-      const grps = raw.grupos as Array<{grupo:string;literal:string}> | undefined
+      const grps = raw.grupos
       if (Array.isArray(grps)) {
         for (let i = 0; i < Math.min(grps.length, 5); i++) {
-          out[`PG.GRUPO.${i+1}`] = grps[i].grupo || ''
-          out[`PG.LITERAL.${i+1}`] = grps[i].literal || ''
+          const g = grps[i] as Record<string, string> | null
+          if (!g) continue
+          if (g.grupo)  out[`PG.GRUPO.${i+1}`]  = String(g.grupo).trim()
+          if (g.literal) out[`PG.LITERAL.${i+1}`] = String(g.literal).trim()
         }
       }
 
       // Observaciones → OBS.CERT.L1..L4
-      const obs = raw.observaciones as string[] | undefined
+      const obs = raw.observaciones
       if (Array.isArray(obs)) {
         for (let i = 0; i < Math.min(obs.length, 4); i++) {
-          out[`OBS.CERT.L${i+1}`] = obs[i] || ''
+          if (obs[i]) out[`OBS.CERT.L${i+1}`] = String(obs[i]).trim()
+        }
+      }
+
+      // Observaciones de Notas → OBS.NOTAS.L1..L3
+      const obsNotas = raw.observacionesNotas
+      if (Array.isArray(obsNotas)) {
+        for (let i = 0; i < Math.min(obsNotas.length, 3); i++) {
+          if (obsNotas[i]) out[`OBS.NOTAS.L${i+1}`] = String(obsNotas[i]).trim()
+        }
+      }
+
+      // Observaciones de Boleta → OBS.BOLETA.L1..L3
+      const obsBoleta = raw.observacionesBoleta
+      if (Array.isArray(obsBoleta)) {
+        for (let i = 0; i < Math.min(obsBoleta.length, 3); i++) {
+          if (obsBoleta[i]) out[`OBS.BOLETA.L${i+1}`] = String(obsBoleta[i]).trim()
+        }
+      }
+
+      // Secciones → SECCION.1..5
+      const secs = raw.secciones
+      if (Array.isArray(secs)) {
+        for (let i = 0; i < Math.min(secs.length, 5); i++) {
+          if (secs[i]) out[`SECCION.${i+1}`] = String(secs[i]).trim()
         }
       }
 
       // Título / Acta
-      if (raw.acta)             out['TITULO.SERIAL']      = String(raw.acta)
-      if (raw.tituloExpedicion) out['TITULO.EXPEDICION'] = String(raw.tituloExpedicion)
-      if (raw.actaAnio)         out['TITULO.EGRESO']     = String(raw.actaAnio)
-      if (raw.actaFecha)        out['CERT.EXPEDICION']   = String(raw.actaFecha)
+      if (raw.acta)             out['TITULO.SERIAL']      = String(raw.acta).trim()
+      if (raw.tituloExpedicion) out['TITULO.EXPEDICION'] = String(raw.tituloExpedicion).trim()
+      if (raw.actaAnio)         out['TITULO.EGRESO']     = String(raw.actaAnio).trim()
+      if (raw.actaFecha)        out['CERT.EXPEDICION']   = String(raw.actaFecha).trim()
 
-      return out
+      // Literales finales → PG.LITERAL (si existen como alternativa)
+      const litFinal = raw.literalesFinales
+      if (Array.isArray(litFinal) && !Array.isArray(raw.grupos)) {
+        for (let i = 0; i < Math.min(litFinal.length, 5); i++) {
+          if (litFinal[i]) out[`PG.LITERAL.${i+1}`] = String(litFinal[i]).trim()
+        }
+      }
+
+      console.log('[FLATTEN] structured_v1 processed:', Object.keys(out).length, 'keys')
+      // NO return aquí — dejamos caer al fallback (paso 3)
     }
 
-    // Formato legacy (claves numéricas) — mapear según posiciones fijas del Excel
-    // Instituciones: cols 8-22 (keys "8"-"22"), 5 inst × 3 campos
-    for (let i = 0; i < 5; i++) {
-      const nk = String(8 + i * 3)   // 8,11,14,17,20
-      const lk = String(9 + i * 3)   // 9,12,15,18,21
-      const ek = String(10 + i * 3)  // 10,13,16,19,22
-      if (raw[nk]) out[`INST.${i+1}`]  = String(raw[nk]).replace(/^\*/, '').trim()
-      if (raw[lk]) out[`LOCAL.${i+1}`] = String(raw[lk]).replace(/^\*/, '').trim()
-      if (raw[ek]) out[`EF.${i+1}`]    = String(raw[ek]).trim()
+    // ─── 2) FORMATO LEGACY (claves numéricas) ───
+    const hasNumericKeys = Object.keys(raw).some(k => /^\d+$/.test(k))
+    if (hasNumericKeys) {
+      // Instituciones: cols 8-22 (keys "8"-"22"), 5 inst × 3 campos
+      for (let i = 0; i < 5; i++) {
+        const nk = String(8 + i * 3)   // 8,11,14,17,20
+        const lk = String(9 + i * 3)   // 9,12,15,18,21
+        const ek = String(10 + i * 3)  // 10,13,16,19,22
+        if (raw[nk]) out[`INST.${i+1}`]  = String(raw[nk]).replace(/^\*/, '').trim()
+        if (raw[lk]) out[`LOCAL.${i+1}`] = String(raw[lk]).replace(/^\*/, '').trim()
+        if (raw[ek]) out[`EF.${i+1}`]    = String(raw[ek]).trim()
+      }
+
+      // Calificaciones por año (bloques fijos del Excel BD)
+      const yearBlocks = [
+        { year: 1, start: 23, count: 7 },
+        { year: 2, start: 58, count: 7 },
+        { year: 3, start: 93, count: 8 },
+        { year: 4, start: 133, count: 9 },
+        { year: 5, start: 178, count: 10 },
+      ]
+      const abrevsByYear: Record<number, string[]> = {
+        1: ['CA','IN','MA','EF','AP','CN','GH'],
+        2: ['CA','IN','MA','EF','AP','CN','GH'],
+        3: ['CA','IN','MA','EF','FI','QU','BI','GH'],
+        4: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'],
+        5: ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'],
+      }
+      for (const block of yearBlocks) {
+        const abrevs = abrevsByYear[block.year] || []
+        for (let i = 0; i < block.count; i++) {
+          const col = block.start + i * 5
+          const abrev = abrevs[i] || `M${i+1}`
+          const nota = raw[String(col)]
+          const eval_ = raw[String(col + 1)]
+          const mes  = raw[String(col + 2)]
+          const anio = raw[String(col + 3)]
+          const inst = raw[String(col + 4)]
+          if (nota) out[`NOTA.${abrev}.${block.year}`] = String(nota).trim()
+          if (eval_) out[`EVAL.${abrev}.${block.year}`] = String(eval_).trim()
+          if (mes)  out[`MES.${abrev}.${block.year}`]  = String(mes).trim()
+          if (anio) out[`AÑO.${abrev}.${block.year}`]  = String(anio).trim()
+          if (inst) out[`INST.${abrev}.${block.year}`]  = String(inst).trim()
+        }
+      }
+
+      // Orientación (cols 228-232)
+      for (let i = 0; i < 5; i++) {
+        const v = raw[String(228 + i)]
+        if (v) out[`OC.LITERAL.${i+1}`] = String(v).trim()
+      }
+      // Grupos descripción (cols 233-237) y literal (cols 238-242)
+      for (let i = 0; i < 5; i++) {
+        const gd = raw[String(233 + i)]
+        const gl = raw[String(238 + i)]
+        if (gd) out[`PG.GRUPO.${i+1}`] = String(gd).trim()
+        if (gl) out[`PG.LITERAL.${i+1}`] = String(gl).trim()
+      }
+      // Observaciones certificación (cols 243,244,260,261)
+      const obsCertCols = [243, 244, 260, 261]
+      for (let i = 0; i < obsCertCols.length; i++) {
+        const v = raw[String(obsCertCols[i])]
+        if (v) out[`OBS.CERT.L${i+1}`] = String(v).trim()
+      }
+      // Acta (cols 253-255)
+      if (raw['253']) out['TITULO.SERIAL']      = String(raw['253']).trim()
+      if (raw['254']) out['CERT.EXPEDICION']   = String(raw['254']).trim()
+      if (raw['255']) out['TITULO.EGRESO']     = String(raw['255']).trim()
+      // Título expedición (col 256)
+      if (raw['256']) out['TITULO.EXPEDICION'] = String(raw['256']).trim()
+
+      console.log('[FLATTEN] legacy processed:', Object.keys(out).length, 'keys')
     }
 
-    // Calificaciones por año (bloques fijos del Excel BD)
-    // Año 1: startCol=23, 7 materias; Año 2: 58, 7; Año 3: 93, 8(?); Año 4: 133, 9; Año 5: 178, 10
-    const yearBlocks = [
-      { year: 1, start: 23, count: 7 },
-      { year: 2, start: 58, count: 7 },
-      { year: 3, start: 93, count: 9 },
-      { year: 4, start: 133, count: 9 },
-      { year: 5, start: 178, count: 10 },
-    ]
-    const abrevsByYear: Record<number, string[]> = {
-      1: ['CA','IN','MA','EF','AP','CN','GH'],
-      2: ['CA','IN','MA','EF','AP','CN','GH'],
-      3: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'],
-      4: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'],
-      5: ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'],
-    }
-    for (const block of yearBlocks) {
-      const abrevs = abrevsByYear[block.year] || []
-      for (let i = 0; i < block.count; i++) {
-        const col = block.start + i * 5
-        const abrev = abrevs[i] || `M${i+1}`
-        const nota = raw[String(col)]
-        const eval_ = raw[String(col + 1)]
-        const mes  = raw[String(col + 2)]
-        const anio = raw[String(col + 3)]
-        const inst = raw[String(col + 4)]
-        if (nota) out[`NOTA.${abrev}.${block.year}`] = String(nota).trim()
-        if (eval_) out[`EVAL.${abrev}.${block.year}`] = String(eval_).trim()
-        if (mes)  out[`MES.${abrev}.${block.year}`]  = String(mes).trim()
-        if (anio) out[`AÑO.${abrev}.${block.year}`]  = String(anio).trim()
-        if (inst) out[`INST.${abrev}.${block.year}`]  = String(inst).trim()
+    // ─── 3) FALLBACK DIRECTO: cualquier clave del raw que coincida con FIELD_MAP ───
+    const fieldMapKeys = new Set(FIELD_MAP.map(([k]) => k))
+    for (const [key, val] of Object.entries(raw)) {
+      if (fieldMapKeys.has(key) && val !== null && val !== undefined) {
+        const sv = String(val).trim()
+        if (sv && !out[key]) out[key] = sv  // No sobreescribir lo ya procesado
       }
     }
 
@@ -842,12 +928,12 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`)
       const data = await res.json()
       setSearchResults(data.students || [])
     } catch { setSearchResults([]) }
     setSearching(false)
-  }, [])
+  }, [plan])
 
   // === RESTAURAR ESTADO INICIAL ===
   const restoreInitialState = useCallback(() => {
@@ -863,9 +949,14 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
     try {
-      const res = await fetch(`/api/students/${studentId}?plan=vigente`)
+      console.log('[LOAD] Fetching student:', studentId, 'plan:', plan)
+      const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
+      if (!res.ok) { console.error('[LOAD] API error:', res.status); restoreInitialState(); return }
       const student = await res.json()
-      if (!student || student.error) { restoreInitialState(); return }
+      if (!student || student.error) { console.error('[LOAD] Student error:', student?.error); restoreInitialState(); return }
+
+      console.log('[LOAD] Student received:', student.cedula, student.apellidos, student.nombres)
+      console.log('[LOAD] rawData type:', typeof student.rawData, 'length:', String(student.rawData).length)
 
       // Guardar estado actual como snapshot para "Guardar Editado"
       initialCellsRef.current = cells.map(row => [...row])
@@ -875,14 +966,23 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setSearchQuery('')
       setSearchResults([])
 
-      // Parsear rawData y aplanar al formato de FIELD_MAP
+      // Parsear rawData
       let rawObj: Record<string, unknown> = {}
-      try { rawObj = typeof student.rawData === 'string' ? JSON.parse(student.rawData) : (student.rawData || {}) } catch { rawObj = {} }
+      try {
+        const rawStr = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
+        rawObj = JSON.parse(rawStr)
+        console.log('[LOAD] rawData parsed, _format:', rawObj._format, 'topKeys:', Object.keys(rawObj).slice(0, 15))
+      } catch (e) {
+        console.error('[LOAD] rawData parse error:', e)
+      }
       initialRawDataRef.current = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
 
       // Construir mapa campo→valor: datos personales + rawData aplanado
       const flat = flattenRawData(rawObj)
+      console.log('[LOAD] Flattened keys:', Object.keys(flat).length, 'sample:', Object.entries(flat).slice(0, 8))
+
       const vals: Record<string, string> = {}
+      // Datos personales del modelo Student (siempre disponibles)
       vals['CEDULA'] = student.cedula || ''
       vals['FECHA'] = student.fechaNacimiento || ''
       vals['APELLIDOS'] = student.apellidos || ''
@@ -891,40 +991,61 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       vals['ESTADO'] = student.estado || ''
       vals['MUNICIPIO'] = student.municipio || ''
 
-      // Sobrescribir con datos del rawData aplanado
+      // Sobrescribir/conjuntar con datos del rawData aplanado
       for (const [campo, valor] of Object.entries(flat)) {
         if (valor) vals[campo] = valor
       }
 
+      console.log('[LOAD] Total vals keys:', Object.keys(vals).length)
+      console.log('[LOAD] Personal:', vals.CEDULA, vals.APELLIDOS, vals.NOMBRES)
+      console.log('[LOAD] Inst1:', vals['INST.1'])
+      console.log('[LOAD] Notas CA.1:', vals['NOTA.CA.1'], 'MA.1:', vals['NOTA.MA.1'])
+      console.log('[LOAD] OC:', vals['OC.LITERAL.1'], 'PG:', vals['PG.GRUPO.1'])
+      console.log('[LOAD] Titulo:', vals['TITULO.SERIAL'], 'Cert:', vals['CERT.EXPEDICION'])
+      console.log('[LOAD] Obs:', vals['OBS.CERT.L1'])
+
       // Aplicar valores a las celdas (usar setCells funcional para evitar stale closure)
       let notaSum = 0
       let notaCount = 0
-      // Pre-calcular valores y posiciones
       const fieldPositions: Array<[string, string, {r:number;c:number}|null]> = []
       for (const [campo, celda] of FIELD_MAP) {
         const pos = cellRef(celda)
-        fieldPositions.push([campo, vals[campo] || '', pos])
+        const val = vals[campo] || ''
+        fieldPositions.push([campo, val, pos])
         if (campo.startsWith('NOTA.')) {
-          const n = parseFloat(vals[campo] || '')
+          const n = parseFloat(val)
           if (!isNaN(n) && n >= 1 && n <= 20) { notaSum += n; notaCount++ }
         }
       }
       const promedioVal = PROMEDIO_CELL && notaCount > 0 ? (notaSum / notaCount).toFixed(2) : ''
+      console.log('[LOAD] Promedio:', promedioVal, 'from', notaCount, 'notas, sum:', notaSum)
+
+      // Contar cuántos valores se aplicarían (sin depender de setCells async)
+      const totalVals = Object.keys(vals).length
+      const nonEmptyFields = fieldPositions.filter(([, val, pos]) => pos && val).length
 
       setCells(prev => {
         const newCells = prev.map(row => [...row])
+        let appliedCount = 0
         for (const [, val, pos] of fieldPositions) {
-          if (pos && newCells[pos.r]) newCells[pos.r][pos.c] = val
+          if (pos && newCells[pos.r] && val) {
+            newCells[pos.r][pos.c] = val
+            appliedCount++
+          }
         }
         if (PROMEDIO_CELL && promedioVal) {
           newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal
         }
+        console.log('[LOAD] Applied', appliedCount, 'values to cells')
         return newCells
       })
 
+      setSaveStatus(`CARGADO: ${nonEmptyFields} de ${totalVals} vals | ${Object.keys(flat).length} del rawData`)
+      setTimeout(() => setSaveStatus(''), 6000)
       setEditMode(true)
+      console.log('[LOAD] Done')
     } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
-  }, [restoreInitialState, cells])
+  }, [restoreInitialState, cells, plan])
 
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
   const saveEditedStudent = useCallback(async () => {
@@ -940,16 +1061,16 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       const m5 = cellRef('M5'), m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8')
       const m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
       const updateData: Record<string, string> = {}
-      if (m5) updateData.cedula = currentCells[m5.r]?.[m5.c] || ''
-      if (m6) updateData.fechaNacimiento = currentCells[m6.r]?.[m6.c] || ''
-      if (m7) updateData.apellidos = currentCells[m7.r]?.[m7.c] || ''
-      if (m8) updateData.nombres = currentCells[m8.r]?.[m8.c] || ''
-      if (m9) updateData.pais = currentCells[m9.r]?.[m9.c] || ''
-      if (m10) updateData.estado = currentCells[m10.r]?.[m10.c] || ''
-      if (m11) updateData.municipio = currentCells[m11.r]?.[m11.c] || ''
+      if (m5) updateData.cedula = currentCells[m5.r]?.[m5.c] || ""
+      if (m6) updateData.fechaNacimiento = currentCells[m6.r]?.[m6.c] || ""
+      if (m7) updateData.apellidos = currentCells[m7.r]?.[m7.c] || ""
+      if (m8) updateData.nombres = currentCells[m8.r]?.[m8.c] || ""
+      if (m9) updateData.pais = currentCells[m9.r]?.[m9.c] || ""
+      if (m10) updateData.estado = currentCells[m10.r]?.[m10.c] || ""
+      if (m11) updateData.municipio = currentCells[m11.r]?.[m11.c] || ""
       updateData.rawData = JSON.stringify(rawObj)
 
-      await fetch(`/api/students/${editingStudentId}?plan=vigente`, {
+      await fetch(`/api/students/${editingStudentId}?plan=${plan}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData)
       })
       restoreInitialState()
@@ -960,7 +1081,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setSaveStatus('ERROR AL GUARDAR')
       setTimeout(() => setSaveStatus(''), 3000)
     }
-  }, [editingStudentId, restoreInitialState])
+  }, [editingStudentId, restoreInitialState, plan])
 
   return (
     <div className="overflow-auto">

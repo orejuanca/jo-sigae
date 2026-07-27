@@ -735,12 +735,26 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setSearching(false)
   }, [])
 
+  // === RESTAURAR ESTADO INICIAL ===
+  const restoreInitialState = useCallback(() => {
+    if (initialCellsRef.current) {
+      setCells(initialCellsRef.current.map(r => [...r]))
+    }
+    setEditingStudentId(null)
+    initialRawDataRef.current = null
+    setEditMode(false)
+    setShowSearchModal(false)
+  }, [])
+
   // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
     try {
       const res = await fetch(`/api/students/${studentId}?plan=vigente`)
       const student = await res.json()
       if (!student || student.error) { restoreInitialState(); return }
+
+      // Guardar estado actual como snapshot para "Guardar Editado"
+      initialCellsRef.current = cells.map(row => [...row])
 
       setEditingStudentId(student.id)
       setShowSearchModal(false)
@@ -796,18 +810,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       setEditMode(true)
     } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
-  }, [restoreInitialState])
-
-  // === RESTAURAR ESTADO INICIAL ===
-  const restoreInitialState = useCallback(() => {
-    if (initialCellsRef.current) {
-      setCells(initialCellsRef.current.map(r => [...r]))
-    }
-    setEditingStudentId(null)
-    initialRawDataRef.current = null
-    setEditMode(false)
-    setShowSearchModal(false)
-  }, [])
+  }, [restoreInitialState, cells])
 
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
   const saveEditedStudent = useCallback(async () => {

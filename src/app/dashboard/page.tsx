@@ -157,6 +157,182 @@ async function saveToDb(plan: string, state: SheetState): Promise<boolean> {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
+/*  STUDENT DATA LOADING — Buscar / Editar Alumno (SOLO Plan Vigente)           */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/** Convertir coordenada Excel "M5" → {r, c} (0-indexed) */
+function cellRef(celda: string): { r: number; c: number } | null {
+  const m = celda.trim().match(/^([A-Z]+)(\d+)$/)
+  if (!m) return null
+  const colStr = m[1]
+  const row = parseInt(m[2], 10) - 1
+  let col = 0
+  for (let i = 0; i < colStr.length; i++) col = col * 26 + (colStr.charCodeAt(i) - 64)
+  col -= 1
+  if (row < 0 || col < 0) return null
+  return { r: row, c: col }
+}
+
+/** Construir FIELD_MAP completo (262 campos → celdas del dashboard) */
+function buildFieldMap(): [string, string][] {
+  const map: [string, string][] = [
+    // Datos personales
+    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
+    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
+    // Instituciones (5)
+    ['INST.1','G15'],['LOCAL.1','I15'],['EF.1','L15'],
+    ['INST.2','G16'],['LOCAL.2','I16'],['EF.2','L16'],
+    ['INST.3','G17'],['LOCAL.3','I17'],['EF.3','L17'],
+    ['INST.4','G18'],['LOCAL.4','I18'],['EF.4','L18'],
+    ['INST.5','G19'],['LOCAL.5','I19'],['EF.5','L19'],
+  ]
+  // Calificaciones por año (NOTA, EVAL, MES, AÑO, INST por materia)
+  const yearConfigs: { year: number; subjects: string[]; colBase: number; startRow: number }[] = [
+    { year: 1, subjects: ['CA','IN','MA','EF','AP','CN','GH'], colBase: 19, startRow: 15 },
+    { year: 2, subjects: ['CA','IN','MA','EF','AP','CN','GH'], colBase: 26, startRow: 15 },
+    { year: 3, subjects: ['CA','IN','MA','EF','FI','QU','BI','GH'], colBase: 7, startRow: 25 },
+    { year: 4, subjects: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'], colBase: 19, startRow: 25 },
+    { year: 5, subjects: ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'], colBase: 26, startRow: 25 },
+  ]
+  const numToCol = (n: number) => {
+    let s = ''; let v = n
+    while (v >= 0) { s = String.fromCharCode(65 + (v % 26)) + s; v = Math.floor(v / 26) - 1 }
+    return s
+  }
+  const prefixes = ['NOTA','EVAL','MES','AÑO','INST']
+  for (const yc of yearConfigs) {
+    for (let s = 0; s < yc.subjects.length; s++) {
+      const row = yc.startRow + s
+      for (let f = 0; f < prefixes.length; f++) {
+        map.push([`${prefixes[f]}.${yc.subjects[s]}.${yc.year}`, numToCol(yc.colBase + f) + row])
+      }
+    }
+  }
+  // Orientación y Convivencia
+  for (let i = 1; i <= 5; i++) map.push([`OC.LITERAL.${i}`, `AH${14 + i}`])
+  // PG Grupo
+  for (let i = 1; i <= 5; i++) map.push([`PG.GRUPO.${i}`, `AH${23 + i}`])
+  // PG Literal
+  for (let i = 1; i <= 5; i++) map.push([`PG.LITERAL.${i}`, `AL${14 + i}`])
+  // Secciones
+  const seccionCells = ['X13','AE13','L23','X23','AE23']
+  for (let i = 1; i <= 5; i++) map.push([`SECCION.${i}`, seccionCells[i - 1]])
+  // Observaciones Certificación
+  map.push(['OBS.CERT.L1','F35'],['OBS.CERT.L2','B36'],['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'])
+  // Observaciones Notas
+  map.push(['OBS.NOTAS.L1','F39'],['OBS.NOTAS.L2','B40'],['OBS.NOTAS.L3','B41'])
+  // Observaciones Boleta
+  map.push(['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'])
+  // Validación Título
+  map.push(['TITULO.SERIAL','AJ31'],['TITULO.EXPEDICION','AJ32'],['TITULO.EGRESO','AJ33'],['CERT.EXPEDICION','AJ34'])
+  return map
+}
+
+const FIELD_MAP = buildFieldMap()
+
+/** Asegurar formato DD/MM/AAAA */
+function toDDMMYYYY(val: unknown): string {
+  if (!val) return ''
+  const s = String(val).trim()
+  if (!s) return ''
+  // Ya DD/MM/AAAA
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+    const p = s.split('/')
+    return `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[2]}`
+  }
+  // YYYY-MM-DD → DD/MM/YYYY
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    try {
+      const d = new Date(s)
+      if (!isNaN(d.getTime())) {
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+      }
+    } catch { /* ignore */ }
+  }
+  return s
+}
+
+/** Aplanar rawData structured_v1 a clave→valor para FIELD_MAP */
+function flattenRawData(rawDataStr: string): Record<string, string> {
+  const vals: Record<string, string> = {}
+  if (!rawDataStr) return vals
+  try {
+    const raw = JSON.parse(rawDataStr)
+    // --- structured_v1 (formato actual de Vercel/PostgreSQL) ---
+    if (raw._format === 'structured_v1') {
+      // Datos personales
+      vals['CEDULA'] = String(raw.CEDULA || '').trim()
+      vals['FECHA'] = toDDMMYYYY(raw.FECHA || '')
+      vals['APELLIDOS'] = String(raw.APELLIDOS || '').trim()
+      vals['NOMBRES'] = String(raw.NOMBRES || '').trim()
+      vals['PAIS'] = String(raw.PAIS || 'VENEZUELA').trim()
+      vals['ESTADO'] = String(raw.ESTADO || '').trim()
+      vals['MUNICIPIO'] = String(raw.MUNICIPIO || '').trim()
+      // Instituciones
+      const instituciones: { denominacion: string; localidad: string; ef: string }[] = raw.instituciones || []
+      for (let i = 0; i < 5; i++) {
+        if (instituciones[i]) {
+          vals[`INST.${i+1}`] = String(instituciones[i].denominacion || '').trim()
+          vals[`LOCAL.${i+1}`] = String(instituciones[i].localidad || '').trim()
+          vals[`EF.${i+1}`] = String(instituciones[i].ef || '').trim()
+        }
+      }
+      // Calificaciones
+      const cal: { abrev: string; anioEscolar: number; nota: string; eval: string; mes: string; anio: string; inst: string }[] = raw.calificaciones || []
+      for (const c of cal) {
+        const y = c.anioEscolar
+        const a = (c.abrev || '').toUpperCase()
+        if (y && a) {
+          vals[`NOTA.${a}.${y}`] = String(c.nota || '').trim()
+          vals[`EVAL.${a}.${y}`] = String(c.eval || '').trim()
+          vals[`MES.${a}.${y}`] = String(c.mes || '').trim()
+          vals[`AÑO.${a}.${y}`] = String(c.anio || '').trim()
+          vals[`INST.${a}.${y}`] = String(c.inst || '').trim()
+        }
+      }
+      // Orientación y Convivencia
+      const oc: { literal: string }[] = raw.orientacion || []
+      for (let i = 0; i < 5; i++) {
+        vals[`OC.LITERAL.${i+1}`] = oc[i] ? String(oc[i].literal || '').trim() : ''
+      }
+      // Grupos (PG.GRUPO y PG.LITERAL) + Secciones
+      const grp: { grupo: string; literal: string }[] = raw.grupos || []
+      for (let i = 0; i < 5; i++) {
+        if (grp[i]) {
+          vals[`PG.GRUPO.${i+1}`] = String(grp[i].grupo || '').trim()
+          vals[`PG.LITERAL.${i+1}`] = String(grp[i].literal || '').trim()
+          vals[`SECCION.${i+1}`] = String(grp[i].grupo || '').trim()
+        }
+      }
+      // Observaciones Certificación
+      const obs: string[] = raw.observaciones || []
+      const obsCertKeys = ['OBS.CERT.L1','OBS.CERT.L2','OBS.CERT.L3','OBS.CERT.L4']
+      for (let i = 0; i < obsCertKeys.length; i++) {
+        vals[obsCertKeys[i]] = obs[i] ? String(obs[i]).trim() : ''
+      }
+      // Observaciones Notas (si existen en rawData)
+      const obsNotas: string[] = raw.observacionesNotas || []
+      for (let i = 0; i < 3; i++) {
+        vals[`OBS.NOTAS.L${i+1}`] = obsNotas[i] ? String(obsNotas[i]).trim() : ''
+      }
+      // Observaciones Boleta (si existen en rawData)
+      const obsBoleta: string[] = raw.observacionesBoleta || []
+      for (let i = 0; i < 3; i++) {
+        vals[`OBS.BOLETA.L${i+1}`] = obsBoleta[i] ? String(obsBoleta[i]).trim() : ''
+      }
+      // Título / Validación
+      vals['TITULO.EXPEDICION'] = toDDMMYYYY(raw.tituloExpedicion || '')
+      vals['TITULO.EGRESO'] = String(raw.actaAnio || '').trim()
+      vals['CERT.EXPEDICION'] = toDDMMYYYY(raw.actaFecha || '')
+      vals['TITULO.SERIAL'] = String(raw.acta || '').trim()
+    }
+  } catch (e) {
+    console.error('[flattenRawData] Error parsing rawData:', e)
+  }
+  return vals
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
 /*  SheetEditor – manages its own state, loads/saves from localStorage[plan]  */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
@@ -193,6 +369,79 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
   const [saveStatus, setSaveStatus] = useState<string>('')
   const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Cargando...')
+
+  // === BUSCAR / EDITAR ALUMNO (SOLO Plan Vigente) ===
+  const [searchQ, setSearchQ] = useState('')
+  const [searchResults, setSearchResults] = useState<{id:string;cedula:string;apellidos:string;nombres:string}[]>([])
+  const [searching, setSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const [loadedStudentId, setLoadedStudentId] = useState<string | null>(null)
+
+  const handleSearch = useCallback(async (q: string) => {
+    setSearchQ(q)
+    if (q.length < 2) { setSearchResults([]); setShowResults(false); return }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q)}&limit=10&plan=vigente`)
+      const data = await res.json()
+      setSearchResults(data.students || [])
+      setShowResults(true)
+    } catch { setSearchResults([]) }
+    setSearching(false)
+  }, [])
+
+  const loadStudentToDashboard = useCallback(async (studentId: string) => {
+    // GUARD: Solo funciona en Plan Vigente
+    if (plan !== 'vigente') return
+    try {
+      const res = await fetch(`/api/students/${studentId}?plan=vigente`)
+      const student = await res.json()
+      if (!student || student.error) {
+        setSaveStatus('ERROR: Alumno no encontrado')
+        setTimeout(() => setSaveStatus(''), 3000)
+        return
+      }
+
+      // Aplanar rawData a clave→valor
+      const vals = flattenRawData(student.rawData || '{}')
+
+      // Sobrescribir datos personales del modelo directo (prioridad)
+      if (student.cedula) vals['CEDULA'] = student.cedula
+      if (student.fechaNacimiento) vals['FECHA'] = toDDMMYYYY(student.fechaNacimiento)
+      if (student.apellidos) vals['APELLIDOS'] = student.apellidos
+      if (student.nombres) vals['NOMBRES'] = student.nombres
+      if (student.pais) vals['PAIS'] = student.pais
+      if (student.estado) vals['ESTADO'] = student.estado
+      if (student.municipio) vals['MUNICIPIO'] = student.municipio
+
+      // Aplicar todos los campos al grid usando FIELD_MAP
+      setCells(prev => {
+        const copy = prev.map(row => [...row])
+        for (const [campo, celda] of FIELD_MAP) {
+          const val = vals[campo]
+          if (val === undefined || val === null) continue
+          const ref = cellRef(celda)
+          if (!ref) continue
+          const { r, c } = ref
+          // Asegurar que la fila y columna existan
+          while (copy.length <= r) copy.push(new Array(numCols).fill(''))
+          while (copy[r].length <= c) copy[r].push('')
+          copy[r][c] = String(val)
+        }
+        return copy
+      })
+
+      setLoadedStudentId(studentId)
+      setShowResults(false)
+      setSearchQ(`${student.apellidos}, ${student.nombres} (${student.cedula})`)
+      setSaveStatus(`Alumno cargado: ${student.apellidos} ${student.nombres}`)
+      setTimeout(() => setSaveStatus(''), 4000)
+    } catch (e) {
+      console.error('[loadStudent] Error:', e)
+      setSaveStatus('ERROR al cargar alumno')
+      setTimeout(() => setSaveStatus(''), 3000)
+    }
+  }, [plan, numCols])
 
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
@@ -1186,6 +1435,44 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           <button onClick={()=>handleToggleBorders(true)} className="bg-green-800 hover:bg-green-700 px-1.5 py-0.5 rounded text-[9px]" title="Mostrar bordes">ON</button>
           <button onClick={()=>handleToggleBorders(false)} className="bg-gray-600 hover:bg-gray-500 px-1.5 py-0.5 rounded text-[9px]" title="Ocultar bordes">OFF</button>
           {hasSelection && <span className="text-[8px] text-gray-400">(a seleccion)</span>}
+        </div>
+      )}
+
+      {/* BUSCAR / EDITAR ALUMNO — SOLO Plan Vigente */}
+      {plan === 'vigente' && (
+        <div className="sticky z-40 bg-gray-900 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-2 border-b border-gray-700"
+          style={{ top: selectedCell ? '76px' : '52px' }}>
+          <span className="font-bold text-[10px] text-yellow-300">BUSCAR ALUMNO:</span>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQ}
+              onChange={e => handleSearch(e.target.value)}
+              onFocus={() => searchResults.length > 0 && setShowResults(true)}
+              onBlur={() => setTimeout(() => setShowResults(false), 200)}
+              placeholder="Cédula, apellidos o nombres..."
+              className="w-56 bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-500 placeholder-gray-400"
+            />
+            {searching && <span className="absolute right-1 top-1 text-gray-400 text-[8px]">...</span>}
+            {showResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-600 rounded shadow-lg z-50 w-80 max-h-48 overflow-y-auto">
+                {searchResults.map(s => (
+                  <button
+                    key={s.id}
+                    onMouseDown={e => { e.preventDefault(); loadStudentToDashboard(s.id) }}
+                    className="w-full text-left px-2 py-1.5 hover:bg-blue-700 text-[9px] border-b border-gray-700 last:border-0"
+                  >
+                    <span className="text-yellow-300">{s.cedula}</span>{' '}
+                    <span className="text-white font-bold">{s.apellidos}</span>{', '}
+                    <span>{s.nombres}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {loadedStudentId && (
+            <span className="text-green-400 text-[9px]">Alumno cargado en el dashboard</span>
+          )}
         </div>
       )}
 

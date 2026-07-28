@@ -194,6 +194,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [saveStatus, setSaveStatus] = useState<string>('')
   const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Cargando...')
 
+  // Estado para botones con activación condicional (declarado AQUÍ antes de los useEffect que lo referencian)
+  const [editMode, setEditMode] = useState(false)
+  const [btnHover, setBtnHover] = useState<string | null>(null)
+  const [btnDown, setBtnDown] = useState<string | null>(null)
+
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
 
@@ -611,11 +616,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const SWITCH_ROW = 5, SWITCH_COL = 35 // celda AJ6
   const PRINT_ROW = 5, PRINT_COL = 30 // celda AE6
   const switchBtnLabel = plan === 'vigente' ? 'Plan\nDerogado' : 'Plan\nVigente'
-
-  // Estado para botones con activación condicional
-  const [editMode, setEditMode] = useState(false)
-  const [btnHover, setBtnHover] = useState<string | null>(null)
-  const [btnDown, setBtnDown] = useState<string | null>(null)
 
   // === ESTADO DE BÚSQUEDA Y EDICIÓN ===
   const [showSearchModal, setShowSearchModal] = useState(false)

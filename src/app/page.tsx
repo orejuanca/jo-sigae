@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { schoolConfig } from '@/lib/school-config'
@@ -12,10 +12,11 @@ export default function LoginPage() {
   const { login, isAuthenticated } = useAuth()
   const router = useRouter()
 
-  if (isAuthenticated) {
-    router.push('/dashboard')
-    return null
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,6 +29,14 @@ export default function LoginPage() {
       setError('Contraseña incorrecta')
       setLoading(false)
     }
+  }
+
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-400">Cargando...</p>
+      </div>
+    )
   }
 
   return (

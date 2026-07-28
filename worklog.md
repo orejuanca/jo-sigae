@@ -112,3 +112,24 @@ Stage Summary:
 - Backward compatible: boletin API still reads legacy flat format if encountered
 - Seed API reads DATA_ALUMNOS.xlsx directly on POST /api/seed
 - Orientación and grupo bindings work with any saved template (cells auto-created)
+
+---
+Task ID: 1
+Agent: main
+Task: Fix Vercel "This page couldn't load" error for dashboard
+
+Work Log:
+- Diagnosed that the preview URL (jo-sigae-dlfa2a2s8...) had SSO protection, not a build error
+- Found production URL jo-sigae.vercel.app works for login but not dashboard
+- Used agent-browser to confirm: login works, dashboard shows "This page couldn't load"
+- Verified all JS chunks load (HTTP 200), CSS loads, fonts load
+- Confirmed the error is a server-side rendering error in the 1445-line dashboard component
+- Created minimal test page → worked, confirming the issue is in the dashboard component code
+- Root cause: Turbopack SSR fails on the complex dashboard component (likely due to large module-level data structures or component complexity)
+- Solution: Wrapped dashboard in dynamic import with ssr:false
+
+Stage Summary:
+- Moved src/app/dashboard/page.tsx → src/components/dashboard-content.tsx
+- Created new src/app/dashboard/page.tsx with next/dynamic and ssr:false
+- Dashboard now loads on Vercel via client-side rendering only
+- Full login → dashboard flow works correctly

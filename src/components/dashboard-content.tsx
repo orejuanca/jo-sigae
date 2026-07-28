@@ -615,7 +615,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
   const SWITCH_ROW = 5, SWITCH_COL = 35 // celda AJ6
   const PRINT_ROW = 5, PRINT_COL = 30 // celda AE6
-  const switchBtnLabel = plan === 'vigente' ? 'Plan\nDerogado' : 'Plan\nVigente'
+  const switchBtnLabel = plan === 'vigente' ? 'ir a\nPlan Derogado' : 'ir a\nPlan Vigente'
 
   // === ESTADO DE BÚSQUEDA Y EDICIÓN ===
   const [showSearchModal, setShowSearchModal] = useState(false)
@@ -1295,11 +1295,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                     rowSpan={rowSpan > 1 ? rowSpan : undefined}
                     className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
                     style={{
-                      backgroundColor: isSwitchCell ? '#2563eb' : (selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff')),
-                      color: isSwitchCell ? '#fff' : (fontColors[r]?.[c] || '#333'),
+                      backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
+                      color: fontColors[r]?.[c] || '#333',
                       fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal',
                       fontStyle: 'normal',
-                      fontSize: isSwitchCell ? '9px' : `${fontSizes[r]?.[c] || 9}px`,
+                      fontSize: `${fontSizes[r]?.[c] || 9}px`,
                       fontFamily: fontFamilies[r]?.[c] || 'Arial',
                       textAlign: textAligns[r]?.[c] || 'left',
                       verticalAlign: 'middle',
@@ -1312,7 +1312,16 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         if (editMode) restoreInitialState()
                         onSwitchPlan()
                       }}
-                        className="w-full h-full bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold px-1 py-0.5 rounded transition cursor-pointer">
+                        onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
+                        onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
+                        className="w-full h-full flex items-center justify-center cursor-pointer"
+                        style={{
+                          backgroundColor: isDn ? '#1d4ed8' : '#2563eb', color: '#ffffff', fontSize: '11px',
+                          fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #1e40af',
+                          borderRadius: '2px', userSelect: 'none', whiteSpace: 'pre-line',
+                          boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.3)' : '1px 1px 3px rgba(0,0,0,0.3)',
+                          transform: isDn ? 'translateY(1px)' : 'none',
+                        }}>
                         {switchBtnLabel}
                       </button>
                     ) : isPrintCell ? (

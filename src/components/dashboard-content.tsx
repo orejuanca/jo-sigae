@@ -643,6 +643,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [searchResults, setSearchResults] = useState<Array<{id:string;cedula:string;apellidos:string;nombres:string}>>([])
   const [searching, setSearching] = useState(false)
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
+  const [dataLoadKey, setDataLoadKey] = useState(0)
   const initialCellsRef = useRef<string[][] | null>(null)
   const initialRawDataRef = useRef<string | null>(null)
 
@@ -1031,6 +1032,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setCells(initialCellsRef.current.map(r => [...r]))
     }
     setEditingStudentId(null)
+    setDataLoadKey(k => k + 1)
     initialRawDataRef.current = null
     setEditMode(false)
     setShowSearchModal(false)
@@ -1041,15 +1043,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     // GUARD: Solo funciona en Plan Vigente
     if (plan !== 'vigente') return
     try {
+      console.log('[LOAD] Iniciando carga para studentId:', studentId)
       const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
-      if (!res.ok) { console.error('[LOAD] API error:', res.status); restoreInitialState(); return }
+      if (!res.ok) { console.error('[LOAD] API error:', res.status); return }
       const student = await res.json()
-      if (!student || student.error) { restoreInitialState(); return }
+      if (!student || student.error) { console.error('[LOAD] Student error:', student?.error); return }
+      console.log('[LOAD] Student recibido:', student.id, student.cedula, student.apellidos, student.nombres)
+      console.log('[LOAD] rawData length:', student.rawData?.length || 0)
 
-      // Guardar estado actual como snapshot para "Guardar Editado"
-      initialCellsRef.current = cells.map(row => [...row])
-
-      setEditingStudentId(student.id)
+      // Cerrar modal y limpiar búsqueda
       setShowSearchModal(false)
       setSearchQuery('')
       setSearchResults([])
@@ -1066,6 +1068,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       // Construir mapa campo→valor: datos personales + rawData aplanado
       const flat = flattenRawData(rawObj)
+      console.log('[LOAD] rawData aplanado keys:', Object.keys(flat).length, Object.keys(flat).slice(0, 10))
 
       const vals: Record<string, string> = {}
       // Datos personales del modelo Student (siempre disponibles)
@@ -1079,10 +1082,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       // Sobrescribir/conjuntar con datos del rawData aplanado
       for (const [campo, valor] of Object.entries(flat)) {
-        if (valor) vals[campo] = valor
+        if (valor) vals[campo] = String(valor)
       }
 
-      // Aplicar valores a las celdas (usar setCells funcional para evitar stale closure)
+      // Pre-calcular posiciones y valores
       let notaSum = 0
       let notaCount = 0
       const fieldPositions: Array<[string, string, {r:number;c:number}|null]> = []
@@ -1096,23 +1099,34 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         }
       }
       const promedioVal = PROMEDIO_CELL && notaCount > 0 ? (notaSum / notaCount).toFixed(2) : ''
-      console.log('[LOAD] Promedio:', promedioVal, 'from', notaCount, 'notas, sum:', notaSum)
-
-      // Contar cuántos valores se aplicarían (sin depender de setCells async)
       const totalVals = Object.keys(vals).length
       const nonEmptyFields = fieldPositions.filter(([, val, pos]) => pos && val).length
+      console.log('[LOAD] totalVals:', totalVals, 'nonEmptyFields:', nonEmptyFields, 'promedio:', promedioVal)
+
+      // Guardar snapshot Y aplicar datos en UNA sola operación setCells
+      // Esto garantiza que el snapshot capture el estado ANTES de los datos del alumno
+      // y que las celdas se actualicen atomicamente
+      setEditingStudentId(student.id)
+      setDataLoadKey(k => k + 1)
 
       setCells(prev => {
+        // 1) Capturar snapshot del estado actual (antes de modificar)
+        if (!initialCellsRef.current) {
+          initialCellsRef.current = prev.map(row => [...row])
+          console.log('[LOAD] Snapshot capturado dentro de setCells')
+        }
+
+        // 2) Aplicar valores del alumno
         const newCells = prev.map(row => [...row])
         let appliedCount = 0
-        for (const [, val, pos] of fieldPositions) {
+        for (const [campo, val, pos] of fieldPositions) {
           if (pos && newCells[pos.r] && val) {
             newCells[pos.r][pos.c] = val
             appliedCount++
           }
         }
         if (PROMEDIO_CELL && promedioVal) {
-          newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal
+          if (newCells[PROMEDIO_CELL.r]) newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal
         }
         console.log('[LOAD] Applied', appliedCount, 'values to cells')
         return newCells
@@ -1121,9 +1135,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setSaveStatus(`CARGADO: ${nonEmptyFields} de ${totalVals} vals | ${Object.keys(flat).length} del rawData`)
       setTimeout(() => setSaveStatus(''), 6000)
       setEditMode(true)
-      console.log('[LOAD] Done')
+      console.log('[LOAD] Done - editMode activado')
     } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
-  }, [restoreInitialState, cells, plan])
+  }, [plan]) // Sin 'cells' ni 'restoreInitialState' — usa setCells(prev=>) y no necesita restoreInitialState aquí
 
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
   const saveEditedStudent = useCallback(async () => {
@@ -1391,7 +1405,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         {cmdBtn.label}
                       </button>
                     ) : (
-                    <input key={`${r}-${c}-${editingStudentId || '_'}`} type="text" defaultValue={cells[r]?.[c] || ''}
+                    <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''}
                       onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)}
                       onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
                       onKeyDown={(e) => handleInputKeyDown(e, r, c)}

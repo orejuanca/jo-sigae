@@ -264,7 +264,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   result['MUNICIPIO'] = values['MUNICIPIO'] || ''
 
   // 2. Instituciones (cols 8-22, índice de Excel "8"-"22", 5 instituciones × 3 campos)
-  // SIEMPRE generar 5 entradas para mantener índices correctos en el dashboard
+  // SIEMPRE generar 5 entradas para preservar posición (índice = número de institución)
   const instituciones: { denominacion: string; localidad: string; ef: string }[] = []
   for (let i = 0; i < 5; i++) {
     const nombreKey = String(8 + (i * 3))      // 8, 11, 14, 17, 20
@@ -355,18 +355,17 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   //    SIEMPRE generar 4 entradas para mantener índices correctos
   const obsCertCols = [243, 244, 260, 261]
   const observaciones: string[] = []
-  for (const i of obsCertCols) {
-    const val = values[String(i)]
+  for (const col of obsCertCols) {
+    const val = values[String(col)]
     observaciones.push(val ? val.trim() : '')
   }
   result['observaciones'] = observaciones
 
   // 7b. Observaciones de Notas (cols 245-247 = OBS.NOTAS.L1 a L3)
   //     SIEMPRE generar 3 entradas para mantener índices correctos
-  const obsNotasCols = [245, 246, 247]
   const observacionesNotas: string[] = []
-  for (const i of obsNotasCols) {
-    const val = values[String(i)]
+  for (let i = 0; i < 3; i++) {
+    const val = values[String(245 + i)]
     observacionesNotas.push(val ? val.trim() : '')
   }
   result['observacionesNotas'] = observacionesNotas
@@ -374,10 +373,9 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   // 7c. Observaciones de Boleta (cols 257-259 = OBS.BOLETA.L1 a L3)
   //     Cols después de literales finales (248-252) y antes de acta (253)
   //     Nota: en el Excel vigente estas columnas pueden estar vacías
-  const obsBoletaCols = [257, 258, 259]
   const observacionesBoleta: string[] = []
-  for (const i of obsBoletaCols) {
-    const val = values[String(i)]
+  for (let i = 0; i < 3; i++) {
+    const val = values[String(257 + i)]
     observacionesBoleta.push(val ? val.trim() : '')
   }
   result['observacionesBoleta'] = observacionesBoleta
@@ -399,19 +397,19 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   }
   result['literalesFinales'] = literales
 
-  // 9. Acta (cols 253-255)
+  // 10. Acta (cols 253-255)
   result['acta'] = values['253'] ? values['253'].trim() : ''
   // La fecha puede venir como objeto Date
   result['actaFecha'] = formatDateVal(values['254'])
   result['actaAnio'] = values['255'] ? String(values['255']).trim() : ''
 
-  // 10. Título / Serial (cols 256+)
+  // 11. Título / Serial (cols 256+)
   const tituloExpedicion = values['256']
   if (tituloExpedicion && tituloExpedicion.toString().trim()) {
     result['tituloExpedicion'] = formatDateVal(tituloExpedicion)
   }
 
-  // 11. Metadata
+  // 12. Metadata
   result['_format'] = 'structured_v1'
   result['_plan'] = 'vigente'
 

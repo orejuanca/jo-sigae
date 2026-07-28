@@ -839,13 +839,22 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         }
       }
 
-      // Secciones → SECCION.1..5
+      // Secciones → SECCION.1..5 (desde grupos[].grupo si no hay raw.secciones)
       const secs = raw.secciones
       console.log('[FLATTEN] secciones raw:', secs)
       if (Array.isArray(secs) && secs.some(s => s)) {
         // Hay campo secciones con datos
         for (let i = 0; i < Math.min(secs.length, 5); i++) {
           if (secs[i]) out[`SECCION.${i+1}`] = String(secs[i]).trim()
+        }
+      } else {
+        // Si no hay campo secciones, usar grupos[].grupo
+        const grps2 = raw.grupos
+        if (Array.isArray(grps2)) {
+          for (let i = 0; i < Math.min(grps2.length, 5); i++) {
+            const g2 = grps2[i] as Record<string, string> | null
+            if (g2?.grupo) out[`SECCION.${i+1}`] = String(g2.grupo).trim()
+          }
         }
       }
       // Siempre complementar con grupos[].grupo para secciones vacías

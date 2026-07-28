@@ -316,3 +316,20 @@ export function flattenRawData(raw: Record<string, unknown>): Record<string, str
 
   return out
 }
+
+// Detecta valores corruptos del importador xlsx (cellDates: true)
+// Números como "4" se convierten en "1900-01-04T00:00:00" y horas en "00:00:00"
+export function isCorruptValue(val: string, fieldKey: string): boolean {
+  if (!val) return false
+  const s = val.trim()
+  if (!s) return false
+  // Campos donde las fechas ISO SÍ son válidos
+  if (fieldKey.startsWith('MES.') || fieldKey === 'FECHA' || fieldKey === 'CERT.EXPEDICION' || fieldKey === 'TITULO.EXPEDICION') {
+    return false
+  }
+  // Fecha ISO corrupta: 1900-01-xxT00:00:00 (números mal interpretados como fechas)
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(s)) return true
+  // Hora corrupta: 00:00:00
+  if (/^\d{2}:\d{2}:\d{2}$/.test(s)) return true
+  return false
+}

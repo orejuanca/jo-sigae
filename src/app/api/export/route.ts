@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
-import { flattenRawData, fmtDate } from '@/lib/flatten-raw'
+import { flattenRawData, fmtDate, isCorruptValue } from '@/lib/flatten-raw'
 import * as XLSX from 'xlsx'
 
 // === CAMPOS DEL DASHBOARD (mismo orden que FIELD_MAP en dashboard-content.tsx) ===
@@ -96,6 +96,7 @@ export async function GET(request: NextRequest) {
 
       const row: Record<string, string> = { '#': String(idx + 1) }
       for (const field of ALL_FIELDS) {
+        let val = ''
         switch (field) {
           case 'CEDULA':   row[field] = s.cedula || ''; break
           case 'FECHA':    row[field] = fmtDate(s.fechaNacimiento); break
@@ -104,8 +105,13 @@ export async function GET(request: NextRequest) {
           case 'PAIS':     row[field] = s.pais || 'VENEZUELA'; break
           case 'ESTADO':   row[field] = s.estado || ''; break
           case 'MUNICIPIO': row[field] = s.municipio || ''; break
-          default:         row[field] = flat[field] || ''; break
+          default:         val = flat[field] || ''; break
         }
+        // Limpiar valores corruptos del importador (fechas 1900-xx-xx, horas 00:00:00)
+        if (field !== 'CEDULA' && field !== 'APELLIDOS' && field !== 'NOMBRES' && field !== 'PAIS' && field !== 'ESTADO' && field !== 'MUNICIPIO') {
+          val = isCorruptValue(val, field) ? '' : val
+        }
+        row[field] = val
       }
       return debug ? { row, rawDebug } : row
     })

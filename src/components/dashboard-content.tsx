@@ -598,15 +598,42 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setSelectedCell({ r: selectedCell.r, c: fromC + off })
   }
 
-  const handleInputBlur = (r: number, c: number, value: string) => { updateCell(r, c, value); setActiveCell(null) }
+  const handleInputBlur = (r: number, c: number, value: string) => {
+    // Auto-formato DD/MM/AAAA en celda Z4 (fila 3, col 25)
+    if (r === 3 && c === 25) {
+      const trimmed = value.trim()
+      const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
+      if (m) {
+        const dd = m[1].padStart(2, '0')
+        const mm = m[2].padStart(2, '0')
+        let yy = parseInt(m[3])
+        yy = yy >= 30 ? 1900 + yy : 2000 + yy
+        value = `${dd}/${mm}/${yy}`
+      }
+    }
+    updateCell(r, c, value); setActiveCell(null)
+  }
   const navigateTo = (r: number, c: number) => {
     let nr = r, nc = c, tries = 0
     while (isHidden(nr, nc) && tries < 500) { if(nr>r)nr++;else if(nr<r)nr--;else if(nc>c)nc++;else nc--; nr=Math.max(0,Math.min(nr,numRows-1));nc=Math.max(0,Math.min(nc,numCols-1));tries++ }
     setSelectedCell({r:nr,c:nc}); setSelectionStart({r:nr,c:nc}); setSelectionEnd({r:nr,c:nc}); setTimeout(()=>focusInput(nr,nc),0)
   }
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
-    if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopPropagation();updateCell(r,c,e.currentTarget.value);navigateTo(r+1,c)}
-    else if(e.key==='Tab'){e.preventDefault();e.stopPropagation();updateCell(r,c,e.currentTarget.value);navigateTo(r,e.shiftKey?c-1:c+1)}
+    let val = e.currentTarget.value
+    // Auto-formato DD/MM/AAAA en celda Z4 al presionar Enter/Tab
+    if (r === 3 && c === 25 && (e.key==='Enter'||e.key==='Tab')) {
+      const trimmed = val.trim()
+      const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
+      if (m) {
+        const dd = m[1].padStart(2, '0')
+        const mm = m[2].padStart(2, '0')
+        let yy = parseInt(m[3])
+        yy = yy >= 30 ? 1900 + yy : 2000 + yy
+        val = `${dd}/${mm}/${yy}`
+      }
+    }
+    if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopPropagation();updateCell(r,c,val);navigateTo(r+1,c)}
+    else if(e.key==='Tab'){e.preventDefault();e.stopPropagation();updateCell(r,c,val);navigateTo(r,e.shiftKey?c-1:c+1)}
     else if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){updateCell(r,c,e.currentTarget.value)}
   }
 

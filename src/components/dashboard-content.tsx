@@ -10,7 +10,7 @@ type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
 interface CmdButton {
   sr: number; sc: number; label: string; color: string; bgColor: string; fontSize: number
-  disabledColor?: string; disabledBgColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean
+  disabledColor?: string; disabledBgColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean; disableOnDerogado?: boolean
   hoverColor1?: string; hoverColor2?: string; hoverShadowColor?: string; downShadowColor?: string
   mergeSpan?: { er: number; ec: number }
 }
@@ -660,6 +660,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
       hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)' },
     { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
+      disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true,
       hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
       mergeSpan: { er: 10, ec: 29 } },
   ]
@@ -1306,7 +1307,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const isPrintCell = r === PRINT_ROW && c === PRINT_COL
                 const cmdBtn = isCmdBtn(r, c, cells[r]?.[c])
                 const isBtnCell = isSwitchCell || isPrintCell || !!cmdBtn
-                const cmdDisabled = cmdBtn ? ((cmdBtn.requiresEdit && !editMode) || (cmdBtn.disableOnEdit && editMode)) : false
+                const cmdDisabled = cmdBtn ? ((cmdBtn.requiresEdit && !editMode) || (cmdBtn.disableOnEdit && editMode) || (cmdBtn.disableOnDerogado && plan === 'derogado')) : false
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
@@ -1367,7 +1368,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                           e.stopPropagation()
                           if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
                           else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
-                          else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export', '_blank') }
+                          else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') }
                         }}
                         onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
                         onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
+import { flattenRawData, fmtDate } from '@/lib/flatten-raw'
 import * as XLSX from 'xlsx'
 
 // === CAMPOS DEL DASHBOARD (mismo orden que FIELD_MAP en dashboard-content.tsx) ===
@@ -60,20 +61,6 @@ const ALL_FIELDS: string[] = [
   'OBS.BOLETA.L1','OBS.BOLETA.L2','OBS.BOLETA.L3','OBS.CERT.L3','OBS.CERT.L4',
 ]
 
-// Campos personales que vienen del modelo Student, no del rawData
-const PERSONAL_FIELDS = new Set(['CEDULA','FECHA','APELLIDOS','NOMBRES','PAIS','ESTADO','MUNICIPIO'])
-
-// Formatear fecha YYYY-MM-DD → DD/MM/YYYY
-function fmtDate(val: string | null | undefined): string {
-  if (!val) return ''
-  const s = val.trim()
-  if (!s) return ''
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    try { const p = s.substring(0, 10).split('-'); return `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}` } catch { return s }
-  }
-  return s
-}
-
 export async function GET(request: NextRequest) {
   try {
     const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
@@ -81,6 +68,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Plan inválido' }, { status: 400 })
     }
 
+    const debug = request.nextUrl.searchParams.get('debug') === '1'
     const db = getDb(plan)
     const students = await db.student.findMany({
       orderBy: { cedula: 'asc' },
@@ -88,44 +76,54 @@ export async function GET(request: NextRequest) {
 
     // Para cada estudiante, extraer los 261 campos
     const rows = students.map((s, idx) => {
-      // Parsear rawData
-      let raw: Record<string, string> = {}
+      // Parsear rawData y aplanar con la misma lógica del dashboard
+      let flat: Record<string, string> = {}
+      let rawDebug: { format: string; keys: string[]; flatCount: number } | undefined
       try {
         const parsed = typeof s.rawData === 'string' ? JSON.parse(s.rawData) : (s.rawData || {})
-        // Si es formato estructurado, aplanar
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          // Formato plano (clave-valor directo)
-          for (const [k, v] of Object.entries(parsed)) {
-            if (v !== null && v !== undefined) raw[k] = String(v)
+          const rawKeys = Object.keys(parsed)
+          flat = flattenRawData(parsed as Record<string, unknown>)
+          rawDebug = {
+            format: String(parsed._format || 'none'),
+            keys: rawKeys.slice(0, 15),
+            flatCount: Object.keys(flat).length,
           }
         }
-      } catch {}
-
-      const getVal = (field: string): string => {
-        // Campos personales vienen del modelo Student
-        if (field === 'CEDULA') return s.cedula || ''
-        if (field === 'FECHA') return fmtDate(s.fechaNacimiento)
-        if (field === 'APELLIDOS') return s.apellidos || ''
-        if (field === 'NOMBRES') return s.nombres || ''
-        if (field === 'PAIS') return s.pais || 'VENEZUELA'
-        if (field === 'ESTADO') return s.estado || ''
-        if (field === 'MUNICIPIO') return s.municipio || ''
-        // Demás campos del rawData
-        return raw[field] || ''
+      } catch (e) {
+        console.error(`[EXPORT] Error parseando rawData estudiante #${idx + 1}:`, e)
       }
 
       const row: Record<string, string> = { '#': String(idx + 1) }
       for (const field of ALL_FIELDS) {
-        row[field] = getVal(field)
+        switch (field) {
+          case 'CEDULA':   row[field] = s.cedula || ''; break
+          case 'FECHA':    row[field] = fmtDate(s.fechaNacimiento); break
+          case 'APELLIDOS': row[field] = s.apellidos || ''; break
+          case 'NOMBRES':  row[field] = s.nombres || ''; break
+          case 'PAIS':     row[field] = s.pais || 'VENEZUELA'; break
+          case 'ESTADO':   row[field] = s.estado || ''; break
+          case 'MUNICIPIO': row[field] = s.municipio || ''; break
+          default:         row[field] = flat[field] || ''; break
+        }
       }
-      return row
+      return debug ? { row, rawDebug } : row
     })
+
+    // MODO DEBUG: retornar JSON en vez de XLSX
+    if (debug) {
+      return NextResponse.json({
+        totalStudents: students.length,
+        totalFields: ALL_FIELDS.length,
+        first3: rows.slice(0, 3),
+      })
+    }
 
     // Crear workbook
     const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(rows)
+    const ws = XLSX.utils.json_to_sheet(rows as Record<string, string>[])
 
-    // Anchos de columna: # + 261 campos
+    // Anchos de columna
     ws['!cols'] = [
       { wch: 5 }, // #
       ...ALL_FIELDS.map(() => ({ wch: 16 })),

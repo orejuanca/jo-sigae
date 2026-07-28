@@ -598,19 +598,20 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setSelectedCell({ r: selectedCell.r, c: fromC + off })
   }
 
-  const handleInputBlur = (r: number, c: number, value: string) => {
-    // Auto-formato DD/MM/AAAA en celda Z4 (fila 3, col 25)
-    if (r === 3 && c === 25) {
-      const trimmed = value.trim()
-      const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
-      if (m) {
-        const dd = m[1].padStart(2, '0')
-        const mm = m[2].padStart(2, '0')
-        let yy = parseInt(m[3])
-        yy = yy >= 30 ? 1900 + yy : 2000 + yy
-        value = `${dd}/${mm}/${yy}`
-      }
+  const formatDateYY = (val: string): string => {
+    const trimmed = val.trim()
+    const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
+    if (m) {
+      const dd = m[1].padStart(2, '0')
+      const mm = m[2].padStart(2, '0')
+      let yy = parseInt(m[3])
+      yy = yy >= 30 ? 1900 + yy : 2000 + yy
+      return `${dd}/${mm}/${yy}`
     }
+    return trimmed
+  }
+  const handleInputBlur = (r: number, c: number, value: string, target?: HTMLInputElement | null) => {
+    if (r === 3 && c === 25) { value = formatDateYY(value); if (target) target.value = value }
     updateCell(r, c, value); setActiveCell(null)
   }
   const navigateTo = (r: number, c: number) => {
@@ -620,17 +621,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
     let val = e.currentTarget.value
-    // Auto-formato DD/MM/AAAA en celda Z4 al presionar Enter/Tab
     if (r === 3 && c === 25 && (e.key==='Enter'||e.key==='Tab')) {
-      const trimmed = val.trim()
-      const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
-      if (m) {
-        const dd = m[1].padStart(2, '0')
-        const mm = m[2].padStart(2, '0')
-        let yy = parseInt(m[3])
-        yy = yy >= 30 ? 1900 + yy : 2000 + yy
-        val = `${dd}/${mm}/${yy}`
-      }
+      val = formatDateYY(val)
+      e.currentTarget.value = val
     }
     if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopPropagation();updateCell(r,c,val);navigateTo(r+1,c)}
     else if(e.key==='Tab'){e.preventDefault();e.stopPropagation();updateCell(r,c,val);navigateTo(r,e.shiftKey?c-1:c+1)}
@@ -1397,7 +1390,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       </button>
                     ) : (
                     <input type="text" defaultValue={cells[r]?.[c] || ''}
-                      onBlur={(e) => handleInputBlur(r, c, e.target.value)}
+                      onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)}
                       onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
                       onKeyDown={(e) => handleInputKeyDown(e, r, c)}
                       className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5"

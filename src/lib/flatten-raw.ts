@@ -2,7 +2,22 @@
 // a claves planas del FIELD_MAP (NOTA.CA.1, INST.1, etc.)
 // Usado por: dashboard-content.tsx y api/export/route.ts
 
-// Formatear fecha a DD/MM/AAAA
+/** Corrige valores corruptos por serialización de fechas de Excel.
+ *  Cuando xlsx lee una celda con formato de fecha, un valor numérico como 4 se convierte
+ *  en '1900-01-04T00:00:00'. Un valor de tiempo 0 se convierte en '00:00:00'.
+ *  Esta función revierte esas conversiones al valor original. */
+function fixExcelValue(val: unknown): unknown {
+  if (typeof val !== 'string') return val
+  // 1900-01-DD → DD  (serial de Excel en celda con formato de fecha, enero)
+  const jan = val.match(/^1900-01-(\d{2})T00:00:00$/)
+  if (jan) return String(parseInt(jan[1], 10))
+  // 1900-02-DD → 31+DD  (febrero, por completitud)
+  const feb = val.match(/^1900-02-(\d{2})T00:00:00$/)
+  if (feb) return String(31 + parseInt(feb[1], 10))
+  // 00:00:00 o 0:00:00 → vacío (medianoche = celda vacía)
+  if (/^0?0:00:00$/.test(val)) return ''
+  return val
+}
 export function fmtDate(val: unknown): string {
   if (!val) return ''
   const s = String(val).trim()
@@ -309,7 +324,7 @@ export function flattenRawData(raw: Record<string, unknown>): Record<string, str
   // ─── 3) FALLBACK DIRECTO: cualquier clave del raw que coincida con FIELD_MAP ───
   for (const [key, val] of Object.entries(raw)) {
     if (FIELD_MAP_KEYS.has(key) && val !== null && val !== undefined) {
-      const sv = String(val).trim()
+      const sv = String(fixExcelValue(val)).trim()
       if (sv && !out[key]) out[key] = DATE_FIELDS.has(key) ? fmtDate(sv) : sv
     }
   }

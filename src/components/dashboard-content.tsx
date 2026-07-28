@@ -611,7 +611,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return trimmed
   }
   const handleInputBlur = (r: number, c: number, value: string, target?: HTMLInputElement | null) => {
-    if (r === 3 && c === 25) { value = formatDateYY(value); if (target) target.value = value }
+    if ((r === 3 && c === 25) || (r === 5 && c === 12)) { value = formatDateYY(value); if (target) target.value = value }
     updateCell(r, c, value); setActiveCell(null)
   }
   const navigateTo = (r: number, c: number) => {
@@ -621,7 +621,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
     let val = e.currentTarget.value
-    if (r === 3 && c === 25 && (e.key==='Enter'||e.key==='Tab')) {
+    if (((r === 3 && c === 25) || (r === 5 && c === 12)) && (e.key==='Enter'||e.key==='Tab')) {
       val = formatDateYY(val)
       e.currentTarget.value = val
     }

@@ -147,16 +147,11 @@ function normalizeFecha(val: unknown): string {
     return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
   }
 
-  // ISO format (de xlsx con cellDates)
+  // ISO format (de xlsx con cellDates) — parsear manualmente sin problema de zona horaria
   if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
     try {
-      const d = new Date(trimmed)
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0')
-        const month = String(d.getMonth() + 1).padStart(2, '0')
-        const year = d.getFullYear()
-        return `${day}/${month}/${year}`
-      }
+      const p = trimmed.substring(0, 10).split('-')
+      return `${p[2].padStart(2, '0')}/${p[1].padStart(2, '0')}/${p[0]}`
     } catch { /* ignore */ }
   }
 
@@ -166,9 +161,10 @@ function normalizeFecha(val: unknown): string {
 function formatDateVal(val: unknown): string {
   if (!val) return ''
   if (val instanceof Date) {
-    const day = String(val.getDate()).padStart(2, '0')
-    const month = String(val.getMonth() + 1).padStart(2, '0')
-    const year = val.getFullYear()
+    // Usar UTC para evitar problema de zona horaria
+    const day = String(val.getUTCDate()).padStart(2, '0')
+    const month = String(val.getUTCMonth() + 1).padStart(2, '0')
+    const year = val.getUTCFullYear()
     return `${day}/${month}/${year}`
   }
   return normalizeFecha(val)
@@ -268,6 +264,7 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   result['MUNICIPIO'] = values['MUNICIPIO'] || ''
 
   // 2. Instituciones (cols 8-22, índice de Excel "8"-"22", 5 instituciones × 3 campos)
+  // SIEMPRE generar 5 entradas para mantener índices correctos en el dashboard
   const instituciones: { denominacion: string; localidad: string; ef: string }[] = []
   for (let i = 0; i < 5; i++) {
     const nombreKey = String(8 + (i * 3))      // 8, 11, 14, 17, 20
@@ -276,13 +273,11 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
     const nombre = values[nombreKey]
     const localidad = values[locKey]
     const ef = values[efKey]
-    if (nombre && !isAsterisk(nombre)) {
-      instituciones.push({
-        denominacion: String(nombre).replace(/^\*/, '').trim(),
-        localidad: localidad && !isAsterisk(localidad) ? String(localidad).replace(/^\*/, '').trim() : '',
-        ef: ef && !isAsterisk(ef) ? ef.trim() : '',
-      })
-    }
+    instituciones.push({
+      denominacion: nombre && !isAsterisk(nombre) ? String(nombre).replace(/^\*/, '').trim() : '',
+      localidad: localidad && !isAsterisk(localidad) ? String(localidad).replace(/^\*/, '').trim() : '',
+      ef: ef && !isAsterisk(ef) ? ef.trim() : '',
+    })
   }
   result['instituciones'] = instituciones
 
@@ -357,24 +352,50 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   result['grupos'] = grupos
 
   // 7. Observaciones de Certificación (cols 243, 244, 260, 261 = OBS.CERT.L1 a L4)
-  //    Cols 245-259 son de otros formatos (OBS.NOTAS, OBS.BOLETA, literales, acta, etc.)
+  //    SIEMPRE generar 4 entradas para mantener índices correctos
   const obsCertCols = [243, 244, 260, 261]
   const observaciones: string[] = []
   for (const i of obsCertCols) {
     const val = values[String(i)]
-    if (val) {
-      observaciones.push(val.trim())
-    }
+    observaciones.push(val ? val.trim() : '')
   }
   result['observaciones'] = observaciones
 
-  // 8. Literales finales (cols 248-252)
+  // 7b. Observaciones de Notas (cols 245-247 = OBS.NOTAS.L1 a L3)
+  //     SIEMPRE generar 3 entradas para mantener índices correctos
+  const obsNotasCols = [245, 246, 247]
+  const observacionesNotas: string[] = []
+  for (const i of obsNotasCols) {
+    const val = values[String(i)]
+    observacionesNotas.push(val ? val.trim() : '')
+  }
+  result['observacionesNotas'] = observacionesNotas
+
+  // 7c. Observaciones de Boleta (cols 257-259 = OBS.BOLETA.L1 a L3)
+  //     Cols después de literales finales (248-252) y antes de acta (253)
+  //     Nota: en el Excel vigente estas columnas pueden estar vacías
+  const obsBoletaCols = [257, 258, 259]
+  const observacionesBoleta: string[] = []
+  for (const i of obsBoletaCols) {
+    const val = values[String(i)]
+    observacionesBoleta.push(val ? val.trim() : '')
+  }
+  result['observacionesBoleta'] = observacionesBoleta
+
+  // 8. Secciones (desde grupos[].grupo — cols 233-237)
+  const secciones: string[] = []
+  for (let i = 0; i < 5; i++) {
+    const grupoDesc = values[String(233 + i)]
+    secciones.push(grupoDesc && grupoDesc.trim() ? grupoDesc.trim() : '')
+  }
+  result['secciones'] = secciones
+
+  // 9. Literales finales (cols 248-252)
+  //     SIEMPRE generar 5 entradas
   const literales: string[] = []
   for (let i = 0; i < 5; i++) {
     const val = values[String(248 + i)]
-    if (val && val.trim()) {
-      literales.push(val.trim())
-    }
+    literales.push(val ? val.trim() : '')
   }
   result['literalesFinales'] = literales
 

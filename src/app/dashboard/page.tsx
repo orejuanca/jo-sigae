@@ -157,182 +157,6 @@ async function saveToDb(plan: string, state: SheetState): Promise<boolean> {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/*  STUDENT DATA LOADING — Buscar / Editar Alumno (SOLO Plan Vigente)           */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-/** Convertir coordenada Excel "M5" → {r, c} (0-indexed) */
-function cellRef(celda: string): { r: number; c: number } | null {
-  const m = celda.trim().match(/^([A-Z]+)(\d+)$/)
-  if (!m) return null
-  const colStr = m[1]
-  const row = parseInt(m[2], 10) - 1
-  let col = 0
-  for (let i = 0; i < colStr.length; i++) col = col * 26 + (colStr.charCodeAt(i) - 64)
-  col -= 1
-  if (row < 0 || col < 0) return null
-  return { r: row, c: col }
-}
-
-/** Construir FIELD_MAP completo (262 campos → celdas del dashboard) */
-function buildFieldMap(): [string, string][] {
-  const map: [string, string][] = [
-    // Datos personales
-    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
-    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
-    // Instituciones (5)
-    ['INST.1','G15'],['LOCAL.1','I15'],['EF.1','L15'],
-    ['INST.2','G16'],['LOCAL.2','I16'],['EF.2','L16'],
-    ['INST.3','G17'],['LOCAL.3','I17'],['EF.3','L17'],
-    ['INST.4','G18'],['LOCAL.4','I18'],['EF.4','L18'],
-    ['INST.5','G19'],['LOCAL.5','I19'],['EF.5','L19'],
-  ]
-  // Calificaciones por año (NOTA, EVAL, MES, AÑO, INST por materia)
-  const yearConfigs: { year: number; subjects: string[]; colBase: number; startRow: number }[] = [
-    { year: 1, subjects: ['CA','IN','MA','EF','AP','CN','GH'], colBase: 19, startRow: 15 },
-    { year: 2, subjects: ['CA','IN','MA','EF','AP','CN','GH'], colBase: 26, startRow: 15 },
-    { year: 3, subjects: ['CA','IN','MA','EF','FI','QU','BI','GH'], colBase: 7, startRow: 25 },
-    { year: 4, subjects: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'], colBase: 19, startRow: 25 },
-    { year: 5, subjects: ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'], colBase: 26, startRow: 25 },
-  ]
-  const numToCol = (n: number) => {
-    let s = ''; let v = n
-    while (v >= 0) { s = String.fromCharCode(65 + (v % 26)) + s; v = Math.floor(v / 26) - 1 }
-    return s
-  }
-  const prefixes = ['NOTA','EVAL','MES','AÑO','INST']
-  for (const yc of yearConfigs) {
-    for (let s = 0; s < yc.subjects.length; s++) {
-      const row = yc.startRow + s
-      for (let f = 0; f < prefixes.length; f++) {
-        map.push([`${prefixes[f]}.${yc.subjects[s]}.${yc.year}`, numToCol(yc.colBase + f) + row])
-      }
-    }
-  }
-  // Orientación y Convivencia
-  for (let i = 1; i <= 5; i++) map.push([`OC.LITERAL.${i}`, `AH${14 + i}`])
-  // PG Grupo
-  for (let i = 1; i <= 5; i++) map.push([`PG.GRUPO.${i}`, `AH${23 + i}`])
-  // PG Literal
-  for (let i = 1; i <= 5; i++) map.push([`PG.LITERAL.${i}`, `AL${14 + i}`])
-  // Secciones
-  const seccionCells = ['X13','AE13','L23','X23','AE23']
-  for (let i = 1; i <= 5; i++) map.push([`SECCION.${i}`, seccionCells[i - 1]])
-  // Observaciones Certificación
-  map.push(['OBS.CERT.L1','F35'],['OBS.CERT.L2','B36'],['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'])
-  // Observaciones Notas
-  map.push(['OBS.NOTAS.L1','F39'],['OBS.NOTAS.L2','B40'],['OBS.NOTAS.L3','B41'])
-  // Observaciones Boleta
-  map.push(['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'])
-  // Validación Título
-  map.push(['TITULO.SERIAL','AJ31'],['TITULO.EXPEDICION','AJ32'],['TITULO.EGRESO','AJ33'],['CERT.EXPEDICION','AJ34'])
-  return map
-}
-
-const FIELD_MAP = buildFieldMap()
-
-/** Asegurar formato DD/MM/AAAA */
-function toDDMMYYYY(val: unknown): string {
-  if (!val) return ''
-  const s = String(val).trim()
-  if (!s) return ''
-  // Ya DD/MM/AAAA
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
-    const p = s.split('/')
-    return `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[2]}`
-  }
-  // YYYY-MM-DD → DD/MM/YYYY
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    try {
-      const d = new Date(s)
-      if (!isNaN(d.getTime())) {
-        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-      }
-    } catch { /* ignore */ }
-  }
-  return s
-}
-
-/** Aplanar rawData structured_v1 a clave→valor para FIELD_MAP */
-function flattenRawData(rawDataStr: string): Record<string, string> {
-  const vals: Record<string, string> = {}
-  if (!rawDataStr) return vals
-  try {
-    const raw = JSON.parse(rawDataStr)
-    // --- structured_v1 (formato actual de Vercel/PostgreSQL) ---
-    if (raw._format === 'structured_v1') {
-      // Datos personales
-      vals['CEDULA'] = String(raw.CEDULA || '').trim()
-      vals['FECHA'] = toDDMMYYYY(raw.FECHA || '')
-      vals['APELLIDOS'] = String(raw.APELLIDOS || '').trim()
-      vals['NOMBRES'] = String(raw.NOMBRES || '').trim()
-      vals['PAIS'] = String(raw.PAIS || 'VENEZUELA').trim()
-      vals['ESTADO'] = String(raw.ESTADO || '').trim()
-      vals['MUNICIPIO'] = String(raw.MUNICIPIO || '').trim()
-      // Instituciones
-      const instituciones: { denominacion: string; localidad: string; ef: string }[] = raw.instituciones || []
-      for (let i = 0; i < 5; i++) {
-        if (instituciones[i]) {
-          vals[`INST.${i+1}`] = String(instituciones[i].denominacion || '').trim()
-          vals[`LOCAL.${i+1}`] = String(instituciones[i].localidad || '').trim()
-          vals[`EF.${i+1}`] = String(instituciones[i].ef || '').trim()
-        }
-      }
-      // Calificaciones
-      const cal: { abrev: string; anioEscolar: number; nota: string; eval: string; mes: string; anio: string; inst: string }[] = raw.calificaciones || []
-      for (const c of cal) {
-        const y = c.anioEscolar
-        const a = (c.abrev || '').toUpperCase()
-        if (y && a) {
-          vals[`NOTA.${a}.${y}`] = String(c.nota || '').trim()
-          vals[`EVAL.${a}.${y}`] = String(c.eval || '').trim()
-          vals[`MES.${a}.${y}`] = String(c.mes || '').trim()
-          vals[`AÑO.${a}.${y}`] = String(c.anio || '').trim()
-          vals[`INST.${a}.${y}`] = String(c.inst || '').trim()
-        }
-      }
-      // Orientación y Convivencia
-      const oc: { literal: string }[] = raw.orientacion || []
-      for (let i = 0; i < 5; i++) {
-        vals[`OC.LITERAL.${i+1}`] = oc[i] ? String(oc[i].literal || '').trim() : ''
-      }
-      // Grupos (PG.GRUPO y PG.LITERAL) + Secciones
-      const grp: { grupo: string; literal: string }[] = raw.grupos || []
-      for (let i = 0; i < 5; i++) {
-        if (grp[i]) {
-          vals[`PG.GRUPO.${i+1}`] = String(grp[i].grupo || '').trim()
-          vals[`PG.LITERAL.${i+1}`] = String(grp[i].literal || '').trim()
-          vals[`SECCION.${i+1}`] = String(grp[i].grupo || '').trim()
-        }
-      }
-      // Observaciones Certificación
-      const obs: string[] = raw.observaciones || []
-      const obsCertKeys = ['OBS.CERT.L1','OBS.CERT.L2','OBS.CERT.L3','OBS.CERT.L4']
-      for (let i = 0; i < obsCertKeys.length; i++) {
-        vals[obsCertKeys[i]] = obs[i] ? String(obs[i]).trim() : ''
-      }
-      // Observaciones Notas (si existen en rawData)
-      const obsNotas: string[] = raw.observacionesNotas || []
-      for (let i = 0; i < 3; i++) {
-        vals[`OBS.NOTAS.L${i+1}`] = obsNotas[i] ? String(obsNotas[i]).trim() : ''
-      }
-      // Observaciones Boleta (si existen en rawData)
-      const obsBoleta: string[] = raw.observacionesBoleta || []
-      for (let i = 0; i < 3; i++) {
-        vals[`OBS.BOLETA.L${i+1}`] = obsBoleta[i] ? String(obsBoleta[i]).trim() : ''
-      }
-      // Título / Validación
-      vals['TITULO.EXPEDICION'] = toDDMMYYYY(raw.tituloExpedicion || '')
-      vals['TITULO.EGRESO'] = String(raw.actaAnio || '').trim()
-      vals['CERT.EXPEDICION'] = toDDMMYYYY(raw.actaFecha || '')
-      vals['TITULO.SERIAL'] = String(raw.acta || '').trim()
-    }
-  } catch (e) {
-    console.error('[flattenRawData] Error parsing rawData:', e)
-  }
-  return vals
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
 /*  SheetEditor – manages its own state, loads/saves from localStorage[plan]  */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
@@ -369,79 +193,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [activeCell, setActiveCell] = useState<{r:number;c:number}|null>(null)
   const [saveStatus, setSaveStatus] = useState<string>('')
   const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Cargando...')
-
-  // === BUSCAR / EDITAR ALUMNO (SOLO Plan Vigente) ===
-  const [searchQ, setSearchQ] = useState('')
-  const [searchResults, setSearchResults] = useState<{id:string;cedula:string;apellidos:string;nombres:string}[]>([])
-  const [searching, setSearching] = useState(false)
-  const [showResults, setShowResults] = useState(false)
-  const [loadedStudentId, setLoadedStudentId] = useState<string | null>(null)
-
-  const handleSearch = useCallback(async (q: string) => {
-    setSearchQ(q)
-    if (q.length < 2) { setSearchResults([]); setShowResults(false); return }
-    setSearching(true)
-    try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q)}&limit=10&plan=vigente`)
-      const data = await res.json()
-      setSearchResults(data.students || [])
-      setShowResults(true)
-    } catch { setSearchResults([]) }
-    setSearching(false)
-  }, [])
-
-  const loadStudentToDashboard = useCallback(async (studentId: string) => {
-    // GUARD: Solo funciona en Plan Vigente
-    if (plan !== 'vigente') return
-    try {
-      const res = await fetch(`/api/students/${studentId}?plan=vigente`)
-      const student = await res.json()
-      if (!student || student.error) {
-        setSaveStatus('ERROR: Alumno no encontrado')
-        setTimeout(() => setSaveStatus(''), 3000)
-        return
-      }
-
-      // Aplanar rawData a clave→valor
-      const vals = flattenRawData(student.rawData || '{}')
-
-      // Sobrescribir datos personales del modelo directo (prioridad)
-      if (student.cedula) vals['CEDULA'] = student.cedula
-      if (student.fechaNacimiento) vals['FECHA'] = toDDMMYYYY(student.fechaNacimiento)
-      if (student.apellidos) vals['APELLIDOS'] = student.apellidos
-      if (student.nombres) vals['NOMBRES'] = student.nombres
-      if (student.pais) vals['PAIS'] = student.pais
-      if (student.estado) vals['ESTADO'] = student.estado
-      if (student.municipio) vals['MUNICIPIO'] = student.municipio
-
-      // Aplicar todos los campos al grid usando FIELD_MAP
-      setCells(prev => {
-        const copy = prev.map(row => [...row])
-        for (const [campo, celda] of FIELD_MAP) {
-          const val = vals[campo]
-          if (val === undefined || val === null) continue
-          const ref = cellRef(celda)
-          if (!ref) continue
-          const { r, c } = ref
-          // Asegurar que la fila y columna existan
-          while (copy.length <= r) copy.push(new Array(numCols).fill(''))
-          while (copy[r].length <= c) copy[r].push('')
-          copy[r][c] = String(val)
-        }
-        return copy
-      })
-
-      setLoadedStudentId(studentId)
-      setShowResults(false)
-      setSearchQ(`${student.apellidos}, ${student.nombres} (${student.cedula})`)
-      setSaveStatus(`Alumno cargado: ${student.apellidos} ${student.nombres}`)
-      setTimeout(() => setSaveStatus(''), 4000)
-    } catch (e) {
-      console.error('[loadStudent] Error:', e)
-      setSaveStatus('ERROR al cargar alumno')
-      setTimeout(() => setSaveStatus(''), 3000)
-    }
-  }, [plan, numCols])
 
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
@@ -551,28 +302,31 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }, [])
 
   // === AUTO-SAVE (localStorage inmediato + BD con debounce) ===
+  // NO guardar cuando editMode=true (datos de alumno cargado temporalmente)
   useEffect(() => {
-    if (!loaded || !dbLoaded) return
+    if (!loaded || !dbLoaded || editMode) return
     // Guardar en localStorage inmediatamente (caché rápido)
     const timer = setTimeout(() => {
       doSave(plan)
       setTimeout(() => setSaveStatus(''), 2000)
     }, 300)
     return () => clearTimeout(timer)
-  }, [loaded, dbLoaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
+  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
   // === GUARDAR EN BD con debounce de 3 segundos (no en cada cambio) ===
+  // NO guardar cuando editMode=true (datos de alumno cargado temporalmente)
   useEffect(() => {
-    if (!loaded || !dbLoaded) return
+    if (!loaded || !dbLoaded || editMode) return
     const timer = setTimeout(() => {
       saveToDb(plan, stateRef.current)
     }, 3000)
     return () => clearTimeout(timer)
-  }, [loaded, dbLoaded, plan, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
+  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
 
   // === SAVE ON BEFORE UNLOAD (guarda en ambos) ===
+  // NO guardar cuando editMode=true (datos de alumno cargado temporalmente)
   useEffect(() => {
-    if (!loaded || !dbLoaded) return
+    if (!loaded || !dbLoaded || editMode) return
     const handler = () => {
       try {
         const json = JSON.stringify(stateRef.current)
@@ -583,7 +337,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
-  }, [loaded, dbLoaded, plan])
+  }, [loaded, dbLoaded, plan, editMode])
 
   // === RESTORE (restaurar plantilla original y limpiar BD + localStorage) ===
   const handleRestore = () => {
@@ -910,6 +664,18 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return { r: parseInt(match[2]) - 1, c: col - 1 }
   }
 
+  // === Formato DD/MM/AAAA (sin problema de zona horaria) ===
+  const fmtDate = (val: unknown): string => {
+    if (!val) return ''
+    const s = String(val).trim()
+    if (!s) return ''
+    // Ya en DD/MM/AAAA
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) { const p = s.split('/'); return `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[2]}` }
+    // YYYY-MM-DD o ISO — parsear manualmente para evitar problema de zona horaria
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) { try { const p = s.substring(0,10).split('-'); return `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}` } catch {} }
+    return s
+  }
+
   // === MAPEO CAMPO_BD → CELDA DASHBOARD ===
   const FIELD_MAP: [string, string][] = [
     ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
@@ -941,7 +707,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     ['NOTA.QU.3','H30'],['EVAL.QU.3','I30'],['MES.QU.3','J30'],['AÑO.QU.3','K30'],['INST.QU.3','L30'],
     ['NOTA.BI.3','H31'],['EVAL.BI.3','I31'],['MES.BI.3','J31'],['AÑO.BI.3','K31'],['INST.BI.3','L31'],
     ['NOTA.GH.3','H32'],['EVAL.GH.3','I32'],['MES.GH.3','J32'],['AÑO.GH.3','K32'],['INST.GH.3','L32'],
-    ['NOTA.FS.3','H33'],['EVAL.FS.3','I33'],['MES.FS.3','J33'],['AÑO.FS.3','K33'],['INST.FS.3','L33'],
     ['NOTA.CA.4','T25'],['EVAL.CA.4','U25'],['MES.CA.4','V25'],['AÑO.CA.4','W25'],['INST.CA.4','X25'],
     ['NOTA.IN.4','T26'],['EVAL.IN.4','U26'],['MES.IN.4','V26'],['AÑO.IN.4','W26'],['INST.IN.4','X26'],
     ['NOTA.MA.4','T27'],['EVAL.MA.4','U27'],['MES.MA.4','V27'],['AÑO.MA.4','W27'],['INST.MA.4','X27'],
@@ -989,7 +754,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (raw._format === 'structured_v1') {
       // Instituciones → INST.1..5, LOCAL.1..5, EF.1..5
       const insts = raw.instituciones
+      console.log('[FLATTEN] instituciones raw:', insts)
       if (Array.isArray(insts)) {
+        console.log('[FLATTEN] instituciones length:', insts.length, 'items:', insts.map((x: any) => x.denominacion || '(empty)'))
         for (let i = 0; i < Math.min(insts.length, 5); i++) {
           const inst = insts[i] as Record<string, string> | null
           if (!inst) continue
@@ -997,6 +764,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           if (inst.localidad)  out[`LOCAL.${i+1}`] = String(inst.localidad).trim()
           if (inst.ef)          out[`EF.${i+1}`]    = String(inst.ef).trim()
         }
+      } else {
+        console.log('[FLATTEN] instituciones is NOT an array, type:', typeof insts)
       }
 
       // Calificaciones → NOTA.{abrev}.{year}, EVAL..., MES..., AÑO..., INST...
@@ -1010,7 +779,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           if (!a) continue
           if (cal.nota) out[`NOTA.${a}.${y}`]  = String(cal.nota).trim()
           if (cal.eval) out[`EVAL.${a}.${y}`]  = String(cal.eval).trim()
-          if (cal.mes)  out[`MES.${a}.${y}`]   = String(cal.mes).trim()
+          if (cal.mes)  out[`MES.${a}.${y}`]   = fmtDate(String(cal.mes).trim())
           if (cal.anio) out[`AÑO.${a}.${y}`]  = String(cal.anio).trim()
           if (cal.inst) out[`INST.${a}.${y}`]  = String(cal.inst).trim()
         }
@@ -1027,52 +796,75 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       // Grupos → PG.GRUPO.1..5, PG.LITERAL.1..5
       const grps = raw.grupos
+      console.log('[FLATTEN] grupos raw:', grps)
       if (Array.isArray(grps)) {
+        console.log('[FLATTEN] grupos length:', grps.length, 'items:', grps.map((x: any) => ({ grupo: x.grupo, literal: x.literal })))
         for (let i = 0; i < Math.min(grps.length, 5); i++) {
           const g = grps[i] as Record<string, string> | null
           if (!g) continue
           if (g.grupo)  out[`PG.GRUPO.${i+1}`]  = String(g.grupo).trim()
           if (g.literal) out[`PG.LITERAL.${i+1}`] = String(g.literal).trim()
         }
+      } else {
+        console.log('[FLATTEN] grupos is NOT an array, type:', typeof grps)
       }
 
       // Observaciones → OBS.CERT.L1..L4
       const obs = raw.observaciones
+      console.log('[FLATTEN] observaciones raw:', obs)
       if (Array.isArray(obs)) {
-        for (let i = 0; i < Math.min(obs.length, 4); i++) {
+        console.log('[FLATTEN] observaciones length:', obs.length, 'items:', obs)
+        for (let i = 0; i < 4; i++) {
           if (obs[i]) out[`OBS.CERT.L${i+1}`] = String(obs[i]).trim()
         }
+      } else {
+        console.log('[FLATTEN] observaciones is NOT an array, type:', typeof obs)
       }
 
       // Observaciones de Notas → OBS.NOTAS.L1..L3
       const obsNotas = raw.observacionesNotas
+      console.log('[FLATTEN] observacionesNotas raw:', obsNotas)
       if (Array.isArray(obsNotas)) {
-        for (let i = 0; i < Math.min(obsNotas.length, 3); i++) {
+        for (let i = 0; i < 3; i++) {
           if (obsNotas[i]) out[`OBS.NOTAS.L${i+1}`] = String(obsNotas[i]).trim()
         }
       }
 
       // Observaciones de Boleta → OBS.BOLETA.L1..L3
       const obsBoleta = raw.observacionesBoleta
+      console.log('[FLATTEN] observacionesBoleta raw:', obsBoleta)
       if (Array.isArray(obsBoleta)) {
-        for (let i = 0; i < Math.min(obsBoleta.length, 3); i++) {
+        for (let i = 0; i < 3; i++) {
           if (obsBoleta[i]) out[`OBS.BOLETA.L${i+1}`] = String(obsBoleta[i]).trim()
         }
       }
 
       // Secciones → SECCION.1..5
       const secs = raw.secciones
-      if (Array.isArray(secs)) {
+      console.log('[FLATTEN] secciones raw:', secs)
+      if (Array.isArray(secs) && secs.some(s => s)) {
+        // Hay campo secciones con datos
         for (let i = 0; i < Math.min(secs.length, 5); i++) {
           if (secs[i]) out[`SECCION.${i+1}`] = String(secs[i]).trim()
         }
       }
+      // Siempre complementar con grupos[].grupo para secciones vacías
+      const grps2 = raw.grupos
+      if (Array.isArray(grps2)) {
+        console.log('[FLATTEN] secciones complement from grupos:', grps2.length, 'items')
+        for (let i = 0; i < Math.min(grps2.length, 5); i++) {
+          if (!out[`SECCION.${i+1}`]) {
+            const g2 = grps2[i] as Record<string, string> | null
+            if (g2?.grupo) out[`SECCION.${i+1}`] = String(g2.grupo).trim()
+          }
+        }
+      }
 
-      // Título / Acta
+      // Título / Acta (fechas en formato DD/MM/AAAA)
       if (raw.acta)             out['TITULO.SERIAL']      = String(raw.acta).trim()
-      if (raw.tituloExpedicion) out['TITULO.EXPEDICION'] = String(raw.tituloExpedicion).trim()
+      if (raw.tituloExpedicion) out['TITULO.EXPEDICION'] = fmtDate(raw.tituloExpedicion)
       if (raw.actaAnio)         out['TITULO.EGRESO']     = String(raw.actaAnio).trim()
-      if (raw.actaFecha)        out['CERT.EXPEDICION']   = String(raw.actaFecha).trim()
+      if (raw.actaFecha)        out['CERT.EXPEDICION']   = fmtDate(raw.actaFecha)
 
       // Literales finales → PG.LITERAL (si existen como alternativa)
       const litFinal = raw.literalesFinales
@@ -1126,7 +918,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           const inst = raw[String(col + 4)]
           if (nota) out[`NOTA.${abrev}.${block.year}`] = String(nota).trim()
           if (eval_) out[`EVAL.${abrev}.${block.year}`] = String(eval_).trim()
-          if (mes)  out[`MES.${abrev}.${block.year}`]  = String(mes).trim()
+          if (mes)  out[`MES.${abrev}.${block.year}`]  = fmtDate(String(mes).trim())
           if (anio) out[`AÑO.${abrev}.${block.year}`]  = String(anio).trim()
           if (inst) out[`INST.${abrev}.${block.year}`]  = String(inst).trim()
         }
@@ -1144,18 +936,35 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         if (gd) out[`PG.GRUPO.${i+1}`] = String(gd).trim()
         if (gl) out[`PG.LITERAL.${i+1}`] = String(gl).trim()
       }
+      // Secciones (cols 233-237 = grupo descripción, misma fuente que PG.GRUPO)
+      for (let i = 0; i < 5; i++) {
+        const sd = raw[String(233 + i)]
+        if (sd) out[`SECCION.${i+1}`] = String(sd).trim()
+      }
       // Observaciones certificación (cols 243,244,260,261)
       const obsCertCols = [243, 244, 260, 261]
       for (let i = 0; i < obsCertCols.length; i++) {
         const v = raw[String(obsCertCols[i])]
         if (v) out[`OBS.CERT.L${i+1}`] = String(v).trim()
       }
+      // Observaciones de Notas (cols 245,246,247)
+      const obsNotasCols = [245, 246, 247]
+      for (let i = 0; i < obsNotasCols.length; i++) {
+        const v = raw[String(obsNotasCols[i])]
+        if (v) out[`OBS.NOTAS.L${i+1}`] = String(v).trim()
+      }
+      // Observaciones de Boleta (cols 257,258,259)
+      const obsBoletaCols = [257, 258, 259]
+      for (let i = 0; i < obsBoletaCols.length; i++) {
+        const v = raw[String(obsBoletaCols[i])]
+        if (v) out[`OBS.BOLETA.L${i+1}`] = String(v).trim()
+      }
       // Acta (cols 253-255)
       if (raw['253']) out['TITULO.SERIAL']      = String(raw['253']).trim()
-      if (raw['254']) out['CERT.EXPEDICION']   = String(raw['254']).trim()
+      if (raw['254']) out['CERT.EXPEDICION']   = fmtDate(raw['254'])
       if (raw['255']) out['TITULO.EGRESO']     = String(raw['255']).trim()
       // Título expedición (col 256)
-      if (raw['256']) out['TITULO.EXPEDICION'] = String(raw['256']).trim()
+      if (raw['256']) out['TITULO.EXPEDICION'] = fmtDate(raw['256'])
 
       console.log('[FLATTEN] legacy processed:', Object.keys(out).length, 'keys')
     }
@@ -1172,17 +981,17 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return out
   }
 
-  // === BUSCAR ESTUDIANTE ===
+  // === BUSCAR ESTUDIANTE (SOLO Plan Vigente) ===
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`)
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
       const data = await res.json()
       setSearchResults(data.students || [])
     } catch { setSearchResults([]) }
     setSearching(false)
-  }, [plan])
+  }, [])
 
   // === RESTAURAR ESTADO INICIAL ===
   const restoreInitialState = useCallback(() => {
@@ -1195,17 +1004,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setShowSearchModal(false)
   }, [])
 
-  // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
+  // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD (SOLO Plan Vigente) ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
+    // GUARD: Solo funciona en Plan Vigente
+    if (plan !== 'vigente') return
     try {
-      console.log('[LOAD] Fetching student:', studentId, 'plan:', plan)
       const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
       if (!res.ok) { console.error('[LOAD] API error:', res.status); restoreInitialState(); return }
       const student = await res.json()
-      if (!student || student.error) { console.error('[LOAD] Student error:', student?.error); restoreInitialState(); return }
-
-      console.log('[LOAD] Student received:', student.cedula, student.apellidos, student.nombres)
-      console.log('[LOAD] rawData type:', typeof student.rawData, 'length:', String(student.rawData).length)
+      if (!student || student.error) { restoreInitialState(); return }
 
       // Guardar estado actual como snapshot para "Guardar Editado"
       initialCellsRef.current = cells.map(row => [...row])
@@ -1220,7 +1027,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       try {
         const rawStr = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
         rawObj = JSON.parse(rawStr)
-        console.log('[LOAD] rawData parsed, _format:', rawObj._format, 'topKeys:', Object.keys(rawObj).slice(0, 15))
       } catch (e) {
         console.error('[LOAD] rawData parse error:', e)
       }
@@ -1228,12 +1034,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       // Construir mapa campo→valor: datos personales + rawData aplanado
       const flat = flattenRawData(rawObj)
-      console.log('[LOAD] Flattened keys:', Object.keys(flat).length, 'sample:', Object.entries(flat).slice(0, 8))
 
       const vals: Record<string, string> = {}
       // Datos personales del modelo Student (siempre disponibles)
       vals['CEDULA'] = student.cedula || ''
-      vals['FECHA'] = student.fechaNacimiento || ''
+      vals['FECHA'] = fmtDate(student.fechaNacimiento || '')
       vals['APELLIDOS'] = student.apellidos || ''
       vals['NOMBRES'] = student.nombres || ''
       vals['PAIS'] = student.pais || ''
@@ -1244,14 +1049,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       for (const [campo, valor] of Object.entries(flat)) {
         if (valor) vals[campo] = valor
       }
-
-      console.log('[LOAD] Total vals keys:', Object.keys(vals).length)
-      console.log('[LOAD] Personal:', vals.CEDULA, vals.APELLIDOS, vals.NOMBRES)
-      console.log('[LOAD] Inst1:', vals['INST.1'])
-      console.log('[LOAD] Notas CA.1:', vals['NOTA.CA.1'], 'MA.1:', vals['NOTA.MA.1'])
-      console.log('[LOAD] OC:', vals['OC.LITERAL.1'], 'PG:', vals['PG.GRUPO.1'])
-      console.log('[LOAD] Titulo:', vals['TITULO.SERIAL'], 'Cert:', vals['CERT.EXPEDICION'])
-      console.log('[LOAD] Obs:', vals['OBS.CERT.L1'])
 
       // Aplicar valores a las celdas (usar setCells funcional para evitar stale closure)
       let notaSum = 0
@@ -1438,44 +1235,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </div>
       )}
 
-      {/* BUSCAR / EDITAR ALUMNO — SOLO Plan Vigente */}
-      {plan === 'vigente' && (
-        <div className="sticky z-40 bg-gray-900 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-2 border-b border-gray-700"
-          style={{ top: selectedCell ? '76px' : '52px' }}>
-          <span className="font-bold text-[10px] text-yellow-300">BUSCAR ALUMNO:</span>
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQ}
-              onChange={e => handleSearch(e.target.value)}
-              onFocus={() => searchResults.length > 0 && setShowResults(true)}
-              onBlur={() => setTimeout(() => setShowResults(false), 200)}
-              placeholder="Cédula, apellidos o nombres..."
-              className="w-56 bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-500 placeholder-gray-400"
-            />
-            {searching && <span className="absolute right-1 top-1 text-gray-400 text-[8px]">...</span>}
-            {showResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-600 rounded shadow-lg z-50 w-80 max-h-48 overflow-y-auto">
-                {searchResults.map(s => (
-                  <button
-                    key={s.id}
-                    onMouseDown={e => { e.preventDefault(); loadStudentToDashboard(s.id) }}
-                    className="w-full text-left px-2 py-1.5 hover:bg-blue-700 text-[9px] border-b border-gray-700 last:border-0"
-                  >
-                    <span className="text-yellow-300">{s.cedula}</span>{' '}
-                    <span className="text-white font-bold">{s.apellidos}</span>{', '}
-                    <span>{s.nombres}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {loadedStudentId && (
-            <span className="text-green-400 text-[9px]">Alumno cargado en el dashboard</span>
-          )}
-        </div>
-      )}
-
       <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown}
         style={{ marginTop: selectedCell ? '52px' : '28px' }}>
         <colgroup>
@@ -1537,7 +1296,13 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       verticalAlign: 'middle',
                     }}>
                     {isSwitchCell ? (
-                      <button onClick={(e) => { e.stopPropagation(); doSave(plan); onSwitchPlan() }}
+                      <button onClick={(e) => {
+                        e.stopPropagation()
+                        // NO guardar si estamos en editMode (datos de alumno cargados)
+                        if (!editMode) doSave(plan)
+                        if (editMode) restoreInitialState()
+                        onSwitchPlan()
+                      }}
                         className="w-full h-full bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold px-1 py-0.5 rounded transition cursor-pointer">
                         {switchBtnLabel}
                       </button>
@@ -1603,8 +1368,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </tbody>
       </table>
 
-      {/* MODAL DE BÚSQUEDA DE ALUMNO */}
-      {showSearchModal && (
+      {/* MODAL DE BÚSQUEDA DE ALUMNO — SOLO Plan Vigente */}
+      {plan === 'vigente' && showSearchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
           <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
             <div className="flex justify-between items-center mb-3">

@@ -10,7 +10,7 @@ type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
 interface CmdButton {
   sr: number; sc: number; label: string; color: string; bgColor: string; fontSize: number
-  disabledColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean
+  disabledColor?: string; disabledBgColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean
   hoverColor1?: string; hoverColor2?: string; hoverShadowColor?: string; downShadowColor?: string
   mergeSpan?: { er: number; ec: number }
 }
@@ -631,7 +631,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
       hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)' },
     { sr: 9, sc: 25, label: 'Guardar Editado', color: '#90EE90', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', activeColor: '#32CD32', requiresEdit: true,
+      disabledColor: '#999999', disabledBgColor: '#f5f5f5', activeColor: '#32CD32', requiresEdit: true,
       hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)' },
     { sr: 7, sc: 30, label: 'Guardar Datos', color: '#5BA8FF', bgColor: '#ffffff', fontSize: 16,
       disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true,
@@ -979,11 +979,13 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
 
     // ─── 3) FALLBACK DIRECTO: cualquier clave del raw que coincida con FIELD_MAP ───
+    // Los campos de fecha SIEMPRE pasan por fmtDate para asegurar DD/MM/AAAA
+    const DATE_FIELDS = new Set(FIELD_MAP.filter(([k]) => k.startsWith('MES.') || k === 'FECHA' || k === 'CERT.EXPEDICION' || k === 'TITULO.EXPEDICION').map(([k]) => k))
     const fieldMapKeys = new Set(FIELD_MAP.map(([k]) => k))
     for (const [key, val] of Object.entries(raw)) {
       if (fieldMapKeys.has(key) && val !== null && val !== undefined) {
         const sv = String(val).trim()
-        if (sv && !out[key]) out[key] = sv  // No sobreescribir lo ya procesado
+        if (sv && !out[key]) out[key] = DATE_FIELDS.has(key) ? fmtDate(sv) : sv
       }
     }
 
@@ -1350,18 +1352,18 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
                         className="w-full h-full flex items-center justify-center"
                         style={{
-                          backgroundColor: cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')),
-                          color: cmdDisabled ? (cmdBtn.disabledColor || '#999999') : cmdBtn.color,
+                          backgroundColor: cmdDisabled ? (cmdBtn.disabledBgColor || '#f5f5f5') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')),
+                          color: cmdDisabled ? (cmdBtn.disabledColor || '#aaaaaa') : cmdBtn.color,
                           fontSize: `${cmdBtn.fontSize}px`, fontFamily: 'Arial', fontWeight: 'bold',
                           textAlign: 'center', verticalAlign: 'middle', lineHeight: 'normal',
-                          border: `2px solid ${cmdDisabled ? '#cccccc' : cmdBtn.color}`,
+                          border: `2px solid ${cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : cmdBtn.color}`,
                           borderRadius: '4px',
                           boxShadow: cmdDisabled ? 'none' : (isDn
                             ? `inset 0 1px 3px ${cmdBtn.downShadowColor || 'rgba(0,0,0,0.15)'}`
                             : (isHov ? `2px 2px 6px ${cmdBtn.hoverShadowColor || 'rgba(0,0,0,0.2)'}` : '1px 1px 3px rgba(0,0,0,0.2)')),
                           transform: isDn ? 'translateY(1px)' : 'none',
                           userSelect: 'none', whiteSpace: 'pre-line',
-                          opacity: cmdDisabled ? 0.6 : 1,
+                          opacity: 1,
                           cursor: cmdDisabled ? 'not-allowed' : 'pointer',
                         }}>
                         {cmdBtn.label}

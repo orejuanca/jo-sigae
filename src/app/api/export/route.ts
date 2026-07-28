@@ -137,16 +137,18 @@ export async function GET(request: NextRequest) {
     // Generar buffer
     const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
 
-    // Nombre del archivo con fecha y hora
+    // Nombre del archivo: fecha y hora en zona Caracas (UTC-4), formato 12h AM/PM
     const now = new Date()
-    const dd = String(now.getDate()).padStart(2, '0')
-    const mm = String(now.getMonth() + 1).padStart(2, '0')
-    const yyyy = now.getFullYear()
-    const hh = String(now.getHours()).padStart(2, '0')
-    const mi = String(now.getMinutes()).padStart(2, '0')
-    const ss = String(now.getSeconds()).padStart(2, '0')
+    const caracas = new Date(now.toLocaleString('en-US', { timeZone: 'America/Caracas' }))
+    const dd = String(caracas.getDate()).padStart(2, '0')
+    const mm = String(caracas.getMonth() + 1).padStart(2, '0')
+    const yyyy = caracas.getFullYear()
+    let hh12 = caracas.getHours() % 12 || 12
+    const ampm = caracas.getHours() < 12 ? 'AM' : 'PM'
+    const mi = String(caracas.getMinutes()).padStart(2, '0')
+    const ss = String(caracas.getSeconds()).padStart(2, '0')
     const planLabel = plan === 'vigente' ? 'plan vigente' : 'plan derogado'
-    const filename = `Base de Datos de Certificaciones ${planLabel} ${dd}-${mm}-${yyyy} ${hh}.${mi}.${ss}.xlsx`
+    const filename = `Base de Datos de Certificaciones ${planLabel} ${dd}-${mm}-${yyyy} ${hh12}.${mi}.${ss} ${ampm}.xlsx`
 
     return new NextResponse(buf, {
       status: 200,

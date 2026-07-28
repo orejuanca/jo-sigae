@@ -1367,6 +1367,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                           e.stopPropagation()
                           if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
                           else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
+                          else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export', '_blank') }
                         }}
                         onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
                         onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}

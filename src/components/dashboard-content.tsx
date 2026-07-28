@@ -1391,7 +1391,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         {cmdBtn.label}
                       </button>
                     ) : (
-                    <input type="text" defaultValue={cells[r]?.[c] || ''}
+                    <input key={`${r}-${c}-${editingStudentId || '_'}`} type="text" defaultValue={cells[r]?.[c] || ''}
                       onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)}
                       onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
                       onKeyDown={(e) => handleInputKeyDown(e, r, c)}

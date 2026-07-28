@@ -138,15 +138,15 @@ model DashboardState {
 // Centros Escolares / Planteles (compartido entre ambos planes)
 model CentroEscolar {
   id        String   @id @default(cuid())
-  codigo    String   @unique  // Codigo del plantel (ej: "0001")
-  nombre    String   // Nombre del plantel
+  codigo    String   @default("")  // Codigo del plantel (ej: "PD16660105")
+  nombre    String   @unique        // Nombre del plantel (unico, no acepta duplicados)
   localidad String   @default("")  // Localidad/ubicacion
-  estado    String   @default("")  // Estado
-  municipio String   @default("")  // Municipio
+  ef        String   @default("")  // Codigo EF del estado (ej: "MI" = Miranda)
   activo    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([codigo])
   @@index([nombre])
+  @@index([ef])
 }

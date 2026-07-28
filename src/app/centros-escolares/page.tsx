@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,8 +23,7 @@ interface CentroEscolar {
   codigo: string
   nombre: string
   localidad: string
-  estado: string
-  municipio: string
+  ef: string
   activo: boolean
 }
 
@@ -41,15 +40,14 @@ export default function CentrosEscolaresPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const [formCodigo, setFormCodigo] = useState('')
   const [formNombre, setFormNombre] = useState('')
   const [formLocalidad, setFormLocalidad] = useState('')
-  const [formEstado, setFormEstado] = useState('')
-  const [formMunicipio, setFormMunicipio] = useState('')
+  const [formCodigo, setFormCodigo] = useState('')
+  const [formEf, setFormEf] = useState('')
 
   const { toast } = useToast()
 
-  const fetchCentros = async () => {
+  const fetchCentros = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/centros-escolares?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`)
@@ -61,42 +59,68 @@ export default function CentrosEscolaresPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchQuery, page, toast])
 
-  useEffect(() => { fetchCentros() }, [searchQuery, page])
+  // Auto-inicializar: si la tabla no existe o está vacía, inicializarla
+  const [initialized, setInitialized] = useState(false)
 
-  // Auto-crear tabla si no existe
-  useEffect(() => { fetch('/api/setup-ce', { method: 'POST' }).catch(() => {}) }, [])
+  useEffect(() => {
+    if (initialized) return
+    const init = async () => {
+      try {
+        // Intentar cargar — si falla (tabla no existe o schema viejo) → inicializar
+        const res = await fetch(`/api/centros-escolares?q=&page=1&limit=1`)
+        const data = await res.json()
+        if (data.total > 0) {
+          setInitialized(true)
+          return
+        }
+        // Tabla vacía → inicializar y sembrar
+        const initRes = await fetch('/api/init-ce', { method: 'POST' })
+        const initResult = await initRes.json()
+        console.log('CE init result:', initResult)
+        setInitialized(true)
+      } catch (e) {
+        // Tabla probablemente no existe o schema incompatible → crear de cero
+        console.log('CE fetch failed, initializing...', e)
+        const initRes = await fetch('/api/init-ce', { method: 'POST' })
+        const initResult = await initRes.json()
+        console.log('CE init result:', initResult)
+        setInitialized(true)
+      }
+    }
+    init()
+  }, [initialized]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { if (initialized) fetchCentros() }, [initialized, fetchCentros])
 
   const totalPages = Math.ceil(total / limit)
 
   const openCreateDialog = () => {
     setEditing(null)
-    setFormCodigo('')
     setFormNombre('')
     setFormLocalidad('')
-    setFormEstado('')
-    setFormMunicipio('')
+    setFormCodigo('')
+    setFormEf('')
     setDialogOpen(true)
   }
 
   const openEditDialog = (c: CentroEscolar) => {
     setEditing(c)
-    setFormCodigo(c.codigo)
-    setFormNombre(c.nombre)
+    setFormNombre(c.nombre || '')
     setFormLocalidad(c.localidad || '')
-    setFormEstado(c.estado || '')
-    setFormMunicipio(c.municipio || '')
+    setFormCodigo(c.codigo || '')
+    setFormEf(c.ef || '')
     setDialogOpen(true)
   }
 
   const handleSave = async () => {
-    if (!formCodigo.trim() || !formNombre.trim()) {
-      toast({ title: 'Validacion', description: 'Codigo y nombre son requeridos', variant: 'destructive' })
+    if (!formNombre.trim()) {
+      toast({ title: 'Validacion', description: 'El nombre del plantel es requerido', variant: 'destructive' })
       return
     }
     try {
-      const body = { codigo: formCodigo, nombre: formNombre, localidad: formLocalidad, estado: formEstado, municipio: formMunicipio }
+      const body = { nombre: formNombre, localidad: formLocalidad, codigo: formCodigo, ef: formEf }
       if (editing) {
         const res = await fetch(`/api/centros-escolares/${editing.id}`, {
           method: 'PUT',
@@ -176,28 +200,20 @@ export default function CentrosEscolaresPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-600 hover:bg-gray-700">
-                    <TableHead className="text-[10px] text-teal-300 font-bold w-20">CODIGO</TableHead>
-                    <TableHead className="text-[10px] text-teal-300 font-bold">NOMBRE</TableHead>
+                    <TableHead className="text-[10px] text-teal-300 font-bold">NOMBRE DEL PLANTEL</TableHead>
                     <TableHead className="text-[10px] text-teal-300 font-bold">LOCALIDAD</TableHead>
-                    <TableHead className="text-[10px] text-teal-300 font-bold w-32">ESTADO</TableHead>
-                    <TableHead className="text-[10px] text-teal-300 font-bold w-32">MUNICIPIO</TableHead>
-                    <TableHead className="text-[10px] text-teal-300 font-bold w-20">ESTADO</TableHead>
+                    <TableHead className="text-[10px] text-teal-300 font-bold w-36">CODIGO</TableHead>
+                    <TableHead className="text-[10px] text-teal-300 font-bold w-16">E.F.</TableHead>
                     <TableHead className="text-[10px] text-teal-300 font-bold w-20">ACCIONES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {centros.map(c => (
                     <TableRow key={c.id} className="border-gray-700 hover:bg-gray-750">
-                      <TableCell className="text-xs text-gray-300 font-mono">{c.codigo}</TableCell>
                       <TableCell className="text-xs text-white font-medium">{c.nombre}</TableCell>
                       <TableCell className="text-xs text-gray-400">{c.localidad}</TableCell>
-                      <TableCell className="text-xs text-gray-400">{c.estado}</TableCell>
-                      <TableCell className="text-xs text-gray-400">{c.municipio}</TableCell>
-                      <TableCell className="text-xs">
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${c.activo ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-400'}`}>
-                          {c.activo ? 'ACTIVO' : 'INACTIVO'}
-                        </span>
-                      </TableCell>
+                      <TableCell className="text-xs text-gray-300 font-mono">{c.codigo}</TableCell>
+                      <TableCell className="text-xs text-gray-300 font-mono">{c.ef}</TableCell>
                       <TableCell className="text-xs">
                         <div className="flex gap-1">
                           <button onClick={() => openEditDialog(c)} className="p-1 hover:bg-gray-600 rounded" title="Editar">
@@ -234,26 +250,20 @@ export default function CentrosEscolaresPage() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label className="text-xs text-gray-300">Codigo *</Label>
-              <Input value={formCodigo} onChange={e => setFormCodigo(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" placeholder="Ej: 0001" />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-300">Nombre *</Label>
+              <Label className="text-xs text-gray-300">Nombre del Plantel</Label>
               <Input value={formNombre} onChange={e => setFormNombre(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" placeholder="Nombre del plantel" />
             </div>
             <div>
               <Label className="text-xs text-gray-300">Localidad</Label>
               <Input value={formLocalidad} onChange={e => setFormLocalidad(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-gray-300">Estado</Label>
-                <Input value={formEstado} onChange={e => setFormEstado(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-300">Municipio</Label>
-                <Input value={formMunicipio} onChange={e => setFormMunicipio(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" />
-              </div>
+            <div>
+              <Label className="text-xs text-gray-300">Codigo</Label>
+              <Input value={formCodigo} onChange={e => setFormCodigo(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-300">EF</Label>
+              <Input value={formEf} onChange={e => setFormEf(e.target.value)} className="bg-gray-700 border-gray-600 text-white text-xs h-8 mt-1" />
             </div>
           </div>
           <DialogFooter className="gap-2">

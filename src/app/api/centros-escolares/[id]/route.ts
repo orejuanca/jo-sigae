@@ -27,16 +27,15 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { codigo, nombre, localidad, estado, municipio, activo } = body
+    const { nombre, localidad, codigo, ef, activo } = body
 
     const centro = await prisma.centroEscolar.update({
       where: { id },
       data: {
-        ...(codigo !== undefined && { codigo: codigo.trim() }),
         ...(nombre !== undefined && { nombre: nombre.trim() }),
         ...(localidad !== undefined && { localidad: localidad?.trim() || '' }),
-        ...(estado !== undefined && { estado: estado?.trim() || '' }),
-        ...(municipio !== undefined && { municipio: municipio?.trim() || '' }),
+        ...(codigo !== undefined && { codigo: codigo?.trim() || '' }),
+        ...(ef !== undefined && { ef: ef?.trim() || '' }),
         ...(activo !== undefined && { activo }),
       },
     })
@@ -45,7 +44,7 @@ export async function PUT(
   } catch (error: unknown) {
     const err = error as { code?: string }
     if (err.code === 'P2002') {
-      return NextResponse.json({ error: 'Ya existe un centro con ese codigo' }, { status: 409 })
+      return NextResponse.json({ error: 'Ya existe un centro con ese nombre' }, { status: 409 })
     }
     if (err.code === 'P2025') {
       return NextResponse.json({ error: 'Centro escolar no encontrado' }, { status: 404 })

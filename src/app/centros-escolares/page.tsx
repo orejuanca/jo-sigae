@@ -75,7 +75,7 @@ export default function CentrosEscolaresPage() {
         setInitMsg(`Listo: ${data.inserted} de ${data.total} centros cargados.`)
         fetchCentros()
       } else {
-        setInitMsg(`Error: ${data.error || data.details || 'Desconocido'}`)
+        setInitMsg(`Error: ${data.details || data.error || JSON.stringify(data)}`)
       }
     } catch (e) {
       setInitMsg(`Error de conexion: ${(e as Error).message}`)

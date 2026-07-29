@@ -14,19 +14,16 @@ export async function GET(request: Request) {
     let raw: Record<string, unknown>
     try { raw = JSON.parse(student.rawData) } catch { return NextResponse.json({ cedula: student.cedula, parseError: true, rawData: student.rawData?.substring(0, 500) }) }
 
+    // Mostrar valores de las columnas clave
+    const cols: Record<string, string> = {}
+    for (const k of ['228','229','230','231','232', '233','234','235','236','237', '238','239','240','241','242', '243','244','245','246','247', '248','249','250','251','252', '253','254','255','256','257','258','259','260','261']) {
+      cols[k] = raw[k] != null ? String(raw[k]) : '(vacío)'
+    }
+
     return NextResponse.json({
       cedula: student.cedula,
       apellidos: student.apellidos,
-      _format: raw._format,
-      _plan: raw._plan,
-      tieneSecciones: 'secciones' in raw,
-      tieneLiterales: 'literalesFinales' in raw,
-      tieneGrupos: 'grupos' in raw,
-      secciones: raw.secciones,
-      literalesFinales: raw.literalesFinales,
-      gruposCount: Array.isArray(raw.grupos) ? raw.grupos.length : 0,
-      grupos: Array.isArray(raw.grupos) ? raw.grupos.map((g: Record<string, unknown>) => ({ grupo: g.grupo, literal: g.literal })) : null,
-      rawKeys: Object.keys(raw).filter(k => !k.startsWith('calificaciones') && !k.startsWith('instituciones') && !k.startsWith('orientacion') && !k.startsWith('observaciones')),
+      cols,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

@@ -1,67 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db-helper'
-import { flattenRawData } from '@/lib/flatten-raw'
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+// GET /api/debug-raw?cedula=... — muestra rawData de un estudiante para diagnóstico
+export async function GET(request: Request) {
   try {
-    const id = request.nextUrl.searchParams.get('id')
-    const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
+    const { searchParams } = new URL(request.url)
+    const cedula = searchParams.get('cedula')
 
-    const db = getDb(plan)
-    let student
-    if (id) {
-      student = await db.student.findUnique({ where: { id } })
-    } else {
-      // Obtener el primer estudiante que tenga rawData no vacío
-      student = await db.student.findFirst({ orderBy: { cedula: 'asc' } })
-    }
+    const where = cedula ? { cedula, plan: 'vigente' as const } : { plan: 'vigente' as const }
+    const student = await prisma.student.findFirst({ where, select: { cedula: true, apellidos: true, rawData: true } })
 
-    if (!student) {
-      return NextResponse.json({ error: 'No hay estudiantes' }, { status: 404 })
-    }
+    if (!student) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 
-    // 1. Ver formato crudo del rawData
-    const rawStr = student.rawData || '{}'
-    const rawData = JSON.parse(rawStr)
-    const allKeys = Object.keys(rawData)
-    const format = rawData._format || 'desconocido'
-    const hasNumericKeys = allKeys.some(k => /^\d+$/.test(k))
-    const hasFieldMapKeys = allKeys.some(k => k.startsWith('NOTA.') || k.startsWith('INST.') || k.startsWith('EVAL.'))
-
-    // 2. Aplicar flattenRawData
-    const flat = flattenRawData(rawData)
-    const flatKeys = Object.keys(flat)
-    const flatSample: Record<string, string> = {}
-    for (const k of flatKeys) {
-      flatSample[k] = flat[k]
-    }
-
-    // 3. Contar campos por tipo
-    const notaCount = flatKeys.filter(k => k.startsWith('NOTA.')).length
-    const evalCount = flatKeys.filter(k => k.startsWith('EVAL.')).length
-    const mesCount = flatKeys.filter(k => k.startsWith('MES.')).length
-    const instCount = flatKeys.filter(k => k.startsWith('INST.')).length
-    const totalNonPersonal = flatKeys.length
+    const raw = JSON.parse(student.rawData)
 
     return NextResponse.json({
-      student: { id: student.id, cedula: student.cedula, apellidos: student.apellidos },
-      rawDataAnalysis: {
-        format,
-        hasNumericKeys,
-        hasFieldMapKeys,
-        totalRawKeys: allKeys.length,
-        first10Keys: allKeys.slice(0, 10),
-      },
-      flattenResult: {
-        totalFlatKeys: totalNonPersonal,
-        notaFields: notaCount,
-        evalFields: evalCount,
-        mesFields: mesCount,
-        instFields: instCount,
-        sampleFlatData: flatSample,
-      },
+      cedula: student.cedula,
+      apellidos: student.apellidos,
+      _format: raw._format,
+      secciones: raw.secciones,
+      literalesFinales: raw.literalesFinales,
+      grupos: raw.grupos,
     })
   } catch (error) {
-    return NextResponse.json({ error: String(error), stack: (error as Error).stack }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

@@ -1,24 +1,30 @@
 [
   {
-    "nombre": "APOYO DOCENTE",
+    "nombre": " * * * * *",
+    "localidad": "* * *",
+    "codigo": "",
+    "ef": "* *"
+  },
+  {
+    "nombre": " APOYO DOCENTE",
     "localidad": "LOS TEQUES",
     "codigo": "",
     "ef": "MI"
   },
   {
-    "nombre": "D.R.C.E.E.",
+    "nombre": " D.R.C.E.E.",
     "localidad": "ALTAMIRA",
     "codigo": "Z - 15",
     "ef": "MI"
   },
   {
-    "nombre": "U E N CREACIÓN CÚA",
+    "nombre": " U E N CREACIÓN CÚA",
     "localidad": "NUEVA CÚA",
     "codigo": "OD16751520",
     "ef": "MI"
   },
   {
-    "nombre": "ZONA EDUCATIVA",
+    "nombre": " ZONA EDUCATIVA",
     "localidad": "MIRANDA",
     "codigo": "PD16660105",
     "ef": "MI"
@@ -600,7 +606,7 @@
     "ef": "GU"
   },
   {
-    "nombre": "ETC ANGEL DE LA GUARDA",
+    "nombre": "ETC ANGEL DE LA GUARDA ",
     "localidad": "MATURIN",
     "codigo": "",
     "ef": "MO"
@@ -721,7 +727,7 @@
   },
   {
     "nombre": "INST NUEVA LUZ DE ESPERANZA",
-    "localidad": "",
+    "localidad": "* * *",
     "codigo": "",
     "ef": "* *"
   },

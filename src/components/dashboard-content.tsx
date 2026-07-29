@@ -4,6 +4,96 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { flattenRawData, fmtDate } from '@/lib/flatten-raw'
 
+// === EXTRACCION DIRECTA DE RAW (fallback robusto) ===
+// Extrae calificaciones de rawData sin depender de flattenRawData
+// Maneja: structured_v1, formato plano (FIELD_MAP keys), y claves numéricas
+function extractDirectFromRaw(raw: Record<string, unknown>, out: Record<string, string>) {
+  if (!raw || typeof raw !== 'object') return
+
+  const ABBREV_NORM: Record<string, string> = { FSN: 'FS' }
+  const norm = (a: string) => {
+    const u = (a || '').toUpperCase().trim()
+    return ABBREV_NORM[u] || u
+  }
+
+  // 1) structured_v1: raw.calificaciones[]
+  if (Array.isArray(raw.calificaciones)) {
+    for (const c of raw.calificaciones) {
+      const cal = c as Record<string, unknown>
+      const y = Number(cal.anioEscolar)
+      if (!y || y < 1 || y > 5) continue
+      const a = norm(String(cal.abrev || ''))
+      if (!a) continue
+      // Extraer TODOS los campos, sin importar si están vacíos (para diagnóstico)
+      const nota = cal.nota != null ? String(cal.nota).trim() : ''
+      const eval_ = cal.eval != null ? String(cal.eval).trim() : ''
+      const mes = cal.mes != null ? String(cal.mes).trim() : ''
+      const anio = cal.anio != null ? String(cal.anio).trim() : ''
+      const inst = cal.inst != null ? String(cal.inst).trim() : ''
+      // Solo escribir si out no lo tiene ya
+      if (nota && !out[`NOTA.${a}.${y}`]) out[`NOTA.${a}.${y}`] = nota
+      if (eval_ && !out[`EVAL.${a}.${y}`]) out[`EVAL.${a}.${y}`] = eval_
+      if (mes && !out[`MES.${a}.${y}`]) out[`MES.${a}.${y}`] = mes
+      if (anio && !out[`AÑO.${a}.${y}`]) out[`AÑO.${a}.${y}`] = anio
+      if (inst && !out[`INST.${a}.${y}`]) out[`INST.${a}.${y}`] = inst
+    }
+  }
+
+  // 2) Instituciones
+  if (Array.isArray(raw.instituciones)) {
+    for (let i = 0; i < Math.min(raw.instituciones.length, 5); i++) {
+      const inst = raw.instituciones[i] as Record<string, string> | null
+      if (!inst) continue
+      if (inst.denominacion && !out[`INST.${i+1}`]) out[`INST.${i+1}`] = String(inst.denominacion).trim()
+      if (inst.localidad && !out[`LOCAL.${i+1}`]) out[`LOCAL.${i+1}`] = String(inst.localidad).trim()
+      if (inst.ef && !out[`EF.${i+1}`]) out[`EF.${i+1}`] = String(inst.ef).trim()
+    }
+  }
+
+  // 3) Orientación, Grupos, Secciones
+  if (Array.isArray(raw.orientacion)) {
+    for (let i = 0; i < Math.min(raw.orientacion.length, 5); i++) {
+      const o = raw.orientacion[i] as Record<string, string> | null
+      if (o?.literal && !out[`OC.LITERAL.${i+1}`]) out[`OC.LITERAL.${i+1}`] = String(o.literal).trim()
+    }
+  }
+  if (Array.isArray(raw.grupos)) {
+    for (let i = 0; i < Math.min(raw.grupos.length, 5); i++) {
+      const g = raw.grupos[i] as Record<string, string> | null
+      if (!g) continue
+      if (g.grupo && !out[`PG.GRUPO.${i+1}`]) out[`PG.GRUPO.${i+1}`] = String(g.grupo).trim()
+      if (g.literal && !out[`PG.LITERAL.${i+1}`]) out[`PG.LITERAL.${i+1}`] = String(g.literal).trim()
+      if (g.grupo && !out[`SECCION.${i+1}`]) out[`SECCION.${i+1}`] = String(g.grupo).trim()
+    }
+  }
+  if (Array.isArray(raw.secciones)) {
+    for (let i = 0; i < Math.min(raw.secciones.length, 5); i++) {
+      if (raw.secciones[i] && !out[`SECCION.${i+1}`]) out[`SECCION.${i+1}`] = String(raw.secciones[i]).trim()
+    }
+  }
+
+  // 4) Observaciones
+  if (Array.isArray(raw.observaciones)) {
+    for (let i = 0; i < Math.min(raw.observaciones.length, 4); i++) {
+      if (raw.observaciones[i] && !out[`OBS.CERT.L${i+1}`]) out[`OBS.CERT.L${i+1}`] = String(raw.observaciones[i]).trim()
+    }
+  }
+  if (Array.isArray(raw.observacionesNotas)) {
+    for (let i = 0; i < Math.min(raw.observacionesNotas.length, 3); i++) {
+      if (raw.observacionesNotas[i] && !out[`OBS.NOTAS.L${i+1}`]) out[`OBS.NOTAS.L${i+1}`] = String(raw.observacionesNotas[i]).trim()
+    }
+  }
+  if (Array.isArray(raw.observacionesBoleta)) {
+    for (let i = 0; i < Math.min(raw.observacionesBoleta.length, 3); i++) {
+      if (raw.observacionesBoleta[i] && !out[`OBS.BOLETA.L${i+1}`]) out[`OBS.BOLETA.L${i+1}`] = String(raw.observacionesBoleta[i]).trim()
+    }
+  }
+
+  // 5) Acta/Título
+  if (raw.acta && !out['TITULO.SERIAL']) out['TITULO.SERIAL'] = String(raw.acta).trim()
+  if (raw.actaAnio && !out['TITULO.EGRESO']) out['TITULO.EGRESO'] = String(raw.actaAnio).trim()
+}
+
 const INIT_COLS = 40
 const INIT_ROWS = 51
 
@@ -802,7 +892,23 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       // Construir mapa campo→valor: datos personales + rawData aplanado
       const flat = flattenRawData(rawObj)
-      console.log('[LOAD] rawData aplanado keys:', Object.keys(flat).length, Object.keys(flat).slice(0, 10))
+      console.log('[LOAD] flattenRawData keys:', Object.keys(flat).length, Object.keys(flat).filter(k => k.startsWith('NOTA.')).length, 'NOTAs')
+
+      // === EXTRACCIÓN DIRECTA COMO FALLBACK ===
+      // Si flattenRawData no extrajo materias, intentar extraer directamente del rawObj
+      const notaCount_fromFlat = Object.keys(flat).filter(k => k.startsWith('NOTA.')).length
+      if (notaCount_fromFlat === 0 && rawObj && typeof rawObj === 'object') {
+        console.log('[LOAD] fallback: extractDirectFromRaw')
+        extractDirectFromRaw(rawObj, flat)
+        console.log('[LOAD] after fallback, NOTA keys:', Object.keys(flat).filter(k => k.startsWith('NOTA.')).length)
+      }
+
+      const diagFormat = rawObj._format || 'none'
+      const diagCalCount = Array.isArray(rawObj.calificaciones) ? rawObj.calificaciones.length : 0
+      const diagFlatNotas = Object.keys(flat).filter(k => k.startsWith('NOTA.')).length
+      const diagFlatMes = Object.keys(flat).filter(k => k.startsWith('MES.')).length
+      const diagRawLen = (typeof student.rawData === 'string' ? student.rawData : '').length
+      console.log(`[LOAD] DIAG: format=${diagFormat} cals=${diagCalCount} notas=${diagFlatNotas} mes=${diagFlatMes} rawLen=${diagRawLen}`)
 
       const vals: Record<string, string> = {}
       // Datos personales del modelo Student (siempre disponibles)
@@ -866,7 +972,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         return newCells
       })
 
-      setSaveStatus(`CARGADO: ${nonEmptyFields} de ${totalVals} vals | ${Object.keys(flat).length} del rawData`)
+      setSaveStatus(`CARGADO: ${nonEmptyFields}/${totalVals} vals | ${diagFlatNotas} notas | raw=${diagRawLen}B fmt=${diagFormat} cals=${diagCalCount}`)
       setTimeout(() => setSaveStatus(''), 6000)
       setEditMode(true)
       console.log('[LOAD] Done - editMode activado')

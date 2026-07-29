@@ -1097,16 +1097,34 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }, [plan]) // Sin 'cells' ni 'restoreInitialState' — usa setCells(prev=>) y no necesita restoreInitialState aquí
 
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
+  // Solo actualiza los campos del FIELD_MAP dentro del rawData existente,
+  // SIN destruir las claves numéricas ni otros datos que no están en el dashboard.
   const saveEditedStudent = useCallback(async () => {
     if (!editingStudentId) return
     try {
       const currentCells = stateRef.current.cells
-      const rawObj: Record<string, string> = {}
+
+      // Leer el rawData original del estudiante
+      const studentData = await fetch(`/api/students/${editingStudentId}?plan=${plan}`)
+      const student = await studentData.json()
+      let originalRaw: Record<string, unknown> = {}
+      try {
+        originalRaw = JSON.parse(student.rawData || '{}')
+      } catch { /* rawData vacío o inválido */ }
+
+      // Construir mapa de ediciones: campo → valor desde las celdas
+      const edits: Record<string, string> = {}
       for (const [campo, celda] of FIELD_MAP) {
         const pos = cellRef(celda)
         if (!pos) continue
-        rawObj[campo] = currentCells[pos.r]?.[pos.c] || ''
+        edits[campo] = currentCells[pos.r]?.[pos.c] || ''
       }
+
+      // Merge: sobrescribir claves del FIELD_MAP en el rawData original
+      for (const [campo, valor] of Object.entries(edits)) {
+        originalRaw[campo] = valor
+      }
+
       const m5 = cellRef('M5'), m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8')
       const m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
       const updateData: Record<string, string> = {}
@@ -1117,7 +1135,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       if (m9) updateData.pais = currentCells[m9.r]?.[m9.c] || ""
       if (m10) updateData.estado = currentCells[m10.r]?.[m10.c] || ""
       if (m11) updateData.municipio = currentCells[m11.r]?.[m11.c] || ""
-      updateData.rawData = JSON.stringify(rawObj)
+      updateData.rawData = JSON.stringify(originalRaw)
 
       await fetch(`/api/students/${editingStudentId}?plan=${plan}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData)

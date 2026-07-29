@@ -930,11 +930,12 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         if (gd) out[`PG.GRUPO.${i+1}`] = String(gd).trim()
         if (gl) out[`PG.LITERAL.${i+1}`] = String(gl).trim()
       }
-      // En legacy, cols 233-237 son la única fuente → SECCION = PG.GRUPO
+      // Secciones: cols 248-252 (SEPARADAS de PG.GRUPO cols 233-237)
       for (let i = 0; i < 5; i++) {
-        const sd = raw[String(233 + i)]
+        const sd = raw[String(248 + i)]
         if (sd) out[`SECCION.${i+1}`] = String(sd).trim()
       }
+      // OBS.CERT: cols 243, 244, 260, 261
       const obsCertCols = [243, 244, 260, 261]
       for (let i = 0; i < obsCertCols.length; i++) {
         const v = raw[String(obsCertCols[i])]
@@ -951,9 +952,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         if (v) out[`OBS.BOLETA.L${i+1}`] = String(v).trim()
       }
       if (raw['253']) out['TITULO.SERIAL']      = String(raw['253']).trim()
-      if (raw['254']) out['CERT.EXPEDICION']   = fmtDate(raw['254'])
+      if (raw['254']) out['TITULO.EXPEDICION'] = fmtDate(raw['254'])
       if (raw['255']) out['TITULO.EGRESO']     = String(raw['255']).trim()
-      if (raw['256']) out['TITULO.EXPEDICION'] = fmtDate(raw['256'])
+      if (raw['256']) out['CERT.EXPEDICION']   = fmtDate(raw['256'])
     }
 
     // ─── 3) FALLBACK: claves planas del raw que coincidan con FIELD_MAP ───

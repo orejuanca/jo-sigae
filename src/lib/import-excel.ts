@@ -97,14 +97,15 @@ const MATERIAS_DEROGADO = [
 //   Año 4: 9 materias → cols 138-182 (grupos 23-31)
 //   Año 5: 9 materias → cols 183-227 (grupos 32-40)
 // Cols 228-232 (índice 227-231): Orientación y Convivencia (5 años)
-// Cols 233-237 (índice 232-236): Grupos - descripción (5 años)
-// Cols 238-242 (índice 237-241): Grupos - literal (5 años)
-// Cols 243-244 (índice 242-243): Observaciones líneas 1-2
-// Cols 245-247 (índice 244-246): Observaciones líneas 3-5 (texto continuo)
-// Cols 248-252 (índice 247-251): Literales finales (A-E por año)
-// Cols 253-255 (índice 252-254): Acta (número, fecha, año)
-// Col 256 (índice 255): Título - fecha expedición
-// Cols 257-261 (índice 256-260): Título serial / datos adicionales
+// Cols 233-237 (índice 232-236): PG.GRUPO - descripción (5 años)
+// Cols 238-242 (índice 237-241): PG.LITERAL - literal (5 años)
+// Cols 243-244 (índice 242-243): OBS.CERT.L1, L2
+// Cols 245-247 (índice 244-246): OBS.NOTAS.L1, L2, L3
+// Cols 248-252 (índice 247-251): SECCION.1 a SECCION.5
+// Cols 253-255 (índice 252-254): TITULO.SERIAL, TITULO.EXPEDICION (fecha), TITULO.EGRESO
+// Col 256 (índice 255): CERT.EXPEDICION (fecha)
+// Cols 257-259 (índice 256-258): OBS.BOLETA.L1, L2, L3
+// Cols 260-261 (índice 259-260): OBS.CERT.L3, L4
 
 // Límites de materias por año para el plan vigente
 const YEAR_SUBJECT_COUNTS_VIGENTE = [7, 7, 9, 9, 9] // Total: 41 grupos de 5
@@ -380,34 +381,30 @@ function buildStructuredVigente(values: Record<string, string>): Record<string, 
   }
   result['observacionesBoleta'] = observacionesBoleta
 
-  // 8. Secciones (desde grupos[].grupo — cols 233-237)
+  // 8. Secciones (cols 248-252 — SON COLUMNAS SEPARADAS DE PG.GRUPO)
   const secciones: string[] = []
   for (let i = 0; i < 5; i++) {
-    const grupoDesc = values[String(233 + i)]
-    secciones.push(grupoDesc && grupoDesc.trim() ? grupoDesc.trim() : '')
+    const secVal = values[String(248 + i)]
+    secciones.push(secVal && secVal.trim() ? secVal.trim() : '')
   }
   result['secciones'] = secciones
 
-  // 9. Literales finales (cols 248-252)
+  // 9. Literales finales (cols 238-242 = PG.LITERAL)
   //     SIEMPRE generar 5 entradas
   const literales: string[] = []
   for (let i = 0; i < 5; i++) {
-    const val = values[String(248 + i)]
+    const val = values[String(238 + i)]
     literales.push(val ? val.trim() : '')
   }
   result['literalesFinales'] = literales
 
-  // 10. Acta (cols 253-255)
+  // 10. Título (cols 253-256)
+  // Col 253 = TITULO.SERIAL, Col 254 = TITULO.EXPEDICION (fecha)
+  // Col 255 = TITULO.EGRESO, Col 256 = CERT.EXPEDICION (fecha)
   result['acta'] = values['253'] ? values['253'].trim() : ''
-  // La fecha puede venir como objeto Date
-  result['actaFecha'] = formatDateVal(values['254'])
+  result['tituloExpedicion'] = formatDateVal(values['254'])
   result['actaAnio'] = values['255'] ? String(values['255']).trim() : ''
-
-  // 11. Título / Serial (cols 256+)
-  const tituloExpedicion = values['256']
-  if (tituloExpedicion && tituloExpedicion.toString().trim()) {
-    result['tituloExpedicion'] = formatDateVal(tituloExpedicion)
-  }
+  result['actaFecha'] = formatDateVal(values['256'])
 
   // 12. Metadata
   result['_format'] = 'structured_v1'

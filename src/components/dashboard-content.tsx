@@ -731,7 +731,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   // === ESTADO DE BÚSQUEDA Y EDICIÓN ===
   const [showSearchModal, setShowSearchModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Array<{id:string;cedula:string;apellidos:string;nombres:string;rawDataLen?:number;rawDataSample?:string}>>([])
+  const [searchResults, setSearchResults] = useState<Array<{id:string;cedula:string;apellidos:string;nombres:string}>>([])
   const [searching, setSearching] = useState(false)
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
   const [dataLoadKey, setDataLoadKey] = useState(0)
@@ -843,23 +843,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=5`)
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
       const data = await res.json()
-      const students = (data.students || []).map((s: Record<string, string>) => {
-        // Intentar extraer muestra del rawData para diagnóstico
-        let rawLen = 0, rawSample = '', rawFormat = ''
-        if (s.rawData) {
-          try {
-            const parsed = typeof s.rawData === 'string' ? JSON.parse(s.rawData) : s.rawData
-            rawLen = (typeof s.rawData === 'string' ? s.rawData : JSON.stringify(parsed)).length
-            rawFormat = String(parsed._format || 'no-format')
-            const topKeys = Object.keys(parsed).slice(0, 8).join(',')
-            rawSample = `fmt=${rawFormat} len=${rawLen} keys=[${topKeys}]`
-          } catch { rawSample = 'rawData inválido' }
-        }
-        return { id: s.id, cedula: s.cedula, apellidos: s.apellidos, nombres: s.nombres, rawDataLen: rawLen, rawDataSample: rawSample }
-      })
-      setSearchResults(students)
+      setSearchResults(data.students || [])
     } catch { setSearchResults([]) }
     setSearching(false)
   }, [])
@@ -879,53 +865,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD (SOLO Plan Vigente) ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
     // GUARD: Solo funciona en Plan Vigente
-    if (plan !== 'vigente') {
-      setSaveStatus('ERROR: Solo funciona en Plan Vigente')
-      setTimeout(() => setSaveStatus(''), 5000)
-      return
-    }
+    if (plan !== 'vigente') return
     try {
-      console.log('[LOAD-v3] Iniciando carga para studentId:', studentId)
-      setSaveStatus('CARGANDO...')
-
-      let res: Response
-      try {
-        res = await fetch(`/api/students/${studentId}?plan=${plan}`)
-      } catch (fetchErr) {
-        console.error('[LOAD-v3] Fetch error:', fetchErr)
-        setSaveStatus('ERROR DE RED: ' + (fetchErr as Error).message)
-        setTimeout(() => setSaveStatus(''), 8000)
-        return
-      }
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => 'sin detalle')
-        console.error('[LOAD-v3] API error:', res.status, errText)
-        setSaveStatus(`ERROR API ${res.status}: ${errText.substring(0, 100)}`)
-        setTimeout(() => setSaveStatus(''), 8000)
-        return
-      }
-
-      let student: Record<string, unknown>
-      try {
-        student = await res.json()
-      } catch (jsonErr) {
-        console.error('[LOAD-v3] JSON parse error:', jsonErr)
-        setSaveStatus('ERROR: Respuesta no es JSON válido')
-        setTimeout(() => setSaveStatus(''), 8000)
-        return
-      }
-
-      if (!student || (student as Record<string, unknown>).error) {
-        console.error('[LOAD-v3] Student error:', (student as Record<string, unknown>)?.error)
-        setSaveStatus('ERROR: ' + String((student as Record<string, unknown>)?.error || 'student vacío'))
-        setTimeout(() => setSaveStatus(''), 8000)
-        return
-      }
-
-      const s = student as Record<string, string>
-      console.log('[LOAD-v3] Student:', s.id, s.cedula, s.apellidos, s.nombres)
-      console.log('[LOAD-v3] rawData length:', s.rawData?.length || 0)
+      console.log('[LOAD] Iniciando carga para studentId:', studentId)
+      const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
+      if (!res.ok) { console.error('[LOAD] API error:', res.status); return }
+      const student = await res.json()
+      if (!student || student.error) { console.error('[LOAD] Student error:', student?.error); return }
+      console.log('[LOAD] Student recibido:', student.id, student.cedula, student.apellidos, student.nombres)
+      console.log('[LOAD] rawData length:', student.rawData?.length || 0)
 
       // Cerrar modal y limpiar búsqueda
       setShowSearchModal(false)
@@ -935,51 +883,42 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       // Parsear rawData
       let rawObj: Record<string, unknown> = {}
       try {
-        const rawStr = typeof s.rawData === 'string' ? s.rawData : JSON.stringify(s.rawData || {})
+        const rawStr = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
         rawObj = JSON.parse(rawStr)
       } catch (e) {
-        console.error('[LOAD-v3] rawData parse error:', e)
-        setSaveStatus('ERROR: rawData no es JSON - ' + String(e).substring(0, 80))
-        setTimeout(() => setSaveStatus(''), 8000)
-        return
+        console.error('[LOAD] rawData parse error:', e)
       }
-
-      // DEBUG: Mostrar primeros 300 chars del rawData EN LA GRILLA (celda A2)
-      const rawSample = JSON.stringify(rawObj).substring(0, 300)
-      console.log('[LOAD-v3] rawData sample:', rawSample)
-
-      initialRawDataRef.current = typeof s.rawData === 'string' ? s.rawData : JSON.stringify(s.rawData || {})
+      initialRawDataRef.current = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
 
       // Construir mapa campo→valor: datos personales + rawData aplanado
       const flat = flattenRawData(rawObj)
-      const notaCount_fromFlat = Object.keys(flat).filter(k => k.startsWith('NOTA.')).length
-      console.log('[LOAD-v3] flattenRawData:', Object.keys(flat).length, 'keys,', notaCount_fromFlat, 'NOTAs')
+      console.log('[LOAD] flattenRawData keys:', Object.keys(flat).length, Object.keys(flat).filter(k => k.startsWith('NOTA.')).length, 'NOTAs')
 
       // === EXTRACCIÓN DIRECTA COMO FALLBACK ===
+      // Si flattenRawData no extrajo materias, intentar extraer directamente del rawObj
+      const notaCount_fromFlat = Object.keys(flat).filter(k => k.startsWith('NOTA.')).length
       if (notaCount_fromFlat === 0 && rawObj && typeof rawObj === 'object') {
-        console.log('[LOAD-v3] fallback: extractDirectFromRaw')
+        console.log('[LOAD] fallback: extractDirectFromRaw')
         extractDirectFromRaw(rawObj, flat)
-        console.log('[LOAD-v3] after fallback, NOTA keys:', Object.keys(flat).filter(k => k.startsWith('NOTA.')).length)
+        console.log('[LOAD] after fallback, NOTA keys:', Object.keys(flat).filter(k => k.startsWith('NOTA.')).length)
       }
 
       const diagFormat = rawObj._format || 'none'
       const diagCalCount = Array.isArray(rawObj.calificaciones) ? rawObj.calificaciones.length : 0
       const diagFlatNotas = Object.keys(flat).filter(k => k.startsWith('NOTA.')).length
       const diagFlatMes = Object.keys(flat).filter(k => k.startsWith('MES.')).length
-      const diagRawLen = (typeof s.rawData === 'string' ? s.rawData : '').length
-      const diagRawKeys = Object.keys(rawObj).slice(0, 10).join(',')
-      console.log(`[LOAD-v3] DIAG: format=${diagFormat} cals=${diagCalCount} notas=${diagFlatNotas} mes=${diagFlatMes} rawLen=${diagRawLen}`)
-      console.log(`[LOAD-v3] RAW KEYS: ${diagRawKeys}`)
+      const diagRawLen = (typeof student.rawData === 'string' ? student.rawData : '').length
+      console.log(`[LOAD] DIAG: format=${diagFormat} cals=${diagCalCount} notas=${diagFlatNotas} mes=${diagFlatMes} rawLen=${diagRawLen}`)
 
       const vals: Record<string, string> = {}
       // Datos personales del modelo Student (siempre disponibles)
-      vals['CEDULA'] = s.cedula || ''
-      vals['FECHA'] = fmtDate(s.fechaNacimiento || '')
-      vals['APELLIDOS'] = s.apellidos || ''
-      vals['NOMBRES'] = s.nombres || ''
-      vals['PAIS'] = s.pais || ''
-      vals['ESTADO'] = s.estado || ''
-      vals['MUNICIPIO'] = s.municipio || ''
+      vals['CEDULA'] = student.cedula || ''
+      vals['FECHA'] = fmtDate(student.fechaNacimiento || '')
+      vals['APELLIDOS'] = student.apellidos || ''
+      vals['NOMBRES'] = student.nombres || ''
+      vals['PAIS'] = student.pais || ''
+      vals['ESTADO'] = student.estado || ''
+      vals['MUNICIPIO'] = student.municipio || ''
 
       // Sobrescribir/conjuntar con datos del rawData aplanado
       for (const [campo, valor] of Object.entries(flat)) {
@@ -1002,18 +941,22 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       const promedioVal = PROMEDIO_CELL && notaCount > 0 ? (notaSum / notaCount).toFixed(2) : ''
       const totalVals = Object.keys(vals).length
       const nonEmptyFields = fieldPositions.filter(([, val, pos]) => pos && val).length
-      console.log('[LOAD-v3] totalVals:', totalVals, 'nonEmptyFields:', nonEmptyFields, 'promedio:', promedioVal)
+      console.log('[LOAD] totalVals:', totalVals, 'nonEmptyFields:', nonEmptyFields, 'promedio:', promedioVal)
 
       // Guardar snapshot Y aplicar datos en UNA sola operación setCells
-      setEditingStudentId(s.id as string)
+      // Esto garantiza que el snapshot capture el estado ANTES de los datos del alumno
+      // y que las celdas se actualicen atomicamente
+      setEditingStudentId(student.id)
       setDataLoadKey(k => k + 1)
 
       setCells(prev => {
+        // 1) Capturar snapshot del estado actual (antes de modificar)
         if (!initialCellsRef.current) {
           initialCellsRef.current = prev.map(row => [...row])
-          console.log('[LOAD-v3] Snapshot capturado dentro de setCells')
+          console.log('[LOAD] Snapshot capturado dentro de setCells')
         }
 
+        // 2) Aplicar valores del alumno
         const newCells = prev.map(row => [...row])
         let appliedCount = 0
         for (const [campo, val, pos] of fieldPositions) {
@@ -1022,25 +965,19 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
             appliedCount++
           }
         }
-        // DEBUG: Escribir muestra del rawData en celda visible (fila 2, col 0)
-        if (newCells[1]) newCells[1][0] = `DEBUG: format=${diagFormat} cals=${diagCalCount} notas=${diagFlatNotas} rawLen=${diagRawLen} keys=[${diagRawKeys}]`
         if (PROMEDIO_CELL && promedioVal) {
           if (newCells[PROMEDIO_CELL.r]) newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal
         }
-        console.log('[LOAD-v3] Applied', appliedCount, 'values to cells')
+        console.log('[LOAD] Applied', appliedCount, 'values to cells')
         return newCells
       })
 
       setSaveStatus(`CARGADO: ${nonEmptyFields}/${totalVals} vals | ${diagFlatNotas} notas | raw=${diagRawLen}B fmt=${diagFormat} cals=${diagCalCount}`)
-      setTimeout(() => setSaveStatus(''), 10000)
+      setTimeout(() => setSaveStatus(''), 6000)
       setEditMode(true)
-      console.log('[LOAD-v3] Done - editMode activado')
-    } catch (e) {
-      console.error('[LOAD-v3 ERROR]', e)
-      setSaveStatus('ERROR INESPERADO: ' + String(e).substring(0, 100))
-      setTimeout(() => setSaveStatus(''), 8000)
-    }
-  }, [plan])
+      console.log('[LOAD] Done - editMode activado')
+    } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
+  }, [plan]) // Sin 'cells' ni 'restoreInitialState' — usa setCells(prev=>) y no necesita restoreInitialState aquí
 
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
   const saveEditedStudent = useCallback(async () => {
@@ -1149,7 +1086,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
 
         <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
-        <span className="text-orange-400 text-[8px] font-bold">v3-DEBUG</span>
         {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
         <button onClick={async () => {
           try {
@@ -1351,8 +1287,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                     <button key={s.id}
                       onClick={() => loadStudentToDashboard(s.id)}
                       className="w-full text-left px-3 py-2 hover:bg-blue-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer">
-                      <div><span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}</div>
-                      {s.rawDataSample && <div className="text-[9px] text-gray-400 mt-0.5 font-mono">{s.rawDataSample}</div>}
+                      <span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}
                     </button>
                   ))}
                 </div>

@@ -752,6 +752,108 @@ function parseBD2RawDataLegacy(rawData: Record<string, string>): ParsedCertData 
 }
 
 // ============================================================
+// PARSER: Claves FIELD_MAP planas (NOTA.CA.1, EVAL.CA.1, etc.)
+// ============================================================
+
+// Abreviaturas de materias por año (coinciden con import-excel.ts y FIELD_MAP)
+const ABREVS_VIGENTE: string[][] = [
+  ['CA','IN','MA','EF','AP','CN','GH'],
+  ['CA','IN','MA','EF','AP','CN','GH'],
+  ['CA','IN','MA','EF','FI','QU','BI','GH'],
+  ['CA','IN','MA','EF','FI','QU','BI','GH','FS'],
+  ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'],
+]
+
+const YEAR_NAMES = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+
+function parseFlatFieldMapKeys(raw: Record<string, unknown>): ParsedCertData | null {
+  const r = (k: string) => raw[k] != null ? String(raw[k]).trim() : ''
+
+  const result: ParsedCertData = {
+    plan: 'vigente',
+    acta: r('TITULO.SERIAL'),
+    actaFecha: formatDateVal(r('TITULO.EXPEDICION') || r('CERT.EXPEDICION')),
+    actaAnio: r('TITULO.EGRESO'),
+    instituciones: [],
+    calificaciones: {},
+    aniosEscolares: [],
+    orientacion: [],
+    grupos: [],
+    especializaciones: [],
+    observaciones: [],
+    observacionCompleta: '',
+    literalesFinales: [],
+  }
+
+  // Instituciones (INST.1-5, LOCAL.1-5, EF.1-5)
+  for (let i = 1; i <= 5; i++) {
+    result.instituciones.push({
+      numero: i,
+      denominacion: r(`INST.${i}`),
+      localidad: r(`LOCAL.${i}`),
+      ef: r(`EF.${i}`),
+    })
+  }
+
+  // Calificaciones por año
+  for (let yearIdx = 0; yearIdx < 5; yearIdx++) {
+    const yearNum = yearIdx + 1
+    const yearName = YEAR_NAMES[yearIdx]
+    const abrevs = ABREVS_VIGENTE[yearIdx] || []
+    const subjects = planEMG[yearIdx]?.materias || []
+    const aniosSet = new Set<string>()
+
+    const califs: ParsedCalificacion[] = []
+    for (let sIdx = 0; sIdx < abrevs.length; sIdx++) {
+      const abrev = abrevs[sIdx]
+      const nota = r(`NOTA.${abrev}.${yearNum}`)
+      const eval_ = r(`EVAL.${abrev}.${yearNum}`)
+      const mes = r(`MES.${abrev}.${yearNum}`)
+      const anio = r(`AÑO.${abrev}.${yearNum}`)
+      const inst = r(`INST.${abrev}.${yearNum}`)
+
+      const isAster = /^\*+$/.test(nota)
+      const literal = isAster ? nota : notaEnLetras(nota)
+      if (anio) aniosSet.add(anio)
+
+      califs.push({
+        materia: subjects[sIdx]?.nombre || `Materia ${sIdx + 1}`,
+        numero: sIdx + 1,
+        nota,
+        literal,
+        tipoEvaluacion: eval_,
+        fechaMes: /^\*+$/.test(mes) ? mes : parseMes(mes),
+        fechaAnio: anio,
+        instEduc: inst,
+      })
+    }
+    result.calificaciones[yearName] = califs
+    aniosSet.forEach(a => {
+      if (!result.aniosEscolares.includes(a)) result.aniosEscolares.push(a)
+    })
+  }
+
+  // Orientación (OC.LITERAL.1-5)
+  for (let i = 0; i < 5; i++) {
+    result.orientacion.push({ anio: result.aniosEscolares[i] || '', literal: r(`OC.LITERAL.${i + 1}`) })
+  }
+
+  // Grupos (PG.GRUPO.1-5, PG.LITERAL.1-5)
+  for (let i = 0; i < 5; i++) {
+    result.grupos.push({ anio: result.aniosEscolares[i] || '', grupo: r(`PG.GRUPO.${i + 1}`), literal: r(`PG.LITERAL.${i + 1}`) })
+  }
+
+  // Observaciones (OBS.CERT.L1-L4)
+  for (let i = 1; i <= 4; i++) {
+    const obs = r(`OBS.CERT.L${i}`)
+    if (obs) result.observaciones.push(obs)
+  }
+  result.observacionCompleta = result.observaciones.join(' ')
+
+  return result
+}
+
+// ============================================================
 // PARSER PRINCIPAL (detecta formato automáticamente)
 // ============================================================
 
@@ -789,6 +891,11 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
     })
 
     if (numKeys.length > 0) return parseBDRawDataLegacy(rawData)
+
+    // PRIORIDAD 3: Claves FIELD_MAP planas (NOTA.CA.1, EVAL.CA.1, INST.1, etc.)
+    const fieldMapKeys = Object.keys(rawData).filter(k => /^[A-Z]/.test(k) && k.includes('.'))
+    if (fieldMapKeys.length >= 5) return parseFlatFieldMapKeys(rawData)
+
     return null
   } catch {
     return null

@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Loader2, Pencil, Trash2, School } from 'lucide-react'
+import { Plus, Search, Loader2, Pencil, Trash2, School, Database } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface CentroEscolar {
@@ -32,7 +32,9 @@ export default function CentrosEscolaresPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [initMsg, setInitMsg] = useState('')
+  const [initing, setIniting] = useState(false)
   const limit = 50
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -61,38 +63,26 @@ export default function CentrosEscolaresPage() {
     }
   }, [searchQuery, page, toast])
 
-  // Auto-inicializar: si la tabla no existe o está vacía, inicializarla
-  const [initialized, setInitialized] = useState(false)
+  useEffect(() => { fetchCentros() }, [fetchCentros])
 
-  useEffect(() => {
-    if (initialized) return
-    const init = async () => {
-      try {
-        // Intentar cargar — si falla (tabla no existe o schema viejo) → inicializar
-        const res = await fetch(`/api/centros-escolares?q=&page=1&limit=1`)
-        const data = await res.json()
-        if (data.total > 0) {
-          setInitialized(true)
-          return
-        }
-        // Tabla vacía → inicializar y sembrar
-        const initRes = await fetch('/api/init-ce', { method: 'POST' })
-        const initResult = await initRes.json()
-        console.log('CE init result:', initResult)
-        setInitialized(true)
-      } catch (e) {
-        // Tabla probablemente no existe o schema incompatible → crear de cero
-        console.log('CE fetch failed, initializing...', e)
-        const initRes = await fetch('/api/init-ce', { method: 'POST' })
-        const initResult = await initRes.json()
-        console.log('CE init result:', initResult)
-        setInitialized(true)
+  const handleInitDB = async () => {
+    setIniting(true)
+    setInitMsg('Creando tabla y cargando datos...')
+    try {
+      const res = await fetch('/api/init-ce', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setInitMsg(`Listo: ${data.inserted} de ${data.total} centros cargados.`)
+        fetchCentros()
+      } else {
+        setInitMsg(`Error: ${data.error || data.details || 'Desconocido'}`)
       }
+    } catch (e) {
+      setInitMsg(`Error de conexion: ${(e as Error).message}`)
+    } finally {
+      setIniting(false)
     }
-    init()
-  }, [initialized]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { if (initialized) fetchCentros() }, [initialized, fetchCentros])
+  }
 
   const totalPages = Math.ceil(total / limit)
 
@@ -182,8 +172,19 @@ export default function CentrosEscolaresPage() {
             <Button onClick={openCreateDialog} size="sm" className="bg-teal-600 hover:bg-teal-500 text-xs h-8">
               <Plus className="h-3.5 w-3.5 mr-1" /> Agregar
             </Button>
+            <Button onClick={handleInitDB} size="sm" disabled={initing} className="bg-amber-600 hover:bg-amber-500 text-xs h-8">
+              {initing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Database className="h-3.5 w-3.5 mr-1" />}
+              {initing ? 'Cargando...' : 'Cargar BD'}
+            </Button>
           </div>
         </div>
+
+        {/* Init message */}
+        {initMsg && (
+          <div className={`text-xs px-3 py-2 rounded ${initMsg.startsWith('Error') ? 'bg-red-900/50 text-red-300 border border-red-700' : 'bg-green-900/50 text-green-300 border border-green-700'}`}>
+            {initMsg}
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">

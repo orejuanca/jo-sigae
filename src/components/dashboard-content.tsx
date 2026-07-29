@@ -664,6 +664,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true,
       hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
       mergeSpan: { er: 10, ec: 29 } },
+    { sr: 12, sc: 25, label: 'Fix Secciones', color: '#AA00FF', bgColor: '#f0e0ff', fontSize: 11,
+      hoverColor1: '#f0e0ff', hoverColor2: '#d4aaff', hoverShadowColor: 'rgba(170,0,255,0.3)', downShadowColor: 'rgba(170,0,255,0.15)' },
   ]
 
   // Busca botón de comando por posición exacta o por texto en celdas combinadas
@@ -1338,6 +1340,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                           if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
                           else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
                           else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') }
+                          else if (cmdBtn.label === 'Fix Secciones') {
+                            fetch('/api/fix-secciones', { method: 'POST' })
+                              .then(r => r.json()).then(d => { setLoadInfo(`Fix: ${d.fixed} corregidos, ${d.skipped} omitidos de ${d.total}`) })
+                              .catch(e => setLoadInfo('Error: ' + String(e)))
+                          }
                         }}
                         onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
                         onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}

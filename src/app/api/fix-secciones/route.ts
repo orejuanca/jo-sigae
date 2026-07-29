@@ -3,13 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 // POST /api/fix-secciones — corrección única de datos importados con columnas mal mapeadas
 //
-// Bug: import-excel.ts leía SECCION de cols 233-237 (que son PG.GRUPO)
-//      y literalesFinales de cols 248-252 (que son SECCION real)
+// Bug original: import-excel.ts leía SECCION de cols 233-237 (PG.GRUPO)
+//              y literalesFinales de cols 248-252 (SECCION real)
+//              y PG.LITERAL de cols 248-252 (debía ser 238-242)
 //
-// Fix:  secciones ← literalesFinales antiguos (cols 248-252)
+// Fix:  secciones ← literalesFinales antiguos (lo que estaba en 248-252 = SECCION real)
 //       literalesFinales ← grupos[i].literal (cols 238-242 = PG.LITERAL)
-//       tituloExpedicion ← actaFecha antiguo (col 254 = TITULO.EXPEDICION)
-//       actaFecha ← col 256 (CERT.EXPEDICION)
 
 export async function POST() {
   try {
@@ -27,50 +26,35 @@ export async function POST() {
       let raw: Record<string, unknown>
       try { raw = JSON.parse(student.rawData) } catch { skipped++; continue }
 
-      // Solo procesar structured_v1 que tenga el bug
       if (raw._format !== 'structured_v1') { skipped++; continue }
 
-      const secciones = raw.secciones
-      const literalesFinales = raw.literalesFinales
-      const grupos = raw.grupos
-      const actaFecha = raw.actaFecha
-      const tituloExpedicion = raw.tituloExpedicion
+      const secciones: unknown[] = Array.isArray(raw.secciones) ? raw.secciones : []
+      const literalesFinales: unknown[] = Array.isArray(raw.literalesFinales) ? raw.literalesFinales : []
+      const grupos: Record<string, string>[] = Array.isArray(raw.grupos) ? raw.grupos : []
 
-      // Detectar si hay algo que corregir
-      // Si literalesFinales tiene datos y secciones tiene los mismos que grupos[].grupo, hay bug
-      const gruposGrupo = Array.isArray(grupos) ? grupos.map((g: Record<string, string>) => g.grupo || '') : []
-      const seccionesArr = Array.isArray(secciones) ? secciones : []
-      const literalesArr = Array.isArray(literalesFinales) ? literalesFinales : []
+      // Detectar bug: secciones tiene los mismos valores que grupos[].grupo
+      // (ambos venían de cols 233-237)
+      const gruposGrupo = grupos.map(g => g.grupo || '')
+      const seccionesStr = secciones.map(s => String(s || ''))
+      const literalesStr = literalesFinales.map(l => String(l || ''))
 
-      // Verificar si secciones coincide con grupos (el bug)
-      const seccionesMatchGrupos = seccionesArr.length > 0 &&
-        seccionesArr.every((s: string, i: number) => s === (gruposGrupo[i] || ''))
+      // El bug está presente si secciones == grupos[].grupo
+      const tieneBug = seccionesStr.length > 0 &&
+        seccionesStr.every((s, i) => s === (gruposGrupo[i] || ''))
 
-      // Verificar si tituloExpedicion vino de actaFecha (col 254) y actaFecha no existe
-      const needsTituloFix = tituloExpedicion && !actaFecha
+      // También si secciones está vacío pero literalesFinales tiene datos
+      const seccionVacia = seccionesStr.every(s => s === '')
+      const literalesTieneDatos = literalesStr.some(l => l !== '')
 
-      if (!seccionesMatchGrupos && !needsTituloFix) { skipped++; continue }
+      if (!tieneBug && !(seccionVacia && literalesTieneDatos)) { skipped++; continue }
 
-      // Aplicar corrección
-      // 1. secciones ← lo que estaba en literalesFinales (cols 248-252)
-      if (seccionesMatchGrupos && literalesArr.length > 0) {
-        raw.secciones = literalesArr
+      // Corregir: intercambiar secciones y literalesFinales
+      if (literalesTieneDatos) {
+        raw.secciones = literalesStr
       }
 
-      // 2. literalesFinales ← grupos[i].literal (cols 238-242 = PG.LITERAL)
-      if (seccionesMatchGrupos && Array.isArray(grupos)) {
-        raw.literalesFinales = grupos.map((g: Record<string, string>) => g.literal || '')
-      }
-
-      // 3. tituloExpedicion ya estaba en raw.tituloExpedicion (correcto ahora)
-      //    actaFecha necesita venir de col 256 — pero ya no tenemos la col original.
-      //    Lo que estaba como tituloExpedicion era de col 254 (TITULO.EXPEDICION) — correcto.
-      //    actaFecha estaba de col 254 también — era wrong. Ahora debería ser null/vacío si no hay col 256.
-      if (needsTituloFix && tituloExpedicion) {
-        // tituloExpedicion ya es correcto (venía de col 254)
-        // actaFecha no existe en datos viejos, lo dejamos vacío
-        raw.actaFecha = ''
-      }
+      // literalesFinales ahora viene de grupos[i].literal (cols 238-242)
+      raw.literalesFinales = grupos.map(g => g.literal || '')
 
       await prisma.student.update({
         where: { id: student.id },
@@ -84,7 +68,6 @@ export async function POST() {
       total: students.length,
       fixed,
       skipped,
-      message: `Corregidos ${fixed} registros. Omitidos: ${skipped}`,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

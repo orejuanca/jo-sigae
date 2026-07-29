@@ -42,16 +42,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { nombre, localidad, codigo, ef } = body
 
-    if (!nombre || !nombre.trim()) {
+    if (!nombre) {
       return NextResponse.json({ error: 'El nombre del plantel es requerido' }, { status: 400 })
     }
 
     const centro = await prisma.centroEscolar.create({
       data: {
-        nombre: nombre.trim(),
-        localidad: localidad?.trim() || '',
-        codigo: codigo?.trim() || '',
-        ef: ef?.trim() || '',
+        nombre,
+        localidad: localidad || '',
+        codigo: codigo || '',
+        ef: ef || '',
       },
     })
 

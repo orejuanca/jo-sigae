@@ -105,7 +105,7 @@ export default function CentrosEscolaresPage() {
   }
 
   const handleSave = async () => {
-    if (!formNombre.trim()) {
+    if (!formNombre) {
       toast({ title: 'Validacion', description: 'El nombre del plantel es requerido', variant: 'destructive' })
       return
     }

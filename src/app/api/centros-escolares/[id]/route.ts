@@ -32,10 +32,10 @@ export async function PUT(
     const centro = await prisma.centroEscolar.update({
       where: { id },
       data: {
-        ...(nombre !== undefined && { nombre: nombre.trim() }),
-        ...(localidad !== undefined && { localidad: localidad?.trim() || '' }),
-        ...(codigo !== undefined && { codigo: codigo?.trim() || '' }),
-        ...(ef !== undefined && { ef: ef?.trim() || '' }),
+        ...(nombre !== undefined && { nombre }),
+        ...(localidad !== undefined && { localidad: localidad || '' }),
+        ...(codigo !== undefined && { codigo: codigo || '' }),
+        ...(ef !== undefined && { ef: ef || '' }),
         ...(activo !== undefined && { activo }),
       },
     })

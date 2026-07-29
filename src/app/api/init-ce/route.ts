@@ -43,7 +43,7 @@ export async function POST() {
       }).join(',')
 
       await prisma.$executeRawUnsafe(
-        `INSERT INTO "CentroEscolar" ("id","codigo","nombre","localidad","ef","activo","createdAt","updatedAt") VALUES ${values}
+        `INSERT INTO "CentroEscolar" ("id","codigo","nombre","localidad","ef","activo") VALUES ${values}
          ON CONFLICT ("nombre") DO NOTHING`
       )
       inserted += batch.length

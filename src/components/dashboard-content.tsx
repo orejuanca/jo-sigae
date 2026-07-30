@@ -406,6 +406,25 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return s
   }
 
+  const colToIndex = (letters: string): number | null => {
+    let idx = 0
+    for (let i = 0; i < letters.length; i++) { const ch = letters.charCodeAt(i); if (ch < 65 || ch > 90) return null; idx = idx * 26 + (ch - 64) }
+    return idx - 1
+  }
+
+  const [rangeInput, setRangeInput] = useState('')
+  const applyRange = (input: string) => {
+    const match = input.trim().match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i)
+    if (!match) return
+    const c1 = colToIndex(match[1].toUpperCase()), r1 = parseInt(match[2]) - 1
+    const c2 = colToIndex(match[3].toUpperCase()), r2 = parseInt(match[4]) - 1
+    if (c1 == null || c2 == null) return
+    setSelectionStart({ r: Math.min(r1, r2), c: Math.min(c1, c2) })
+    setSelectionEnd({ r: Math.max(r1, r2), c: Math.max(c1, c2) })
+  }
+  const handleRangeSubmit = () => { applyRange(rangeInput) }
+
+
   const [selectedCell, setSelectedCell] = useState<{r:number;c:number}|null>(null)
   const tableRef = useRef<HTMLTableElement>(null)
 
@@ -664,10 +683,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true,
       hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
       mergeSpan: { er: 10, ec: 29 } },
-    { sr: 12, sc: 25, label: 'Fix Secciones', color: '#AA00FF', bgColor: '#f0e0ff', fontSize: 11,
-      hoverColor1: '#f0e0ff', hoverColor2: '#d4aaff', hoverShadowColor: 'rgba(170,0,255,0.3)', downShadowColor: 'rgba(170,0,255,0.15)' },
-  ]
 
+  ]
   // Busca botón de comando por posición exacta o por texto en celdas combinadas
   const isCmdBtn = (r: number, c: number, cellText?: string) => {
     const posBtn = CMD_BUTTONS.find(b => b.sr === r && b.sc === c)
@@ -1234,6 +1251,16 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           setTimeout(() => setSaveStatus(''), 4000)
         }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
         <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
+        <span className="text-gray-600">|</span>
+        <input
+          type="text"
+          value={rangeInput}
+          onChange={e => setRangeInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRangeSubmit() } }}
+          placeholder="A1:D5"
+          className="w-16 bg-gray-700 text-yellow-300 text-[9px] px-1 py-0.5 rounded border border-gray-500 placeholder-gray-500 text-center"
+          title="Escribe rango y presiona Enter"
+        />
         <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
       </div>
 
@@ -1285,7 +1312,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 {r + 1}
               </td>
               {Array.from({ length: numCols }).map((_, c) => {
-                if (isHidden(r, c)) return null
+                if (isHidden(r, c) && !CMD_BUTTONS.find(b => b.sr === r && b.sc === c)) return null
                 const merge = getMerge(r, c)
                 const colSpan = merge ? (merge.ec - merge.sc + 1) : 1
                 const rowSpan = merge ? (merge.er - merge.sr + 1) : 1
@@ -1358,11 +1385,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                           if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
                           else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
                           else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') }
-                          else if (cmdBtn.label === 'Fix Secciones') {
-                            fetch('/api/fix-secciones', { method: 'POST' })
-                              .then(r => r.json()).then(d => { setLoadInfo(`Fix: ${d.fixed} corregidos, ${d.skipped} omitidos de ${d.total}`) })
-                              .catch(e => setLoadInfo('Error: ' + String(e)))
-                          }
                         }}
                         onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
                         onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}

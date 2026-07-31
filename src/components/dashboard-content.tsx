@@ -673,6 +673,13 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
   const [dataLoadKey, setDataLoadKey] = useState(0)
 
+  // === ESTADO DE ELIMINACIÓN ===
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteQuery, setDeleteQuery] = useState('')
+  const [deleteResults, setDeleteResults] = useState<Array<{id:string;cedula:string;apellidos:string;nombres:string;fechaNacimiento?:string;pais?:string;estado?:string;municipio?:string}>>([])
+  const [deleteSearching, setDeleteSearching] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<typeof deleteResults[0] | null>(null)
+
   // Botones de comando
   const CMD_BUTTONS: CmdButton[] = [
     { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
@@ -685,7 +692,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true, requiresNewData: true,
       hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)' },
     { sr: 9, sc: 30, label: 'Eliminar Datos', color: '#FF4444', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true, disableOnNewData: true,
+      disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
       hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)' },
     { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
       disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true, disableOnNewData: true,
@@ -937,6 +944,43 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     } catch { setSearchResults([]) }
     setSearching(false)
   }, [])
+
+  // === BÚSQUEDA PARA ELIMINAR ===
+  const doDeleteSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setDeleteResults([]); return }
+    setDeleteSearching(true)
+    try {
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
+      const data = await res.json()
+      setDeleteResults(data.students || [])
+    } catch { setDeleteResults([]) }
+    setDeleteSearching(false)
+  }, [])
+
+  // === CONFIRMAR Y ELIMINAR ESTUDIANTE ===
+  const doDeleteStudent = useCallback(async (studentId: string) => {
+    try {
+      setSaveStatus('ELIMINANDO...')
+      const res = await fetch(`/api/students/${studentId}?plan=${plan}`, { method: 'DELETE' })
+      if (!res.ok) {
+        setSaveStatus('ERROR AL ELIMINAR')
+        setTimeout(() => setSaveStatus(''), 3000)
+        return
+      }
+      setSaveStatus('REGISTRO ELIMINADO ✓')
+      setTimeout(() => setSaveStatus(''), 3000)
+      // Cerrar modales y restaurar
+      setDeleteConfirm(null)
+      setShowDeleteModal(false)
+      setDeleteQuery('')
+      setDeleteResults([])
+      restoreInitialState()
+    } catch (e) {
+      console.error('[DELETE ERROR]', e)
+      setSaveStatus('ERROR AL ELIMINAR')
+      setTimeout(() => setSaveStatus(''), 3000)
+    }
+  }, [plan, restoreInitialState])
 
   // === RESTAURAR ESTADO INICIAL ===
   const restoreInitialState = useCallback(() => {
@@ -1418,6 +1462,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                           if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
                           else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
                           else if (cmdBtn.label === 'Guardar Datos') { saveNewStudent() }
+                          else if (cmdBtn.label === 'Eliminar Datos') { setShowDeleteModal(true) }
                           else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') }
                         }}
                         onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
@@ -1519,13 +1564,74 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           </div>
         </div>
       )}
+
+      {/* MODAL DE ELIMINAR — SOLO Plan Vigente */}
+      {plan === 'vigente' && showDeleteModal && !deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
+          <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-bold text-red-600">Eliminar Registro</h3>
+              <button onClick={() => { setShowDeleteModal(false); setDeleteQuery(''); setDeleteResults([]) }}
+                className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
+            </div>
+            <div className="space-y-2">
+              <input type="text" placeholder="Cédula del alumno a eliminar..."
+                value={deleteQuery}
+                onChange={e => { setDeleteQuery(e.target.value); if (e.target.value.length >= 2) doDeleteSearch(e.target.value) }}
+                onKeyDown={e => { if (e.key === 'Enter') doDeleteSearch(deleteQuery) }}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                autoFocus />
+              {deleteSearching && <div className="text-xs text-gray-500 text-center py-2">Buscando...</div>}
+              {deleteResults.length > 0 && (
+                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded">
+                  {deleteResults.map(s => (
+                    <button key={s.id}
+                      onClick={() => setDeleteConfirm(s)}
+                      className="w-full text-left px-3 py-2 hover:bg-red-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer">
+                      <span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!deleteSearching && deleteQuery.length >= 2 && deleteResults.length === 0 && (
+                <div className="text-xs text-red-500 text-center py-2">No se encontraron alumnos</div>
+              )}
+              {deleteQuery.length < 2 && (
+                <div className="text-xs text-gray-400 text-center py-2">Escriba al menos 2 caracteres para buscar</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      {plan === 'vigente' && showDeleteModal && deleteConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" style={{ marginTop: '0' }}>
+          <div className="bg-white rounded-lg shadow-2xl p-5 w-[420px] max-w-[90vw]">
+            <h3 className="text-sm font-bold text-red-600 mb-3">Confirmar Eliminación</h3>
+            <p className="text-xs text-gray-700 mb-3">El siguiente registro será eliminado de la base de datos <b>Plan Vigente</b>:</p>
+            <div className="bg-red-50 border border-red-200 rounded p-3 mb-4 space-y-1 text-xs">
+              <div><b>Cédula:</b> {deleteConfirm.cedula}</div>
+              <div><b>Fecha de Nacimiento:</b> {deleteConfirm.fechaNacimiento || '-'}</div>
+              <div><b>Apellidos:</b> {deleteConfirm.apellidos}</div>
+              <div><b>Nombres:</b> {deleteConfirm.nombres}</div>
+              <div><b>País:</b> {deleteConfirm.pais || '-'}</div>
+              <div><b>Estado:</b> {deleteConfirm.estado || '-'}</div>
+              <div><b>Municipio:</b> {deleteConfirm.municipio || '-'}</div>
+            </div>
+            <p className="text-xs text-red-600 font-bold mb-4">¿Está de acuerdo?</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setDeleteConfirm(null); setShowDeleteModal(false); setDeleteQuery(''); setDeleteResults([]); restoreInitialState() }}
+                className="px-4 py-2 text-xs font-bold border-2 border-gray-400 text-gray-600 rounded hover:bg-gray-100">NO</button>
+              <button onClick={() => doDeleteStudent(deleteConfirm.id)}
+                className="px-4 py-2 text-xs font-bold border-2 border-red-500 text-white bg-red-500 rounded hover:bg-red-600">SI</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  DashboardPage – thin wrapper that manages plan state                      */
-/* ─────────────────────────────────────────────────────────────────────────── */
 
 export default function DashboardPage() {
   const [plan, setPlan] = useState<'vigente' | 'derogado'>(() => {

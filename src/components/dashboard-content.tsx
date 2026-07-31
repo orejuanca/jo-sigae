@@ -81,8 +81,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return { r: parseInt(match[2]) - 1, c: col - 1 }
   }
 
-  // === MAPEO CAMPO_BD → CELDA DASHBOARD ===
-  const FIELD_MAP: [string, string][] = [
+  // === MAPEO CAMPO_BD → CELDA DASHBOARD (PLAN VIGENTE) ===
+  const FIELD_MAP_VIGENTE: [string, string][] = [
     ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
     ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
     ['INST.1','C15'],['LOCAL.1','I15'],['EF.1','L15'],
@@ -140,7 +140,106 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     ['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'],
     ['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'],
   ]
-  const PROMEDIO_CELL = cellRef('AJ35')
+
+  // === MAPEO CAMPO_BD → CELDA DASHBOARD (PLAN DEROGADO) ===
+  const FIELD_MAP_DEROGADO: [string, string][] = [
+    // Datos personales
+    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
+    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],['LUGAR','M12'],
+    // Instituciones Básica
+    ['INST.BASICA.1','C15'],['LOCAL.BASICA.1','I15'],['EF.BASICA.1','L15'],
+    ['INST.BASICA.2','C16'],['LOCAL.BASICA.2','I16'],['EF.BASICA.2','L16'],
+    ['INST.BASICA.3','C17'],['LOCAL.BASICA.3','I17'],['EF.BASICA.3','L17'],
+    ['INST.BASICA.4','C18'],['LOCAL.BASICA.4','I18'],['EF.BASICA.4','L18'],
+    ['INST.BASICA.5','C19'],['LOCAL.BASICA.5','I19'],['EF.BASICA.5','L19'],
+    // Instituciones Diversificado
+    ['INST.DIV.1','C21'],['LOCAL.DIV.1','I21'],['EF.DIV.1','L21'],
+    ['INST.DIV.2','C22'],['LOCAL.DIV.2','I22'],['EF.DIV.2','L22'],
+    ['INST.DIV.3','C23'],['LOCAL.DIV.3','I23'],['EF.DIV.3','L23'],
+    ['INST.DIV.4','C24'],['LOCAL.DIV.4','I24'],['EF.DIV.4','L24'],
+    ['INST.DIV.5','C25'],['LOCAL.DIV.5','I25'],['EF.DIV.5','L25'],
+    // Año 1 (rows 16-25, cols T-X)
+    ['NOTA.CA.1','T16'],['EVAL.CA.1','U16'],['MES.CA.1','V16'],['AÑO.CA.1','W16'],['INST.CA.1','X16'],
+    ['NOTA.IN.1','T17'],['EVAL.IN.1','U17'],['MES.IN.1','V17'],['AÑO.IN.1','W17'],['INST.IN.1','X17'],
+    ['NOTA.MA.1','T18'],['EVAL.MA.1','U18'],['MES.MA.1','V18'],['AÑO.MA.1','W18'],['INST.MA.1','X18'],
+    ['NOTA.EN.1','T19'],['EVAL.EN.1','U19'],['MES.EN.1','V19'],['AÑO.EN.1','W19'],['INST.EN.1','X19'],
+    ['NOTA.HV.1','T20'],['EVAL.HV.1','U20'],['MES.HV.1','V20'],['AÑO.HV.1','W20'],['INST.HV.1','X20'],
+    ['NOTA.EFC.1','T21'],['EVAL.EFC.1','U21'],['MES.EFC.1','V21'],['AÑO.EFC.1','W21'],['INST.EFC.1','X21'],
+    ['NOTA.GG.1','T22'],['EVAL.GG.1','U22'],['MES.GG.1','V22'],['AÑO.GG.1','W22'],['INST.GG.1','X22'],
+    ['NOTA.EA.1','T23'],['EVAL.EA.1','U23'],['MES.EA.1','V23'],['AÑO.EA.1','W23'],['INST.EA.1','X23'],
+    ['NOTA.EF.1','T24'],['EVAL.EF.1','U24'],['MES.EF.1','V24'],['AÑO.EF.1','W24'],['INST.EF.1','X24'],
+    ['NOTA.EPT.1','T25'],['EVAL.EPT.1','U25'],['MES.EPT.1','V25'],['AÑO.EPT.1','W25'],['INST.EPT.1','X25'],
+    // Año 2 (rows 16-25, cols AA-AE)
+    ['NOTA.CA.2','AA16'],['EVAL.CA.2','AB16'],['MES.CA.2','AC16'],['AÑO.CA.2','AD16'],['INST.CA.2','AE16'],
+    ['NOTA.IN.2','AA17'],['EVAL.IN.2','AB17'],['MES.IN.2','AC17'],['AÑO.IN.2','AD17'],['INST.IN.2','AE17'],
+    ['NOTA.MA.2','AA18'],['EVAL.MA.2','AB18'],['MES.MA.2','AC18'],['AÑO.MA.2','AD18'],['INST.MA.2','AE18'],
+    ['NOTA.EPS.2','AA19'],['EVAL.EPS.2','AB19'],['MES.EPS.2','AC19'],['AÑO.EPS.2','AD19'],['INST.EPS.2','AE19'],
+    ['NOTA.CB.2','AA20'],['EVAL.CB.2','AB20'],['MES.CB.2','AC20'],['AÑO.CB.2','AD20'],['INST.CB.2','AE20'],
+    ['NOTA.HV.2','AA21'],['EVAL.HV.2','AB21'],['MES.HV.2','AC21'],['AÑO.HV.2','AD21'],['INST.HV.2','AE21'],
+    ['NOTA.HU.2','AA22'],['EVAL.HU.2','AB22'],['MES.HU.2','AC22'],['AÑO.HU.2','AD22'],['INST.HU.2','AE22'],
+    ['NOTA.EA.2','AA23'],['EVAL.EA.2','AB23'],['MES.EA.2','AC23'],['AÑO.EA.2','AD23'],['INST.EA.2','AE23'],
+    ['NOTA.EF.2','AA24'],['EVAL.EF.2','AB24'],['MES.EF.2','AC24'],['AÑO.EF.2','AD24'],['INST.EF.2','AE24'],
+    ['NOTA.ET.2','AA25'],['EVAL.ET.2','AB25'],['MES.ET.2','AC25'],['AÑO.ET.2','AD25'],['INST.ET.2','AE25'],
+    // Año 3 (rows 29-38, cols H-L)
+    ['NOTA.CA.3','H29'],['EVAL.CA.3','I29'],['MES.CA.3','J29'],['AÑO.CA.3','K29'],['INST.CA.3','L29'],
+    ['NOTA.IN.3','H30'],['EVAL.IN.3','I30'],['MES.IN.3','J30'],['AÑO.IN.3','K30'],['INST.IN.3','L30'],
+    ['NOTA.MA.3','H31'],['EVAL.MA.3','I31'],['MES.MA.3','J31'],['AÑO.MA.3','K31'],['INST.MA.3','L31'],
+    ['NOTA.CB.3','H32'],['EVAL.CB.3','I32'],['MES.CB.3','J32'],['AÑO.CB.3','K32'],['INST.CB.3','L32'],
+    ['NOTA.FI.3','H33'],['EVAL.FI.3','I33'],['MES.FI.3','J33'],['AÑO.FI.3','K33'],['INST.FI.3','L33'],
+    ['NOTA.QU.3','H34'],['EVAL.QU.3','I34'],['MES.QU.3','J34'],['AÑO.QU.3','K34'],['INST.QU.3','L34'],
+    ['NOTA.HVCB.3','H35'],['EVAL.HVCB.3','I35'],['MES.HVCB.3','J35'],['AÑO.HVCB.3','K35'],['INST.HVCB.3','L35'],
+    ['NOTA.GV.3','H36'],['EVAL.GV.3','I36'],['MES.GV.3','J36'],['AÑO.GV.3','K36'],['INST.GV.3','L36'],
+    ['NOTA.EF.3','H37'],['EVAL.EF.3','I37'],['MES.EF.3','J37'],['AÑO.EF.3','K37'],['INST.EF.3','L37'],
+    ['NOTA.ET.3','H38'],['EVAL.ET.3','I38'],['MES.ET.3','J38'],['AÑO.ET.3','K38'],['INST.ET.3','L38'],
+    // Año 4 (rows 29-39, cols T-X)
+    ['NOTA.CA.4','T29'],['EVAL.CA.4','U29'],['MES.CA.4','V29'],['AÑO.CA.4','W29'],['INST.CA.4','X29'],
+    ['NOTA.MA.4','T30'],['EVAL.MA.4','U30'],['MES.MA.4','V30'],['AÑO.MA.4','W30'],['INST.MA.4','X30'],
+    ['NOTA.HC.4','T31'],['EVAL.HC.4','U31'],['MES.HC.4','V31'],['AÑO.HC.4','W31'],['INST.HC.4','X31'],
+    ['NOTA.IN.4','T32'],['EVAL.IN.4','U32'],['MES.IN.4','V32'],['AÑO.IN.4','W32'],['INST.IN.4','X32'],
+    ['NOTA.EF.4','T33'],['EVAL.EF.4','U33'],['MES.EF.4','V33'],['AÑO.EF.4','W33'],['INST.EF.4','X33'],
+    ['NOTA.FI.4','T34'],['EVAL.FI.4','U34'],['MES.FI.4','V34'],['AÑO.FI.4','W34'],['INST.FI.4','X34'],
+    ['NOTA.QU.4','T35'],['EVAL.QU.4','U35'],['MES.QU.4','V35'],['AÑO.QU.4','W35'],['INST.QU.4','X35'],
+    ['NOTA.BI.4','T36'],['EVAL.BI.4','U36'],['MES.BI.4','V36'],['AÑO.BI.4','W36'],['INST.BI.4','X36'],
+    ['NOTA.DT.4','T37'],['EVAL.DT.4','U37'],['MES.DT.4','V37'],['AÑO.DT.4','W37'],['INST.DT.4','X37'],
+    ['NOTA.FIL.4','T38'],['EVAL.FIL.4','U38'],['MES.FIL.4','V38'],['AÑO.FIL.4','W38'],['INST.FIL.4','X38'],
+    ['NOTA.IPM.4','T39'],['EVAL.IPM.4','U39'],['MES.IPM.4','V39'],['AÑO.IPM.4','W39'],['INST.IPM.4','X39'],
+    // Año 5 (rows 29-38, cols AA-AE)
+    ['NOTA.IN.5','AA29'],['EVAL.IN.5','AB29'],['MES.IN.5','AC29'],['AÑO.IN.5','AD29'],['INST.IN.5','AE29'],
+    ['NOTA.EF.5','AA30'],['EVAL.EF.5','AB30'],['MES.EF.5','AC30'],['AÑO.EF.5','AD30'],['INST.EF.5','AE30'],
+    ['NOTA.GEV.5','AA31'],['EVAL.GEV.5','AB31'],['MES.GEV.5','AC31'],['AÑO.GEV.5','AD31'],['INST.GEV.5','AE31'],
+    ['NOTA.CA.5','AA32'],['EVAL.CA.5','AB32'],['MES.CA.5','AC32'],['AÑO.CA.5','AD32'],['INST.CA.5','AE32'],
+    ['NOTA.MA.5','AA33'],['EVAL.MA.5','AB33'],['MES.MA.5','AC33'],['AÑO.MA.5','AD33'],['INST.MA.5','AE33'],
+    ['NOTA.FI.5','AA34'],['EVAL.FI.5','AB34'],['MES.FI.5','AC34'],['AÑO.FI.5','AD34'],['INST.FI.5','AE34'],
+    ['NOTA.QU.5','AA35'],['EVAL.QU.5','AB35'],['MES.FI.5','AC35'],['AÑO.QU.5','AD35'],['INST.QU.5','AE35'],
+    ['NOTA.BI.5','AA36'],['EVAL.BI.5','AB36'],['MES.BI.5','AC36'],['AÑO.BI.5','AD36'],['INST.BI.5','AE36'],
+    ['NOTA.CT.5','AA37'],['EVAL.CT.5','AB37'],['MES.CT.5','AC37'],['AÑO.CT.5','AD37'],['INST.CT.5','AE37'],
+    ['NOTA.IPM.5','AA38'],['EVAL.IPM.5','AB38'],['MES.IPM.5','AC38'],['AÑO.IPM.5','AD38'],['INST.IPM.5','AE38'],
+    // Secciones
+    ['SECCION.1','X14'],['SECCION.2','AE14'],['SECCION.3','L27'],['SECCIONL.4','X27'],['SECCION.5','AE27'],
+    // EPT (Educación para el Trabajo)
+    ['EPT.GRADO.1','AG16'],['EPT.NOMBRE.1','AH16'],['EPT.HORAS.1','AL16'],
+    ['EPT.GRADO.2','AG17'],['EPT.NOMBRE.2','AH17'],['EPT.HORAS.2','AL17'],
+    ['EPT.GRADO.3','AG18'],['EPT.NOMBRE.3','AH18'],['EPT.HORAS.3','AL18'],
+    ['EPT.GRADO.4','AG19'],['EPT.NOMBRE.4','AH19'],['EPT.HORAS.4','AL19'],
+    ['EPT.GRADO.5','AG20'],['EPT.NOMBRE.5','AH20'],['EPT.HORAS.5','AL20'],
+    ['EPT.GRADO.6','AG21'],['EPT.NOMBRE.6','AH21'],['EPT.HORAS.6','AL21'],
+    ['EPT.GRADO.7','AG22'],['EPT.NOMBRE.7','AH22'],['EPT.HORAS.7','AL22'],
+    ['EPT.GRADO.8','AG23'],['EPT.NOMBRE.8','AH23'],['EPT.HORAS.8','AL23'],
+    ['EPT.GRADO.9','AG24'],['EPT.NOMBRE.9','AH24'],['EPT.HORAS.9','AL24'],
+    ['EPT.GRADO.10','AG25'],['EPT.NOMBRE.10','AH25'],['EPT.HORAS.10','AL25'],
+    ['EPT.GRADO.11','AG26'],['EPT.NOMBRE.11','AH26'],['EPT.HORAS.11','AL26'],
+    ['EPT.GRADO.12','AG27'],['EPT.NOMBRE.12','AH27'],['EPT.HORAS.12','AL27'],
+    // Título / Certificación
+    ['SERIALTITULO','AJ30'],['FECHAEMISIONT','AJ31'],['EGRESOAÑO','AJ32'],['FECHAEMISIONN','AJ33'],
+    // Observaciones Básica
+    ['OBS.BASICA.L1','F41'],['OBS.BASICA.L2','B42'],['OBS.BASICA.L3','B43'],['OBS.BASICA.L4','B44'],['OBS.BASICA.L5','B45'],
+    // Observaciones Diversificado
+    ['OBS.DIV.L1','F46'],['OBS.DIV.L2','B47'],['OBS.DIV.L3','B48'],['OBS.DIV.L4','B49'],['OBS.DIV.L5','B50'],
+  ]
+
+  // Seleccionar el mapa según el plan activo
+  const fieldMap = plan === 'derogado' ? FIELD_MAP_DEROGADO : FIELD_MAP_VIGENTE
+  const PROMEDIO_CELL = plan === 'derogado' ? null : cellRef('AJ35')
 
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
@@ -201,7 +300,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const hasNewData = !editMode && initialCellsRef.current && (() => {
     const init = initialCellsRef.current!
     const cur = stateRef.current.cells
-    for (const [campo, celda] of FIELD_MAP) {
+    for (const [campo, celda] of fieldMap) {
       const pos = cellRef(celda)
       if (!pos) continue
       const initVal = (init[pos.r]?.[pos.c] || '').trim()
@@ -736,11 +835,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
     // Detectar si rawData tiene claves planas del FIELD_MAP
     const rawKeys = Object.keys(raw)
-    const hasFlatFieldMapKeys = rawKeys.some(k => /^[A-Z]/.test(k) && k.includes('.') && FIELD_MAP.some(([fm]) => fm === k))
+    const hasFlatFieldMapKeys = rawKeys.some(k => /^[A-Z]/.test(k) && k.includes('.') && fieldMap.some(([fm]) => fm === k))
 
     // === RAMA A: Claves planas → copiar directo en orden ===
     if (hasFlatFieldMapKeys) {
-      const fieldMapSet = new Set(FIELD_MAP.map(([k]) => k))
+      const fieldMapSet = new Set(fieldMap.map(([k]) => k))
       for (const key of rawKeys) {
         if (fieldMapSet.has(key) && raw[key] != null && raw[key] !== undefined) {
           const sv = String(raw[key])
@@ -926,7 +1025,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
 
     // ─── 3) FALLBACK: claves planas del raw que coincidan con FIELD_MAP ───
-    const fieldMapKeys = new Set(FIELD_MAP.map(([k]) => k))
+    const fieldMapKeys = new Set(fieldMap.map(([k]) => k))
     for (const [key, val] of Object.entries(raw)) {
       if (fieldMapKeys.has(key) && val !== null && val !== undefined) {
         const sv = String(val)
@@ -1047,7 +1146,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       let notaSum = 0
       let notaCount = 0
       const fieldPositions: Array<[string, string, {r:number;c:number}|null]> = []
-      for (const [campo, celda] of FIELD_MAP) {
+      for (const [campo, celda] of fieldMap) {
         const pos = cellRef(celda)
         const val = vals[campo] || ''
         fieldPositions.push([campo, val, pos])
@@ -1141,7 +1240,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
     // 5. Construir rawData desde todas las celdas del FIELD_MAP
     const rawData: Record<string, string> = {}
-    for (const [campo, celda] of FIELD_MAP) {
+    for (const [campo, celda] of fieldMap) {
       const pos = cellRef(celda)
       if (pos) rawData[campo] = currentCells[pos.r]?.[pos.c] || ''
     }
@@ -1209,7 +1308,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
       // Construir mapa de ediciones: campo → valor desde las celdas
       const edits: Record<string, string> = {}
-      for (const [campo, celda] of FIELD_MAP) {
+      for (const [campo, celda] of fieldMap) {
         const pos = cellRef(celda)
         if (!pos) continue
         edits[campo] = currentCells[pos.r]?.[pos.c] || ''

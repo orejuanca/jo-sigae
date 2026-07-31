@@ -957,6 +957,19 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setDeleteSearching(false)
   }, [])
 
+  // === RESTAURAR ESTADO INICIAL ===
+  const restoreInitialState = useCallback(() => {
+    if (initialCellsRef.current) {
+      setCells(initialCellsRef.current.map(r => [...r]))
+    }
+    setEditingStudentId(null)
+    setDataLoadKey(k => k + 1)
+    initialRawDataRef.current = null
+    setEditMode(false)
+    setShowSearchModal(false)
+    setShowDeleteModal(false)
+  }, [])
+
   // === CONFIRMAR Y ELIMINAR ESTUDIANTE ===
   const doDeleteStudent = useCallback(async (studentId: string) => {
     try {
@@ -971,7 +984,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setTimeout(() => setSaveStatus(''), 3000)
       // Cerrar modales y restaurar
       setDeleteConfirm(null)
-      setShowDeleteModal(false)
       setDeleteQuery('')
       setDeleteResults([])
       restoreInitialState()
@@ -981,18 +993,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setTimeout(() => setSaveStatus(''), 3000)
     }
   }, [plan, restoreInitialState])
-
-  // === RESTAURAR ESTADO INICIAL ===
-  const restoreInitialState = useCallback(() => {
-    if (initialCellsRef.current) {
-      setCells(initialCellsRef.current.map(r => [...r]))
-    }
-    setEditingStudentId(null)
-    setDataLoadKey(k => k + 1)
-    initialRawDataRef.current = null
-    setEditMode(false)
-    setShowSearchModal(false)
-  }, [])
 
   // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD (SOLO Plan Vigente) ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {

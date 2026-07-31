@@ -1068,7 +1068,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
 
     // 3. Validar formato: letra (V,E,P,D,C) + espacio + 8 u 11 dígitos
-    const cedulaRegex = /^[VEPDC] \\d{8}$|^[VEPDC] \\d{11}$/
+    const cedulaRegex = /^[VEPDC] \d{8}$|^[VEPDC] \d{11}$/
     if (!cedulaRegex.test(cedula)) {
       const msg = `Formato de cédula inválido: "${cedula}"\nDebe ser: Letra (V,E,P,D,C) + espacio + 8 u 11 dígitos.\nEjemplos: V 12345678 o E 12345678901\n¿Corregir o cancelar?`
       if (!window.confirm(msg)) { restoreInitialState(); return }

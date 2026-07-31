@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
-
-const INIT_COLS = 40
-const INIT_ROWS = 51
+import * as VT from '@/lib/templates/vigente-template'
+import * as DT from '@/lib/templates/derogado-template'
 
 type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
@@ -19,99 +18,6 @@ const FONTS = [
   'Arial','Verdana','Tahoma','Georgia','Times New Roman',
   'Courier New','Trebuchet MS','Lucida Console','Impact','Comic Sans MS'
 ]
-
-function makeEmpty2D<T>(rows: number, cols: number, fill: T): T[][] {
-  const a: T[][] = []
-  for (let r = 0; r < rows; r++) { a[r] = []; for (let c = 0; c < cols; c++) a[r][c] = fill }
-  return a
-}
-
-function makeInitialCells(): string[][] {
-  const c = makeEmpty2D(INIT_ROWS, INIT_COLS, '')
-  c[0][0] = 'AGREGAR DATOS, NOTAS Y OBSERVACIONES PARA CERTIFICACION DE CALIFICACIONES EMG 31059 - CONSTANCIA - BOLETIN - VALIDACION DE TITULO Y NOTAS'
-  c[1][0] = 'DATOS PERSONALES'; c[1][7] = 'CIRCULAR N 05, (02/07/2003) (modificada al 30/03/2007)'
-  c[2][0] = 'CEDULA:'; c[3][0] = 'FECHA DE NACIMIENTO:'; c[4][0] = 'APELLIDOS:'
-  c[5][0] = 'NOMBRES:'; c[6][0] = 'PAIS DE NACIMIENTO:'; c[6][1] = 'VENEZUELA'
-  c[7][0] = 'ESTADO:'; c[8][0] = 'MUNICIPIO:'
-  c[9][0] = 'Programacion y Diseno por Juan C. Orellana R.'
-  c[11][0] = 'N'; c[11][1] = 'NOMBRE DEL PLANTEL'; c[11][2] = 'LOCALIDAD'; c[11][3] = 'E.F.'
-  c[11][4] = 'PRIMER AO'; c[11][10] = 'SEGUNDO AO'; c[11][16] = 'SECCION'
-  c[12][4] = 'AREAS DE FORMACION'; c[12][5] = 'NOTA'; c[12][6] = 'T-E'; c[12][7] = 'FECHA'; c[12][8] = 'PLANTEL'
-  c[12][10] = 'AREAS DE FORMACION'; c[12][11] = 'NOTA'; c[12][12] = 'T-E'; c[12][13] = 'FECHA'; c[12][14] = 'PLANTEL'
-  c[12][16] = 'AREAS'; c[12][17] = 'OC'; c[12][18] = 'PG'
-  const m1 = ['Castellano', 'Matematicas', 'Educacion Fisica', 'Arte y Patrimonio', 'Ciencias Naturales']
-  const m2 = ['Ingles y otras Len. Extranj.', 'Matematicas', 'Educacion Fisica', 'Arte y Patrimonio', 'Ciencias Naturales']
-  for (let i = 0; i < 5; i++) { c[13+i][0] = String(i+1); c[13+i][4] = m1[i]; c[13+i][10] = m2[i] }
-  c[17][0] = 'TERCER AO'; c[17][4] = 'SECCION'; c[17][6] = 'AREAS DE FORMACION'; c[17][7] = 'NOTA'
-  c[17][8] = 'T-E'; c[17][9] = 'FECHA'; c[17][10] = 'PLANTEL'; c[17][11] = 'CUARTO AO'
-  c[17][15] = 'SECCION'; c[17][17] = 'AREAS DE FORMACION'; c[17][18] = 'NOTA'; c[17][19] = 'T-E'
-  c[17][20] = 'FECHA'; c[17][21] = 'PLANTEL'; c[17][22] = 'QUINTO AO'; c[17][26] = 'SECCION'
-  c[17][28] = 'AREAS DE FORMACION'; c[17][29] = 'NOTA'; c[17][30] = 'T-E'; c[17][31] = 'FECHA'
-  c[17][32] = 'PLANTEL'; c[17][33] = 'GRUPO'
-  const m3 = ['Castellano','Ingles y otras Len. Extranj.','Matematicas','Educacion Fisica','Fisica','Quimica','Biologia','Geografia, Hist. y Ciudad.','Form. para la Sober. Nal.']
-  const m4 = ['Ingles y otras Len. Extranj.','Matematicas','Educacion Fisica','Fisica','Quimica','Biologia','Geografia, Hist. y Ciudad.','Form. para la Sober. Nal.']
-  const m5 = ['Castellano','Ingles y otras Len. Extranj.','Matematicas','Educacion Fisica','Fisica','Quimica','Ciencias de la Tierra','Geografia, Hist. y Ciudad.']
-  for (let i = 0; i < 9; i++) {
-    if (i < m3.length) c[18+i][6] = m3[i]
-    if (i < m4.length) c[18+i][17] = m4[i]
-    if (i < m5.length) c[18+i][28] = m5[i]
-  }
-  c[26][0] = 'VALIDACION TITULO / NOTAS'; c[26][1] = 'VALIDACION TITULO / NOTAS'
-  c[26][2] = 'Serial T.'; c[26][3] = 'Fecha Emision T.'; c[26][4] = 'Ao Egreso T.'
-  c[26][5] = 'Fecha Emision N.'; c[26][6] = 'Promedio Total'; c[26][7] = '*'
-  c[27][0] = 'Observaciones:'
-  return c
-}
-
-function makeInitialWidths(): number[] {
-  const w = [30,160,80,30, 130,40,30,30,50,100, 130,40,30,30,50,100, 40,130,40,30, 130,40,30,30,50,100, 40,130,40,30, 30,50,100, 40,130,40,30,30,50,100]
-  while (w.length < INIT_COLS) w.push(80)
-  return w
-}
-
-function makeInitialHeights(rows: number): number[] {
-  const h: number[] = []
-  for (let r = 0; r < rows; r++) h[r] = r <= 1 ? 28 : r <= 11 ? 22 : 20
-  return h
-}
-
-function makeInitialBg(rows: number, cols: number): string[][] {
-  const b = makeEmpty2D(rows, cols, '#ffffff')
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    if (r===0) b[r][c]='#0080ff'; else if (r===1) b[r][c]='#b3d9ff'; else if (r>=2&&r<=11) b[r][c]='#ffffcc'
-    else if (r===12||r===17) b[r][c]='#b3d9ff'; else if (r>=13&&r<=25) b[r][c]='#ffffcc'
-    else if (r===26) b[r][c]='#b3d9ff'; else if (r===27) b[r][c]='#ffffcc'
-  }
-  return b
-}
-
-function makeInitialAlign(rows: number, cols: number): Align[][] {
-  const a = makeEmpty2D<Align>(rows, cols, 'left')
-  for (let r = 0; r < rows; r++) a[r][0] = 'center'
-  for (let r = 2; r <= 8; r++) a[r][0] = 'right'
-  return a
-}
-
-function makeInitialFontFamilies(rows: number, cols: number): string[][] {
-  return makeEmpty2D(rows, cols, 'Arial')
-}
-
-function makeInitialFontSizes(rows: number, cols: number): number[][] {
-  return makeEmpty2D(rows, cols, 9)
-}
-
-function makeInitialFontColors(rows: number, cols: number): string[][] {
-  const fc = makeEmpty2D(rows, cols, '#333333')
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    if (r === 0) fc[r][c] = 'white'
-    else if ([1,12,17,26].includes(r)) fc[r][c] = '#003366'
-  }
-  return fc
-}
-
-function makeInitialBorders(rows: number, cols: number): boolean[][] {
-  return makeEmpty2D(rows, cols, false)
-}
 
 // localStorage persistence
 const STORAGE_KEY = (plan: string) => `jo-sigae-dashboard-${plan}`
@@ -161,6 +67,11 @@ async function saveToDb(plan: string, state: SheetState): Promise<boolean> {
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () => void }) {
+  // Seleccionar plantilla según plan
+  const tpl = plan === 'derogado' ? DT : VT
+  const INIT_COLS = tpl.INIT_COLS
+  const INIT_ROWS = tpl.INIT_ROWS
+
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
   const [dbLoaded, setDbLoaded] = useState(false)
@@ -171,21 +82,16 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
   const [numRows, setNumRows] = useState(sv?.numRows ?? INIT_ROWS)
   const [numCols, setNumCols] = useState(sv?.numCols ?? INIT_COLS)
-  const [cells, setCells] = useState<string[][]>(() => sv?.cells ?? makeInitialCells())
-  const [colWidths, setColWidths] = useState<number[]>(() => sv?.colWidths ?? makeInitialWidths())
-  const [rowHeights, setRowHeights] = useState<number[]>(() => sv?.rowHeights ?? makeInitialHeights(INIT_ROWS))
-  const [bgColors, setBgColors] = useState<string[][]>(() => sv?.bgColors ?? makeInitialBg(INIT_ROWS, INIT_COLS))
-  const [textAligns, setTextAligns] = useState<Align[][]>(() => sv?.textAligns ?? makeInitialAlign(INIT_ROWS, INIT_COLS))
-  const [fontFamilies, setFontFamilies] = useState<string[][]>(() => sv?.fontFamilies ?? makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
-  const [fontSizes, setFontSizes] = useState<number[][]>(() => sv?.fontSizes ?? makeInitialFontSizes(INIT_ROWS, INIT_COLS))
-  const [fontColors, setFontColors] = useState<string[][]>(() => sv?.fontColors ?? makeInitialFontColors(INIT_ROWS, INIT_COLS))
-  const [borders, setBorders] = useState<boolean[][]>(() => sv?.borders ?? makeInitialBorders(INIT_ROWS, INIT_COLS))
-  const [boldCells, setBoldCells] = useState<boolean[][]>(() => {
-    if (sv?.boldCells) return sv.boldCells
-    const b = makeEmpty2D(INIT_ROWS, INIT_COLS, false)
-    for (const r of [0,1,11,12,17,26,27]) for (let c = 0; c < INIT_COLS; c++) b[r][c] = true
-    return b
-  })
+  const [cells, setCells] = useState<string[][]>(() => sv?.cells ?? tpl.makeInitialCells())
+  const [colWidths, setColWidths] = useState<number[]>(() => sv?.colWidths ?? tpl.makeInitialWidths())
+  const [rowHeights, setRowHeights] = useState<number[]>(() => sv?.rowHeights ?? tpl.makeInitialHeights(INIT_ROWS))
+  const [bgColors, setBgColors] = useState<string[][]>(() => sv?.bgColors ?? tpl.makeInitialBg(INIT_ROWS, INIT_COLS))
+  const [textAligns, setTextAligns] = useState<Align[][]>(() => sv?.textAligns ?? tpl.makeInitialAlign(INIT_ROWS, INIT_COLS))
+  const [fontFamilies, setFontFamilies] = useState<string[][]>(() => sv?.fontFamilies ?? tpl.makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
+  const [fontSizes, setFontSizes] = useState<number[][]>(() => sv?.fontSizes ?? tpl.makeInitialFontSizes(INIT_ROWS, INIT_COLS))
+  const [fontColors, setFontColors] = useState<string[][]>(() => sv?.fontColors ?? tpl.makeInitialFontColors(INIT_ROWS, INIT_COLS))
+  const [borders, setBorders] = useState<boolean[][]>(() => sv?.borders ?? tpl.makeInitialBorders(INIT_ROWS, INIT_COLS))
+  const [boldCells, setBoldCells] = useState<boolean[][]>(() => sv?.boldCells ?? tpl.makeInitialBold(INIT_ROWS, INIT_COLS))
   const [merges, setMerges] = useState<Merge[]>(() => sv?.merges ?? [])
 
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
@@ -366,15 +272,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     localStorage.removeItem(STORAGE_KEY(plan))
     // Limpiar de la BD también
     fetch(`/api/dashboard-state?plan=${plan}`, { method: 'DELETE' }).catch(() => {})
-    setCells(makeInitialCells()); setColWidths(makeInitialWidths())
-    setRowHeights(makeInitialHeights(INIT_ROWS)); setBgColors(makeInitialBg(INIT_ROWS, INIT_COLS))
-    setTextAligns(makeInitialAlign(INIT_ROWS, INIT_COLS)); setMerges([])
+    setCells(tpl.makeInitialCells()); setColWidths(tpl.makeInitialWidths())
+    setRowHeights(tpl.makeInitialHeights(INIT_ROWS)); setBgColors(tpl.makeInitialBg(INIT_ROWS, INIT_COLS))
+    setTextAligns(tpl.makeInitialAlign(INIT_ROWS, INIT_COLS)); setMerges([])
     setNumRows(INIT_ROWS); setNumCols(INIT_COLS)
-    setFontFamilies(makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
-    setFontSizes(makeInitialFontSizes(INIT_ROWS, INIT_COLS))
-    setFontColors(makeInitialFontColors(INIT_ROWS, INIT_COLS))
-    setBorders(makeInitialBorders(INIT_ROWS, INIT_COLS))
-    setBoldCells(makeEmpty2D(INIT_ROWS, INIT_COLS, false))
+    setFontFamilies(tpl.makeInitialFontFamilies(INIT_ROWS, INIT_COLS))
+    setFontSizes(tpl.makeInitialFontSizes(INIT_ROWS, INIT_COLS))
+    setFontColors(tpl.makeInitialFontColors(INIT_ROWS, INIT_COLS))
+    setBorders(tpl.makeInitialBorders(INIT_ROWS, INIT_COLS))
+    setBoldCells(tpl.makeInitialBold(INIT_ROWS, INIT_COLS))
     setSaveStatus('Restaurado')
     setTimeout(() => setSaveStatus(''), 2000)
   }
@@ -737,11 +643,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const FIELD_MAP: [string, string][] = [
     ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
     ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
-    ['INST.1','G15'],['LOCAL.1','I15'],['EF.1','L15'],
-    ['INST.2','G16'],['LOCAL.2','I16'],['EF.2','L16'],
-    ['INST.3','G17'],['LOCAL.3','I17'],['EF.3','L17'],
-    ['INST.4','G18'],['LOCAL.4','I18'],['EF.4','L18'],
-    ['INST.5','G19'],['LOCAL.5','I19'],['EF.5','L19'],
+    ['INST.1','C15'],['LOCAL.1','I15'],['EF.1','L15'],
+    ['INST.2','C16'],['LOCAL.2','I16'],['EF.2','L16'],
+    ['INST.3','C17'],['LOCAL.3','I17'],['EF.3','L17'],
+    ['INST.4','C18'],['LOCAL.4','I18'],['EF.4','L18'],
+    ['INST.5','C19'],['LOCAL.5','I19'],['EF.5','L19'],
     ['NOTA.CA.1','T15'],['EVAL.CA.1','U15'],['MES.CA.1','V15'],['AÑO.CA.1','W15'],['INST.CA.1','X15'],
     ['NOTA.IN.1','T16'],['EVAL.IN.1','U16'],['MES.IN.1','V16'],['AÑO.IN.1','W16'],['INST.IN.1','X16'],
     ['NOTA.MA.1','T17'],['EVAL.MA.1','U17'],['MES.MA.1','V17'],['AÑO.MA.1','W17'],['INST.MA.1','X17'],

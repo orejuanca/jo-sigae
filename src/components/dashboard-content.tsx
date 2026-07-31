@@ -194,6 +194,23 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
 
+  const initialCellsRef = useRef<string[][] | null>(null)
+  const initialRawDataRef = useRef<string | null>(null)
+
+  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
+  const hasNewData = !editMode && initialCellsRef.current && (() => {
+    const init = initialCellsRef.current!
+    const cur = stateRef.current.cells
+    for (const [campo, celda] of FIELD_MAP) {
+      const pos = cellRef(celda)
+      if (!pos) continue
+      const initVal = (init[pos.r]?.[pos.c] || '').trim()
+      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
+      if (curVal && curVal !== initVal) return true
+    }
+    return false
+  })()
+
   useEffect(() => { setLoaded(true) }, [])
 
   // === CARGAR DESDE BD (fuente principal) al montar ===
@@ -655,22 +672,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [searching, setSearching] = useState(false)
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
   const [dataLoadKey, setDataLoadKey] = useState(0)
-  const initialCellsRef = useRef<string[][] | null>(null)
-  const initialRawDataRef = useRef<string | null>(null)
-
-  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
-  const hasNewData = !editMode && initialCellsRef.current && (() => {
-    const init = initialCellsRef.current!
-    const cur = stateRef.current.cells
-    for (const [campo, celda] of FIELD_MAP) {
-      const pos = cellRef(celda)
-      if (!pos) continue
-      const initVal = (init[pos.r]?.[pos.c] || '').trim()
-      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
-      if (curVal && curVal !== initVal) return true
-    }
-    return false
-  })()
 
   // Botones de comando
   const CMD_BUTTONS: CmdButton[] = [

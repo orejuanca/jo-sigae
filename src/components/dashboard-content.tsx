@@ -1401,9 +1401,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
-                // Dropdown de planteles CE: Básica C14-C18, Diversificado C21-C25
+                // Dropdown de planteles CE: Básica C15-C19, Diversificado C21-C25
                 const isCeDropdown = ceList.length > 0 && (
-                  (c === 2 && r >= 14 && r <= 18) ||
+                  (c === 2 && r >= 15 && r <= 19) ||
                   (c === 2 && r >= 21 && r <= 25)
                 )
                 return (

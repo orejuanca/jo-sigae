@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
 import * as VT from '@/lib/templates/vigente-template'
 import * as DT from '@/lib/templates/derogado-template'
+import { buildDerogadoFlatMap } from '@/lib/build-derogado-flatmap'
 
 type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
@@ -847,6 +848,14 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         }
       }
       return out
+    }
+
+    // === RAMA A2: Plan Derogado con claves numéricas BD2 → usar buildDerogadoFlatMap ===
+    if (plan === 'derogado') {
+      const hasNumericKeys = rawKeys.some(k => /^\d+$/.test(k))
+      if (hasNumericKeys) {
+        return buildDerogadoFlatMap(raw as Record<string, any>)
+      }
     }
 
     // === RAMA B: Formato estructurado o legacy numérico ===

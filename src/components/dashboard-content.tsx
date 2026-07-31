@@ -199,6 +199,22 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [btnHover, setBtnHover] = useState<string | null>(null)
   const [btnDown, setBtnDown] = useState<string | null>(null)
 
+  // Lista de planteles CE para dropdown en celdas C15-C19
+  const [ceList, setCeList] = useState<{nombre:string;localidad:string;ef:string}[]>([])
+  const ceMapRef = useRef<Map<string,{localidad:string;ef:string}>>(new Map())
+  useEffect(() => {
+    fetch('/api/centros-escolares?limit=9999')
+      .then(r => r.json())
+      .then(data => {
+        const list: {nombre:string;localidad:string;ef:string}[] = (data.centros || [])
+        setCeList(list)
+        const map = new Map<string,{localidad:string;ef:string}>()
+        for (const ce of list) map.set(ce.nombre, { localidad: ce.localidad, ef: ce.ef })
+        ceMapRef.current = map
+      })
+      .catch(() => {})
+  }, [])
+
   const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
   stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
 
@@ -1327,6 +1343,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
+                const isCeDropdown = (c === 2) && (r >= 14 && r <= 18) && ceList.length > 0
                 return (
                   <td key={c} data-r={r} data-c={c}
                     onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }}
@@ -1408,6 +1425,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       </button>
                     ) : (
                     <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''}
+                      list={isCeDropdown ? 'ce-datalist' : undefined}
+                      onChange={isCeDropdown ? (e) => {
+                        const ce = ceMapRef.current.get(e.target.value)
+                        if (ce) { updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef) }
+                      } : undefined}
                       onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)}
                       onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
                       onKeyDown={(e) => handleInputKeyDown(e, r, c)}
@@ -1425,6 +1447,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           ))}
         </tbody>
       </table>
+
+      {/* DATALIST de planteles CE para C15-C19 */}
+      {ceList.length > 0 && (
+        <datalist id="ce-datalist">
+          {ceList.map(ce => (
+            <option key={ce.nombre} value={ce.nombre} />
+          ))}
+        </datalist>
+      )}
 
       {/* MODAL DE BÚSQUEDA DE ALUMNO — SOLO Plan Vigente */}
       {plan === 'vigente' && showSearchModal && (

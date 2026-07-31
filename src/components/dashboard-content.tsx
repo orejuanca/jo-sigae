@@ -1428,7 +1428,13 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       list={isCeDropdown ? 'ce-datalist' : undefined}
                       onChange={isCeDropdown ? (e) => {
                         const ce = ceMapRef.current.get(e.target.value)
-                        if (ce) { updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef) }
+                        if (ce) {
+                          updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef)
+                          const tdI = tableRef.current?.querySelector(`[data-r="${r}"][data-c="8"]`)
+                          if (tdI) { const inp = tdI.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.localidad }
+                          const tdL = tableRef.current?.querySelector(`[data-r="${r}"][data-c="11"]`)
+                          if (tdL) { const inp = tdL.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.ef }
+                        }
                       } : undefined}
                       onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)}
                       onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}

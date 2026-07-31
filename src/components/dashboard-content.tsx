@@ -933,29 +933,29 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return out
   }
 
-  // === BUSCAR ESTUDIANTE (SOLO Plan Vigente) ===
+  // === BUSCAR ESTUDIANTE ===
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`)
       const data = await res.json()
       setSearchResults(data.students || [])
     } catch { setSearchResults([]) }
     setSearching(false)
-  }, [])
+  }, [plan])
 
   // === BÚSQUEDA PARA ELIMINAR ===
   const doDeleteSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setDeleteResults([]); return }
     setDeleteSearching(true)
     try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=vigente&limit=10`)
+      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`)
       const data = await res.json()
       setDeleteResults(data.students || [])
     } catch { setDeleteResults([]) }
     setDeleteSearching(false)
-  }, [])
+  }, [plan])
 
   // === RESTAURAR ESTADO INICIAL ===
   const restoreInitialState = useCallback(() => {
@@ -994,10 +994,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
   }, [plan, restoreInitialState])
 
-  // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD (SOLO Plan Vigente) ===
+  // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
-    // GUARD: Solo funciona en Plan Vigente
-    if (plan !== 'vigente') return
     try {
       console.log('[LOAD] Iniciando carga para studentId:', studentId)
       const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
@@ -1403,7 +1401,14 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
-                const isCeDropdown = (c === 2) && (r >= 14 && r <= 18) && ceList.length > 0
+                // Dropdown de planteles CE: columnas C (Básica 1-2, filas 14-18),
+                // L (3er año, filas 25-32), X (4to año, filas 25-33), AE (5to año, filas 25-33)
+                const isCeDropdown = ceList.length > 0 && (
+                  (c === 2 && r >= 14 && r <= 18) ||
+                  (c === 11 && r >= 25 && r <= 33) ||
+                  (c === 23 && r >= 25 && r <= 33) ||
+                  (c === 30 && r >= 25 && r <= 33)
+                )
                 return (
                   <td key={c} data-r={r} data-c={c}
                     onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }}

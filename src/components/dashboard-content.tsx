@@ -1401,13 +1401,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
-                // Dropdown de planteles CE: columnas C (Básica 1-2, filas 14-18),
-                // L (3er año, filas 25-32), X (4to año, filas 25-33), AE (5to año, filas 25-33)
+                // Dropdown de planteles CE: Básica C14-C18, Diversificado C21-C25
                 const isCeDropdown = ceList.length > 0 && (
                   (c === 2 && r >= 14 && r <= 18) ||
-                  (c === 11 && r >= 25 && r <= 33) ||
-                  (c === 23 && r >= 25 && r <= 33) ||
-                  (c === 30 && r >= 25 && r <= 33)
+                  (c === 2 && r >= 21 && r <= 25)
                 )
                 return (
                   <td key={c} data-r={r} data-c={c}

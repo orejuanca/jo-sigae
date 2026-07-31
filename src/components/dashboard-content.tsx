@@ -1426,8 +1426,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                     ) : (
                     <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''}
                       list={isCeDropdown ? 'ce-datalist' : undefined}
-                      onChange={isCeDropdown ? (e) => {
-                        const ce = ceMapRef.current.get(e.target.value)
+                      onInput={isCeDropdown ? (e) => {
+                        const val = (e.target as HTMLInputElement).value
+                        const ce = ceMapRef.current.get(val)
                         if (ce) {
                           updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef)
                           const tdI = tableRef.current?.querySelector(`[data-r="${r}"][data-c="8"]`)

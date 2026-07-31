@@ -136,6 +136,7 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   }
 
   // 2. Instituciones — mapear a claves estructuradas INST.BASICA.N, LOCAL.BASICA.N, EF.BASICA.N
+  // Nota: BD2 usa claves con símbolo de grado ("9°") para la primera institución.
   const hasFlatInstKeys = Object.keys(rawData).some(k => { const n = parseInt(k); return n >= 8 && n <= 38 })
   const instituciones: Array<{ denominacion: string; localidad: string; ef: string }> = rawData['instituciones'] || []
 
@@ -150,15 +151,19 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
       if (inst.ef && !isBlank(inst.ef)) map[`EF.${prefix}.${num}`] = cleanVal(inst.ef)
     }
   } else {
-    // FORMATO B: Crudo BD2 — claves "9","10","11" (inst1), "12","13","14" (inst2), etc.
+    // FORMATO B: Crudo BD2 — claves "9°" o "9","10","11" (inst1), etc.
     const bd2InstSlots = [
-      ['9', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
+      ['9°', '9', '10', '11'], ['12', '13', '14'], ['15', '16', '17'],
       ['18', '19', '20'], ['21', '22', '23'], ['24', '25', '26'],
       ['27', '28', '29'], ['30', '31', '32'], ['33', '34', '35'],
       ['36', '37', '38'],
     ]
     for (let i = 0; i < bd2InstSlots.length; i++) {
-      const [nameKey, locKey, efKey] = bd2InstSlots[i]
+      const slots = bd2InstSlots[i]
+      // Primer slot tiene variante con ° ("9°") y sin ° ("9")
+      const nameKey = i === 0 ? (rawData['9°'] ? '9°' : '9') : slots[0]
+      const locKey = i === 0 ? slots[2] : slots[1]
+      const efKey = i === 0 ? slots[3] : slots[2]
       const prefix = i < 5 ? 'BASICA' : 'DIV'
       const num = i < 5 ? i + 1 : i - 4
       // Mapear SIEMPRE que haya datos (incluyendo asteriscos)

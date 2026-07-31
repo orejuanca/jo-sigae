@@ -871,6 +871,11 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
       return parseStructuredVigente(rawData)
     }
 
+    // Detectar claves FIELD_MAP planas ANTES de asumir formato por plan
+    // (un rawData editado/guardado desde el dashboard tiene NOTA.CA.1, MES.CA.1, etc.)
+    const fieldMapKeys = Object.keys(rawData).filter(k => /^[A-Z]/.test(k) && k.includes('.'))
+    if (fieldMapKeys.length >= 5) return parseFlatFieldMapKeys(rawData)
+
     // Detectar formato plano por claves numéricas
     // PRIORIDAD 1: Usar el parámetro plan si está disponible
     if (plan === 'derogado') return parseBD2RawDataLegacy(rawData)
@@ -891,10 +896,6 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
     })
 
     if (numKeys.length > 0) return parseBDRawDataLegacy(rawData)
-
-    // PRIORIDAD 3: Claves FIELD_MAP planas (NOTA.CA.1, EVAL.CA.1, INST.1, etc.)
-    const fieldMapKeys = Object.keys(rawData).filter(k => /^[A-Z]/.test(k) && k.includes('.'))
-    if (fieldMapKeys.length >= 5) return parseFlatFieldMapKeys(rawData)
 
     return null
   } catch {

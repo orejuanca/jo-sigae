@@ -695,7 +695,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
       hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)' },
     { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
-      disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true, disableOnNewData: true,
+      disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnNewData: true,
       hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
       mergeSpan: { er: 10, ec: 29 } },
 

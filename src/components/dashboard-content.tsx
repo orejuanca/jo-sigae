@@ -684,16 +684,20 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const CMD_BUTTONS: CmdButton[] = [
     { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
       disableOnNewData: true,
-      hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)' },
+      hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)',
+      mergeSpan: { er: 8, ec: 26 } },
     { sr: 9, sc: 25, label: 'Guardar Editado', color: '#90EE90', bgColor: '#ffffff', fontSize: 16,
       disabledColor: '#999999', disabledBgColor: '#f5f5f5', activeColor: '#32CD32', requiresEdit: true,
-      hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)' },
+      hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)',
+      mergeSpan: { er: 10, ec: 26 } },
     { sr: 7, sc: 30, label: 'Guardar Datos', color: '#5BA8FF', bgColor: '#ffffff', fontSize: 16,
       disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true, requiresNewData: true,
-      hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)' },
+      hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)',
+      mergeSpan: { er: 8, ec: 37 } },
     { sr: 9, sc: 30, label: 'Eliminar Datos', color: '#FF4444', bgColor: '#ffffff', fontSize: 16,
       disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
-      hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)' },
+      hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)',
+      mergeSpan: { er: 10, ec: 37 } },
     { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
       disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnNewData: true,
       hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
@@ -1528,8 +1532,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </datalist>
       )}
 
-      {/* MODAL DE BÚSQUEDA DE ALUMNO — SOLO Plan Vigente */}
-      {plan === 'vigente' && showSearchModal && (
+      {/* MODAL DE BÚSQUEDA DE ALUMNO */}
+      {showSearchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
           <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
             <div className="flex justify-between items-center mb-3">
@@ -1567,8 +1571,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </div>
       )}
 
-      {/* MODAL DE ELIMINAR — SOLO Plan Vigente */}
-      {plan === 'vigente' && showDeleteModal && !deleteConfirm && (
+      {/* MODAL DE ELIMINAR */}
+      {showDeleteModal && !deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
           <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
             <div className="flex justify-between items-center mb-3">
@@ -1607,11 +1611,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       )}
 
       {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
-      {plan === 'vigente' && showDeleteModal && deleteConfirm && (
+      {showDeleteModal && deleteConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" style={{ marginTop: '0' }}>
           <div className="bg-white rounded-lg shadow-2xl p-5 w-[420px] max-w-[90vw]">
             <h3 className="text-sm font-bold text-red-600 mb-3">Confirmar Eliminación</h3>
-            <p className="text-xs text-gray-700 mb-3">El siguiente registro será eliminado de la base de datos <b>Plan Vigente</b>:</p>
+            <p className="text-xs text-gray-700 mb-3">El siguiente registro será eliminado de la base de datos <b>Plan {plan.toUpperCase()}</b>:</p>
             <div className="bg-red-50 border border-red-200 rounded p-3 mb-4 space-y-1 text-xs">
               <div><b>Cédula:</b> {deleteConfirm.cedula}</div>
               <div><b>Fecha de Nacimiento:</b> {deleteConfirm.fechaNacimiento || '-'}</div>

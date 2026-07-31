@@ -588,20 +588,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const initialCellsRef = useRef<string[][] | null>(null)
   const initialRawDataRef = useRef<string | null>(null)
 
-  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
-  const hasNewData = !editMode && initialCellsRef.current && (() => {
-    const init = initialCellsRef.current!
-    const cur = stateRef.current.cells
-    for (const [campo, celda] of FIELD_MAP) {
-      const pos = cellRef(celda)
-      if (!pos) continue
-      const initVal = (init[pos.r]?.[pos.c] || '').trim()
-      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
-      if (curVal && curVal !== initVal) return true
-    }
-    return false
-  })()
-
   // Botones de comando
   const CMD_BUTTONS: CmdButton[] = [
     { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
@@ -714,6 +700,20 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     ['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'],
   ]
   const PROMEDIO_CELL = cellRef('AJ35')
+
+  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
+  const hasNewData = !editMode && initialCellsRef.current && (() => {
+    const init = initialCellsRef.current!
+    const cur = stateRef.current.cells
+    for (const [campo, celda] of FIELD_MAP) {
+      const pos = cellRef(celda)
+      if (!pos) continue
+      const initVal = (init[pos.r]?.[pos.c] || '').trim()
+      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
+      if (curVal && curVal !== initVal) return true
+    }
+    return false
+  })()
 
   // === CONVERTIR RAWDATA → CLAVES PLANAS DEL FIELD_MAP ===
   // Si el rawData ya tiene claves planas (NOTA.CA.1, SECCION.1, PG.GRUPO.1, etc.),

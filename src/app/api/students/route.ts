@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q') || ''
+    const cedulaExact = searchParams.get('cedula_exact') || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const plan = searchParams.get('plan') || 'vigente'
@@ -34,6 +35,14 @@ export async function GET(request: NextRequest) {
     const planFilter = { plan }
 
     const db = getDb(plan)
+
+    // Verificación exacta de cédula para duplicados
+    if (cedulaExact) {
+      const existing = await db.student.findFirst({
+        where: { ...planFilter, cedula: cedulaExact.trim() },
+      })
+      return NextResponse.json({ exists: !!existing, student: existing || null })
+    }
 
     if (!q) {
       const [students, total] = await Promise.all([

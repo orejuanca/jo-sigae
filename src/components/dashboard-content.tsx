@@ -9,7 +9,7 @@ type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
 interface CmdButton {
   sr: number; sc: number; label: string; color: string; bgColor: string; fontSize: number
-  disabledColor?: string; disabledBgColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean; disableOnDerogado?: boolean
+  disabledColor?: string; disabledBgColor?: string; activeColor?: string; requiresEdit?: boolean; disableOnEdit?: boolean; disableOnDerogado?: boolean; disableOnNewData?: boolean; requiresNewData?: boolean
   hoverColor1?: string; hoverColor2?: string; hoverShadowColor?: string; downShadowColor?: string
   mergeSpan?: { er: number; ec: number }
 }
@@ -229,9 +229,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }, [])
 
   // === AUTO-SAVE (localStorage inmediato + BD con debounce) ===
-  // NO guardar cuando editMode=true (datos de alumno cargado temporalmente)
+  // NO guardar cuando editMode=true o hasNewData=true (datos temporales)
   useEffect(() => {
-    if (!loaded || !dbLoaded || editMode) return
+    if (!loaded || !dbLoaded || editMode || hasNewData) return
     // Guardar en localStorage inmediatamente (caché rápido)
     const timer = setTimeout(() => {
       doSave(plan)
@@ -241,9 +241,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
   // === GUARDAR EN BD con debounce de 3 segundos (no en cada cambio) ===
-  // NO guardar cuando editMode=true (datos de alumno cargado temporalmente)
+  // NO guardar cuando editMode=true o hasNewData=true (datos temporales)
   useEffect(() => {
-    if (!loaded || !dbLoaded || editMode) return
+    if (!loaded || !dbLoaded || editMode || hasNewData) return
     const timer = setTimeout(() => {
       saveToDb(plan, stateRef.current)
     }, 3000)
@@ -251,9 +251,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
 
   // === SAVE ON BEFORE UNLOAD (guarda en ambos) ===
-  // NO guardar cuando editMode=true (datos de alumno cargado temporalmente)
+  // NO guardar cuando editMode=true o hasNewData=true (datos temporales)
   useEffect(() => {
-    if (!loaded || !dbLoaded || editMode) return
+    if (!loaded || !dbLoaded || editMode || hasNewData) return
     const handler = () => {
       try {
         const json = JSON.stringify(stateRef.current)
@@ -264,7 +264,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
-  }, [loaded, dbLoaded, plan, editMode])
+  }, [loaded, dbLoaded, plan, editMode, hasNewData])
 
   // === RESTORE (restaurar plantilla original y limpiar BD + localStorage) ===
   const handleRestore = () => {
@@ -588,21 +588,36 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const initialCellsRef = useRef<string[][] | null>(null)
   const initialRawDataRef = useRef<string | null>(null)
 
+  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
+  const hasNewData = !editMode && initialCellsRef.current && (() => {
+    const init = initialCellsRef.current!
+    const cur = stateRef.current.cells
+    for (const [campo, celda] of FIELD_MAP) {
+      const pos = cellRef(celda)
+      if (!pos) continue
+      const initVal = (init[pos.r]?.[pos.c] || '').trim()
+      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
+      if (curVal && curVal !== initVal) return true
+    }
+    return false
+  })()
+
   // Botones de comando
   const CMD_BUTTONS: CmdButton[] = [
     { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
+      disableOnNewData: true,
       hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)' },
     { sr: 9, sc: 25, label: 'Guardar Editado', color: '#90EE90', bgColor: '#ffffff', fontSize: 16,
       disabledColor: '#999999', disabledBgColor: '#f5f5f5', activeColor: '#32CD32', requiresEdit: true,
       hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)' },
     { sr: 7, sc: 30, label: 'Guardar Datos', color: '#5BA8FF', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true,
+      disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true, requiresNewData: true,
       hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)' },
     { sr: 9, sc: 30, label: 'Eliminar Datos', color: '#FF4444', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
+      disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true, disableOnNewData: true,
       hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)' },
     { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
-      disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true,
+      disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnDerogado: true, disableOnNewData: true,
       hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
       mergeSpan: { er: 10, ec: 29 } },
 
@@ -1035,6 +1050,100 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
   }, [plan]) // Sin 'cells' ni 'restoreInitialState' — usa setCells(prev=>) y no necesita restoreInitialState aquí
 
+  // === GUARDAR NUEVO REGISTRO EN BD ===
+  // Valida cédula (formato + duplicado), crea el registro y restaura el dashboard.
+  const saveNewStudent = useCallback(async () => {
+    const currentCells = stateRef.current.cells
+
+    // 1. Leer cédula de M5
+    const m5 = cellRef('M5')
+    const cedula = m5 ? (currentCells[m5.r]?.[m5.c] || '').trim() : ''
+
+    // 2. Validar que no esté vacía o con asteriscos
+    if (!cedula || cedula.includes('*')) {
+      const msg = 'La cédula está vacía o contiene asteriscos.\nDebe tener el formato: V 12345678 (letra + espacio + 8 u 11 dígitos).\n¿Corregir o cancelar?'
+      if (!window.confirm(msg)) { restoreInitialState(); return }
+      return
+    }
+
+    // 3. Validar formato: letra (V,E,P,D,C) + espacio + 8 u 11 dígitos
+    const cedulaRegex = /^[VEPDC] \\d{8}$|^[VEPDC] \\d{11}$/
+    if (!cedulaRegex.test(cedula)) {
+      const msg = `Formato de cédula inválido: "${cedula}"\nDebe ser: Letra (V,E,P,D,C) + espacio + 8 u 11 dígitos.\nEjemplos: V 12345678 o E 12345678901\n¿Corregir o cancelar?`
+      if (!window.confirm(msg)) { restoreInitialState(); return }
+      return
+    }
+
+    // 4. Verificar duplicado en BD
+    try {
+      setSaveStatus('VERIFICANDO CÉDULA...')
+      const checkRes = await fetch(`/api/students?cedula_exact=${encodeURIComponent(cedula)}&plan=${plan}`)
+      const checkData = await checkRes.json()
+      if (checkData.exists) {
+        setSaveStatus('')
+        const msg = `Ya existe un alumno con la cédula: "${cedula}"\n¿Corregir o cancelar?`
+        if (!window.confirm(msg)) { restoreInitialState(); return }
+        return
+      }
+    } catch {
+      setSaveStatus('')
+      const msg = 'No se pudo verificar si la cédula ya existe.\n¿Intentar de nuevo o cancelar?'
+      if (!window.confirm(msg)) { restoreInitialState(); return }
+      return
+    }
+
+    // 5. Construir rawData desde todas las celdas del FIELD_MAP
+    const rawData: Record<string, string> = {}
+    for (const [campo, celda] of FIELD_MAP) {
+      const pos = cellRef(celda)
+      if (pos) rawData[campo] = currentCells[pos.r]?.[pos.c] || ''
+    }
+
+    // 6. Campos directos del estudiante
+    const m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8')
+    const m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
+
+    const newStudent = {
+      cedula,
+      apellidos: m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : '',
+      nombres: m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : '',
+      fechaNacimiento: m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : '',
+      pais: m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA',
+      estado: m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : '',
+      municipio: m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : '',
+      rawData: JSON.stringify(rawData),
+      plan,
+    }
+
+    // 7. Crear en BD
+    try {
+      setSaveStatus('GUARDANDO NUEVO REGISTRO...')
+      const res = await fetch('/api/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStudent),
+      })
+      const result = await res.json()
+
+      if (!res.ok) {
+        setSaveStatus('')
+        const msg = `Error al guardar: ${result.error || 'desconocido'}\n¿Corregir o cancelar?`
+        if (!window.confirm(msg)) { restoreInitialState(); return }
+        return
+      }
+
+      // 8. Éxito: restaurar dashboard
+      setSaveStatus('NUEVO REGISTRO GUARDADO ✓')
+      setTimeout(() => setSaveStatus(''), 3000)
+      restoreInitialState()
+    } catch (e) {
+      console.error('[SAVE NEW ERROR]', e)
+      setSaveStatus('')
+      const msg = 'Error de conexión al guardar el nuevo registro.\n¿Intentar de nuevo o cancelar?'
+      if (!window.confirm(msg)) { restoreInitialState(); return }
+    }
+  }, [plan, restoreInitialState])
+
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
   // Solo actualiza los campos del FIELD_MAP dentro del rawData existente,
   // SIN destruir las claves numéricas ni otros datos que no están en el dashboard.
@@ -1245,7 +1354,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const isPrintCell = r === PRINT_ROW && c === PRINT_COL
                 const cmdBtn = isCmdBtn(r, c, cells[r]?.[c])
                 const isBtnCell = isSwitchCell || isPrintCell || !!cmdBtn
-                const cmdDisabled = cmdBtn ? ((cmdBtn.requiresEdit && !editMode) || (cmdBtn.disableOnEdit && editMode) || (cmdBtn.disableOnDerogado && plan === 'derogado')) : false
+                const cmdDisabled = cmdBtn ? ((cmdBtn.requiresEdit && !editMode) || (cmdBtn.disableOnEdit && editMode) || (cmdBtn.disableOnDerogado && plan === 'derogado') || (cmdBtn.disableOnNewData && hasNewData) || (cmdBtn.requiresNewData && !hasNewData)) : false
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
@@ -1307,6 +1416,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                           e.stopPropagation()
                           if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
                           else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
+                          else if (cmdBtn.label === 'Guardar Datos') { saveNewStudent() }
                           else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') }
                         }}
                         onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}

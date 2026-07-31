@@ -72,6 +72,76 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const INIT_COLS = tpl.INIT_COLS
   const INIT_ROWS = tpl.INIT_ROWS
 
+  // === FUNCIÓN DE CELDA: convierte 'M5' → {r:4, c:12} ===
+  const cellRef = (ref: string): {r:number;c:number} | null => {
+    const match = ref.trim().match(/^([A-Z]+)(\d+)$/)
+    if (!match) return null
+    let col = 0
+    for (let i = 0; i < match[1].length; i++) col = col * 26 + (match[1].charCodeAt(i) - 64)
+    return { r: parseInt(match[2]) - 1, c: col - 1 }
+  }
+
+  // === MAPEO CAMPO_BD → CELDA DASHBOARD ===
+  const FIELD_MAP: [string, string][] = [
+    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
+    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
+    ['INST.1','C15'],['LOCAL.1','I15'],['EF.1','L15'],
+    ['INST.2','C16'],['LOCAL.2','I16'],['EF.2','L16'],
+    ['INST.3','C17'],['LOCAL.3','I17'],['EF.3','L17'],
+    ['INST.4','C18'],['LOCAL.4','I18'],['EF.4','L18'],
+    ['INST.5','C19'],['LOCAL.5','I19'],['EF.5','L19'],
+    ['NOTA.CA.1','T15'],['EVAL.CA.1','U15'],['MES.CA.1','V15'],['AÑO.CA.1','W15'],['INST.CA.1','X15'],
+    ['NOTA.IN.1','T16'],['EVAL.IN.1','U16'],['MES.IN.1','V16'],['AÑO.IN.1','W16'],['INST.IN.1','X16'],
+    ['NOTA.MA.1','T17'],['EVAL.MA.1','U17'],['MES.MA.1','V17'],['AÑO.MA.1','W17'],['INST.MA.1','X17'],
+    ['NOTA.EF.1','T18'],['EVAL.EF.1','U18'],['MES.EF.1','V18'],['AÑO.EF.1','W18'],['INST.EF.1','X18'],
+    ['NOTA.AP.1','T19'],['EVAL.AP.1','U19'],['MES.AP.1','V19'],['AÑO.AP.1','W19'],['INST.AP.1','X19'],
+    ['NOTA.CN.1','T20'],['EVAL.CN.1','U20'],['MES.CN.1','V20'],['AÑO.CN.1','W20'],['INST.CN.1','X20'],
+    ['NOTA.GH.1','T21'],['EVAL.GH.1','U21'],['MES.GH.1','V21'],['AÑO.GH.1','W21'],['INST.GH.1','X21'],
+    ['NOTA.CA.2','AA15'],['EVAL.CA.2','AB15'],['MES.CA.2','AC15'],['AÑO.CA.2','AD15'],['INST.CA.2','AE15'],
+    ['NOTA.IN.2','AA16'],['EVAL.IN.2','AB16'],['MES.IN.2','AC16'],['AÑO.IN.2','AD16'],['INST.IN.2','AE16'],
+    ['NOTA.MA.2','AA17'],['EVAL.MA.2','AB17'],['MES.MA.2','AC17'],['AÑO.MA.2','AD17'],['INST.MA.2','AE17'],
+    ['NOTA.EF.2','AA18'],['EVAL.EF.2','AB18'],['MES.EF.2','AC18'],['AÑO.EF.2','AD18'],['INST.EF.2','AE18'],
+    ['NOTA.AP.2','AA19'],['EVAL.AP.2','AB19'],['MES.AP.2','AC19'],['AÑO.AP.2','AD19'],['INST.AP.2','AE19'],
+    ['NOTA.CN.2','AA20'],['EVAL.CN.2','AB20'],['MES.CN.2','AC20'],['AÑO.CN.2','AD20'],['INST.CN.2','AE20'],
+    ['NOTA.GH.2','AA21'],['EVAL.GH.2','AB21'],['MES.GH.2','AC21'],['AÑO.GH.2','AD21'],['INST.GH.2','AE21'],
+    ['NOTA.CA.3','H25'],['EVAL.CA.3','I25'],['MES.CA.3','J25'],['AÑO.CA.3','K25'],['INST.CA.3','L25'],
+    ['NOTA.IN.3','H26'],['EVAL.IN.3','I26'],['MES.IN.3','J26'],['AÑO.CA.3','K26'],['INST.IN.3','L26'],
+    ['NOTA.MA.3','H27'],['EVAL.MA.3','I27'],['MES.MA.3','J27'],['AÑO.CA.3','K27'],['INST.MA.3','L27'],
+    ['NOTA.EF.3','H28'],['EVAL.EF.3','I28'],['MES.EF.3','J28'],['AÑO.EF.3','K28'],['INST.EF.3','L28'],
+    ['NOTA.FI.3','H29'],['EVAL.FI.3','I29'],['MES.FI.3','J29'],['AÑO.EF.3','K29'],['INST.FI.3','L29'],
+    ['NOTA.QU.3','H30'],['EVAL.QU.3','I30'],['MES.QU.3','J30'],['AÑO.QU.3','K30'],['INST.QU.3','L30'],
+    ['NOTA.BI.3','H31'],['EVAL.BI.3','I31'],['MES.BI.3','J31'],['AÑO.BI.3','K31'],['INST.BI.3','L31'],
+    ['NOTA.GH.3','H32'],['EVAL.GH.3','I32'],['MES.GH.3','J32'],['AÑO.GH.3','K32'],['INST.GH.3','L32'],
+    ['NOTA.CA.4','T25'],['EVAL.CA.4','U25'],['MES.CA.4','V25'],['AÑO.CA.4','W25'],['INST.CA.4','X25'],
+    ['NOTA.IN.4','T26'],['EVAL.IN.4','U26'],['MES.IN.4','V26'],['AÑO.IN.4','W26'],['INST.IN.4','X26'],
+    ['NOTA.MA.4','T27'],['EVAL.MA.4','U27'],['MES.MA.4','V27'],['AÑO.MA.4','W27'],['INST.MA.4','X27'],
+    ['NOTA.EF.4','T28'],['EVAL.EF.4','U28'],['MES.EF.4','V28'],['AÑO.EF.4','W28'],['INST.EF.4','X28'],
+    ['NOTA.FI.4','T29'],['EVAL.FI.4','U29'],['MES.FI.4','V29'],['AÑO.EF.4','W29'],['INST.FI.4','X29'],
+    ['NOTA.QU.4','T30'],['EVAL.QU.4','U30'],['MES.QU.4','V30'],['AÑO.QU.4','W30'],['INST.QU.4','X30'],
+    ['NOTA.BI.4','T31'],['EVAL.BI.4','U31'],['MES.BI.4','V31'],['AÑO.BI.4','W31'],['INST.BI.4','X31'],
+    ['NOTA.GH.4','T32'],['EVAL.GH.4','U32'],['MES.GH.4','V32'],['AÑO.GH.4','W32'],['INST.GH.4','X32'],
+    ['NOTA.FS.4','T33'],['EVAL.FS.4','U33'],['MES.FS.4','V33'],['AÑO.FS.4','W33'],['INST.FS.4','X33'],
+    ['NOTA.CA.5','AA25'],['EVAL.CA.5','AB25'],['MES.CA.5','AC25'],['AÑO.CA.5','AD25'],['INST.CA.5','AE25'],
+    ['NOTA.IN.5','AA26'],['EVAL.IN.5','AB26'],['MES.IN.5','AC26'],['AÑO.IN.5','AD26'],['INST.IN.5','AE26'],
+    ['NOTA.MA.5','AA27'],['EVAL.MA.5','AB27'],['MES.MA.5','AC27'],['AÑO.MA.5','AD27'],['INST.MA.5','AE27'],
+    ['NOTA.EF.5','AA28'],['EVAL.EF.5','AB28'],['MES.EF.5','AC28'],['AÑO.EF.5','AD28'],['INST.EF.5','AE28'],
+    ['NOTA.FI.5','AA29'],['EVAL.FI.5','AB29'],['MES.FI.5','AC29'],['AÑO.FA.5','AD29'],['INST.FI.5','AE29'],
+    ['NOTA.QU.5','AA30'],['EVAL.QU.5','AB30'],['MES.QU.5','AC30'],['AÑO.QU.5','AD30'],['INST.QU.5','AE30'],
+    ['NOTA.BI.5','AA31'],['EVAL.BI.5','AB31'],['MES.BI.5','AC31'],['AÑO.BI.5','AD31'],['INST.BI.5','AE31'],
+    ['NOTA.CT.5','AA32'],['EVAL.CT.5','AB32'],['MES.CT.5','AC32'],['AÑO.CT.5','AD32'],['INST.CT.5','AE32'],
+    ['NOTA.GH.5','AA33'],['EVAL.GH.5','AB33'],['MES.GH.5','AC33'],['AÑO.GH.5','AD33'],['INST.GH.5','AE33'],
+    ['NOTA.FS.5','AA34'],['EVAL.FS.5','AB34'],['MES.FS.5','AC34'],['AÑO.FS.5','AD34'],['INST.FS.5','AE34'],
+    ['OC.LITERAL.1','AH15'],['OC.LITERAL.2','AH16'],['OC.LITERAL.3','AH17'],['OC.LITERAL.4','AH18'],['OC.LITERAL.5','AH19'],
+    ['PG.GRUPO.1','AH24'],['PG.GRUPO.2','AH25'],['PG.GRUPO.3','AH26'],['PG.GRUPO.4','AH27'],['PG.GRUPO.5','AH28'],
+    ['PG.LITERAL.1','AL15'],['PG.LITERAL.2','AL16'],['PG.LITERAL.3','AL17'],['PG.LITERAL.4','AL18'],['PG.LITERAL.5','AL19'],
+    ['OBS.CERT.L1','F35'],['OBS.CERT.L2','B36'],['OBS.NOTAS.L1','F39'],['OBS.NOTAS.L2','B40'],['OBS.NOTAS.L3','B41'],
+    ['SECCION.1','X13'],['SECCION.2','AE13'],['SECCION.3','L23'],['SECCION.4','X23'],['SECCION.5','AE23'],
+    ['TITULO.SERIAL','AJ31'],['TITULO.EXPEDICION','AJ32'],['TITULO.EGRESO','AJ33'],['CERT.EXPEDICION','AJ34'],
+    ['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'],
+    ['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'],
+  ]
+  const PROMEDIO_CELL = cellRef('AJ35')
+
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
   const [dbLoaded, setDbLoaded] = useState(false)
@@ -588,6 +658,20 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const initialCellsRef = useRef<string[][] | null>(null)
   const initialRawDataRef = useRef<string | null>(null)
 
+  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
+  const hasNewData = !editMode && initialCellsRef.current && (() => {
+    const init = initialCellsRef.current!
+    const cur = stateRef.current.cells
+    for (const [campo, celda] of FIELD_MAP) {
+      const pos = cellRef(celda)
+      if (!pos) continue
+      const initVal = (init[pos.r]?.[pos.c] || '').trim()
+      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
+      if (curVal && curVal !== initVal) return true
+    }
+    return false
+  })()
+
   // Botones de comando
   const CMD_BUTTONS: CmdButton[] = [
     { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
@@ -619,15 +703,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return null
   }
 
-  // === FUNCIÓN DE CELDA: convierte 'M5' → {r:4, c:12} ===
-  const cellRef = (ref: string): {r:number;c:number} | null => {
-    const match = ref.trim().match(/^([A-Z]+)(\d+)$/)
-    if (!match) return null
-    let col = 0
-    for (let i = 0; i < match[1].length; i++) col = col * 26 + (match[1].charCodeAt(i) - 64)
-    return { r: parseInt(match[2]) - 1, c: col - 1 }
-  }
-
   // === Formato DD/MM/AAAA (sin problema de zona horaria) ===
   const fmtDate = (val: unknown): string => {
     if (!val) return ''
@@ -639,81 +714,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) { try { const p = s.substring(0,10).split('-'); return `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}` } catch {} }
     return s
   }
-
-  // === MAPEO CAMPO_BD → CELDA DASHBOARD ===
-  const FIELD_MAP: [string, string][] = [
-    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
-    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
-    ['INST.1','C15'],['LOCAL.1','I15'],['EF.1','L15'],
-    ['INST.2','C16'],['LOCAL.2','I16'],['EF.2','L16'],
-    ['INST.3','C17'],['LOCAL.3','I17'],['EF.3','L17'],
-    ['INST.4','C18'],['LOCAL.4','I18'],['EF.4','L18'],
-    ['INST.5','C19'],['LOCAL.5','I19'],['EF.5','L19'],
-    ['NOTA.CA.1','T15'],['EVAL.CA.1','U15'],['MES.CA.1','V15'],['AÑO.CA.1','W15'],['INST.CA.1','X15'],
-    ['NOTA.IN.1','T16'],['EVAL.IN.1','U16'],['MES.IN.1','V16'],['AÑO.IN.1','W16'],['INST.IN.1','X16'],
-    ['NOTA.MA.1','T17'],['EVAL.MA.1','U17'],['MES.MA.1','V17'],['AÑO.MA.1','W17'],['INST.MA.1','X17'],
-    ['NOTA.EF.1','T18'],['EVAL.EF.1','U18'],['MES.EF.1','V18'],['AÑO.EF.1','W18'],['INST.EF.1','X18'],
-    ['NOTA.AP.1','T19'],['EVAL.AP.1','U19'],['MES.AP.1','V19'],['AÑO.AP.1','W19'],['INST.AP.1','X19'],
-    ['NOTA.CN.1','T20'],['EVAL.CN.1','U20'],['MES.CN.1','V20'],['AÑO.CN.1','W20'],['INST.CN.1','X20'],
-    ['NOTA.GH.1','T21'],['EVAL.GH.1','U21'],['MES.GH.1','V21'],['AÑO.GH.1','W21'],['INST.GH.1','X21'],
-    ['NOTA.CA.2','AA15'],['EVAL.CA.2','AB15'],['MES.CA.2','AC15'],['AÑO.CA.2','AD15'],['INST.CA.2','AE15'],
-    ['NOTA.IN.2','AA16'],['EVAL.IN.2','AB16'],['MES.IN.2','AC16'],['AÑO.IN.2','AD16'],['INST.IN.2','AE16'],
-    ['NOTA.MA.2','AA17'],['EVAL.MA.2','AB17'],['MES.MA.2','AC17'],['AÑO.MA.2','AD17'],['INST.MA.2','AE17'],
-    ['NOTA.EF.2','AA18'],['EVAL.EF.2','AB18'],['MES.EF.2','AC18'],['AÑO.EF.2','AD18'],['INST.EF.2','AE18'],
-    ['NOTA.AP.2','AA19'],['EVAL.AP.2','AB19'],['MES.AP.2','AC19'],['AÑO.AP.2','AD19'],['INST.AP.2','AE19'],
-    ['NOTA.CN.2','AA20'],['EVAL.CN.2','AB20'],['MES.CN.2','AC20'],['AÑO.CN.2','AD20'],['INST.CN.2','AE20'],
-    ['NOTA.GH.2','AA21'],['EVAL.GH.2','AB21'],['MES.GH.2','AC21'],['AÑO.GH.2','AD21'],['INST.GH.2','AE21'],
-    ['NOTA.CA.3','H25'],['EVAL.CA.3','I25'],['MES.CA.3','J25'],['AÑO.CA.3','K25'],['INST.CA.3','L25'],
-    ['NOTA.IN.3','H26'],['EVAL.IN.3','I26'],['MES.IN.3','J26'],['AÑO.IN.3','K26'],['INST.IN.3','L26'],
-    ['NOTA.MA.3','H27'],['EVAL.MA.3','I27'],['MES.MA.3','J27'],['AÑO.MA.3','K27'],['INST.MA.3','L27'],
-    ['NOTA.EF.3','H28'],['EVAL.EF.3','I28'],['MES.EF.3','J28'],['AÑO.EF.3','K28'],['INST.EF.3','L28'],
-    ['NOTA.FI.3','H29'],['EVAL.FI.3','I29'],['MES.FI.3','J29'],['AÑO.FI.3','K29'],['INST.FI.3','L29'],
-    ['NOTA.QU.3','H30'],['EVAL.QU.3','I30'],['MES.QU.3','J30'],['AÑO.QU.3','K30'],['INST.QU.3','L30'],
-    ['NOTA.BI.3','H31'],['EVAL.BI.3','I31'],['MES.BI.3','J31'],['AÑO.BI.3','K31'],['INST.BI.3','L31'],
-    ['NOTA.GH.3','H32'],['EVAL.GH.3','I32'],['MES.GH.3','J32'],['AÑO.GH.3','K32'],['INST.GH.3','L32'],
-    ['NOTA.CA.4','T25'],['EVAL.CA.4','U25'],['MES.CA.4','V25'],['AÑO.CA.4','W25'],['INST.CA.4','X25'],
-    ['NOTA.IN.4','T26'],['EVAL.IN.4','U26'],['MES.IN.4','V26'],['AÑO.IN.4','W26'],['INST.IN.4','X26'],
-    ['NOTA.MA.4','T27'],['EVAL.MA.4','U27'],['MES.MA.4','V27'],['AÑO.MA.4','W27'],['INST.MA.4','X27'],
-    ['NOTA.EF.4','T28'],['EVAL.EF.4','U28'],['MES.EF.4','V28'],['AÑO.EF.4','W28'],['INST.EF.4','X28'],
-    ['NOTA.FI.4','T29'],['EVAL.FI.4','U29'],['MES.FI.4','V29'],['AÑO.FI.4','W29'],['INST.FI.4','X29'],
-    ['NOTA.QU.4','T30'],['EVAL.QU.4','U30'],['MES.QU.4','V30'],['AÑO.QU.4','W30'],['INST.QU.4','X30'],
-    ['NOTA.BI.4','T31'],['EVAL.BI.4','U31'],['MES.BI.4','V31'],['AÑO.BI.4','W31'],['INST.BI.4','X31'],
-    ['NOTA.GH.4','T32'],['EVAL.GH.4','U32'],['MES.GH.4','V32'],['AÑO.GH.4','W32'],['INST.GH.4','X32'],
-    ['NOTA.FS.4','T33'],['EVAL.FS.4','U33'],['MES.FS.4','V33'],['AÑO.FS.4','W33'],['INST.FS.4','X33'],
-    ['NOTA.CA.5','AA25'],['EVAL.CA.5','AB25'],['MES.CA.5','AC25'],['AÑO.CA.5','AD25'],['INST.CA.5','AE25'],
-    ['NOTA.IN.5','AA26'],['EVAL.IN.5','AB26'],['MES.IN.5','AC26'],['AÑO.IN.5','AD26'],['INST.IN.5','AE26'],
-    ['NOTA.MA.5','AA27'],['EVAL.MA.5','AB27'],['MES.MA.5','AC27'],['AÑO.MA.5','AD27'],['INST.MA.5','AE27'],
-    ['NOTA.EF.5','AA28'],['EVAL.EF.5','AB28'],['MES.EF.5','AC28'],['AÑO.EF.5','AD28'],['INST.EF.5','AE28'],
-    ['NOTA.FI.5','AA29'],['EVAL.FI.5','AB29'],['MES.FI.5','AC29'],['AÑO.FI.5','AD29'],['INST.FI.5','AE29'],
-    ['NOTA.QU.5','AA30'],['EVAL.QU.5','AB30'],['MES.QU.5','AC30'],['AÑO.QU.5','AD30'],['INST.QU.5','AE30'],
-    ['NOTA.BI.5','AA31'],['EVAL.BI.5','AB31'],['MES.BI.5','AC31'],['AÑO.BI.5','AD31'],['INST.BI.5','AE31'],
-    ['NOTA.CT.5','AA32'],['EVAL.CT.5','AB32'],['MES.CT.5','AC32'],['AÑO.CT.5','AD32'],['INST.CT.5','AE32'],
-    ['NOTA.GH.5','AA33'],['EVAL.GH.5','AB33'],['MES.GH.5','AC33'],['AÑO.GH.5','AD33'],['INST.GH.5','AE33'],
-    ['NOTA.FS.5','AA34'],['EVAL.FS.5','AB34'],['MES.FS.5','AC34'],['AÑO.FS.5','AD34'],['INST.FS.5','AE34'],
-    ['OC.LITERAL.1','AH15'],['OC.LITERAL.2','AH16'],['OC.LITERAL.3','AH17'],['OC.LITERAL.4','AH18'],['OC.LITERAL.5','AH19'],
-    ['PG.GRUPO.1','AH24'],['PG.GRUPO.2','AH25'],['PG.GRUPO.3','AH26'],['PG.GRUPO.4','AH27'],['PG.GRUPO.5','AH28'],
-    ['PG.LITERAL.1','AL15'],['PG.LITERAL.2','AL16'],['PG.LITERAL.3','AL17'],['PG.LITERAL.4','AL18'],['PG.LITERAL.5','AL19'],
-    ['OBS.CERT.L1','F35'],['OBS.CERT.L2','B36'],['OBS.NOTAS.L1','F39'],['OBS.NOTAS.L2','B40'],['OBS.NOTAS.L3','B41'],
-    ['SECCION.1','X13'],['SECCION.2','AE13'],['SECCION.3','L23'],['SECCION.4','X23'],['SECCION.5','AE23'],
-    ['TITULO.SERIAL','AJ31'],['TITULO.EXPEDICION','AJ32'],['TITULO.EGRESO','AJ33'],['CERT.EXPEDICION','AJ34'],
-    ['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'],
-    ['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'],
-  ]
-  const PROMEDIO_CELL = cellRef('AJ35')
-
-  // Detectar si hay datos nuevos (diferentes al estado inicial) y no estamos en editMode
-  const hasNewData = !editMode && initialCellsRef.current && (() => {
-    const init = initialCellsRef.current!
-    const cur = stateRef.current.cells
-    for (const [campo, celda] of FIELD_MAP) {
-      const pos = cellRef(celda)
-      if (!pos) continue
-      const initVal = (init[pos.r]?.[pos.c] || '').trim()
-      const curVal = (cur[pos.r]?.[pos.c] || '').trim()
-      if (curVal && curVal !== initVal) return true
-    }
-    return false
-  })()
 
   // === CONVERTIR RAWDATA → CLAVES PLANAS DEL FIELD_MAP ===
   // Si el rawData ya tiene claves planas (NOTA.CA.1, SECCION.1, PG.GRUPO.1, etc.),

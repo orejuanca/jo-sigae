@@ -592,18 +592,31 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return out
   }
 
+  // === URL base según plan ===
+  const apiBase = plan === 'vigente' ? '/api/plan-vigente' : '/api/students'
+
   // === BUSCAR ESTUDIANTE ===
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
-    try { const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`); const data = await res.json(); setSearchResults(data.students || []) } catch { setSearchResults([]) }
+    try {
+      const url = plan === 'vigente'
+        ? `/api/plan-vigente?q=${encodeURIComponent(q.trim())}&limit=10`
+        : `/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`
+      const res = await fetch(url); const data = await res.json(); setSearchResults(data.students || [])
+    } catch { setSearchResults([]) }
     setSearching(false)
   }, [plan])
 
   const doDeleteSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setDeleteResults([]); return }
     setDeleteSearching(true)
-    try { const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`); const data = await res.json(); setDeleteResults(data.students || []) } catch { setDeleteResults([]) }
+    try {
+      const url = plan === 'vigente'
+        ? `/api/plan-vigente?q=${encodeURIComponent(q.trim())}&limit=10`
+        : `/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`
+      const res = await fetch(url); const data = await res.json(); setDeleteResults(data.students || [])
+    } catch { setDeleteResults([]) }
     setDeleteSearching(false)
   }, [plan])
 
@@ -615,7 +628,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const doDeleteStudent = useCallback(async (studentId: string) => {
     try {
       setSaveStatus('ELIMINANDO...')
-      const res = await fetch(`/api/students/${studentId}?plan=${plan}`, { method: 'DELETE' })
+      const deleteUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${studentId}`
+        : `/api/students/${studentId}?plan=${plan}`
+      const res = await fetch(deleteUrl, { method: 'DELETE' })
       if (!res.ok) { setSaveStatus('ERROR AL ELIMINAR'); setTimeout(() => setSaveStatus(''), 3000); return }
       setSaveStatus('REGISTRO ELIMINADO ✓'); setTimeout(() => setSaveStatus(''), 3000)
       setDeleteConfirm(null); setDeleteQuery(''); setDeleteResults([]); restoreInitialState()
@@ -625,7 +641,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
     try {
-      const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
+      const loadUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${studentId}`
+        : `/api/students/${studentId}?plan=${plan}`
+      const res = await fetch(loadUrl)
       if (!res.ok) return
       const student = await res.json()
       if (!student || student.error) return
@@ -669,7 +688,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (!cedulaRegex.test(cedula)) { if (!window.confirm(`Formato de cédula inválido: "${cedula}"\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
     try {
       setSaveStatus('VERIFICANDO CÉDULA...')
-      const checkRes = await fetch(`/api/students?cedula_exact=${encodeURIComponent(cedula)}&plan=${plan}`)
+      const checkUrl = plan === 'vigente'
+        ? `/api/plan-vigente?cedula_exact=${encodeURIComponent(cedula)}`
+        : `/api/students?cedula_exact=${encodeURIComponent(cedula)}&plan=${plan}`
+      const checkRes = await fetch(checkUrl)
       const checkData = await checkRes.json()
       if (checkData.exists) { setSaveStatus(''); if (!window.confirm(`Ya existe un alumno con la cédula: "${cedula}"\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
     } catch { setSaveStatus(''); if (!window.confirm('No se pudo verificar si la cédula ya existe.\n¿Intentar de nuevo o cancelar?')) { restoreInitialState(); return }; return }
@@ -679,7 +701,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     const newStudent = { cedula, apellidos: m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : '', nombres: m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : '', fechaNacimiento: m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : '', pais: m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA', estado: m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : '', municipio: m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : '', rawData: JSON.stringify(rawData), plan }
     try {
       setSaveStatus('GUARDANDO NUEVO REGISTRO...')
-      const res = await fetch('/api/students', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newStudent) })
+      const postUrl = plan === 'vigente' ? '/api/plan-vigente' : '/api/students'
+      const res = await fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newStudent) })
       const result = await res.json()
       if (!res.ok) { setSaveStatus(''); if (!window.confirm(`Error al guardar: ${result.error || 'desconocido'}\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
       setSaveStatus('NUEVO REGISTRO GUARDADO ✓'); setTimeout(() => setSaveStatus(''), 3000); restoreInitialState()
@@ -691,7 +714,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (!editingStudentId) return
     try {
       const currentCells = stateRef.current.cells
-      const studentData = await fetch(`/api/students/${editingStudentId}?plan=${plan}`)
+      const getEditUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${editingStudentId}`
+        : `/api/students/${editingStudentId}?plan=${plan}`
+      const studentData = await fetch(getEditUrl)
       const student = await studentData.json()
       let originalRaw: Record<string, unknown> = {}
       try { originalRaw = JSON.parse(student.rawData || '{}') } catch {}
@@ -708,7 +734,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       if (m10) updateData.estado = currentCells[m10.r]?.[m10.c] || ""
       if (m11) updateData.municipio = currentCells[m11.r]?.[m11.c] || ""
       updateData.rawData = JSON.stringify(originalRaw)
-      await fetch(`/api/students/${editingStudentId}?plan=${plan}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData) })
+      const putUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${editingStudentId}`
+        : `/api/students/${editingStudentId}?plan=${plan}`
+      await fetch(putUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData) })
       restoreInitialState(); setSaveStatus('DATOS GUARDADOS ✓'); setTimeout(() => setSaveStatus(''), 3000)
     } catch (e) { console.error('[SAVE EDITED ERROR]', e); setSaveStatus('ERROR AL GUARDAR'); setTimeout(() => setSaveStatus(''), 3000) }
   }, [editingStudentId, restoreInitialState, plan])

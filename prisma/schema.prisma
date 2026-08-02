@@ -150,3 +150,43 @@ model CentroEscolar {
   @@index([nombre])
   @@index([ef])
 }
+
+// Tabla independiente para Plan Vigente — usada solo por el dashboard plan vigente
+// Almacena los datos completos de cada alumno (261 columnas del Excel)
+model PlanVigente {
+  id              String   @id @default(cuid())
+  cedula          String   @unique
+  fechaNacimiento String?
+  apellidos       String
+  nombres         String
+  pais            String   @default("VENEZUELA")
+  estado          String   @default("")
+  municipio       String   @default("")
+  rawData         String   @default("{}")  // JSON con todas las 261 columnas del Excel
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([cedula])
+  @@index([apellidos])
+  @@index([nombres])
+}
+
+// Tabla independiente para Plan Derogado — usada solo por el dashboard plan derogado
+// Almacena los datos completos de cada alumno (348 columnas del Excel)
+model PlanDerogado {
+  id              String   @id @default(cuid())
+  cedula          String   @unique
+  fechaNacimiento String?
+  apellidos       String
+  nombres         String
+  pais            String   @default("VENEZUELA")
+  estado          String   @default("")
+  municipio       String   @default("")
+  rawData         String   @default("{}")  // JSON con todas las columnas del Excel
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([cedula])
+  @@index([apellidos])
+  @@index([nombres])
+}

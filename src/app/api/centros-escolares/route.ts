@@ -46,11 +46,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El nombre del plantel es requerido' }, { status: 400 })
     }
 
+    // Unicidad: si codigo tiene valor, debe ser único
+    if (codigo && codigo.trim()) {
+      const existing = await prisma.centroEscolar.findFirst({ where: { codigo: codigo.trim() } })
+      if (existing) {
+        return NextResponse.json({ error: `Ya existe un centro con código ${codigo.trim()}` }, { status: 409 })
+      }
+    }
+    // Si codigo vacío: nombre+localidad no pueden repetirse
+    if (!codigo || !codigo.trim()) {
+      const existing = await prisma.centroEscolar.findFirst({ where: { nombre, localidad: localidad || '' } })
+      if (existing) {
+        return NextResponse.json({ error: `Ya existe un centro con nombre "${nombre}" en ${localidad || 'sin localidad'}` }, { status: 409 })
+      }
+    }
+
     const centro = await prisma.centroEscolar.create({
       data: {
         nombre,
         localidad: localidad || '',
-        codigo: codigo || '',
+        codigo: (codigo || '').trim(),
         ef: ef || '',
       },
     })
@@ -59,7 +74,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const err = error as { code?: string }
     if (err.code === 'P2002') {
-      return NextResponse.json({ error: 'Ya existe un centro con ese nombre' }, { status: 409 })
+      return NextResponse.json({ error: 'Registro duplicado' }, { status: 409 })
     }
     console.error('Error creating centro escolar:', error)
     return NextResponse.json({ error: 'Error al crear centro escolar' }, { status: 500 })

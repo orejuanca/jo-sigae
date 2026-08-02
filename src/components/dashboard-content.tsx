@@ -122,17 +122,27 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [btnDown, setBtnDown] = useState<string | null>(null)
 
   // Lista de planteles CE para dropdown en celdas C15-C19
-  const [ceList, setCeList] = useState<{nombre:string;localidad:string;ef:string}[]>([])
-  const ceMapRef = useRef<Map<string,{localidad:string;ef:string}>>(new Map())
+  // Unicidad: si código no vacío → código es único; si vacío → nombre+localidad+ef únicos
+  interface CeRecord { id:string; codigo:string; nombre:string; localidad:string; ef:string }
+  const [ceList, setCeList] = useState<CeRecord[]>([])
+  const ceMapRef = useRef<Map<string,{nombre:string;localidad:string;ef:string}>>(new Map())
+  const ceNombreToIdRef = useRef<Map<string,string>>(new Map())
   useEffect(() => {
     fetch('/api/centros-escolares?limit=9999')
       .then(r => r.json())
       .then(data => {
-        const list: {nombre:string;localidad:string;ef:string}[] = (data.centros || [])
+        const list: CeRecord[] = (data.centros || [])
         setCeList(list)
-        const map = new Map<string,{localidad:string;ef:string}>()
-        for (const ce of list) map.set(ce.nombre, { localidad: ce.localidad, ef: ce.ef })
+        const map = new Map<string,{nombre:string;localidad:string;ef:string}>()
+        const nombreToId = new Map<string,string>()
+        for (const ce of list) {
+          map.set(ce.id, { nombre: ce.nombre, localidad: ce.localidad, ef: ce.ef })
+          // nombre→id: si hay duplicados de nombre, el último con código gana
+          if (ce.codigo) nombreToId.set(ce.nombre, ce.id)
+          else if (!nombreToId.has(ce.nombre)) nombreToId.set(ce.nombre, ce.id)
+        }
         ceMapRef.current = map
+        ceNombreToIdRef.current = nombreToId
       })
       .catch(() => {})
   }, [])
@@ -833,21 +843,29 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       <button onClick={(e) => { e.stopPropagation(); window.print() }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: '#ffffff', color: '#000000', fontSize: '12px', fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #333333', borderRadius: '2px', userSelect: 'none', whiteSpace: 'nowrap', boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : '1px 1px 3px rgba(0,0,0,0.3)', transform: isDn ? 'translateY(1px)' : 'none' }}>IMPRIMIR</button>
                     ) : cmdBtn ? (
                       <button disabled={cmdDisabled} onClick={(e) => { e.stopPropagation(); if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) } else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() } else if (cmdBtn.label === 'Guardar Datos') { saveNewStudent() } else if (cmdBtn.label === 'Eliminar Datos') { setShowDeleteModal(true) } else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') } }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center" style={{ backgroundColor: cmdDisabled ? (cmdBtn.disabledBgColor || '#f5f5f5') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')), color: cmdDisabled ? (cmdBtn.disabledColor || '#aaaaaa') : cmdBtn.color, fontSize: `${cmdBtn.fontSize}px`, fontFamily: 'Arial', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', lineHeight: 'normal', border: `2px solid ${cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : cmdBtn.color}`, borderRadius: '4px', boxShadow: cmdDisabled ? 'none' : (isDn ? `inset 0 1px 3px ${cmdBtn.downShadowColor || 'rgba(0,0,0,0.15)'}` : (isHov ? `2px 2px 6px ${cmdBtn.hoverShadowColor || 'rgba(0,0,0,0.2)'}` : '1px 1px 3px rgba(0,0,0,0.2)')), transform: isDn ? 'translateY(1px)' : 'none', userSelect: 'none', whiteSpace: 'pre-line', opacity: 1, cursor: cmdDisabled ? 'not-allowed' : 'pointer' }}>{cmdBtn.label}</button>
-                    ) : isCeDropdown ? (
+                    ) : isCeDropdown ? (() => {
+                      // Detectar nombres duplicados para mostrar disambiguación
+                      const nombreCount = new Map<string,number>()
+                      for (const ce of ceList) { nombreCount.set(ce.nombre, (nombreCount.get(ce.nombre) || 0) + 1) }
+                      // Valor actual de la celda → buscar el id correspondiente
+                      const cellVal = cells[r]?.[c] || ''
+                      const selectedId = cellVal ? ceNombreToIdRef.current.get(cellVal) || '' : ''
+                      return (
                       <select
                         key={`ce-${r}-${c}-${dataLoadKey}`}
-                        value={cells[r]?.[c] || ''}
+                        value={selectedId}
                         onChange={(e) => {
                           e.stopPropagation()
-                          const val = e.target.value
-                          updateCell(r, c, val)
-                          if (val) {
-                            const ce = ceMapRef.current.get(val)
+                          const id = e.target.value
+                          if (id) {
+                            const ce = ceMapRef.current.get(id)
                             if (ce) {
+                              updateCell(r, c, ce.nombre)
                               updateCell(r, 8, ce.localidad)
                               updateCell(r, 11, ce.ef)
                             }
                           } else {
+                            updateCell(r, c, '')
                             updateCell(r, 8, '')
                             updateCell(r, 11, '')
                           }
@@ -858,11 +876,25 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         style={{ color: 'inherit', fontWeight: 'inherit', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }}
                       >
                         <option value="">-- Seleccionar --</option>
-                        {ceList.map(ce => (<option key={ce.nombre} value={ce.nombre}>{ce.nombre}</option>))}
+                        {ceList.map(ce => {
+                          const dup = (nombreCount.get(ce.nombre) || 0) > 1
+                          const label = dup
+                            ? (ce.codigo ? `${ce.nombre} [${ce.codigo}]` : `${ce.nombre} - ${ce.localidad}`)
+                            : ce.nombre
+                          return <option key={ce.id} value={ce.id}>{label}</option>
+                        })}
                       </select>
-                    ) : (
-                      <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''} onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)} onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }} onKeyDown={(e) => handleInputKeyDown(e, r, c)} className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
-                    )}
+                      )
+                    })()
+                    : (() => {
+                      const isAutoFill = plan === 'vigente' && r >= 14 && r <= 18 && (c === 8 || c === 11)
+                      const inputVal = cells[r]?.[c] || ''
+                      return isAutoFill ? (
+                        <input id={`inp-${r}-${c}`} key={`af-${r}-${c}-${dataLoadKey}`} type="text" value={inputVal} readOnly className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
+                      ) : (
+                        <input id={`inp-${r}-${c}`} key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={inputVal} onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)} onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }} onKeyDown={(e) => handleInputKeyDown(e, r, c)} className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
+                      )
+                    })()}
                   </td>
                 )
               })}

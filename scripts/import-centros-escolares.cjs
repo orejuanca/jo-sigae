@@ -7,6 +7,11 @@ const EXCEL_PATH = path.join(process.cwd(), 'BASE DE DATOS CENTROS ESCOLARES CE.
 
 function cleanStr(val) {
   if (val === null || val === undefined) return '';
+  return String(val);
+}
+
+function cleanTrim(val) {
+  if (val === null || val === undefined) return '';
   return String(val).trim();
 }
 
@@ -27,7 +32,7 @@ function main() {
   db.prepare('DELETE FROM CentroEscolar').run();
 
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO CentroEscolar (id, codigo, nombre, localidad, ef, activo, createdAt, updatedAt)
+    INSERT OR REPLACE INTO CentroEscolar (id, codigo, nombre, localidad, ef, activo, createdAt, updatedAt)
     VALUES (?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
   `);
 
@@ -46,12 +51,11 @@ function main() {
     const row = rows[i];
 
     const nombre = cleanStr(row['Nombre del Plantel']);
-    const localidad = cleanStr(row['Localidad']);
-    const codigo = cleanStr(row['CODIGO']);
-    const ef = cleanStr(row['EF']);
+    const localidad = cleanTrim(row['Localidad']);
+    const codigo = cleanTrim(row['CODIGO']);
+    const ef = cleanTrim(row['EF']);
 
-    // Omitir filas vacías o con nombre inválido
-    if (!nombre || nombre === '* * * * *' || nombre.startsWith('*')) {
+    if (!nombre) {
       omitidos++;
       continue;
     }

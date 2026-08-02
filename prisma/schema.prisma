@@ -139,7 +139,7 @@ model DashboardState {
 model CentroEscolar {
   id        String   @id @default(cuid())
   codigo    String   @default("")  // Codigo del plantel (ej: "PD16660105")
-  nombre    String   @unique        // Nombre del plantel (unico, no acepta duplicados)
+  nombre    String                   // Nombre del plantel
   localidad String   @default("")  // Localidad/ubicacion
   ef        String   @default("")  // Codigo EF del estado (ej: "MI" = Miranda)
   activo    Boolean  @default(true)

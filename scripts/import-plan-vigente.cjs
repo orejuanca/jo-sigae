@@ -1,8 +1,9 @@
 const XLSX = require('xlsx');
 const Database = require('better-sqlite3');
 
-const DB_PATH = '/home/z/my-project/jo-sigae/db/custom.db';
-const EXCEL_PATH = '/home/z/my-project/upload/Base de Datos plan vigente.xlsx';
+const path = require('path');
+const DB_PATH = path.join(__dirname, '..', 'db', 'custom.db');
+const EXCEL_PATH = path.join(__dirname, '..', 'Base de Datos plan vigente.xlsx');
 
 function formatCedula(raw) {
   const trimmed = String(raw).trim().toUpperCase();

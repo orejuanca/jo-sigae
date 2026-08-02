@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
       OR: [
         { cedula: { contains: q } },
         { cedula: { contains: q.toUpperCase() } },
-        { apellidos: { contains: q, mode: 'insensitive' as const } },
-        { nombres: { contains: q, mode: 'insensitive' as const } },
+        { apellidos: { contains: q } },
+        { nombres: { contains: q } },
       ],
     }
 

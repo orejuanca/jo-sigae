@@ -1,7 +1,7 @@
 #!/bin/bash
 while true; do
-  cd /home/z/my-project
-  npx next dev -p 3000 2>&1
+  cd /home/z/my-project/jo-sigae
+  NODE_OPTIONS='--max-old-space-size=2048' npx next dev -p 3000 2>&1
   echo "Server died, restarting in 2s..."
   sleep 2
 done

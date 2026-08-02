@@ -235,10 +235,23 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
-  // 4. Secciones
+  // 4. Secciones — tres orígenes posibles para SECCION.1-5:
+  //    a) rawData.secciones (array, formato estructurado desde importDerogadoFromJSON)
+  //    b) rawData['SECCION'] (objeto con claves numéricas o string)
+  //    c) Claves numéricas BD2 294-298 (formato crudo desde seed.ts)
+  //
+  //    NOTA: Las mismas claves 294-298 también alimentan LITERAL.FINAL.1-5
+  //    (sección 8 abajo), porque en BD2 esos campos contienen el literal del
+  //    grado completado, que coincide con la sección.
   const secciones = rawData['secciones'] || rawData['SECCION'] || {}
+  const seccionesIsArray = Array.isArray(secciones)
   for (let i = 1; i <= 5; i++) {
-    const val = secciones[i] || secciones[String(i)] || rawData[`SECCION.${i}`]
+    // a) Array estructurado
+    let val = seccionesIsArray ? secciones[i - 1] : (secciones[i] || secciones[String(i)])
+    // b) Claves planas ya presentes en rawData
+    if (!val) val = rawData[`SECCION.${i}`]
+    // c) Claves numéricas BD2 (294-298) — formato crudo
+    if (!val) val = rawData[String(293 + i)]
     if (val && String(val).trim()) {
       map[`SECCION.${i}`] = String(val).trim()
     }

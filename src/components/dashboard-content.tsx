@@ -5,6 +5,8 @@ import { AppShell } from '@/components/app-shell'
 import * as VT from '@/lib/templates/vigente-template'
 import * as DT from '@/lib/templates/derogado-template'
 import { buildDerogadoFlatMap } from '@/lib/build-derogado-flatmap'
+import { FIELD_MAP_VIGENTE, FIELD_MAP_DEROGADO } from '@/lib/field-maps'
+import { fmtDate } from '@/lib/flatten-raw'
 
 type Align = 'left' | 'center' | 'right'
 interface Merge { sr: number; sc: number; er: number; ec: number }
@@ -82,163 +84,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     return { r: parseInt(match[2]) - 1, c: col - 1 }
   }
 
-  // === MAPEO CAMPO_BD → CELDA DASHBOARD (PLAN VIGENTE) ===
-  const FIELD_MAP_VIGENTE: [string, string][] = [
-    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
-    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],
-    ['INST.1','C15'],['LOCAL.1','I15'],['EF.1','L15'],
-    ['INST.2','C16'],['LOCAL.2','I16'],['EF.2','L16'],
-    ['INST.3','C17'],['LOCAL.3','I17'],['EF.3','L17'],
-    ['INST.4','C18'],['LOCAL.4','I18'],['EF.4','L18'],
-    ['INST.5','C19'],['LOCAL.5','I19'],['EF.5','L19'],
-    ['NOTA.CA.1','T15'],['EVAL.CA.1','U15'],['MES.CA.1','V15'],['AÑO.CA.1','W15'],['INST.CA.1','X15'],
-    ['NOTA.IN.1','T16'],['EVAL.IN.1','U16'],['MES.IN.1','V16'],['AÑO.IN.1','W16'],['INST.IN.1','X16'],
-    ['NOTA.MA.1','T17'],['EVAL.MA.1','U17'],['MES.MA.1','V17'],['AÑO.MA.1','W17'],['INST.MA.1','X17'],
-    ['NOTA.EF.1','T18'],['EVAL.EF.1','U18'],['MES.EF.1','V18'],['AÑO.EF.1','W18'],['INST.EF.1','X18'],
-    ['NOTA.AP.1','T19'],['EVAL.AP.1','U19'],['MES.AP.1','V19'],['AÑO.AP.1','W19'],['INST.AP.1','X19'],
-    ['NOTA.CN.1','T20'],['EVAL.CN.1','U20'],['MES.CN.1','V20'],['AÑO.CN.1','W20'],['INST.CN.1','X20'],
-    ['NOTA.GH.1','T21'],['EVAL.GH.1','U21'],['MES.GH.1','V21'],['AÑO.GH.1','W21'],['INST.GH.1','X21'],
-    ['NOTA.CA.2','AA15'],['EVAL.CA.2','AB15'],['MES.CA.2','AC15'],['AÑO.CA.2','AD15'],['INST.CA.2','AE15'],
-    ['NOTA.IN.2','AA16'],['EVAL.IN.2','AB16'],['MES.IN.2','AC16'],['AÑO.IN.2','AD16'],['INST.IN.2','AE16'],
-    ['NOTA.MA.2','AA17'],['EVAL.MA.2','AB17'],['MES.MA.2','AC17'],['AÑO.MA.2','AD17'],['INST.MA.2','AE17'],
-    ['NOTA.EF.2','AA18'],['EVAL.EF.2','AB18'],['MES.EF.2','AC18'],['AÑO.EF.2','AD18'],['INST.EF.2','AE18'],
-    ['NOTA.AP.2','AA19'],['EVAL.AP.2','AB19'],['MES.AP.2','AC19'],['AÑO.AP.2','AD19'],['INST.AP.2','AE19'],
-    ['NOTA.CN.2','AA20'],['EVAL.CN.2','AB20'],['MES.CN.2','AC20'],['AÑO.CN.2','AD20'],['INST.CN.2','AE20'],
-    ['NOTA.GH.2','AA21'],['EVAL.GH.2','AB21'],['MES.GH.2','AC21'],['AÑO.GH.2','AD21'],['INST.GH.2','AE21'],
-    ['NOTA.CA.3','H25'],['EVAL.CA.3','I25'],['MES.CA.3','J25'],['AÑO.CA.3','K25'],['INST.CA.3','L25'],
-    ['NOTA.IN.3','H26'],['EVAL.IN.3','I26'],['MES.IN.3','J26'],['AÑO.CA.3','K26'],['INST.IN.3','L26'],
-    ['NOTA.MA.3','H27'],['EVAL.MA.3','I27'],['MES.MA.3','J27'],['AÑO.CA.3','K27'],['INST.MA.3','L27'],
-    ['NOTA.EF.3','H28'],['EVAL.EF.3','I28'],['MES.EF.3','J28'],['AÑO.EF.3','K28'],['INST.EF.3','L28'],
-    ['NOTA.FI.3','H29'],['EVAL.FI.3','I29'],['MES.FI.3','J29'],['AÑO.EF.3','K29'],['INST.FI.3','L29'],
-    ['NOTA.QU.3','H30'],['EVAL.QU.3','I30'],['MES.QU.3','J30'],['AÑO.QU.3','K30'],['INST.QU.3','L30'],
-    ['NOTA.BI.3','H31'],['EVAL.BI.3','I31'],['MES.BI.3','J31'],['AÑO.BI.3','K31'],['INST.BI.3','L31'],
-    ['NOTA.GH.3','H32'],['EVAL.GH.3','I32'],['MES.GH.3','J32'],['AÑO.GH.3','K32'],['INST.GH.3','L32'],
-    ['NOTA.CA.4','T25'],['EVAL.CA.4','U25'],['MES.CA.4','V25'],['AÑO.CA.4','W25'],['INST.CA.4','X25'],
-    ['NOTA.IN.4','T26'],['EVAL.IN.4','U26'],['MES.IN.4','V26'],['AÑO.IN.4','W26'],['INST.IN.4','X26'],
-    ['NOTA.MA.4','T27'],['EVAL.MA.4','U27'],['MES.MA.4','V27'],['AÑO.MA.4','W27'],['INST.MA.4','X27'],
-    ['NOTA.EF.4','T28'],['EVAL.EF.4','U28'],['MES.EF.4','V28'],['AÑO.EF.4','W28'],['INST.EF.4','X28'],
-    ['NOTA.FI.4','T29'],['EVAL.FI.4','U29'],['MES.FI.4','V29'],['AÑO.EF.4','W29'],['INST.FI.4','X29'],
-    ['NOTA.QU.4','T30'],['EVAL.QU.4','U30'],['MES.QU.4','V30'],['AÑO.QU.4','W30'],['INST.QU.4','X30'],
-    ['NOTA.BI.4','T31'],['EVAL.BI.4','U31'],['MES.BI.4','V31'],['AÑO.BI.4','W31'],['INST.BI.4','X31'],
-    ['NOTA.GH.4','T32'],['EVAL.GH.4','U32'],['MES.GH.4','V32'],['AÑO.GH.4','W32'],['INST.GH.4','X32'],
-    ['NOTA.FS.4','T33'],['EVAL.FS.4','U33'],['MES.FS.4','V33'],['AÑO.FS.4','W33'],['INST.FS.4','X33'],
-    ['NOTA.CA.5','AA25'],['EVAL.CA.5','AB25'],['MES.CA.5','AC25'],['AÑO.CA.5','AD25'],['INST.CA.5','AE25'],
-    ['NOTA.IN.5','AA26'],['EVAL.IN.5','AB26'],['MES.IN.5','AC26'],['AÑO.IN.5','AD26'],['INST.IN.5','AE26'],
-    ['NOTA.MA.5','AA27'],['EVAL.MA.5','AB27'],['MES.MA.5','AC27'],['AÑO.MA.5','AD27'],['INST.MA.5','AE27'],
-    ['NOTA.EF.5','AA28'],['EVAL.EF.5','AB28'],['MES.EF.5','AC28'],['AÑO.EF.5','AD28'],['INST.EF.5','AE28'],
-    ['NOTA.FI.5','AA29'],['EVAL.FI.5','AB29'],['MES.FI.5','AC29'],['AÑO.FA.5','AD29'],['INST.FI.5','AE29'],
-    ['NOTA.QU.5','AA30'],['EVAL.QU.5','AB30'],['MES.QU.5','AC30'],['AÑO.QU.5','AD30'],['INST.QU.5','AE30'],
-    ['NOTA.BI.5','AA31'],['EVAL.BI.5','AB31'],['MES.BI.5','AC31'],['AÑO.BI.5','AD31'],['INST.BI.5','AE31'],
-    ['NOTA.CT.5','AA32'],['EVAL.CT.5','AB32'],['MES.CT.5','AC32'],['AÑO.CT.5','AD32'],['INST.CT.5','AE32'],
-    ['NOTA.GH.5','AA33'],['EVAL.GH.5','AB33'],['MES.GH.5','AC33'],['AÑO.GH.5','AD33'],['INST.GH.5','AE33'],
-    ['NOTA.FS.5','AA34'],['EVAL.FS.5','AB34'],['MES.FS.5','AC34'],['AÑO.FS.5','AD34'],['INST.FS.5','AE34'],
-    ['OC.LITERAL.1','AH15'],['OC.LITERAL.2','AH16'],['OC.LITERAL.3','AH17'],['OC.LITERAL.4','AH18'],['OC.LITERAL.5','AH19'],
-    ['PG.GRUPO.1','AH24'],['PG.GRUPO.2','AH25'],['PG.GRUPO.3','AH26'],['PG.GRUPO.4','AH27'],['PG.GRUPO.5','AH28'],
-    ['PG.LITERAL.1','AL15'],['PG.LITERAL.2','AL16'],['PG.LITERAL.3','AL17'],['PG.LITERAL.4','AL18'],['PG.LITERAL.5','AL19'],
-    ['OBS.CERT.L1','F35'],['OBS.CERT.L2','B36'],['OBS.NOTAS.L1','F39'],['OBS.NOTAS.L2','B40'],['OBS.NOTAS.L3','B41'],
-    ['SECCION.1','X13'],['SECCION.2','AE13'],['SECCION.3','L23'],['SECCION.4','X23'],['SECCION.5','AE23'],
-    ['TITULO.SERIAL','AJ31'],['TITULO.EXPEDICION','AJ32'],['TITULO.EGRESO','AJ33'],['CERT.EXPEDICION','AJ34'],
-    ['OBS.BOLETA.L1','F43'],['OBS.BOLETA.L2','B44'],['OBS.BOLETA.L3','B45'],
-    ['OBS.CERT.L3','B37'],['OBS.CERT.L4','B38'],
-  ]
-
-  // === MAPEO CAMPO_BD → CELDA DASHBOARD (PLAN DEROGADO) ===
-  const FIELD_MAP_DEROGADO: [string, string][] = [
-    // Datos personales
-    ['CEDULA','M5'],['FECHA','M6'],['APELLIDOS','M7'],['NOMBRES','M8'],
-    ['PAIS','M9'],['ESTADO','M10'],['MUNICIPIO','M11'],['LUGAR','M12'],
-    // Instituciones Básica
-    ['INST.BASICA.1','C15'],['LOCAL.BASICA.1','I15'],['EF.BASICA.1','L15'],
-    ['INST.BASICA.2','C16'],['LOCAL.BASICA.2','I16'],['EF.BASICA.2','L16'],
-    ['INST.BASICA.3','C17'],['LOCAL.BASICA.3','I17'],['EF.BASICA.3','L17'],
-    ['INST.BASICA.4','C18'],['LOCAL.BASICA.4','I18'],['EF.BASICA.4','L18'],
-    ['INST.BASICA.5','C19'],['LOCAL.BASICA.5','I19'],['EF.BASICA.5','L19'],
-    // Instituciones Diversificado
-    ['INST.DIV.1','C21'],['LOCAL.DIV.1','I21'],['EF.DIV.1','L21'],
-    ['INST.DIV.2','C22'],['LOCAL.DIV.2','I22'],['EF.DIV.2','L22'],
-    ['INST.DIV.3','C23'],['LOCAL.DIV.3','I23'],['EF.DIV.3','L23'],
-    ['INST.DIV.4','C24'],['LOCAL.DIV.4','I24'],['EF.DIV.4','L24'],
-    ['INST.DIV.5','C25'],['LOCAL.DIV.5','I25'],['EF.DIV.5','L25'],
-    // Año 1 (rows 16-25, cols T-X)
-    ['NOTA.CA.1','T16'],['EVAL.CA.1','U16'],['MES.CA.1','V16'],['AÑO.CA.1','W16'],['INST.CA.1','X16'],
-    ['NOTA.IN.1','T17'],['EVAL.IN.1','U17'],['MES.IN.1','V17'],['AÑO.IN.1','W17'],['INST.IN.1','X17'],
-    ['NOTA.MA.1','T18'],['EVAL.MA.1','U18'],['MES.MA.1','V18'],['AÑO.MA.1','W18'],['INST.MA.1','X18'],
-    ['NOTA.EN.1','T19'],['EVAL.EN.1','U19'],['MES.EN.1','V19'],['AÑO.EN.1','W19'],['INST.EN.1','X19'],
-    ['NOTA.HV.1','T20'],['EVAL.HV.1','U20'],['MES.HV.1','V20'],['AÑO.HV.1','W20'],['INST.HV.1','X20'],
-    ['NOTA.EFC.1','T21'],['EVAL.EFC.1','U21'],['MES.EFC.1','V21'],['AÑO.EFC.1','W21'],['INST.EFC.1','X21'],
-    ['NOTA.GG.1','T22'],['EVAL.GG.1','U22'],['MES.GG.1','V22'],['AÑO.GG.1','W22'],['INST.GG.1','X22'],
-    ['NOTA.EA.1','T23'],['EVAL.EA.1','U23'],['MES.EA.1','V23'],['AÑO.EA.1','W23'],['INST.EA.1','X23'],
-    ['NOTA.EF.1','T24'],['EVAL.EF.1','U24'],['MES.EF.1','V24'],['AÑO.EF.1','W24'],['INST.EF.1','X24'],
-    ['NOTA.EPT.1','T25'],['EVAL.EPT.1','U25'],['MES.EPT.1','V25'],['AÑO.EPT.1','W25'],['INST.EPT.1','X25'],
-    // Año 2 (rows 16-25, cols AA-AE)
-    ['NOTA.CA.2','AA16'],['EVAL.CA.2','AB16'],['MES.CA.2','AC16'],['AÑO.CA.2','AD16'],['INST.CA.2','AE16'],
-    ['NOTA.IN.2','AA17'],['EVAL.IN.2','AB17'],['MES.IN.2','AC17'],['AÑO.IN.2','AD17'],['INST.IN.2','AE17'],
-    ['NOTA.MA.2','AA18'],['EVAL.MA.2','AB18'],['MES.MA.2','AC18'],['AÑO.MA.2','AD18'],['INST.MA.2','AE18'],
-    ['NOTA.EPS.2','AA19'],['EVAL.EPS.2','AB19'],['MES.EPS.2','AC19'],['AÑO.EPS.2','AD19'],['INST.EPS.2','AE19'],
-    ['NOTA.CB.2','AA20'],['EVAL.CB.2','AB20'],['MES.CB.2','AC20'],['AÑO.CB.2','AD20'],['INST.CB.2','AE20'],
-    ['NOTA.HV.2','AA21'],['EVAL.HV.2','AB21'],['MES.HV.2','AC21'],['AÑO.HV.2','AD21'],['INST.HV.2','AE21'],
-    ['NOTA.HU.2','AA22'],['EVAL.HU.2','AB22'],['MES.HU.2','AC22'],['AÑO.HU.2','AD22'],['INST.HU.2','AE22'],
-    ['NOTA.EA.2','AA23'],['EVAL.EA.2','AB23'],['MES.EA.2','AC23'],['AÑO.EA.2','AD23'],['INST.EA.2','AE23'],
-    ['NOTA.EF.2','AA24'],['EVAL.EF.2','AB24'],['MES.EF.2','AC24'],['AÑO.EF.2','AD24'],['INST.EF.2','AE24'],
-    ['NOTA.ET.2','AA25'],['EVAL.ET.2','AB25'],['MES.ET.2','AC25'],['AÑO.ET.2','AD25'],['INST.ET.2','AE25'],
-    // Año 3 (rows 29-38, cols H-L)
-    ['NOTA.CA.3','H29'],['EVAL.CA.3','I29'],['MES.CA.3','J29'],['AÑO.CA.3','K29'],['INST.CA.3','L29'],
-    ['NOTA.IN.3','H30'],['EVAL.IN.3','I30'],['MES.IN.3','J30'],['AÑO.IN.3','K30'],['INST.IN.3','L30'],
-    ['NOTA.MA.3','H31'],['EVAL.MA.3','I31'],['MES.MA.3','J31'],['AÑO.MA.3','K31'],['INST.MA.3','L31'],
-    ['NOTA.CB.3','H32'],['EVAL.CB.3','I32'],['MES.CB.3','J32'],['AÑO.CB.3','K32'],['INST.CB.3','L32'],
-    ['NOTA.FI.3','H33'],['EVAL.FI.3','I33'],['MES.FI.3','J33'],['AÑO.FI.3','K33'],['INST.FI.3','L33'],
-    ['NOTA.QU.3','H34'],['EVAL.QU.3','I34'],['MES.QU.3','J34'],['AÑO.QU.3','K34'],['INST.QU.3','L34'],
-    ['NOTA.HVCB.3','H35'],['EVAL.HVCB.3','I35'],['MES.HVCB.3','J35'],['AÑO.HVCB.3','K35'],['INST.HVCB.3','L35'],
-    ['NOTA.GV.3','H36'],['EVAL.GV.3','I36'],['MES.GV.3','J36'],['AÑO.GV.3','K36'],['INST.GV.3','L36'],
-    ['NOTA.EF.3','H37'],['EVAL.EF.3','I37'],['MES.EF.3','J37'],['AÑO.EF.3','K37'],['INST.EF.3','L37'],
-    ['NOTA.ET.3','H38'],['EVAL.ET.3','I38'],['MES.ET.3','J38'],['AÑO.ET.3','K38'],['INST.ET.3','L38'],
-    // Año 4 (rows 29-39, cols T-X)
-    ['NOTA.CA.4','T29'],['EVAL.CA.4','U29'],['MES.CA.4','V29'],['AÑO.CA.4','W29'],['INST.CA.4','X29'],
-    ['NOTA.MA.4','T30'],['EVAL.MA.4','U30'],['MES.MA.4','V30'],['AÑO.MA.4','W30'],['INST.MA.4','X30'],
-    ['NOTA.HC.4','T31'],['EVAL.HC.4','U31'],['MES.HC.4','V31'],['AÑO.HC.4','W31'],['INST.HC.4','X31'],
-    ['NOTA.IN.4','T32'],['EVAL.IN.4','U32'],['MES.IN.4','V32'],['AÑO.IN.4','W32'],['INST.IN.4','X32'],
-    ['NOTA.EF.4','T33'],['EVAL.EF.4','U33'],['MES.EF.4','V33'],['AÑO.EF.4','W33'],['INST.EF.4','X33'],
-    ['NOTA.FI.4','T34'],['EVAL.FI.4','U34'],['MES.FI.4','V34'],['AÑO.FI.4','W34'],['INST.FI.4','X34'],
-    ['NOTA.QU.4','T35'],['EVAL.QU.4','U35'],['MES.QU.4','V35'],['AÑO.QU.4','W35'],['INST.QU.4','X35'],
-    ['NOTA.BI.4','T36'],['EVAL.BI.4','U36'],['MES.BI.4','V36'],['AÑO.BI.4','W36'],['INST.BI.4','X36'],
-    ['NOTA.DT.4','T37'],['EVAL.DT.4','U37'],['MES.DT.4','V37'],['AÑO.DT.4','W37'],['INST.DT.4','X37'],
-    ['NOTA.FIL.4','T38'],['EVAL.FIL.4','U38'],['MES.FIL.4','V38'],['AÑO.FIL.4','W38'],['INST.FIL.4','X38'],
-    ['NOTA.IPM.4','T39'],['EVAL.IPM.4','U39'],['MES.IPM.4','V39'],['AÑO.IPM.4','W39'],['INST.IPM.4','X39'],
-    // Año 5 (rows 29-38, cols AA-AE)
-    ['NOTA.IN.5','AA29'],['EVAL.IN.5','AB29'],['MES.IN.5','AC29'],['AÑO.IN.5','AD29'],['INST.IN.5','AE29'],
-    ['NOTA.EF.5','AA30'],['EVAL.EF.5','AB30'],['MES.EF.5','AC30'],['AÑO.EF.5','AD30'],['INST.EF.5','AE30'],
-    ['NOTA.GEV.5','AA31'],['EVAL.GEV.5','AB31'],['MES.GEV.5','AC31'],['AÑO.GEV.5','AD31'],['INST.GEV.5','AE31'],
-    ['NOTA.CA.5','AA32'],['EVAL.CA.5','AB32'],['MES.CA.5','AC32'],['AÑO.CA.5','AD32'],['INST.CA.5','AE32'],
-    ['NOTA.MA.5','AA33'],['EVAL.MA.5','AB33'],['MES.MA.5','AC33'],['AÑO.MA.5','AD33'],['INST.MA.5','AE33'],
-    ['NOTA.FI.5','AA34'],['EVAL.FI.5','AB34'],['MES.FI.5','AC34'],['AÑO.FI.5','AD34'],['INST.FI.5','AE34'],
-    ['NOTA.QU.5','AA35'],['EVAL.QU.5','AB35'],['MES.FI.5','AC35'],['AÑO.QU.5','AD35'],['INST.QU.5','AE35'],
-    ['NOTA.BI.5','AA36'],['EVAL.BI.5','AB36'],['MES.BI.5','AC36'],['AÑO.BI.5','AD36'],['INST.BI.5','AE36'],
-    ['NOTA.CT.5','AA37'],['EVAL.CT.5','AB37'],['MES.CT.5','AC37'],['AÑO.CT.5','AD37'],['INST.CT.5','AE37'],
-    ['NOTA.IPM.5','AA38'],['EVAL.IPM.5','AB38'],['MES.IPM.5','AC38'],['AÑO.IPM.5','AD38'],['INST.IPM.5','AE38'],
-    // Secciones
-    ['SECCION.1','X14'],['SECCION.2','AE14'],['SECCION.3','L27'],['SECCIONL.4','X27'],['SECCION.5','AE27'],
-    // EPT (Educación para el Trabajo)
-    ['EPT.GRADO.1','AG16'],['EPT.NOMBRE.1','AH16'],['EPT.HORAS.1','AL16'],
-    ['EPT.GRADO.2','AG17'],['EPT.NOMBRE.2','AH17'],['EPT.HORAS.2','AL17'],
-    ['EPT.GRADO.3','AG18'],['EPT.NOMBRE.3','AH18'],['EPT.HORAS.3','AL18'],
-    ['EPT.GRADO.4','AG19'],['EPT.NOMBRE.4','AH19'],['EPT.HORAS.4','AL19'],
-    ['EPT.GRADO.5','AG20'],['EPT.NOMBRE.5','AH20'],['EPT.HORAS.5','AL20'],
-    ['EPT.GRADO.6','AG21'],['EPT.NOMBRE.6','AH21'],['EPT.HORAS.6','AL21'],
-    ['EPT.GRADO.7','AG22'],['EPT.NOMBRE.7','AH22'],['EPT.HORAS.7','AL22'],
-    ['EPT.GRADO.8','AG23'],['EPT.NOMBRE.8','AH23'],['EPT.HORAS.8','AL23'],
-    ['EPT.GRADO.9','AG24'],['EPT.NOMBRE.9','AH24'],['EPT.HORAS.9','AL24'],
-    ['EPT.GRADO.10','AG25'],['EPT.NOMBRE.10','AH25'],['EPT.HORAS.10','AL25'],
-    ['EPT.GRADO.11','AG26'],['EPT.NOMBRE.11','AH26'],['EPT.HORAS.11','AL26'],
-    ['EPT.GRADO.12','AG27'],['EPT.NOMBRE.12','AH27'],['EPT.HORAS.12','AL27'],
-    // Título / Certificación
-    ['SERIALTITULO','AJ30'],['FECHAEMISIONT','AJ31'],['EGRESOAÑO','AJ32'],['FECHAEMISIONN','AJ33'],
-    // Observaciones Básica
-    ['OBS.BASICA.L1','F41'],['OBS.BASICA.L2','B42'],['OBS.BASICA.L3','B43'],['OBS.BASICA.L4','B44'],['OBS.BASICA.L5','B45'],
-    // Observaciones Diversificado
-    ['OBS.DIV.L1','F46'],['OBS.DIV.L2','B47'],['OBS.DIV.L3','B48'],['OBS.DIV.L4','B49'],['OBS.DIV.L5','B50'],
-  ]
-
-  // Seleccionar el mapa según el plan activo
+  // Seleccionar el mapa según el plan activo (importado de field-maps.ts)
   const fieldMap = plan === 'derogado' ? FIELD_MAP_DEROGADO : FIELD_MAP_VIGENTE
   const PROMEDIO_CELL = plan === 'derogado' ? null : cellRef('AJ35')
 
@@ -270,7 +116,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const [saveStatus, setSaveStatus] = useState<string>('')
   const [loadInfo, setLoadInfo] = useState(sv ? `Cache: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)` : 'Cargando...')
 
-  // Estado para botones con activación condicional (declarado AQUÍ antes de los useEffect que lo referencian)
+  // Estado para botones con activación condicional
   const [editMode, setEditMode] = useState(false)
   const [btnHover, setBtnHover] = useState<string | null>(null)
   const [btnDown, setBtnDown] = useState<string | null>(null)
@@ -318,7 +164,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (!loaded) return
     loadFromDb(plan).then(dbState => {
       if (dbState) {
-        // La BD tiene datos → usar esos como fuente de verdad
         setNumRows(dbState.numRows); setNumCols(dbState.numCols)
         setCells(dbState.cells); setColWidths(dbState.colWidths)
         setRowHeights(dbState.rowHeights); setBgColors(dbState.bgColors)
@@ -326,11 +171,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         setFontFamilies(dbState.fontFamilies); setFontSizes(dbState.fontSizes)
         setFontColors(dbState.fontColors); setBorders(dbState.borders)
         setBoldCells(dbState.boldCells)
-        // Sincronizar caché localStorage con la BD
         localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(dbState))
         setLoadInfo(`BD: ${(JSON.stringify(dbState).length/1024).toFixed(0)}KB (${dbState.numRows}f x ${dbState.numCols}c)`)
       } else if (sv) {
-        // No hay datos en BD pero sí en localStorage → subirlos a la BD
         saveToDb(plan, sv).then(() => {
           setLoadInfo(`Cache→BD: ${(JSON.stringify(sv).length/1024).toFixed(0)}KB (${sv.numRows}f x ${sv.numCols}c)`)
         })
@@ -339,7 +182,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       }
       setDbLoaded(true)
     })
-  }, [loaded, plan]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loaded, plan])
 
   // Asegurar merges de botones de comando tras cargar BD
   useEffect(() => {
@@ -351,55 +194,40 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       if (!exists) {
         setMerges(prev => {
           const nm: Merge = { sr: btn.sr, sc: btn.sc, er: ms.er, ec: ms.ec }
-          const filtered = prev.filter(m => {
-            const overlap = !(m.er < nm.sr || m.sr > nm.er || m.ec < nm.sc || m.sc > nm.ec)
-            return !overlap
-          })
+          const filtered = prev.filter(m => { const overlap = !(m.er < nm.sr || m.sr > nm.er || m.ec < nm.sc || m.sc > nm.ec); return !overlap })
           return [...filtered, nm]
         })
         setCells(prev => { const copy = prev.map(r => [...r]); if (copy[btn.sr]) copy[btn.sr][btn.sc] = btn.label; return copy })
       }
     }
-    // Forzar merge del botón switch AJ6:AL7 (row 5, col 35-37)
     const switchMerge: Merge = { sr: 5, sc: 35, er: 6, ec: 37 }
-    const switchExists = merges.some(m => m.sr === 5 && m.sc === 35 && m.er === 6 && m.ec === 37)
-    if (!switchExists) {
+    if (!merges.some(m => m.sr === 5 && m.sc === 35 && m.er === 6 && m.ec === 37)) {
       setMerges(prev => {
-        const filtered = prev.filter(m => {
-          const overlap = !(m.er < switchMerge.sr || m.sr > switchMerge.er || m.ec < switchMerge.sc || m.sc > switchMerge.ec)
-          return !overlap
-        })
+        const filtered = prev.filter(m => { const overlap = !(m.er < switchMerge.sr || m.sr > switchMerge.er || m.ec < switchMerge.sc || m.sc > switchMerge.ec); return !overlap })
         return [...filtered, switchMerge]
       })
     }
-    // Limpiar merge dañado del botón IMPRIMIR que se guardó incorrectamente
     const hasBadMerge = merges.some(m => m.sr === 6 && m.sc === 30 && m.er === 7 && m.ec === 33)
     if (hasBadMerge) {
       setMerges(prev => prev.filter(m => !(m.sr === 6 && m.sc === 30 && m.er === 7 && m.ec === 33)))
       setCells(prev => { const copy = prev.map(r => [...r]); if (copy[6]) copy[6][30] = ''; return copy })
     }
-    // Forzar merge del botón imprimir AE6:AH7 (row 5, col 30-33)
     const printMerge: Merge = { sr: 5, sc: 30, er: 6, ec: 33 }
-    const printExists = merges.some(m => m.sr === 5 && m.sc === 30 && m.er === 6 && m.ec === 33)
-    if (!printExists) {
+    if (!merges.some(m => m.sr === 5 && m.sc === 30 && m.er === 6 && m.ec === 33)) {
       setMerges(prev => {
-        const filtered = prev.filter(m => {
-          const overlap = !(m.er < printMerge.sr || m.sr > printMerge.er || m.ec < printMerge.sc || m.sc > printMerge.ec)
-          return !overlap
-        })
+        const filtered = prev.filter(m => { const overlap = !(m.er < printMerge.sr || m.sr > printMerge.er || m.ec < printMerge.sc || m.sc > printMerge.ec); return !overlap })
         return [...filtered, printMerge]
       })
       setCells(prev => { const copy = prev.map(r => [...r]); if (copy[5]) copy[5][30] = 'IMPRIMIR'; return copy })
     }
-  }, [dbLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dbLoaded])
 
-  // Guardar snapshot del estado inicial (después de cargar BD)
+  // Guardar snapshot del estado inicial
   useEffect(() => {
     if (!dbLoaded || initialCellsRef.current) return
     initialCellsRef.current = cells.map(r => [...r])
-  }, [dbLoaded, cells]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dbLoaded, cells])
 
-  // Función de save: guarda en localStorage (rápido) y en BD (permanente)
   const saveCountRef = useRef(0)
   const doSave = useCallback((p: string) => {
     try {
@@ -408,56 +236,33 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       saveCountRef.current++
       setSaveStatus(`Save#${saveCountRef.current} ${(json.length/1024).toFixed(0)}KB`)
       return true
-    } catch (e) {
-      console.error('[SAVE ERROR]', e)
-      setSaveStatus('ERROR SAVE')
-      return false
-    }
+    } catch (e) { console.error('[SAVE ERROR]', e); setSaveStatus('ERROR SAVE'); return false }
   }, [])
 
-  // === AUTO-SAVE (localStorage inmediato + BD con debounce) ===
-  // NO guardar cuando editMode=true o hasNewData=true (datos temporales)
   useEffect(() => {
     if (!loaded || !dbLoaded || editMode || hasNewData) return
-    // Guardar en localStorage inmediatamente (caché rápido)
-    const timer = setTimeout(() => {
-      doSave(plan)
-      setTimeout(() => setSaveStatus(''), 2000)
-    }, 300)
+    const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
     return () => clearTimeout(timer)
   }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
-  // === GUARDAR EN BD con debounce de 3 segundos (no en cada cambio) ===
-  // NO guardar cuando editMode=true o hasNewData=true (datos temporales)
   useEffect(() => {
     if (!loaded || !dbLoaded || editMode || hasNewData) return
-    const timer = setTimeout(() => {
-      saveToDb(plan, stateRef.current)
-    }, 3000)
+    const timer = setTimeout(() => { saveToDb(plan, stateRef.current) }, 3000)
     return () => clearTimeout(timer)
   }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
 
-  // === SAVE ON BEFORE UNLOAD (guarda en ambos) ===
-  // NO guardar cuando editMode=true o hasNewData=true (datos temporales)
   useEffect(() => {
     if (!loaded || !dbLoaded || editMode || hasNewData) return
     const handler = () => {
-      try {
-        const json = JSON.stringify(stateRef.current)
-        localStorage.setItem(STORAGE_KEY(plan), json)
-        // Enviar a BD con sendBeacon (no bloquea el cierre)
-        navigator.sendBeacon(`/api/dashboard-state?plan=${plan}`, JSON.stringify({ datos: stateRef.current }))
-      } catch {}
+      try { const json = JSON.stringify(stateRef.current); localStorage.setItem(STORAGE_KEY(plan), json); navigator.sendBeacon(`/api/dashboard-state?plan=${plan}`, JSON.stringify({ datos: stateRef.current })) } catch {}
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [loaded, dbLoaded, plan, editMode, hasNewData])
 
-  // === RESTORE (restaurar plantilla original y limpiar BD + localStorage) ===
   const handleRestore = () => {
     if (!confirm('Restaurar todo al diseño original? Se perderan todos los cambios.')) return
     localStorage.removeItem(STORAGE_KEY(plan))
-    // Limpiar de la BD también
     fetch(`/api/dashboard-state?plan=${plan}`, { method: 'DELETE' }).catch(() => {})
     setCells(tpl.makeInitialCells()); setColWidths(tpl.makeInitialWidths())
     setRowHeights(tpl.makeInitialHeights(INIT_ROWS)); setBgColors(tpl.makeInitialBg(INIT_ROWS, INIT_COLS))
@@ -468,23 +273,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setFontColors(tpl.makeInitialFontColors(INIT_ROWS, INIT_COLS))
     setBorders(tpl.makeInitialBorders(INIT_ROWS, INIT_COLS))
     setBoldCells(tpl.makeInitialBold(INIT_ROWS, INIT_COLS))
-    setSaveStatus('Restaurado')
-    setTimeout(() => setSaveStatus(''), 2000)
+    setSaveStatus('Restaurado'); setTimeout(() => setSaveStatus(''), 2000)
   }
 
   const isHidden = useCallback((r: number, c: number): boolean => {
-    for (const m of merges) {
-      if (r >= m.sr && r <= m.er && c >= m.sc && c <= m.ec) {
-        if (r === m.sr && c === m.sc) return false
-        return true
-      }
-    }
-    return false
+    for (const m of merges) { if (r >= m.sr && r <= m.er && c >= m.sc && c <= m.ec) { if (r === m.sr && c === m.sc) return false; return true } } return false
   }, [merges])
 
   const getMerge = useCallback((r: number, c: number): Merge | null => {
-    for (const m of merges) { if (r === m.sr && c === m.sc) return m }
-    return null
+    for (const m of merges) { if (r === m.sr && c === m.sc) return m } return null
   }, [merges])
 
   const updateCell = useCallback((r: number, c: number, val: string) => {
@@ -504,22 +301,12 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       const today = new Date()
       const ds = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`
       updateCell(2, 7, ds)
-
     } catch {}
   }, [plan, updateCell])
   useEffect(() => { loadCount() }, [loadCount])
 
-  const colLetter = (i: number) => {
-    let s = ''; let n = i
-    while (n >= 0) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1 }
-    return s
-  }
-
-  const colToIndex = (letters: string): number | null => {
-    let idx = 0
-    for (let i = 0; i < letters.length; i++) { const ch = letters.charCodeAt(i); if (ch < 65 || ch > 90) return null; idx = idx * 26 + (ch - 64) }
-    return idx - 1
-  }
+  const colLetter = (i: number) => { let s = ''; let n = i; while (n >= 0) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1 } return s }
+  const colToIndex = (letters: string): number | null => { let idx = 0; for (let i = 0; i < letters.length; i++) { const ch = letters.charCodeAt(i); if (ch < 65 || ch > 90) return null; idx = idx * 26 + (ch - 64) } return idx - 1 }
 
   const [rangeInput, setRangeInput] = useState('')
   const applyRange = (input: string) => {
@@ -533,7 +320,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }
   const handleRangeSubmit = () => { applyRange(rangeInput) }
 
-
   const [selectedCell, setSelectedCell] = useState<{r:number;c:number}|null>(null)
   const tableRef = useRef<HTMLTableElement>(null)
 
@@ -541,22 +327,18 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (shiftKey && selectionStart) { setSelectionEnd({ r, c }) }
     else { setSelectionStart({ r, c }); setSelectionEnd({ r, c }); setSelectedCell({ r, c }) }
   }
-
   const handleRowHeaderClick = (r: number, shiftKey: boolean) => {
     if (shiftKey && selectionStart) { setSelectionEnd({ r, c: numCols - 1 }) }
     else { setSelectionStart({ r, c: 0 }); setSelectionEnd({ r, c: numCols - 1 }); setSelectedCell({ r, c: 0 }) }
   }
-
   const handleColHeaderClick = (c: number, shiftKey: boolean) => {
     if (shiftKey && selectionStart) { setSelectionEnd({ r: numRows - 1, c }) }
     else { setSelectionStart({ r: 0, c }); setSelectionEnd({ r: numRows - 1, c }); setSelectedCell({ r: 0, c }) }
   }
-
   const focusInput = (r: number, c: number) => {
     const td = tableRef.current?.querySelector(`[data-r="${r}"][data-c="${c}"]`)
     if (td) { const input = td.querySelector('input') as HTMLInputElement; if (input) input.focus() }
   }
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!selectedCell) return
     const { r, c } = selectedCell
@@ -569,10 +351,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     else if (e.key === 'Enter') { e.preventDefault(); nr = Math.min(r+1, numRows-1); nc = c }
     else return
     let tries = 0
-    while (isHidden(nr, nc) && tries < 500) {
-      if (nr > r) nr++; else if (nr < r) nr--; else if (nc > c) nc++; else nc--
-      nr = Math.max(0, Math.min(nr, numRows-1)); nc = Math.max(0, Math.min(nc, numCols-1)); tries++
-    }
+    while (isHidden(nr, nc) && tries < 500) { if(nr>r)nr++;else if(nr<r)nr--;else if(nc>c)nc++;else nc--; nr=Math.max(0,Math.min(nr,numRows-1));nc=Math.max(0,Math.min(nc,numCols-1));tries++ }
     setSelectedCell({ r: nr, c: nc }); setSelectionStart({ r: nr, c: nc }); setSelectionEnd({ r: nr, c: nc })
     setTimeout(() => focusInput(nr, nc), 0)
   }
@@ -584,53 +363,23 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const isInSelection = (r: number, c: number) => { if (selMinR < 0) return false; return r >= selMinR && r <= selMaxR && c >= selMinC && c <= selMaxC }
   const hasSelection = selMinR >= 0 && (selMinR !== selMaxR || selMinC !== selMaxC)
 
-  // === APPLY TO SELECTION HELPERS ===
   const applyToSelection = (arr: any[][], val: any, setter: (v: any[][]) => void) => {
     if (selMinR < 0) return
-    setter(arr.map((row, ri) => row.map((cell, ci) =>
-      ri >= selMinR && ri <= selMaxR && ci >= selMinC && ci <= selMaxC ? val : cell
-    )))
+    setter(arr.map((row, ri) => row.map((cell, ci) => ri >= selMinR && ri <= selMaxR && ci >= selMinC && ci <= selMaxC ? val : cell)))
   }
-
-  // === MERGE ===
-  const handleMerge = () => {
-    if (!hasSelection) return
-    const newMerge: Merge = { sr: selMinR, sc: selMinC, er: selMaxR, ec: selMaxC }
-    const filtered = merges.filter(m => { const overlap = !(m.er < newMerge.sr || m.sr > newMerge.er || m.ec < newMerge.sc || m.sc > newMerge.ec); return !overlap })
-    setMerges([...filtered, newMerge]); setSelectionStart(null); setSelectionEnd(null)
-  }
+  const handleMerge = () => { if (!hasSelection) return; const newMerge: Merge = { sr: selMinR, sc: selMinC, er: selMaxR, ec: selMaxC }; const filtered = merges.filter(m => { const overlap = !(m.er < newMerge.sr || m.sr > newMerge.er || m.ec < newMerge.sc || m.sc > newMerge.ec); return !overlap }); setMerges([...filtered, newMerge]); setSelectionStart(null); setSelectionEnd(null) }
   const handleUnmerge = () => { if (!selectedCell) return; setMerges(prev => prev.filter(m => !(m.sr === selectedCell.r && m.sc === selectedCell.c))) }
-
-  // === ALIGNMENT ===
   const handleSetAlign = (align: Align) => { if (selMinR < 0) return; applyToSelection(textAligns, align, setTextAligns) }
-
-  // === BG COLOR ===
   const handleApplyBgToSelection = (color: string) => { if (selMinR < 0) return; applyToSelection(bgColors, color, setBgColors) }
-
-  // === FONT FAMILY ===
   const handleSetFont = (font: string) => { if (selMinR < 0) return; applyToSelection(fontFamilies, font, setFontFamilies) }
-
-  // === FONT SIZE ===
   const handleSetFontSize = (size: number) => { if (selMinR < 0) return; applyToSelection(fontSizes, size, setFontSizes) }
-
-  // === FONT COLOR ===
   const handleSetFontColor = (color: string) => { if (selMinR < 0) return; applyToSelection(fontColors, color, setFontColors) }
-
-  // === BORDERS TOGGLE ===
   const handleToggleBorders = (val: boolean) => { if (selMinR < 0) return; applyToSelection(borders, val, setBorders) }
+  const handleToggleBold = () => { if (!selectedCell) return; const current = boldCells[selectedCell.r]?.[selectedCell.c] ?? false; applyToSelection(boldCells, !current, setBoldCells) }
 
-  // === BOLD TOGGLE ===
-  const handleToggleBold = () => {
-    if (!selectedCell) return
-    const current = boldCells[selectedCell.r]?.[selectedCell.c] ?? false
-    applyToSelection(boldCells, !current, setBoldCells)
-  }
-
-  // === INSERT ROW ===
   const handleInsertRow = (after: boolean) => {
     if (!selectedCell) return
     const at = after ? selectedCell.r + 1 : selectedCell.r
-    const splicer = <T,>(arr: T[][], fill: T) => arr.map(row => [...row]).splice(at, 0, new Array(numCols).fill(fill)) && arr.map((row, i) => i === at ? new Array(numCols).fill(fill) : [...row])
     setCells(prev => { const c = prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('')); return c })
     setRowHeights(prev => { const c=[...prev]; c.splice(at,0,20); return c })
     setBgColors(prev => { const c=prev.map(r=>[...r]); c.splice(at,0,new Array(numCols).fill('#ffffff')); return c })
@@ -643,8 +392,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setMerges(prev => prev.map(m => { if (m.sr >= at) return { ...m, sr: m.sr + 1, er: m.er + 1 }; if (m.er >= at) return { ...m, er: m.er + 1 }; return m }))
     setNumRows(numRows + 1)
   }
-
-  // === INSERT COLUMN ===
   const handleInsertCol = (after: boolean) => {
     if (!selectedCell) return
     const at = after ? selectedCell.c + 1 : selectedCell.c
@@ -657,8 +404,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setMerges(prev => prev.map(m => { if (m.sc >= at) return { ...m, sc: m.sc + 1, ec: m.ec + 1 }; if (m.ec >= at) return { ...m, ec: m.ec + 1 }; return m }))
     setNumCols(numCols + 1)
   }
-
-  // === DELETE ROW ===
   const handleDeleteRow = () => {
     if (!selectedCell || numRows <= 1) return
     const at = selectedCell.r
@@ -670,8 +415,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setMerges(prev => prev.filter(m => !(m.sr <= at && m.er >= at)).map(m => { if (m.sr > at) return { ...m, sr: m.sr - 1, er: m.er - 1 }; if (m.er > at) return { ...m, er: m.er - 1 }; return m }))
     setNumRows(numRows - 1); setSelectionStart(null); setSelectionEnd(null); setSelectedCell(null)
   }
-
-  // === DELETE COLUMN ===
   const handleDeleteCol = () => {
     if (!selectedCell || numCols <= 1) return
     const at = selectedCell.c
@@ -683,8 +426,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setMerges(prev => prev.filter(m => !(m.sc <= at && m.ec >= at)).map(m => { if (m.sc > at) return { ...m, sc: m.sc - 1, ec: m.ec - 1 }; if (m.ec > at) return { ...m, ec: m.ec - 1 }; return m }))
     setNumCols(numCols - 1); setSelectionStart(null); setSelectionEnd(null); setSelectedCell(null)
   }
-
-  // === MOVE ROW ===
   const handleMoveRow = (dir: 'up' | 'down') => {
     if (!selectedCell) return
     const fromR = selMinR >= 0 ? selMinR : selectedCell.r
@@ -704,8 +445,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     setSelectionEnd({ r: toR + off, c: selMaxC >= 0 ? selMaxC : numCols - 1 })
     setSelectedCell({ r: fromR + off, c: selectedCell.c })
   }
-
-  // === MOVE COLUMN ===
   const handleMoveCol = (dir: 'left' | 'right') => {
     if (!selectedCell) return
     const fromC = selMinC >= 0 ? selMinC : selectedCell.c
@@ -729,13 +468,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const formatDateYY = (val: string): string => {
     const trimmed = val.trim()
     const m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
-    if (m) {
-      const dd = m[1].padStart(2, '0')
-      const mm = m[2].padStart(2, '0')
-      let yy = parseInt(m[3])
-      yy = yy >= 30 ? 1900 + yy : 2000 + yy
-      return `${dd}/${mm}/${yy}`
-    }
+    if (m) { const dd = m[1].padStart(2, '0'); const mm = m[2].padStart(2, '0'); let yy = parseInt(m[3]); yy = yy >= 30 ? 1900 + yy : 2000 + yy; return `${dd}/${mm}/${yy}` }
     return trimmed
   }
   const handleInputBlur = (r: number, c: number, value: string, target?: HTMLInputElement | null) => {
@@ -744,15 +477,12 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }
   const navigateTo = (r: number, c: number) => {
     let nr = r, nc = c, tries = 0
-    while (isHidden(nr, nc) && tries < 500) { if(nr>r)nr++;else if(nr<r)nr--;else if(nc>c)nc++;else nc--; nr=Math.max(0,Math.min(nr,numRows-1));nc=Math.max(0,Math.min(nc,numCols-1));tries++ }
+    while (isHidden(nr, nc) && tries < 500) { if(nr>nr)nr++;else if(nr<r)nr--;else if(nc>c)nc++;else nc--; nr=Math.max(0,Math.min(nr,numRows-1));nc=Math.max(0,Math.min(nc,numCols-1));tries++ }
     setSelectedCell({r:nr,c:nc}); setSelectionStart({r:nr,c:nc}); setSelectionEnd({r:nr,c:nc}); setTimeout(()=>focusInput(nr,nc),0)
   }
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
     let val = e.currentTarget.value
-    if (((r === 3 && c === 25) || (r === 5 && c === 12)) && (e.key==='Enter'||e.key==='Tab')) {
-      val = formatDateYY(val)
-      e.currentTarget.value = val
-    }
+    if (((r === 3 && c === 25) || (r === 5 && c === 12)) && (e.key==='Enter'||e.key==='Tab')) { val = formatDateYY(val); e.currentTarget.value = val }
     if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopPropagation();updateCell(r,c,val);navigateTo(r+1,c)}
     else if(e.key==='Tab'){e.preventDefault();e.stopPropagation();updateCell(r,c,val);navigateTo(r,e.shiftKey?c-1:c+1)}
     else if(['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){updateCell(r,c,e.currentTarget.value)}
@@ -760,9 +490,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
   const isFullRowSelected = hasSelection && selMinC === 0 && selMaxC === numCols - 1
   const isFullColSelected = hasSelection && selMinR === 0 && selMaxR === numRows - 1
-
-  const SWITCH_ROW = 5, SWITCH_COL = 35 // celda AJ6
-  const PRINT_ROW = 5, PRINT_COL = 30 // celda AE6
+  const SWITCH_ROW = 5, SWITCH_COL = 35
+  const PRINT_ROW = 5, PRINT_COL = 30
   const switchBtnLabel = plan === 'vigente' ? 'ir a\nPlan Derogado' : 'ir a\nPlan Vigente'
 
   // === ESTADO DE BÚSQUEDA Y EDICIÓN ===
@@ -782,266 +511,84 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
   // Botones de comando
   const CMD_BUTTONS: CmdButton[] = [
-    { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16,
-      disableOnNewData: true,
-      hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)',
-      mergeSpan: { er: 8, ec: 26 } },
-    { sr: 9, sc: 25, label: 'Guardar Editado', color: '#90EE90', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', disabledBgColor: '#f5f5f5', activeColor: '#32CD32', requiresEdit: true,
-      hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)',
-      mergeSpan: { er: 10, ec: 26 } },
-    { sr: 7, sc: 30, label: 'Guardar Datos', color: '#5BA8FF', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true, requiresNewData: true,
-      hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)',
-      mergeSpan: { er: 8, ec: 37 } },
-    { sr: 9, sc: 30, label: 'Eliminar Datos', color: '#FF4444', bgColor: '#ffffff', fontSize: 16,
-      disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true,
-      hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)',
-      mergeSpan: { er: 10, ec: 37 } },
-    { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12,
-      disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnNewData: true,
-      hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)',
-      mergeSpan: { er: 10, ec: 29 } },
-
+    { sr: 7, sc: 25, label: 'Buscar / Editar Alumno', color: '#FF00FF', bgColor: '#ffffff', fontSize: 16, disableOnNewData: true, hoverColor1: '#fdf0ff', hoverColor2: '#f5ccff', hoverShadowColor: 'rgba(255,0,255,0.25)', downShadowColor: 'rgba(255,0,255,0.15)', mergeSpan: { er: 8, ec: 26 } },
+    { sr: 9, sc: 25, label: 'Guardar Editado', color: '#90EE90', bgColor: '#ffffff', fontSize: 16, disabledColor: '#999999', disabledBgColor: '#f5f5f5', activeColor: '#32CD32', requiresEdit: true, hoverColor1: '#f0fff0', hoverColor2: '#c8f7c8', hoverShadowColor: 'rgba(50,205,50,0.25)', downShadowColor: 'rgba(50,205,50,0.15)', mergeSpan: { er: 10, ec: 26 } },
+    { sr: 7, sc: 30, label: 'Guardar Datos', color: '#5BA8FF', bgColor: '#ffffff', fontSize: 16, disabledColor: '#999999', activeColor: '#5BA8FF', disableOnEdit: true, requiresNewData: true, hoverColor1: '#e8f4ff', hoverColor2: '#c0deff', hoverShadowColor: 'rgba(91,168,255,0.3)', downShadowColor: 'rgba(91,168,255,0.15)', mergeSpan: { er: 8, ec: 37 } },
+    { sr: 9, sc: 30, label: 'Eliminar Datos', color: '#FF4444', bgColor: '#ffffff', fontSize: 16, disabledColor: '#999999', activeColor: '#FF4444', disableOnEdit: true, hoverColor1: '#fff0f0', hoverColor2: '#ffcccc', hoverShadowColor: 'rgba(255,68,68,0.3)', downShadowColor: 'rgba(255,68,68,0.15)', mergeSpan: { er: 10, ec: 37 } },
+    { sr: 7, sc: 27, label: 'Exportar\nDatos', color: '#FF8C00', bgColor: '#ffffff', fontSize: 12, disabledColor: '#999999', disabledBgColor: '#f5f5f5', disableOnNewData: true, hoverColor1: '#fff5e6', hoverColor2: '#ffe0b3', hoverShadowColor: 'rgba(255,140,0,0.3)', downShadowColor: 'rgba(255,140,0,0.15)', mergeSpan: { er: 10, ec: 29 } },
   ]
-  // Busca botón de comando por posición exacta o por texto en celdas combinadas
   const isCmdBtn = (r: number, c: number, cellText?: string) => {
     const posBtn = CMD_BUTTONS.find(b => b.sr === r && b.sc === c)
     if (posBtn) return posBtn
-    if (cellText) {
-      const textBtn = CMD_BUTTONS.find(b => cellText.trim() === b.label)
-      if (textBtn) return textBtn
-    }
+    if (cellText) { const textBtn = CMD_BUTTONS.find(b => cellText.trim() === b.label); if (textBtn) return textBtn }
     return null
   }
 
-  // === Formato DD/MM/AAAA (sin problema de zona horaria) ===
-  const fmtDate = (val: unknown): string => {
-    if (!val) return ''
-    const s = String(val).trim()
-    if (!s) return ''
-    // Ya en DD/MM/AAAA
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) { const p = s.split('/'); return `${p[0].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[2]}` }
-    // YYYY-MM-DD o ISO — parsear manualmente para evitar problema de zona horaria
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) { try { const p = s.substring(0,10).split('-'); return `${p[2].padStart(2,'0')}/${p[1].padStart(2,'0')}/${p[0]}` } catch {} }
-    return s
-  }
-
   // === CONVERTIR RAWDATA → CLAVES PLANAS DEL FIELD_MAP ===
-  // Si el rawData ya tiene claves planas (NOTA.CA.1, SECCION.1, PG.GRUPO.1, etc.),
-  // las copia TODAS en orden directo, sin omitir ninguna ni mezclar campos.
   const flattenRawData = (raw: Record<string, unknown>): Record<string, string> => {
     const out: Record<string, string> = {}
     if (!raw || typeof raw !== 'object') return out
-
-    // Detectar si rawData tiene claves planas del FIELD_MAP
     const rawKeys = Object.keys(raw)
     const hasFlatFieldMapKeys = rawKeys.some(k => /^[A-Z]/.test(k) && k.includes('.') && fieldMap.some(([fm]) => fm === k))
 
-    // === RAMA A: Claves planas → copiar directo en orden ===
+    // RAMA A: Claves planas → copiar directo
     if (hasFlatFieldMapKeys) {
       const fieldMapSet = new Set(fieldMap.map(([k]) => k))
-      for (const key of rawKeys) {
-        if (fieldMapSet.has(key) && raw[key] != null && raw[key] !== undefined) {
-          const sv = String(raw[key])
-          if (sv) out[key] = sv
-        }
-      }
+      for (const key of rawKeys) { if (fieldMapSet.has(key) && raw[key] != null && raw[key] !== undefined) { const sv = String(raw[key]); if (sv) out[key] = sv } }
       return out
     }
 
-    // === RAMA A2: Plan Derogado con claves numéricas BD2 → usar buildDerogadoFlatMap ===
+    // RAMA A2: Plan Derogado con claves numéricas BD2 → buildDerogadoFlatMap
     if (plan === 'derogado') {
       const hasNumericKeys = rawKeys.some(k => /^\d+$/.test(k))
-      if (hasNumericKeys) {
-        return buildDerogadoFlatMap(raw as Record<string, any>)
-      }
+      if (hasNumericKeys) { return buildDerogadoFlatMap(raw as Record<string, any>) }
     }
 
-    // === RAMA B: Formato estructurado o legacy numérico ===
-    const ABBREV_NORM: Record<string, string> = { FSN: 'FS' }
-    const norm = (abrev: string): string => {
-      const a = (abrev || '').toUpperCase().trim()
-      return ABBREV_NORM[a] || a
-    }
-
-    // ─── 1) FORMATO ESTRUCTURADO (_format: structured_v1) ───
+    // RAMA B: structured_v1 o legacy numérico vigente
     if (raw._format === 'structured_v1') {
       const insts = raw.instituciones
-      if (Array.isArray(insts)) {
-        for (let i = 0; i < Math.min(insts.length, 5); i++) {
-          const inst = insts[i] as Record<string, string> | null
-          if (!inst) continue
-          if (inst.denominacion) out[`INST.${i+1}`] = String(inst.denominacion).trim()
-          if (inst.localidad)  out[`LOCAL.${i+1}`] = String(inst.localidad).trim()
-          if (inst.ef)          out[`EF.${i+1}`]    = String(inst.ef).trim()
-        }
-      }
-
+      if (Array.isArray(insts)) { for (let i = 0; i < Math.min(insts.length, 5); i++) { const inst = insts[i] as Record<string, string> | null; if (!inst) continue; if (inst.denominacion) out[`INST.${i+1}`] = String(inst.denominacion).trim(); if (inst.localidad) out[`LOCAL.${i+1}`] = String(inst.localidad).trim(); if (inst.ef) out[`EF.${i+1}`] = String(inst.ef).trim() } }
       const cals = raw.calificaciones
-      if (Array.isArray(cals)) {
-        for (const c of cals) {
-          const cal = c as Record<string, unknown>
-          const y = Number(cal.anioEscolar)
-          if (!y || y < 1 || y > 5) continue
-          const a = norm(String(cal.abrev || ''))
-          if (!a) continue
-          if (cal.nota) out[`NOTA.${a}.${y}`]  = String(cal.nota).trim()
-          if (cal.eval) out[`EVAL.${a}.${y}`]  = String(cal.eval).trim()
-          if (cal.mes)  out[`MES.${a}.${y}`]   = String(cal.mes).trim()
-          if (cal.anio) out[`AÑO.${a}.${y}`]  = String(cal.anio).trim()
-          if (cal.inst) out[`INST.${a}.${y}`]  = String(cal.inst).trim()
-        }
-      }
-
+      if (Array.isArray(cals)) { for (const c of cals) { const cal = c as Record<string, unknown>; const y = Number(cal.anioEscolar); if (!y || y < 1 || y > 5) continue; const a = (String(cal.abrev || '').toUpperCase().trim().replace('FSN','FS')); if (!a) continue; if (cal.nota) out[`NOTA.${a}.${y}`] = String(cal.nota).trim(); if (cal.eval) out[`EVAL.${a}.${y}`] = String(cal.eval).trim(); if (cal.mes) out[`MES.${a}.${y}`] = fmtDate(String(cal.mes).trim()); if (cal.anio) out[`AÑO.${a}.${y}`] = String(cal.anio).trim(); if (cal.inst) out[`INST.${a}.${y}`] = String(cal.inst).trim() } }
       const oris = raw.orientacion
-      if (Array.isArray(oris)) {
-        for (let i = 0; i < Math.min(oris.length, 5); i++) {
-          const o = oris[i] as Record<string, string> | null
-          if (o?.literal) out[`OC.LITERAL.${i+1}`] = String(o.literal).trim()
-        }
-      }
-
+      if (Array.isArray(oris)) { for (let i = 0; i < Math.min(oris.length, 5); i++) { const o = oris[i] as Record<string, string> | null; if (o?.literal) out[`OC.LITERAL.${i+1}`] = String(o.literal).trim() } }
       const grps = raw.grupos
-      if (Array.isArray(grps)) {
-        for (let i = 0; i < Math.min(grps.length, 5); i++) {
-          const g = grps[i] as Record<string, string> | null
-          if (!g) continue
-          if (g.grupo)  out[`PG.GRUPO.${i+1}`]  = String(g.grupo).trim()
-          if (g.literal) out[`PG.LITERAL.${i+1}`] = String(g.literal).trim()
-        }
-      }
-
+      if (Array.isArray(grps)) { for (let i = 0; i < Math.min(grps.length, 5); i++) { const g = grps[i] as Record<string, string> | null; if (!g) continue; if (g.grupo) out[`PG.GRUPO.${i+1}`] = String(g.grupo).trim(); if (g.literal) out[`PG.LITERAL.${i+1}`] = String(g.literal).trim() } }
       const obs = raw.observaciones
-      if (Array.isArray(obs)) {
-        for (let i = 0; i < 4; i++) {
-          if (obs[i]) out[`OBS.CERT.L${i+1}`] = String(obs[i]).trim()
-        }
-      }
+      if (Array.isArray(obs)) { for (let i = 0; i < 4; i++) { if (obs[i]) out[`OBS.CERT.L${i+1}`] = String(obs[i]).trim() } }
       const obsNotas = raw.observacionesNotas
-      if (Array.isArray(obsNotas)) {
-        for (let i = 0; i < 3; i++) {
-          if (obsNotas[i]) out[`OBS.NOTAS.L${i+1}`] = String(obsNotas[i]).trim()
-        }
-      }
+      if (Array.isArray(obsNotas)) { for (let i = 0; i < 3; i++) { if (obsNotas[i]) out[`OBS.NOTAS.L${i+1}`] = String(obsNotas[i]).trim() } }
       const obsBoleta = raw.observacionesBoleta
-      if (Array.isArray(obsBoleta)) {
-        for (let i = 0; i < 3; i++) {
-          if (obsBoleta[i]) out[`OBS.BOLETA.L${i+1}`] = String(obsBoleta[i]).trim()
-        }
-      }
-
-      // Secciones: solo desde raw.secciones, NUNCA desde grupos[].grupo
+      if (Array.isArray(obsBoleta)) { for (let i = 0; i < 3; i++) { if (obsBoleta[i]) out[`OBS.BOLETA.L${i+1}`] = String(obsBoleta[i]).trim() } }
       const secs = raw.secciones
-      if (Array.isArray(secs)) {
-        for (let i = 0; i < Math.min(secs.length, 5); i++) {
-          if (secs[i]) out[`SECCION.${i+1}`] = String(secs[i]).trim()
-        }
-      }
-
-      if (raw.acta)             out['TITULO.SERIAL']      = String(raw.acta).trim()
+      if (Array.isArray(secs)) { for (let i = 0; i < Math.min(secs.length, 5); i++) { if (secs[i]) out[`SECCION.${i+1}`] = String(secs[i]).trim() } }
+      if (raw.acta) out['TITULO.SERIAL'] = String(raw.acta).trim()
       if (raw.tituloExpedicion) out['TITULO.EXPEDICION'] = fmtDate(raw.tituloExpedicion)
-      if (raw.actaAnio)         out['TITULO.EGRESO']     = String(raw.actaAnio).trim()
-      if (raw.actaFecha)        out['CERT.EXPEDICION']   = fmtDate(raw.actaFecha)
-
+      if (raw.actaAnio) out['TITULO.EGRESO'] = String(raw.actaAnio).trim()
+      if (raw.actaFecha) out['CERT.EXPEDICION'] = fmtDate(raw.actaFecha)
       const litFinal = raw.literalesFinales
-      if (Array.isArray(litFinal) && !Array.isArray(raw.grupos)) {
-        for (let i = 0; i < Math.min(litFinal.length, 5); i++) {
-          if (litFinal[i]) out[`PG.LITERAL.${i+1}`] = String(litFinal[i]).trim()
-        }
-      }
+      if (Array.isArray(litFinal) && !Array.isArray(raw.grupos)) { for (let i = 0; i < Math.min(litFinal.length, 5); i++) { if (litFinal[i]) out[`PG.LITERAL.${i+1}`] = String(litFinal[i]).trim() } }
     }
 
-    // ─── 2) FORMATO LEGACY (claves numéricas) ───
-    const hasNumericKeys = Object.keys(raw).some(k => /^\d+$/.test(k))
+    // Legacy numérico vigente
+    const hasNumericKeys = rawKeys.some(k => /^\d+$/.test(k))
     if (hasNumericKeys) {
-      for (let i = 0; i < 5; i++) {
-        const nk = String(8 + i * 3)
-        const lk = String(9 + i * 3)
-        const ek = String(10 + i * 3)
-        if (raw[nk]) out[`INST.${i+1}`]  = String(raw[nk]).replace(/^\*/, '').trim()
-        if (raw[lk]) out[`LOCAL.${i+1}`] = String(raw[lk]).replace(/^\*/, '').trim()
-        if (raw[ek]) out[`EF.${i+1}`]    = String(raw[ek]).trim()
-      }
-
-      const yearBlocks = [
-        { year: 1, start: 23, count: 7 },
-        { year: 2, start: 58, count: 7 },
-        { year: 3, start: 93, count: 8 },
-        { year: 4, start: 133, count: 9 },
-        { year: 5, start: 178, count: 10 },
-      ]
-      const abrevsByYear: Record<number, string[]> = {
-        1: ['CA','IN','MA','EF','AP','CN','GH'],
-        2: ['CA','IN','MA','EF','AP','CN','GH'],
-        3: ['CA','IN','MA','EF','FI','QU','BI','GH'],
-        4: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'],
-        5: ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'],
-      }
-      for (const block of yearBlocks) {
-        const abrevs = abrevsByYear[block.year] || []
-        for (let i = 0; i < block.count; i++) {
-          const col = block.start + i * 5
-          const abrev = abrevs[i] || `M${i+1}`
-          const nota = raw[String(col)]
-          const eval_ = raw[String(col + 1)]
-          const mes  = raw[String(col + 2)]
-          const anio = raw[String(col + 3)]
-          const inst = raw[String(col + 4)]
-          if (nota) out[`NOTA.${abrev}.${block.year}`] = String(nota).trim()
-          if (eval_) out[`EVAL.${abrev}.${block.year}`] = String(eval_).trim()
-          if (mes)  out[`MES.${abrev}.${block.year}`]  = fmtDate(String(mes).trim())
-          if (anio) out[`AÑO.${abrev}.${block.year}`]  = String(anio).trim()
-          if (inst) out[`INST.${abrev}.${block.year}`] = String(inst).trim()
-        }
-      }
-
-      for (let i = 0; i < 5; i++) {
-        const v = raw[String(228 + i)]
-        if (v) out[`OC.LITERAL.${i+1}`] = String(v).trim()
-      }
-      for (let i = 0; i < 5; i++) {
-        const gd = raw[String(233 + i)]
-        const gl = raw[String(238 + i)]
-        if (gd) out[`PG.GRUPO.${i+1}`] = String(gd).trim()
-        if (gl) out[`PG.LITERAL.${i+1}`] = String(gl).trim()
-      }
-      // Secciones: cols 248-252 (SEPARADAS de PG.GRUPO cols 233-237)
-      for (let i = 0; i < 5; i++) {
-        const sd = raw[String(248 + i)]
-        if (sd) out[`SECCION.${i+1}`] = String(sd).trim()
-      }
-      // OBS.CERT: cols 243, 244, 260, 261
-      const obsCertCols = [243, 244, 260, 261]
-      for (let i = 0; i < obsCertCols.length; i++) {
-        const v = raw[String(obsCertCols[i])]
-        if (v) out[`OBS.CERT.L${i+1}`] = String(v).trim()
-      }
-      const obsNotasCols = [245, 246, 247]
-      for (let i = 0; i < obsNotasCols.length; i++) {
-        const v = raw[String(obsNotasCols[i])]
-        if (v) out[`OBS.NOTAS.L${i+1}`] = String(v).trim()
-      }
-      const obsBoletaCols = [257, 258, 259]
-      for (let i = 0; i < obsBoletaCols.length; i++) {
-        const v = raw[String(obsBoletaCols[i])]
-        if (v) out[`OBS.BOLETA.L${i+1}`] = String(v).trim()
-      }
-      if (raw['253']) out['TITULO.SERIAL']      = String(raw['253']).trim()
-      if (raw['254']) out['TITULO.EXPEDICION'] = fmtDate(raw['254'])
-      if (raw['255']) out['TITULO.EGRESO']     = String(raw['255']).trim()
-      if (raw['256']) out['CERT.EXPEDICION']   = fmtDate(raw['256'])
+      for (let i = 0; i < 5; i++) { const nk = String(8 + i * 3); const lk = String(9 + i * 3); const ek = String(10 + i * 3); if (raw[nk]) out[`INST.${i+1}`] = String(raw[nk]).replace(/^\*/, '').trim(); if (raw[lk]) out[`LOCAL.${i+1}`] = String(raw[lk]).replace(/^\*/, '').trim(); if (raw[ek]) out[`EF.${i+1}`] = String(raw[ek]).trim() }
+      const yearBlocks = [{ year: 1, start: 23, count: 7 },{ year: 2, start: 58, count: 7 },{ year: 3, start: 93, count: 8 },{ year: 4, start: 133, count: 9 },{ year: 5, start: 178, count: 10 }]
+      const abrevsByYear: Record<number, string[]> = { 1: ['CA','IN','MA','EF','AP','CN','GH'], 2: ['CA','IN','MA','EF','AP','CN','GH'], 3: ['CA','IN','MA','EF','FI','QU','BI','GH'], 4: ['CA','IN','MA','EF','FI','QU','BI','GH','FS'], 5: ['CA','IN','MA','EF','FI','QU','BI','CT','GH','FS'] }
+      for (const block of yearBlocks) { const abrevs = abrevsByYear[block.year] || []; for (let i = 0; i < block.count; i++) { const col = block.start + i * 5; const abrev = abrevs[i] || `M${i+1}`; if (raw[String(col)]) out[`NOTA.${abrev}.${block.year}`] = String(raw[String(col)]).trim(); if (raw[String(col + 1)]) out[`EVAL.${abrev}.${block.year}`] = String(raw[String(col + 1)]).trim(); if (raw[String(col + 2)]) out[`MES.${abrev}.${block.year}`] = fmtDate(String(raw[String(col + 2)]).trim()); if (raw[String(col + 3)]) out[`AÑO.${abrev}.${block.year}`] = String(raw[String(col + 3)]).trim(); if (raw[String(col + 4)]) out[`INST.${abrev}.${block.year}`] = String(raw[String(col + 4)]).trim() } }
+      for (let i = 0; i < 5; i++) { if (raw[String(228 + i)]) out[`OC.LITERAL.${i+1}`] = String(raw[String(228 + i)]).trim() }
+      for (let i = 0; i < 5; i++) { if (raw[String(233 + i)]) out[`PG.GRUPO.${i+1}`] = String(raw[String(233 + i)]).trim(); if (raw[String(238 + i)]) out[`PG.LITERAL.${i+1}`] = String(raw[String(238 + i)]).trim() }
+      for (let i = 0; i < 5; i++) { if (raw[String(248 + i)]) out[`SECCION.${i+1}`] = String(raw[String(248 + i)]).trim() }
+      const obsCertCols = [243, 244, 260, 261]; for (let i = 0; i < obsCertCols.length; i++) { if (raw[String(obsCertCols[i])]) out[`OBS.CERT.L${i+1}`] = String(raw[String(obsCertCols[i])]).trim() }
+      const obsNotasCols = [245, 246, 247]; for (let i = 0; i < obsNotasCols.length; i++) { if (raw[String(obsNotasCols[i])]) out[`OBS.NOTAS.L${i+1}`] = String(raw[String(obsNotasCols[i])]).trim() }
+      const obsBoletaCols = [257, 258, 259]; for (let i = 0; i < obsBoletaCols.length; i++) { if (raw[String(obsBoletaCols[i])]) out[`OBS.BOLETA.L${i+1}`] = String(raw[String(obsBoletaCols[i])]).trim() }
+      if (raw['253']) out['TITULO.SERIAL'] = String(raw['253']).trim(); if (raw['254']) out['TITULO.EXPEDICION'] = fmtDate(raw['254']); if (raw['255']) out['TITULO.EGRESO'] = String(raw['255']).trim(); if (raw['256']) out['CERT.EXPEDICION'] = fmtDate(raw['256'])
     }
 
-    // ─── 3) FALLBACK: claves planas del raw que coincidan con FIELD_MAP ───
+    // Fallback: claves planas del raw que coincidan con FIELD_MAP
     const fieldMapKeys = new Set(fieldMap.map(([k]) => k))
-    for (const [key, val] of Object.entries(raw)) {
-      if (fieldMapKeys.has(key) && val !== null && val !== undefined) {
-        const sv = String(val)
-        if (sv && !out[key]) out[key] = sv
-      }
-    }
-
+    for (const [key, val] of Object.entries(raw)) { if (fieldMapKeys.has(key) && val !== null && val !== undefined) { const sv = String(val); if (sv && !out[key]) out[key] = sv } }
     return out
   }
 
@@ -1049,287 +596,109 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setSearchResults([]); return }
     setSearching(true)
-    try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`)
-      const data = await res.json()
-      setSearchResults(data.students || [])
-    } catch { setSearchResults([]) }
+    try { const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`); const data = await res.json(); setSearchResults(data.students || []) } catch { setSearchResults([]) }
     setSearching(false)
   }, [plan])
 
-  // === BÚSQUEDA PARA ELIMINAR ===
   const doDeleteSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setDeleteResults([]); return }
     setDeleteSearching(true)
-    try {
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`)
-      const data = await res.json()
-      setDeleteResults(data.students || [])
-    } catch { setDeleteResults([]) }
+    try { const res = await fetch(`/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`); const data = await res.json(); setDeleteResults(data.students || []) } catch { setDeleteResults([]) }
     setDeleteSearching(false)
   }, [plan])
 
-  // === RESTAURAR ESTADO INICIAL ===
   const restoreInitialState = useCallback(() => {
-    if (initialCellsRef.current) {
-      setCells(initialCellsRef.current.map(r => [...r]))
-    }
-    setEditingStudentId(null)
-    setDataLoadKey(k => k + 1)
-    initialRawDataRef.current = null
-    setEditMode(false)
-    setShowSearchModal(false)
-    setShowDeleteModal(false)
+    if (initialCellsRef.current) { setCells(initialCellsRef.current.map(r => [...r])) }
+    setEditingStudentId(null); setDataLoadKey(k => k + 1); initialRawDataRef.current = null; setEditMode(false); setShowSearchModal(false); setShowDeleteModal(false)
   }, [])
 
-  // === CONFIRMAR Y ELIMINAR ESTUDIANTE ===
   const doDeleteStudent = useCallback(async (studentId: string) => {
     try {
       setSaveStatus('ELIMINANDO...')
       const res = await fetch(`/api/students/${studentId}?plan=${plan}`, { method: 'DELETE' })
-      if (!res.ok) {
-        setSaveStatus('ERROR AL ELIMINAR')
-        setTimeout(() => setSaveStatus(''), 3000)
-        return
-      }
-      setSaveStatus('REGISTRO ELIMINADO ✓')
-      setTimeout(() => setSaveStatus(''), 3000)
-      // Cerrar modales y restaurar
-      setDeleteConfirm(null)
-      setDeleteQuery('')
-      setDeleteResults([])
-      restoreInitialState()
-    } catch (e) {
-      console.error('[DELETE ERROR]', e)
-      setSaveStatus('ERROR AL ELIMINAR')
-      setTimeout(() => setSaveStatus(''), 3000)
-    }
+      if (!res.ok) { setSaveStatus('ERROR AL ELIMINAR'); setTimeout(() => setSaveStatus(''), 3000); return }
+      setSaveStatus('REGISTRO ELIMINADO ✓'); setTimeout(() => setSaveStatus(''), 3000)
+      setDeleteConfirm(null); setDeleteQuery(''); setDeleteResults([]); restoreInitialState()
+    } catch (e) { console.error('[DELETE ERROR]', e); setSaveStatus('ERROR AL ELIMINAR'); setTimeout(() => setSaveStatus(''), 3000) }
   }, [plan, restoreInitialState])
 
   // === CARGAR DATOS DEL ESTUDIANTE AL DASHBOARD ===
   const loadStudentToDashboard = useCallback(async (studentId: string) => {
     try {
-      console.log('[LOAD] Iniciando carga para studentId:', studentId)
       const res = await fetch(`/api/students/${studentId}?plan=${plan}`)
-      if (!res.ok) { console.error('[LOAD] API error:', res.status); return }
+      if (!res.ok) return
       const student = await res.json()
-      if (!student || student.error) { console.error('[LOAD] Student error:', student?.error); return }
-      console.log('[LOAD] Student recibido:', student.id, student.cedula, student.apellidos, student.nombres)
-      console.log('[LOAD] rawData length:', student.rawData?.length || 0)
-
-      // Cerrar modal y limpiar búsqueda
-      setShowSearchModal(false)
-      setSearchQuery('')
-      setSearchResults([])
-
-      // Parsear rawData
+      if (!student || student.error) return
+      setShowSearchModal(false); setSearchQuery(''); setSearchResults([])
       let rawObj: Record<string, unknown> = {}
-      try {
-        const rawStr = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
-        rawObj = JSON.parse(rawStr)
-      } catch (e) {
-        console.error('[LOAD] rawData parse error:', e)
-      }
+      try { const rawStr = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {}); rawObj = JSON.parse(rawStr) } catch (e) { console.error('[LOAD] rawData parse error:', e) }
       initialRawDataRef.current = typeof student.rawData === 'string' ? student.rawData : JSON.stringify(student.rawData || {})
-
-      // Construir mapa campo→valor: datos personales + rawData aplanado
       const flat = flattenRawData(rawObj)
-      console.log('[LOAD] rawData aplanado keys:', Object.keys(flat).length, Object.keys(flat).slice(0, 10))
-
       const vals: Record<string, string> = {}
-      // Datos personales del modelo Student (siempre disponibles)
-      vals['CEDULA'] = student.cedula || ''
-      vals['FECHA'] = fmtDate(student.fechaNacimiento || '')
-      vals['APELLIDOS'] = student.apellidos || ''
-      vals['NOMBRES'] = student.nombres || ''
-      vals['PAIS'] = student.pais || ''
-      vals['ESTADO'] = student.estado || ''
-      vals['MUNICIPIO'] = student.municipio || ''
-
-      // Sobrescribir/conjuntar con datos del rawData aplanado
-      for (const [campo, valor] of Object.entries(flat)) {
-        if (valor) vals[campo] = String(valor)
-      }
-
-      // Pre-calcular posiciones y valores
-      let notaSum = 0
-      let notaCount = 0
+      vals['CEDULA'] = student.cedula || ''; vals['FECHA'] = fmtDate(student.fechaNacimiento || '')
+      vals['APELLIDOS'] = student.apellidos || ''; vals['NOMBRES'] = student.nombres || ''
+      vals['PAIS'] = student.pais || ''; vals['ESTADO'] = student.estado || ''; vals['MUNICIPIO'] = student.municipio || ''
+      for (const [campo, valor] of Object.entries(flat)) { if (valor) vals[campo] = String(valor) }
+      let notaSum = 0, notaCount = 0
       const fieldPositions: Array<[string, string, {r:number;c:number}|null]> = []
-      for (const [campo, celda] of fieldMap) {
-        const pos = cellRef(celda)
-        const val = vals[campo] || ''
-        fieldPositions.push([campo, val, pos])
-        if (campo.startsWith('NOTA.')) {
-          const n = parseFloat(val)
-          if (!isNaN(n) && n >= 1 && n <= 20) { notaSum += n; notaCount++ }
-        }
-      }
+      for (const [campo, celda] of fieldMap) { const pos = cellRef(celda); const val = vals[campo] || ''; fieldPositions.push([campo, val, pos]); if (campo.startsWith('NOTA.')) { const n = parseFloat(val); if (!isNaN(n) && n >= 1 && n <= 20) { notaSum += n; notaCount++ } } }
       const promedioVal = PROMEDIO_CELL && notaCount > 0 ? (notaSum / notaCount).toFixed(2) : ''
       const totalVals = Object.keys(vals).length
       const nonEmptyFields = fieldPositions.filter(([, val, pos]) => pos && val).length
-      console.log('[LOAD] totalVals:', totalVals, 'nonEmptyFields:', nonEmptyFields, 'promedio:', promedioVal)
-
-      // Guardar snapshot Y aplicar datos en UNA sola operación setCells
-      // Esto garantiza que el snapshot capture el estado ANTES de los datos del alumno
-      // y que las celdas se actualicen atomicamente
-      setEditingStudentId(student.id)
-      setDataLoadKey(k => k + 1)
-
+      setEditingStudentId(student.id); setDataLoadKey(k => k + 1)
       setCells(prev => {
-        // 1) Capturar snapshot del estado actual (antes de modificar)
-        if (!initialCellsRef.current) {
-          initialCellsRef.current = prev.map(row => [...row])
-          console.log('[LOAD] Snapshot capturado dentro de setCells')
-        }
-
-        // 2) Aplicar valores del alumno
+        if (!initialCellsRef.current) { initialCellsRef.current = prev.map(row => [...row]) }
         const newCells = prev.map(row => [...row])
         let appliedCount = 0
-        for (const [campo, val, pos] of fieldPositions) {
-          if (pos && newCells[pos.r] && val) {
-            newCells[pos.r][pos.c] = val
-            appliedCount++
-          }
-        }
-        if (PROMEDIO_CELL && promedioVal) {
-          if (newCells[PROMEDIO_CELL.r]) newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal
-        }
-        console.log('[LOAD] Applied', appliedCount, 'values to cells')
+        for (const [campo, val, pos] of fieldPositions) { if (pos && newCells[pos.r] && val) { newCells[pos.r][pos.c] = val; appliedCount++ } }
+        if (PROMEDIO_CELL && promedioVal) { if (newCells[PROMEDIO_CELL.r]) newCells[PROMEDIO_CELL.r][PROMEDIO_CELL.c] = promedioVal }
         return newCells
       })
-
       setSaveStatus(`CARGADO: ${nonEmptyFields} de ${totalVals} vals | ${Object.keys(flat).length} del rawData`)
       setTimeout(() => setSaveStatus(''), 6000)
       setEditMode(true)
-      console.log('[LOAD] Done - editMode activado')
     } catch (e) { console.error('[LOAD STUDENT ERROR]', e) }
-  }, [plan]) // Sin 'cells' ni 'restoreInitialState' — usa setCells(prev=>) y no necesita restoreInitialState aquí
+  }, [plan])
 
   // === GUARDAR NUEVO REGISTRO EN BD ===
-  // Valida cédula (formato + duplicado), crea el registro y restaura el dashboard.
   const saveNewStudent = useCallback(async () => {
     const currentCells = stateRef.current.cells
-
-    // 1. Leer cédula de M5
-    const m5 = cellRef('M5')
-    const cedula = m5 ? (currentCells[m5.r]?.[m5.c] || '').trim() : ''
-
-    // 2. Validar que no esté vacía o con asteriscos
-    if (!cedula || cedula.includes('*')) {
-      const msg = 'La cédula está vacía o contiene asteriscos.\nDebe tener el formato: V 12345678 (letra + espacio + 8 u 11 dígitos).\n¿Corregir o cancelar?'
-      if (!window.confirm(msg)) { restoreInitialState(); return }
-      return
-    }
-
-    // 3. Validar formato: letra (V,E,P,D,C) + espacio + 8 u 11 dígitos
+    const m5 = cellRef('M5'); const cedula = m5 ? (currentCells[m5.r]?.[m5.c] || '').trim() : ''
+    if (!cedula || cedula.includes('*')) { if (!window.confirm('La cédula está vacía o contiene asteriscos.\nDebe tener el formato: V 12345678\n¿Corregir o cancelar?')) { restoreInitialState(); return }; return }
     const cedulaRegex = /^[VEPDC] \d{8}$|^[VEPDC] \d{11}$/
-    if (!cedulaRegex.test(cedula)) {
-      const msg = `Formato de cédula inválido: "${cedula}"\nDebe ser: Letra (V,E,P,D,C) + espacio + 8 u 11 dígitos.\nEjemplos: V 12345678 o E 12345678901\n¿Corregir o cancelar?`
-      if (!window.confirm(msg)) { restoreInitialState(); return }
-      return
-    }
-
-    // 4. Verificar duplicado en BD
+    if (!cedulaRegex.test(cedula)) { if (!window.confirm(`Formato de cédula inválido: "${cedula}"\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
     try {
       setSaveStatus('VERIFICANDO CÉDULA...')
       const checkRes = await fetch(`/api/students?cedula_exact=${encodeURIComponent(cedula)}&plan=${plan}`)
       const checkData = await checkRes.json()
-      if (checkData.exists) {
-        setSaveStatus('')
-        const msg = `Ya existe un alumno con la cédula: "${cedula}"\n¿Corregir o cancelar?`
-        if (!window.confirm(msg)) { restoreInitialState(); return }
-        return
-      }
-    } catch {
-      setSaveStatus('')
-      const msg = 'No se pudo verificar si la cédula ya existe.\n¿Intentar de nuevo o cancelar?'
-      if (!window.confirm(msg)) { restoreInitialState(); return }
-      return
-    }
-
-    // 5. Construir rawData desde todas las celdas del FIELD_MAP
+      if (checkData.exists) { setSaveStatus(''); if (!window.confirm(`Ya existe un alumno con la cédula: "${cedula}"\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
+    } catch { setSaveStatus(''); if (!window.confirm('No se pudo verificar si la cédula ya existe.\n¿Intentar de nuevo o cancelar?')) { restoreInitialState(); return }; return }
     const rawData: Record<string, string> = {}
-    for (const [campo, celda] of fieldMap) {
-      const pos = cellRef(celda)
-      if (pos) rawData[campo] = currentCells[pos.r]?.[pos.c] || ''
-    }
-
-    // 6. Campos directos del estudiante
-    const m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8')
-    const m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
-
-    const newStudent = {
-      cedula,
-      apellidos: m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : '',
-      nombres: m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : '',
-      fechaNacimiento: m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : '',
-      pais: m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA',
-      estado: m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : '',
-      municipio: m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : '',
-      rawData: JSON.stringify(rawData),
-      plan,
-    }
-
-    // 7. Crear en BD
+    for (const [campo, celda] of fieldMap) { const pos = cellRef(celda); if (pos) rawData[campo] = currentCells[pos.r]?.[pos.c] || '' }
+    const m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8'), m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
+    const newStudent = { cedula, apellidos: m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : '', nombres: m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : '', fechaNacimiento: m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : '', pais: m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA', estado: m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : '', municipio: m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : '', rawData: JSON.stringify(rawData), plan }
     try {
       setSaveStatus('GUARDANDO NUEVO REGISTRO...')
-      const res = await fetch('/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newStudent),
-      })
+      const res = await fetch('/api/students', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newStudent) })
       const result = await res.json()
-
-      if (!res.ok) {
-        setSaveStatus('')
-        const msg = `Error al guardar: ${result.error || 'desconocido'}\n¿Corregir o cancelar?`
-        if (!window.confirm(msg)) { restoreInitialState(); return }
-        return
-      }
-
-      // 8. Éxito: restaurar dashboard
-      setSaveStatus('NUEVO REGISTRO GUARDADO ✓')
-      setTimeout(() => setSaveStatus(''), 3000)
-      restoreInitialState()
-    } catch (e) {
-      console.error('[SAVE NEW ERROR]', e)
-      setSaveStatus('')
-      const msg = 'Error de conexión al guardar el nuevo registro.\n¿Intentar de nuevo o cancelar?'
-      if (!window.confirm(msg)) { restoreInitialState(); return }
-    }
+      if (!res.ok) { setSaveStatus(''); if (!window.confirm(`Error al guardar: ${result.error || 'desconocido'}\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
+      setSaveStatus('NUEVO REGISTRO GUARDADO ✓'); setTimeout(() => setSaveStatus(''), 3000); restoreInitialState()
+    } catch (e) { console.error('[SAVE NEW ERROR]', e); setSaveStatus(''); if (!window.confirm('Error de conexión al guardar el nuevo registro.\n¿Intentar de nuevo o cancelar?')) { restoreInitialState(); return } }
   }, [plan, restoreInitialState])
 
   // === GUARDAR EDICIÓN EN BD Y RESTAURAR ===
-  // Solo actualiza los campos del FIELD_MAP dentro del rawData existente,
-  // SIN destruir las claves numéricas ni otros datos que no están en el dashboard.
   const saveEditedStudent = useCallback(async () => {
     if (!editingStudentId) return
     try {
       const currentCells = stateRef.current.cells
-
-      // Leer el rawData original del estudiante
       const studentData = await fetch(`/api/students/${editingStudentId}?plan=${plan}`)
       const student = await studentData.json()
       let originalRaw: Record<string, unknown> = {}
-      try {
-        originalRaw = JSON.parse(student.rawData || '{}')
-      } catch { /* rawData vacío o inválido */ }
-
-      // Construir mapa de ediciones: campo → valor desde las celdas
+      try { originalRaw = JSON.parse(student.rawData || '{}') } catch {}
       const edits: Record<string, string> = {}
-      for (const [campo, celda] of fieldMap) {
-        const pos = cellRef(celda)
-        if (!pos) continue
-        edits[campo] = currentCells[pos.r]?.[pos.c] || ''
-      }
-
-      // Merge: sobrescribir claves del FIELD_MAP en el rawData original
-      for (const [campo, valor] of Object.entries(edits)) {
-        originalRaw[campo] = valor
-      }
-
-      const m5 = cellRef('M5'), m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8')
-      const m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
+      for (const [campo, celda] of fieldMap) { const pos = cellRef(celda); if (!pos) continue; edits[campo] = currentCells[pos.r]?.[pos.c] || '' }
+      for (const [campo, valor] of Object.entries(edits)) { originalRaw[campo] = valor }
+      const m5 = cellRef('M5'), m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8'), m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
       const updateData: Record<string, string> = {}
       if (m5) updateData.cedula = currentCells[m5.r]?.[m5.c] || ""
       if (m6) updateData.fechaNacimiento = currentCells[m6.r]?.[m6.c] || ""
@@ -1339,18 +708,9 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       if (m10) updateData.estado = currentCells[m10.r]?.[m10.c] || ""
       if (m11) updateData.municipio = currentCells[m11.r]?.[m11.c] || ""
       updateData.rawData = JSON.stringify(originalRaw)
-
-      await fetch(`/api/students/${editingStudentId}?plan=${plan}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData)
-      })
-      restoreInitialState()
-      setSaveStatus('DATOS GUARDADOS ✓')
-      setTimeout(() => setSaveStatus(''), 3000)
-    } catch (e) {
-      console.error('[SAVE EDITED ERROR]', e)
-      setSaveStatus('ERROR AL GUARDAR')
-      setTimeout(() => setSaveStatus(''), 3000)
-    }
+      await fetch(`/api/students/${editingStudentId}?plan=${plan}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData) })
+      restoreInitialState(); setSaveStatus('DATOS GUARDADOS ✓'); setTimeout(() => setSaveStatus(''), 3000)
+    } catch (e) { console.error('[SAVE EDITED ERROR]', e); setSaveStatus('ERROR AL GUARDAR'); setTimeout(() => setSaveStatus(''), 3000) }
   }, [editingStudentId, restoreInitialState, plan])
 
   return (
@@ -1358,99 +718,41 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       {/* TOOLBAR ROW 1 */}
       <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-1.5">
         <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
-
-
-        {/* B */}
-        <button onClick={handleToggleBold} disabled={!selectedCell}
-          className="bg-gray-700 hover:bg-gray-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px] font-bold border border-gray-500" title="Negrita">B</button>
-
-        {/* Alignment */}
-        <button onClick={() => handleSetAlign('left')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Izquierda">
-          <span className="inline-block w-3" style={{textAlign:'left'}}>▸</span>
-        </button>
-        <button onClick={() => handleSetAlign('center')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Centrar">
-          <span className="inline-block w-3" style={{textAlign:'center'}}>▸</span>
-        </button>
-        <button onClick={() => handleSetAlign('right')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Derecha">
-          <span className="inline-block w-3" style={{textAlign:'right'}}>◂</span>
-        </button>
-
+        <button onClick={handleToggleBold} disabled={!selectedCell} className="bg-gray-700 hover:bg-gray-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px] font-bold border border-gray-500" title="Negrita">B</button>
+        <button onClick={() => handleSetAlign('left')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Izquierda"><span className="inline-block w-3" style={{textAlign:'left'}}>▸</span></button>
+        <button onClick={() => handleSetAlign('center')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Centrar"><span className="inline-block w-3" style={{textAlign:'center'}}>▸</span></button>
+        <button onClick={() => handleSetAlign('right')} className="bg-gray-700 hover:bg-gray-600 px-1.5 py-0.5 rounded text-[9px] border border-gray-500" title="Derecha"><span className="inline-block w-3" style={{textAlign:'right'}}>◂</span></button>
         <span className="text-gray-600">|</span>
-
-        {/* Font */}
-        <select onChange={e => handleSetFont(e.target.value)} disabled={!selectedCell}
-          className="bg-gray-700 text-white text-[9px] px-1 py-0.5 rounded border border-gray-500 disabled:opacity-40"
-          title="Tipo de fuente" style={{maxWidth:'110px'}}>
-          {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-        <input type="number" value={selectedCell ? (fontSizes[selectedCell.r]?.[selectedCell.c] || 9) : 9}
-          onChange={e => handleSetFontSize(parseInt(e.target.value) || 9)} disabled={!selectedCell}
-          className="w-10 bg-gray-700 text-white text-[9px] px-1 rounded text-center border border-gray-500 disabled:opacity-40" title="Tamaño fuente" />px
-
-        {/* Font Color */}
-        <span title="Color de texto" className="relative">
-          <span className="text-[9px]">A</span>
-          <input type="color" value={selectedCell ? (fontColors[selectedCell.r]?.[selectedCell.c] || '#333333') : '#333333'}
-            onChange={e => handleSetFontColor(e.target.value)} disabled={!selectedCell}
-            className="w-5 h-4 cursor-pointer absolute -top-0.5 left-3 opacity-60" />
-        </span>
-
+        <select onChange={e => handleSetFont(e.target.value)} disabled={!selectedCell} className="bg-gray-700 text-white text-[9px] px-1 py-0.5 rounded border border-gray-500 disabled:opacity-40" title="Tipo de fuente" style={{maxWidth:'110px'}}>{FONTS.map(f => <option key={f} value={f}>{f}</option>)}</select>
+        <input type="number" value={selectedCell ? (fontSizes[selectedCell.r]?.[selectedCell.c] || 9) : 9} onChange={e => handleSetFontSize(parseInt(e.target.value) || 9)} disabled={!selectedCell} className="w-10 bg-gray-700 text-white text-[9px] px-1 rounded text-center border border-gray-500 disabled:opacity-40" title="Tamaño fuente" />px
+        <span title="Color de texto" className="relative"><span className="text-[9px]">A</span><input type="color" value={selectedCell ? (fontColors[selectedCell.r]?.[selectedCell.c] || '#333333') : '#333333'} onChange={e => handleSetFontColor(e.target.value)} disabled={!selectedCell} className="w-5 h-4 cursor-pointer absolute -top-0.5 left-3 opacity-60" /></span>
         <span className="text-gray-600">|</span>
-
-        {/* Merge */}
         <button onClick={handleMerge} disabled={!hasSelection} className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">Combinar</button>
         <button onClick={handleUnmerge} disabled={!selectedCell||!getMerge(selectedCell.r,selectedCell.c)} className="bg-orange-600 hover:bg-orange-500 disabled:opacity-40 px-2 py-0.5 rounded text-[9px]">Descomb.</button>
-
         <span className="text-gray-600">|</span>
-
-        {/* Insert/Delete */}
         <button onClick={()=>handleInsertRow(false)} disabled={!selectedCell} className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar fila arriba">+F</button>
         <button onClick={()=>handleInsertRow(true)} disabled={!selectedCell} className="bg-green-700 hover:bg-green-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar fila abajo">+F↓</button>
         <button onClick={()=>handleInsertCol(false)} disabled={!selectedCell} className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar columna izquierda">+C</button>
         <button onClick={()=>handleInsertCol(true)} disabled={!selectedCell} className="bg-teal-700 hover:bg-teal-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]" title="Insertar columna derecha">+C→</button>
         <button onClick={handleDeleteRow} disabled={!selectedCell||numRows<=1} className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">-F</button>
         <button onClick={handleDeleteCol} disabled={!selectedCell||numCols<=1} className="bg-red-700 hover:bg-red-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">-C</button>
-
         <span className="text-gray-600">|</span>
-
-        {/* Move */}
         <button onClick={()=>handleMoveRow('up')} disabled={!selectedCell||selMinR===0} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">F↑</button>
         <button onClick={()=>handleMoveRow('down')} disabled={!selectedCell||selMaxR>=numRows-1} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">F↓</button>
         <button onClick={()=>handleMoveCol('left')} disabled={!selectedCell||selMinC===0} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">C←</button>
         <button onClick={()=>handleMoveCol('right')} disabled={!selectedCell||selMaxC>=numCols-1} className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-1.5 py-0.5 rounded text-[9px]">C→</button>
-
         <span className="text-gray-600">|</span>
-
         {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
-
         <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
         {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
-        <button onClick={async () => {
-          try {
-            const json = JSON.stringify(stateRef.current)
-            localStorage.setItem(STORAGE_KEY(plan), json)
-            // Guardar en BD también
-            await saveToDb(plan, stateRef.current)
-            saveCountRef.current++
-            setSaveStatus(`GUARDADO #${saveCountRef.current} (BD+Cache) ${(json.length/1024).toFixed(0)}KB ✓`)
-          } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }
-          setTimeout(() => setSaveStatus(''), 4000)
-        }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
+        <button onClick={async () => { try { const json = JSON.stringify(stateRef.current); localStorage.setItem(STORAGE_KEY(plan), json); await saveToDb(plan, stateRef.current); saveCountRef.current++; setSaveStatus(`GUARDADO #${saveCountRef.current} (BD+Cache) ${(json.length/1024).toFixed(0)}KB ✓`) } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }; setTimeout(() => setSaveStatus(''), 4000) }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
         <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
         <span className="text-gray-600">|</span>
-        <input
-          type="text"
-          value={rangeInput}
-          onChange={e => setRangeInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRangeSubmit() } }}
-          placeholder="A1:D5"
-          className="w-16 bg-gray-700 text-yellow-300 text-[9px] px-1 py-0.5 rounded border border-gray-500 placeholder-gray-500 text-center"
-          title="Escribe rango y presiona Enter"
-        />
+        <input type="text" value={rangeInput} onChange={e => setRangeInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRangeSubmit() } }} placeholder="A1:D5" className="w-16 bg-gray-700 text-yellow-300 text-[9px] px-1 py-0.5 rounded border border-gray-500 placeholder-gray-500 text-center" title="Escribe rango y presiona Enter" />
         <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
       </div>
 
-      {/* TOOLBAR ROW 2 - Cell props */}
+      {/* TOOLBAR ROW 2 */}
       {selectedCell && (
         <div className="sticky top-7 z-30 bg-gray-700 text-white text-[10px] px-3 py-1 flex flex-wrap items-center gap-2">
           <b>{colLetter(selectedCell.c)}{selectedCell.r+1}</b>
@@ -1469,34 +771,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </div>
       )}
 
-      <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown}
-        style={{ marginTop: selectedCell ? '52px' : '28px' }}>
-        <colgroup>
-          <col style={{ width: '35px' }} />
-          {colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}
-        </colgroup>
+      <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown} style={{ marginTop: selectedCell ? '52px' : '28px' }}>
+        <colgroup><col style={{ width: '35px' }} />{colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}</colgroup>
         <tbody>
-          <tr>
-            <td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20"
-              style={{ top: selectedCell ? '52px' : '28px' }}></td>
-            {Array.from({ length: numCols }).map((_, c) => {
-              const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1
-              return (
-                <td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)}
-                  className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
-                  style={{ top: selectedCell ? '52px' : '28px', position: 'sticky', zIndex: 15 }}>
-                  {colLetter(c)}
-                </td>
-              )
-            })}
+          <tr><td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20" style={{ top: selectedCell ? '52px' : '28px' }}></td>
+            {Array.from({ length: numCols }).map((_, c) => { const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1; return (<td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)} className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`} style={{ top: selectedCell ? '52px' : '28px', position: 'sticky', zIndex: 15 }}>{colLetter(c)}</td>) })}
           </tr>
-
           {Array.from({ length: numRows }).map((_, r) => (
             <tr key={r} style={{ height: `${rowHeights[r] || 20}px` }}>
-              <td onClick={(e) => handleRowHeaderClick(r, e.shiftKey)}
-                className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5 ${selMinR<=r&&r<=selMaxR&&selMinC===0&&selMaxC===numCols-1?'bg-blue-400 text-white':'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
-                {r + 1}
-              </td>
+              <td onClick={(e) => handleRowHeaderClick(r, e.shiftKey)} className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5 ${selMinR<=r&&r<=selMaxR&&selMinC===0&&selMaxC===numCols-1?'bg-blue-400 text-white':'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>{r + 1}</td>
               {Array.from({ length: numCols }).map((_, c) => {
                 if (isHidden(r, c) && !CMD_BUTTONS.find(b => b.sr === r && b.sc === c)) return null
                 const merge = getMerge(r, c)
@@ -1504,7 +787,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const rowSpan = merge ? (merge.er - merge.sr + 1) : 1
                 const selected = isInSelection(r, c)
                 const cellBorder = borders[r]?.[c] !== false
-
                 const isSwitchCell = r === SWITCH_ROW && c === SWITCH_COL
                 const isPrintCell = r === PRINT_ROW && c === PRINT_COL
                 const cmdBtn = isCmdBtn(r, c, cells[r]?.[c])
@@ -1513,115 +795,17 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
-                // Dropdown de planteles CE: Básica C15-C19, Diversificado C21-C25 (coordenadas Excel → 0-indexed)
-                const isCeDropdown = ceList.length > 0 && (
-                  (c === 2 && r >= 14 && r <= 18) ||
-                  (c === 2 && r >= 20 && r <= 24)
-                )
+                const isCeDropdown = ceList.length > 0 && ((c === 2 && r >= 14 && r <= 18) || (c === 2 && r >= 20 && r <= 24))
                 return (
-                  <td key={c} data-r={r} data-c={c}
-                    onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }}
-                    colSpan={colSpan > 1 ? colSpan : undefined}
-                    rowSpan={rowSpan > 1 ? rowSpan : undefined}
-                    className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`}
-                    style={{
-                      backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'),
-                      color: fontColors[r]?.[c] || '#333',
-                      fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal',
-                      fontStyle: 'normal',
-                      fontSize: `${fontSizes[r]?.[c] || 9}px`,
-                      fontFamily: fontFamilies[r]?.[c] || 'Arial',
-                      textAlign: textAligns[r]?.[c] || 'left',
-                      verticalAlign: 'middle',
-                    }}>
+                  <td key={c} data-r={r} data-c={c} onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }} colSpan={colSpan > 1 ? colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined} className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`} style={{ backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'), color: fontColors[r]?.[c] || '#333', fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal', fontStyle: 'normal', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', verticalAlign: 'middle' }}>
                     {isSwitchCell ? (
-                      <button onClick={(e) => {
-                        e.stopPropagation()
-                        // NO guardar si estamos en editMode (datos de alumno cargados)
-                        if (!editMode) doSave(plan)
-                        if (editMode) restoreInitialState()
-                        onSwitchPlan()
-                      }}
-                        onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
-                        onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
-                        className="w-full h-full flex items-center justify-center cursor-pointer"
-                        style={{
-                          backgroundColor: isDn ? '#1d4ed8' : '#2563eb', color: '#ffffff', fontSize: '11px',
-                          fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #1e40af',
-                          borderRadius: '2px', userSelect: 'none', whiteSpace: 'pre-line',
-                          boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.3)' : '1px 1px 3px rgba(0,0,0,0.3)',
-                          transform: isDn ? 'translateY(1px)' : 'none',
-                        }}>
-                        {switchBtnLabel}
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); if (!editMode) doSave(plan); if (editMode) restoreInitialState(); onSwitchPlan() }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: isDn ? '#1d4ed8' : '#2563eb', color: '#ffffff', fontSize: '11px', fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #1e40af', borderRadius: '2px', userSelect: 'none', whiteSpace: 'pre-line', boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.3)' : '1px 1px 3px rgba(0,0,0,0.3)', transform: isDn ? 'translateY(1px)' : 'none' }}>{switchBtnLabel}</button>
                     ) : isPrintCell ? (
-                      <button onClick={(e) => { e.stopPropagation(); window.print() }}
-                        onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
-                        onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
-                        className="w-full h-full flex items-center justify-center cursor-pointer"
-                        style={{
-                          backgroundColor: '#ffffff', color: '#000000', fontSize: '12px',
-                          fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #333333',
-                          borderRadius: '2px', userSelect: 'none', whiteSpace: 'nowrap',
-                          boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : '1px 1px 3px rgba(0,0,0,0.3)',
-                          transform: isDn ? 'translateY(1px)' : 'none',
-                        }}>
-                        IMPRIMIR
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); window.print() }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: '#ffffff', color: '#000000', fontSize: '12px', fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #333333', borderRadius: '2px', userSelect: 'none', whiteSpace: 'nowrap', boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : '1px 1px 3px rgba(0,0,0,0.3)', transform: isDn ? 'translateY(1px)' : 'none' }}>IMPRIMIR</button>
                     ) : cmdBtn ? (
-                      <button
-                        disabled={cmdDisabled}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) }
-                          else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() }
-                          else if (cmdBtn.label === 'Guardar Datos') { saveNewStudent() }
-                          else if (cmdBtn.label === 'Eliminar Datos') { setShowDeleteModal(true) }
-                          else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') }
-                        }}
-                        onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }}
-                        onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)}
-                        className="w-full h-full flex items-center justify-center"
-                        style={{
-                          backgroundColor: cmdDisabled ? (cmdBtn.disabledBgColor || '#f5f5f5') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')),
-                          color: cmdDisabled ? (cmdBtn.disabledColor || '#aaaaaa') : cmdBtn.color,
-                          fontSize: `${cmdBtn.fontSize}px`, fontFamily: 'Arial', fontWeight: 'bold',
-                          textAlign: 'center', verticalAlign: 'middle', lineHeight: 'normal',
-                          border: `2px solid ${cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : cmdBtn.color}`,
-                          borderRadius: '4px',
-                          boxShadow: cmdDisabled ? 'none' : (isDn
-                            ? `inset 0 1px 3px ${cmdBtn.downShadowColor || 'rgba(0,0,0,0.15)'}`
-                            : (isHov ? `2px 2px 6px ${cmdBtn.hoverShadowColor || 'rgba(0,0,0,0.2)'}` : '1px 1px 3px rgba(0,0,0,0.2)')),
-                          transform: isDn ? 'translateY(1px)' : 'none',
-                          userSelect: 'none', whiteSpace: 'pre-line',
-                          opacity: 1,
-                          cursor: cmdDisabled ? 'not-allowed' : 'pointer',
-                        }}>
-                        {cmdBtn.label}
-                      </button>
+                      <button disabled={cmdDisabled} onClick={(e) => { e.stopPropagation(); if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) } else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() } else if (cmdBtn.label === 'Guardar Datos') { saveNewStudent() } else if (cmdBtn.label === 'Eliminar Datos') { setShowDeleteModal(true) } else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') } }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center" style={{ backgroundColor: cmdDisabled ? (cmdBtn.disabledBgColor || '#f5f5f5') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')), color: cmdDisabled ? (cmdBtn.disabledColor || '#aaaaaa') : cmdBtn.color, fontSize: `${cmdBtn.fontSize}px`, fontFamily: 'Arial', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', lineHeight: 'normal', border: `2px solid ${cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : cmdBtn.color}`, borderRadius: '4px', boxShadow: cmdDisabled ? 'none' : (isDn ? `inset 0 1px 3px ${cmdBtn.downShadowColor || 'rgba(0,0,0,0.15)'}` : (isHov ? `2px 2px 6px ${cmdBtn.hoverShadowColor || 'rgba(0,0,0,0.2)'}` : '1px 1px 3px rgba(0,0,0,0.2)')), transform: isDn ? 'translateY(1px)' : 'none', userSelect: 'none', whiteSpace: 'pre-line', opacity: 1, cursor: cmdDisabled ? 'not-allowed' : 'pointer' }}>{cmdBtn.label}</button>
                     ) : (
-                    <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''}
-                      list={isCeDropdown ? 'ce-datalist' : undefined}
-                      onInput={isCeDropdown ? (e) => {
-                        const val = (e.target as HTMLInputElement).value
-                        const ce = ceMapRef.current.get(val)
-                        if (ce) {
-                          updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef)
-                          const tdI = tableRef.current?.querySelector(`[data-r="${r}"][data-c="8"]`)
-                          if (tdI) { const inp = tdI.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.localidad }
-                          const tdL = tableRef.current?.querySelector(`[data-r="${r}"][data-c="11"]`)
-                          if (tdL) { const inp = tdL.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.ef }
-                        }
-                      } : undefined}
-                      onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)}
-                      onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
-                      onKeyDown={(e) => handleInputKeyDown(e, r, c)}
-                      className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5"
-                      style={{
-                        color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit',
-                        fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit',
-                        minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px`,
-                      }} />
+                      <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''} list={isCeDropdown ? 'ce-datalist' : undefined} onInput={isCeDropdown ? (e) => { const val = (e.target as HTMLInputElement).value; const ce = ceMapRef.current.get(val); if (ce) { updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef); const tdI = tableRef.current?.querySelector(`[data-r="${r}"][data-c="8"]`); if (tdI) { const inp = tdI.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.localidad } const tdL = tableRef.current?.querySelector(`[data-r="${r}"][data-c="11"]`); if (tdL) { const inp = tdL.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.ef } } } : undefined} onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)} onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }} onKeyDown={(e) => handleInputKeyDown(e, r, c)} className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
                     )}
                   </td>
                 )
@@ -1631,49 +815,22 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </tbody>
       </table>
 
-      {/* DATALIST de planteles CE para C15-C19 */}
-      {ceList.length > 0 && (
-        <datalist id="ce-datalist">
-          {ceList.map(ce => (
-            <option key={ce.nombre} value={ce.nombre} />
-          ))}
-        </datalist>
-      )}
+      {ceList.length > 0 && (<datalist id="ce-datalist">{ceList.map(ce => (<option key={ce.nombre} value={ce.nombre} />))}</datalist>)}
 
-      {/* MODAL DE BÚSQUEDA DE ALUMNO */}
+      {/* MODAL DE BÚSQUEDA */}
       {showSearchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
           <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-bold text-gray-800">Buscar / Editar Alumno</h3>
-              <button onClick={() => { setShowSearchModal(false); setSearchQuery(''); setSearchResults([]) }}
-                className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
+              <button onClick={() => { setShowSearchModal(false); setSearchQuery(''); setSearchResults([]) }} className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
             </div>
             <div className="space-y-2">
-              <input type="text" placeholder="Cedula o Nombre del alumno..."
-                value={searchQuery}
-                onChange={e => { setSearchQuery(e.target.value); if (e.target.value.length >= 2) doSearch(e.target.value) }}
-                onKeyDown={e => { if (e.key === 'Enter') doSearch(searchQuery) }}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                autoFocus />
+              <input type="text" placeholder="Cedula o Nombre del alumno..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if (e.target.value.length >= 2) doSearch(e.target.value) }} onKeyDown={e => { if (e.key === 'Enter') doSearch(searchQuery) }} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" autoFocus />
               {searching && <div className="text-xs text-gray-500 text-center py-2">Buscando...</div>}
-              {searchResults.length > 0 && (
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded">
-                  {searchResults.map(s => (
-                    <button key={s.id}
-                      onClick={() => loadStudentToDashboard(s.id)}
-                      className="w-full text-left px-3 py-2 hover:bg-blue-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer">
-                      <span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
-                <div className="text-xs text-red-500 text-center py-2">No se encontraron alumnos</div>
-              )}
-              {searchQuery.length < 2 && (
-                <div className="text-xs text-gray-400 text-center py-2">Escriba al menos 2 caracteres para buscar</div>
-              )}
+              {searchResults.length > 0 && (<div className="max-h-60 overflow-y-auto border border-gray-200 rounded">{searchResults.map(s => (<button key={s.id} onClick={() => loadStudentToDashboard(s.id)} className="w-full text-left px-3 py-2 hover:bg-blue-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer"><span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}</button>))}</div>)}
+              {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <div className="text-xs text-red-500 text-center py-2">No se encontraron alumnos</div>}
+              {searchQuery.length < 2 && <div className="text-xs text-gray-400 text-center py-2">Escriba al menos 2 caracteres para buscar</div>}
             </div>
           </div>
         </div>
@@ -1685,40 +842,20 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
           <div className="bg-white rounded-lg shadow-2xl p-4 w-96 max-w-[90vw]">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-bold text-red-600">Eliminar Registro</h3>
-              <button onClick={() => { setShowDeleteModal(false); setDeleteQuery(''); setDeleteResults([]) }}
-                className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
+              <button onClick={() => { setShowDeleteModal(false); setDeleteQuery(''); setDeleteResults([]) }} className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
             </div>
             <div className="space-y-2">
-              <input type="text" placeholder="Cédula del alumno a eliminar..."
-                value={deleteQuery}
-                onChange={e => { setDeleteQuery(e.target.value); if (e.target.value.length >= 2) doDeleteSearch(e.target.value) }}
-                onKeyDown={e => { if (e.key === 'Enter') doDeleteSearch(deleteQuery) }}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                autoFocus />
+              <input type="text" placeholder="Cédula del alumno a eliminar..." value={deleteQuery} onChange={e => { setDeleteQuery(e.target.value); if (e.target.value.length >= 2) doDeleteSearch(e.target.value) }} onKeyDown={e => { if (e.key === 'Enter') doDeleteSearch(deleteQuery) }} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" autoFocus />
               {deleteSearching && <div className="text-xs text-gray-500 text-center py-2">Buscando...</div>}
-              {deleteResults.length > 0 && (
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded">
-                  {deleteResults.map(s => (
-                    <button key={s.id}
-                      onClick={() => setDeleteConfirm(s)}
-                      className="w-full text-left px-3 py-2 hover:bg-red-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer">
-                      <span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {!deleteSearching && deleteQuery.length >= 2 && deleteResults.length === 0 && (
-                <div className="text-xs text-red-500 text-center py-2">No se encontraron alumnos</div>
-              )}
-              {deleteQuery.length < 2 && (
-                <div className="text-xs text-gray-400 text-center py-2">Escriba al menos 2 caracteres para buscar</div>
-              )}
+              {deleteResults.length > 0 && (<div className="max-h-60 overflow-y-auto border border-gray-200 rounded">{deleteResults.map(s => (<button key={s.id} onClick={() => setDeleteConfirm(s)} className="w-full text-left px-3 py-2 hover:bg-red-50 text-xs border-b border-gray-100 last:border-0 cursor-pointer"><span className="font-bold">{s.cedula}</span> - {s.apellidos}, {s.nombres}</button>))}</div>)}
+              {!deleteSearching && deleteQuery.length >= 2 && deleteResults.length === 0 && <div className="text-xs text-red-500 text-center py-2">No se encontraron alumnos</div>}
+              {deleteQuery.length < 2 && <div className="text-xs text-gray-400 text-center py-2">Escriba al menos 2 caracteres para buscar</div>}
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      {/* MODAL DE CONFIRMACIÓN */}
       {showDeleteModal && deleteConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" style={{ marginTop: '0' }}>
           <div className="bg-white rounded-lg shadow-2xl p-5 w-[420px] max-w-[90vw]">
@@ -1735,10 +872,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
             </div>
             <p className="text-xs text-red-600 font-bold mb-4">¿Está de acuerdo?</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => { setDeleteConfirm(null); setShowDeleteModal(false); setDeleteQuery(''); setDeleteResults([]); restoreInitialState() }}
-                className="px-4 py-2 text-xs font-bold border-2 border-gray-400 text-gray-600 rounded hover:bg-gray-100">NO</button>
-              <button onClick={() => doDeleteStudent(deleteConfirm.id)}
-                className="px-4 py-2 text-xs font-bold border-2 border-red-500 text-white bg-red-500 rounded hover:bg-red-600">SI</button>
+              <button onClick={() => { setDeleteConfirm(null); setShowDeleteModal(false); setDeleteQuery(''); setDeleteResults([]); restoreInitialState() }} className="px-4 py-2 text-xs font-bold border-2 border-gray-400 text-gray-600 rounded hover:bg-gray-100">NO</button>
+              <button onClick={() => doDeleteStudent(deleteConfirm.id)} className="px-4 py-2 text-xs font-bold border-2 border-red-500 text-white bg-red-500 rounded hover:bg-red-600">SI</button>
             </div>
           </div>
         </div>
@@ -1749,18 +884,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
 
 export default function DashboardPage() {
   const [plan, setPlan] = useState<'vigente' | 'derogado'>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('jo-sigae-current-plan')
-      return stored === 'derogado' ? 'derogado' : 'vigente'
-    }
+    if (typeof window !== 'undefined') { const stored = localStorage.getItem('jo-sigae-current-plan'); return stored === 'derogado' ? 'derogado' : 'vigente' }
     return 'vigente'
   })
-  const handleSwitch = () => {
-    const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'
-    setPlan(newPlan)
-    localStorage.setItem('jo-sigae-current-plan', newPlan)
-    window.dispatchEvent(new Event('plan-changed'))
-  }
+  const handleSwitch = () => { const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'; setPlan(newPlan); localStorage.setItem('jo-sigae-current-plan', newPlan); window.dispatchEvent(new Event('plan-changed')) }
   return (
     <AppShell>
       <SheetEditor key={plan} plan={plan} onSwitchPlan={handleSwitch} />

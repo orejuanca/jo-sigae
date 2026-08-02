@@ -571,7 +571,10 @@ function CertVisualEditorContent() {
     setLoadingData(true)
     reloadDashboardCells() // datos en caliente del tablero
     try {
-      const res = await fetch(`/api/students/${student.id}/cert-data?plan=${plan}`)
+      const certApiUrl = plan === 'vigente'
+       ? `/api/plan-vigente/${student.id}/cert-data`
+       : `/api/students/${student.id}/cert-data?plan=${plan}`
+      const res = await fetch(certApiUrl)
       if (!res.ok) {
         toast({ title: 'Sin datos', description: `No se encontraron datos de calificaciones para ${student.cedula}.`, variant: 'destructive' })
         setLoadingData(false)
@@ -590,7 +593,10 @@ function CertVisualEditorContent() {
       if (result.certData) {
         // Load draft overrides if they exist
         try {
-          const draftRes = await fetch(`/api/students/${student.id}/cert-draft?plan=${plan}`)
+          const draftLoadUrl = plan === 'vigente'
+           ? `/api/plan-vigente/${student.id}/cert-draft`
+           : `/api/students/${student.id}/cert-draft?plan=${plan}`
+         const draftRes = await fetch(draftLoadUrl)
           if (draftRes.ok) {
             const draftData = await draftRes.json()
             if (draftData.draft?.overrides) {
@@ -648,7 +654,10 @@ function CertVisualEditorContent() {
     if (selectedStudent) {
       const updated = { ...draftOverrides, [binding]: newValue }
       setSavingDraft(true)
-      fetch(`/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`, {
+      const draftSaveUrl = plan === 'vigente'
+       ? `/api/plan-vigente/${selectedStudent.id}/cert-draft`
+       : `/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`
+     fetch(draftSaveUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datos: { overrides: updated } }),

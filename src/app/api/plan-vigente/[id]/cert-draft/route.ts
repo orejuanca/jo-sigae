@@ -10,9 +10,8 @@ export async function GET(
     const { id } = await params
     const record = await prisma.planVigente.findUnique({ where: { id } })
     if (!record) return NextResponse.json({ error: 'Registro no encontrado' }, { status: 404 })
-    if (!record.certDraft) return NextResponse.json({ certDraft: null })
-    return NextResponse.json({ certDraft: JSON.parse(record.certDraft) })
-  } catch (error) {
+    if (!record.certDraft) return NextResponse.json({ draft: null })
+    return NextResponse.json({ draft: JSON.parse(record.certDraft) })  } catch (error) {
     console.error('Error loading draft:', error)
     return NextResponse.json({ error: 'Error al cargar borrador' }, { status: 500 })
   }

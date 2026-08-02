@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         }),
         prisma.planVigente.count(),
       ])
-      return NextResponse.json({ students, total, page, limit, totalPages: Math.ceil(total / limit) })
+      return NextResponse.json({ students: students.map(s => ({ ...s, plan: 'vigente' })), total, page, limit, totalPages: Math.ceil(total / limit) })
     }
 
     // Búsqueda por cédula, apellidos o nombres
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      students,
+      students: students.map(s => ({ ...s, plan: 'vigente' })),
       total,
       page,
       limit,

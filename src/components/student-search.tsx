@@ -53,8 +53,10 @@ export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, ape
 
     setLoading(true)
     try {
-      const planParam = plan ? `&plan=${plan}` : ''
-      const res = await fetch(`/api/students?q=${encodeURIComponent(q)}&limit=10${planParam}`)
+    const apiUrl = plan === 'vigente'
+      ? `/api/plan-vigente?q=${encodeURIComponent(q)}&limit=10`
+      : `/api/students?q=${encodeURIComponent(q)}&limit=10${plan ? `&plan=${plan}` : ''}`
+    const res = await fetch(apiUrl)
       const data = await res.json()
       setResults(data.students || [])
       setIsOpen(true)

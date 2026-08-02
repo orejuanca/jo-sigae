@@ -221,7 +221,11 @@ export default function CertificacionesPage() {
     setLoadingData(true)
     setDataLoaded(false)
     try {
-      const res = await fetch(`/api/students/${student.id}/cert-data?plan=${plan}`)
+      // Plan vigente: leer de PlanVigente; otro plan: leer de Student
+      const certApiUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${student.id}/cert-data`
+        : `/api/students/${student.id}/cert-data?plan=${plan}`
+      const res = await fetch(certApiUrl)
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
         console.error('cert-data API error:', res.status, errorData)
@@ -427,7 +431,10 @@ export default function CertificacionesPage() {
     setSavingTab(tabName)
     setLastSavedTab(null)
     try {
-      const res = await fetch(`/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`, {
+      const draftApiUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${selectedStudent.id}/cert-draft`
+        : `/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`
+      const res = await fetch(draftApiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datos: certData }),
@@ -445,7 +452,10 @@ export default function CertificacionesPage() {
   // Cargar borrador guardado previamente
   const loadDraft = async (studentId: string): Promise<CertData | null> => {
     try {
-      const res = await fetch(`/api/students/${studentId}/cert-draft?plan=${plan}`)
+      const draftLoadUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${studentId}/cert-draft`
+        : `/api/students/${studentId}/cert-draft?plan=${plan}`
+      const res = await fetch(draftLoadUrl)
       if (!res.ok) return null
       const { draft } = await res.json()
       if (!draft) return null

@@ -824,7 +824,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
-                const isCeDropdown = ceList.length > 0 && ((c === 2 && r >= 14 && r <= 18) || (c === 2 && r >= 20 && r <= 24))
+                const isCeDropdown = plan === 'vigente' && ceList.length > 0 && c === 2 && r >= 14 && r <= 18
                 return (
                   <td key={c} data-r={r} data-c={c} onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }} colSpan={colSpan > 1 ? colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined} className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`} style={{ backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'), color: fontColors[r]?.[c] || '#333', fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal', fontStyle: 'normal', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', verticalAlign: 'middle' }}>
                     {isSwitchCell ? (
@@ -833,8 +833,35 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       <button onClick={(e) => { e.stopPropagation(); window.print() }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: '#ffffff', color: '#000000', fontSize: '12px', fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #333333', borderRadius: '2px', userSelect: 'none', whiteSpace: 'nowrap', boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : '1px 1px 3px rgba(0,0,0,0.3)', transform: isDn ? 'translateY(1px)' : 'none' }}>IMPRIMIR</button>
                     ) : cmdBtn ? (
                       <button disabled={cmdDisabled} onClick={(e) => { e.stopPropagation(); if (cmdBtn.label === 'Buscar / Editar Alumno') { setShowSearchModal(true) } else if (cmdBtn.label === 'Guardar Editado') { saveEditedStudent() } else if (cmdBtn.label === 'Guardar Datos') { saveNewStudent() } else if (cmdBtn.label === 'Eliminar Datos') { setShowDeleteModal(true) } else if (cmdBtn.label === 'Exportar\nDatos') { window.open('/api/export?plan=' + plan, '_blank') } }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center" style={{ backgroundColor: cmdDisabled ? (cmdBtn.disabledBgColor || '#f5f5f5') : (isHov ? (cmdBtn.hoverColor1 || '#f0f0f0') : (cmdBtn.bgColor || '#ffffff')), color: cmdDisabled ? (cmdBtn.disabledColor || '#aaaaaa') : cmdBtn.color, fontSize: `${cmdBtn.fontSize}px`, fontFamily: 'Arial', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', lineHeight: 'normal', border: `2px solid ${cmdDisabled ? (cmdBtn.disabledColor || '#cccccc') : cmdBtn.color}`, borderRadius: '4px', boxShadow: cmdDisabled ? 'none' : (isDn ? `inset 0 1px 3px ${cmdBtn.downShadowColor || 'rgba(0,0,0,0.15)'}` : (isHov ? `2px 2px 6px ${cmdBtn.hoverShadowColor || 'rgba(0,0,0,0.2)'}` : '1px 1px 3px rgba(0,0,0,0.2)')), transform: isDn ? 'translateY(1px)' : 'none', userSelect: 'none', whiteSpace: 'pre-line', opacity: 1, cursor: cmdDisabled ? 'not-allowed' : 'pointer' }}>{cmdBtn.label}</button>
+                    ) : isCeDropdown ? (
+                      <select
+                        key={`ce-${r}-${c}-${dataLoadKey}`}
+                        value={cells[r]?.[c] || ''}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          const val = e.target.value
+                          updateCell(r, c, val)
+                          if (val) {
+                            const ce = ceMapRef.current.get(val)
+                            if (ce) {
+                              updateCell(r, 8, ce.localidad)
+                              updateCell(r, 11, ce.ef)
+                            }
+                          } else {
+                            updateCell(r, 8, '')
+                            updateCell(r, 11, '')
+                          }
+                        }}
+                        onFocus={(e) => { e.stopPropagation(); setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5 cursor-pointer"
+                        style={{ color: 'inherit', fontWeight: 'inherit', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }}
+                      >
+                        <option value="">-- Seleccionar --</option>
+                        {ceList.map(ce => (<option key={ce.nombre} value={ce.nombre}>{ce.nombre}</option>))}
+                      </select>
                     ) : (
-                      <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''} list={isCeDropdown ? 'ce-datalist' : undefined} onInput={isCeDropdown ? (e) => { const val = (e.target as HTMLInputElement).value; const ce = ceMapRef.current.get(val); if (ce) { updateCell(r, 8, ce.localidad); updateCell(r, 11, ce.ef); const tdI = tableRef.current?.querySelector(`[data-r="${r}"][data-c="8"]`); if (tdI) { const inp = tdI.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.localidad } const tdL = tableRef.current?.querySelector(`[data-r="${r}"][data-c="11"]`); if (tdL) { const inp = tdL.querySelector('input') as HTMLInputElement; if (inp) inp.value = ce.ef } } } : undefined} onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)} onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }} onKeyDown={(e) => handleInputKeyDown(e, r, c)} className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
+                      <input key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={cells[r]?.[c] || ''} onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)} onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }} onKeyDown={(e) => handleInputKeyDown(e, r, c)} className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
                     )}
                   </td>
                 )
@@ -844,7 +871,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
         </tbody>
       </table>
 
-      {ceList.length > 0 && (<datalist id="ce-datalist">{ceList.map(ce => (<option key={ce.nombre} value={ce.nombre} />))}</datalist>)}
 
       {/* MODAL DE BÚSQUEDA */}
       {showSearchModal && (

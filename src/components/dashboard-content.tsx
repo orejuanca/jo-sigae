@@ -848,12 +848,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       const nombreCount = new Map<string,number>()
                       for (const ce of ceList) { nombreCount.set(ce.nombre, (nombreCount.get(ce.nombre) || 0) + 1) }
                       // Valor actual de la celda → buscar el id correspondiente
-                      const cellVal = cells[r]?.[c] || ''
-                      const selectedId = cellVal ? ceNombreToIdRef.current.get(cellVal) || '' : ''
+                      const cellVal = (cells[r]?.[c] || '').trim()
+                      let selectedId = cellVal ? ceNombreToIdRef.current.get(cellVal) || '' : ''
+                      // Fallback: si no se encontró en la lista CE, usar el valor directo
+                      const useFallback = !selectedId && cellVal
+                      const selectValue = selectedId || (useFallback ? cellVal : '')
                       return (
                       <select
                         key={`ce-${r}-${c}-${dataLoadKey}`}
-                        value={selectedId}
+                        value={selectValue}
                         onChange={(e) => {
                           e.stopPropagation()
                           const id = e.target.value
@@ -876,6 +879,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                         style={{ color: 'inherit', fontWeight: 'inherit', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }}
                       >
                         <option value="">-- Seleccionar --</option>
+                        {useFallback && <option key="__fallback__" value={cellVal}>{cellVal}</option>}
                         {ceList.map(ce => {
                           const dup = (nombreCount.get(ce.nombre) || 0) > 1
                           const label = dup

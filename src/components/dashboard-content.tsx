@@ -834,7 +834,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 const btnKey = `${r}-${c}`
                 const isHov = btnHover === btnKey
                 const isDn = btnDown === btnKey
-                const isCeDropdown = plan === 'vigente' && ceList.length > 0 && c === 2 && r >= 14 && r <= 18
+                const isCeDropdown = ceList.length > 0 && c === 2 && (
+  		(plan === 'vigente' && r >= 14 && r <= 18) ||
+  		(plan === 'derogado' && (r >= 14 && r <= 18 || r >= 20 && r <= 24))
+		)
                 return (
                   <td key={c} data-r={r} data-c={c} onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }} colSpan={colSpan > 1 ? colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined} className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`} style={{ backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'), color: fontColors[r]?.[c] || '#333', fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal', fontStyle: 'normal', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', verticalAlign: 'middle' }}>
                     {isSwitchCell ? (

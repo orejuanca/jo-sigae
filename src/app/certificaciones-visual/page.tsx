@@ -1538,21 +1538,152 @@ img{max-width:100%;height:auto}
     <AppShell>
       <div className="space-y-3 print:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Certificación EMG</h1>
-            <p className="text-muted-foreground text-sm">Vista e impresión de certificaciones (solo lectura)</p>
-          </div>
-          <Button
-            size="sm"
-            variant="default"
-            onClick={handlePrint}
-            className="h-8 text-xs"
-            title="Imprimir la certificación con los datos actuales"
-          >
-            <Printer className="h-4 w-4 mr-1.5" /> Imprimir
-          </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Editor de Grilla — Certificaciones</h1>
+          <p className="text-muted-foreground text-sm">Constructor celda por celda para el formato de certificación</p>
         </div>
+
+        {/* Toolbar Row 1: Grid controls */}
+        <Card>
+          <CardContent className="py-2 px-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* === FILAS === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">FILAS</Badge>
+              <Button size="sm" variant="outline" onClick={handleAddRow} className="h-7 text-xs">
+                <Plus className="h-3 w-3 mr-1" /> Agregar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertRowAbove} className="h-7 text-xs" title="Insertar fila arriba de la celda seleccionada">
+                <ArrowUp className="h-3 w-3 mr-1" /> Arriba
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertRowBelow} className="h-7 text-xs" title="Insertar fila abajo de la celda seleccionada">
+                <ArrowDown className="h-3 w-3 mr-1" /> Abajo
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
+                <Minus className="h-3 w-3 mr-1" /> Eliminar
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              {/* === COLUMNAS === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COLS</Badge>
+              <Button size="sm" variant="outline" onClick={handleInsertColLeft} className="h-7 text-xs" title="Insertar columna a la izquierda de la celda seleccionada">
+                <ArrowLeft className="h-3 w-3 mr-1" /> Izquierda
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleInsertColRight} className="h-7 text-xs" title="Insertar columna a la derecha de la celda seleccionada">
+                <ArrowRight className="h-3 w-3 mr-1" /> Derecha
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDeleteLastCol} className="h-7 text-xs">
+                <Minus className="h-3 w-3 mr-1" /> Eliminar
+              </Button>
+              <div className="flex items-center gap-1.5">
+                <Label className="text-xs text-muted-foreground whitespace-nowrap">Total:</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={colInput}
+                  onChange={(e) => setColInput(e.target.value)}
+                  className="h-7 w-14 text-xs text-center"
+                />
+                <Button size="sm" variant="outline" onClick={handleApplyColumns} className="h-7 text-xs">
+                  Aplicar
+                </Button>
+              </div>
+
+              <div className="w-px h-5 bg-border" />
+
+              {/* === COMBINAR === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">COMBINAR</Badge>
+              <Button size="sm" variant="outline" onClick={handleMergeSelection} className="h-7 text-xs" title="Arrastra sobre varias celdas, luego pulsa para combinarlas en una">
+                <Group className="h-3 w-3 mr-1" /> Selección
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeColumns() }} className="h-7 text-xs" title="Elimina la columna derecha y suma su ancho. Total cols baja en 1.">
+                <Combine className="h-3 w-3 mr-1" /> Columnas
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleMergeRows() }} className="h-7 text-xs" title="Elimina la fila de abajo. Total filas baja en 1.">
+                <TableCellsMerge className="h-3 w-3 mr-1" /> Filas
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { clearRangeSelection(); handleSplitCell() }} className="h-7 text-xs" title="Reset colspan/rowspan a 1">
+                <TableCellsSplit className="h-3 w-3 mr-1" /> Separar
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button size="sm" variant="default" onClick={handleOpenSaveDialog} className="h-7 text-xs">
+                <Save className="h-3 w-3 mr-1" /> Guardar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleOpenLayoutsDialog} className="h-7 text-xs">
+                <FolderOpen className="h-3 w-3 mr-1" /> Mis Layouts
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleLoadLocal} className="h-7 text-xs">
+                <Upload className="h-3 w-3 mr-1" /> Local
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleReset} className="h-7 text-xs">
+                <RotateCcw className="h-3 w-3 mr-1" /> Restablecer
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Deep clone so React detects the state change
+                  const cloned: GridConfig = {
+                    ...gridConfig,
+                    rows: gridConfig.rows.map(row => ({
+                      ...row,
+                      cells: { ...row.cells },
+                    })),
+                  }
+                  const patched = patchDataBindings(cloned)
+                  setGridConfig(patched)
+                  let count = 0
+                  for (const row of patched.rows) {
+                    for (const col of Object.keys(row.cells)) {
+                      if (row.cells[Number(col)].dataBinding) count++
+                    }
+                  }
+                  toast({ title: 'Bindings parcheados', description: `Se asignaron ${count} data bindings a las celdas.` })
+                }}
+                className="h-7 text-xs"
+                title="Asignar automáticamente todos los data bindings de calificaciones, orientación, grupos y observaciones"
+              >
+                <Combine className="h-3 w-3 mr-1" /> Parchear Bindings
+              </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant={isPreview ? 'default' : 'outline'}
+                onClick={() => setIsPreview(!isPreview)}
+                className="h-7 text-xs"
+              >
+                {isPreview ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                {isPreview ? 'Diseñador' : 'Vista Previa'}
+              </Button>
+
+              {isPreview && (
+                <Badge variant="outline" className="text-xs">
+                  {gridConfig.rows.length} filas × {gridConfig.totalCols} columnas
+                </Badge>
+              )}
+
+              <div className="w-px h-5 bg-border" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handlePrint}
+                className="h-7 text-xs"
+                title="Imprimir la certificación con los datos actuales"
+              >
+                <Printer className="h-3 w-3 mr-1" /> Imprimir
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Student search */}
         <Card>
@@ -1580,26 +1711,118 @@ img{max-width:100%;height:auto}
           </CardContent>
         </Card>
 
+        {/* Column Widths Editor (only in designer mode) */}
+        {!isPreview && (
+          <Card>
+            <CardContent className="py-2 px-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Anchos de columna (clic para editar):</span>
+              </div>
+              <ColumnWidthEditor config={gridConfig} onUpdate={setGridConfig} />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Main Area: Grid + Properties Panel */}
       {/* Agrega overflowY: 'auto' y overflowX: 'hidden' */}
       <div className="flex gap-3 mt-3" style={{ minHeight: 'calc(100vh - 280px)', overflowY: 'auto', overflowX: 'hidden' }}>
         
-        {/* Grid — siempre modo vista previa (solo lectura) */}
+        {/* Grid */}
+        {/* Agrega overflow: 'visible' */}
         <div className="flex-1 min-w-0" style={{ overflow: 'visible' }}>
           <GridTable
             config={gridConfig}
-            selectedCell={null}
-            selectionRange={null}
-            onCellMouseDown={() => {}}
-            onCellMouseEnter={() => {}}
-            onCellMouseUp={() => {}}
-            isPreview={true}
+            selectedCell={selectedCell}
+            selectionRange={selectionRange}
+            onCellMouseDown={handleCellMouseDown}
+            onCellMouseEnter={handleCellMouseEnter}
+            onCellMouseUp={handleCellMouseUp}
+            isPreview={isPreview}
             displayData={displayData}
+            onCellEdit={handleCellEdit}
+            savingDraft={savingDraft}
+            draftOverrides={draftOverrides}
           />
         </div>
-	</div>
+
+        {/* Properties Panel (only in designer mode, when cell selected) */}
+        {!isPreview && selectedCell && (
+          <div className="w-[320px] shrink-0">
+            {selectionRange && (
+              <div className="mb-1.5 px-1">
+                <Badge variant="default" className="text-[10px] gap-1">
+                  <Group className="h-3 w-3" />
+                  Formato a {Math.abs(selectionRange.r2 - selectionRange.r1) + 1}×{Math.abs(selectionRange.c2 - selectionRange.c1) + 1} celdas
+                </Badge>
+              </div>
+            )}
+            <PropertiesPanel
+              cell={selectedCellData}
+              row={selectedCell.row}
+              col={selectedCell.col}
+              onUpdate={handleFormatUpdate}
+              plan={plan}
+              isRangeMode={!!selectionRange}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* === Save Dialog (enter name) === */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Guardar Layout</DialogTitle>
+            <DialogDescription>
+              Asigna un nombre a este layout para guardarlo en la base de datos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Label htmlFor="layout-name" className="text-sm font-medium">Nombre del layout</Label>
+            <Input
+              id="layout-name"
+              placeholder="Ej: Certificación EMG 2024"
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmSave() }}
+              className="mt-1.5"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSaveDialog(false)}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmSave}
+              disabled={saving || !saveName.trim()}
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+              )}
+              {saving ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* === Saved Layouts Dialog === */}
+      <SavedLayoutsDialog
+        open={showLayoutsDialog}
+        onOpenChange={setShowLayoutsDialog}
+        layouts={savedLayouts}
+        onLoad={handleLoadLayoutFromDB}
+        onDelete={handleDeleteLayout}
+        loading={loadingLayouts || loadingLayout}
+      />
+
       {/* === Print Dialog === */}
       <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
         <DialogContent className="sm:max-w-[380px]">

@@ -186,6 +186,7 @@ model PlanDerogado {
   rawData         String   @default("{}")  // JSON con todas las columnas del Excel
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  certDraft       String?
 
   @@index([cedula])
   @@index([apellidos])

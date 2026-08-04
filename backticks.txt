@@ -1,0 +1,58 @@
+144:            occ.add(`${r + dr}-${c}`)
+150:            occ.add(`${r}-${c + dc}`)
+180:              <col key={i} style={{ width: w || `${100 / config.totalCols}%` }} />
+187:                const key = `${r}-${c}`
+199:                  enabled ? `1px solid ${cell.borderColor}` : 'none'
+217:                      fontSize: `${cell.fontSize}pt`,
+242:                    title={cell.dataBinding ? `[${cell.dataBinding}]` : undefined}
+509:      fetch(`/api/cert-layouts/${layoutId}?plan=${plan}`)
+519:            toast({ title: 'Layout cargado', description: `"${layout.nombre}"` })
+544:    fetch(`/api/dashboard-state?plan=${plan}`)
+575:       ? `/api/plan-vigente/${student.id}/cert-data`
+576:       : `/api/plan-derogado/${student.id}/cert-data`
+579:        toast({ title: 'Sin datos', description: `No se encontraron datos de calificaciones para ${student.cedula}.`, variant: 'destructive' })
+597:           ? `/api/plan-vigente/${student.id}/cert-draft`
+598:           : `/api/plan-derogado/${student.id}/cert-draft`
+623:          cd.fechaExpedicion = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+639:        toast({ title: 'Datos cargados', description: `${gradeCount} calificaciones del rawData.` })
+658:       ? `/api/plan-vigente/${selectedStudent.id}/cert-draft`
+659:       : `/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`
+666:          toast({ title: 'Guardado', description: `Cambios guardados en borrador.`, duration: 1500 })
+682:        const key = `${prefix}.${idx}.${field}`
+701:        denominacion: rm[`INST.BASICA.${i}`] || '',
+702:        localidad: rm[`LOCAL.BASICA.${i}`] || '',
+703:        ef: rm[`EF.BASICA.${i}`] || '',
+707:      const denom = rm[`INST.DIV.${i}`] || ''
+708:      const loc = rm[`LOCAL.DIV.${i}`] || ''
+709:      const ef = rm[`EF.DIV.${i}`] || ''
+719:          denominacion: rm[`INSTITUCION${i}`] || '',
+720:          localidad: rm[`LOCALIDAD${i}`] || '',
+721:          ef: rm[`EF${i}`] || '',
+757:            const key = `calif.${yNum}.${sIdx}.${shortField}`
+781:      dashboardExtra['EXPEDICION.FECHA'] = z4 || `${dd}/${mm}/${yyyy}`
+816:      fechaExp = `${d}/${m}/${y}`
+988:      columnWidths: Array(n).fill(`${(100 / n).toFixed(2)}%`),
+993:    toast({ title: `Grilla reiniciada con ${n} columnas` })
+1216:    toast({ title: 'Celdas combinadas', description: `${spanCols}x${spanRows} celdas fusionadas en una.` })
+1241:      newWidths[mergeCol] = `${leftW + rightW}%`
+1335:      const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
+1352:        description: `El layout "${saveName.trim()}" se guardó correctamente en la base de datos.`,
+1367:      const res = await fetch(`/api/cert-layouts?plan=${plan}`)
+1382:      const res = await fetch(`/api/cert-layouts/${id}?plan=${plan}`)
+1395:        toast({ title: 'Layout cargado', description: `"${layout.nombre}" se cargó correctamente.` })
+1409:      const res = await fetch(`/api/cert-layouts/${id}?plan=${plan}`, { method: 'DELETE' })
+1447:        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occupied.add(`${r + dr}-${c}`) }
+1448:        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
+1453:      enabled ? `1px solid ${color}` : 'none'
+1454:    const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
+1461:        if (occupied.has(`${r}-${c}`)) continue
+1467:        const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
+1468:        const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
+1470:          ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
+1473:        cellsHtml += `<td${csAttr}${rsAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
+1475:      rowsHtml += `<tr>${cellsHtml}</tr>`
+1478:    const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
+1479:    return { tableHtml: `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
+1486:    const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
+1496:`</style></head><body>${tableHtml}</body></html>`
+1658:                  toast({ title: 'Bindings parcheados', description: `Se asignaron ${count} data bindings a las celdas.` })

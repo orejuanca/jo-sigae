@@ -14,18 +14,10 @@ export async function GET(request: NextRequest) {
       const numOnly = cq.replace(/^[A-Za-z]\s*/, '')
       where.OR = [
         { cedula: { contains: cq } },
+        { cedula: { contains: numOnly } },
+        { rawData: { contains: cq } },
+        { rawData: { contains: numOnly } },
       ]
-      if (cq.length >= 3) {
-        where.OR.push({ rawData: { contains: cq } })
-      }
-      if (numOnly) {
-        where.OR.push(
-          { cedula: { contains: numOnly } },
-        )
-        if (numOnly.length >= 3) {
-          where.OR.push({ rawData: { contains: numOnly } })
-        }
-      }
     }
     const [records, total] = await Promise.all([
       prisma.planDerogado.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limit }),

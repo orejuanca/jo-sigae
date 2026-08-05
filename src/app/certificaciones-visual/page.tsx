@@ -32,6 +32,16 @@ import {
 } from 'lucide-react'
 
 // === Student & CertData types (local to this page) ===
+// === Escala automática por layout ===
+const LAYOUT_SCALES: Record<string, number> = {
+  'Ciclo Basico Comun OFICIAL': 89,
+  'EDUCACION MEDIA DIVER. Y PROF. OFICIAL': 89,
+  'EDUCACION MEDIA GENERAL DIVERSIF. OFICIAL': 89,
+  'III Etapa Educacion Basica OFICIAL': 89,
+  'EDUCACION MEDIA GENERAL BASICA OFICIAL': 89,
+  'CERTIFICACION EMG OFICIAL': 97,
+}
+
 interface Student {
   id: string; cedula: string; apellidos: string; nombres: string
   fechaNacimiento?: string | null; pais?: string | null
@@ -173,7 +183,7 @@ function GridTable({
       style={{ maxWidth: '860px', margin: '0 auto', overflow: 'visible' }}
       onMouseUp={() => !isPreview && onCellMouseUp()}
     >
-      <div style={{ width: '816px', minHeight: '1728px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', paddingBottom: '20px', overflow: 'visible' }}>
+      <div style={{ width: '816px', height: '1344px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflowY: 'auto', overflowX: 'hidden' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
           <colgroup>
             {config.columnWidths.map((w, i) => (
@@ -459,8 +469,17 @@ function CertVisualEditorContent() {
   const [isPreview, setIsPreview] = useState(false)
   const [gridInitialized, setGridInitialized] = useState(false)
   const [colInput, setColInput] = useState('27')
-  const [showPrintDialog, setShowPrintDialog] = useState(false)
+  // printScale se aplica automaticamente por layout
   const [printScale, setPrintScale] = useState(100)
+  const LAYOUT_SCALES = [
+    { nombre: 'Ciclo Basico Comun OFICIAL', escala: 89 },
+    { nombre: 'EDUCACION MEDIA DIVER. Y PROF. OFICIAL', escala: 89 },
+    { nombre: 'EDUCACION MEDIA GENERAL DIVERSIF. OFICIAL', escala: 89 },
+    { nombre: 'III Etapa Educacion Basica OFICIAL', escala: 89 },
+    { nombre: 'EDUCACION MEDIA GENERAL BASICA OFICIAL', escala: 89 },
+    { nombre: 'CERTIFICACION EMG OFICIAL', escala: 97 },
+  ]
+
 
   // Range selection state (drag to select multiple cells)
   const [selAnchor, setSelAnchor] = useState<{ row: number; col: number } | null>(null)
@@ -516,6 +535,10 @@ function CertVisualEditorContent() {
             ? JSON.parse(layout.datos) : layout.datos
           if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) {
             setGridConfig(patchDataBindings(parsed))
+        // Auto-apply scale by layout name
+        const autoScale = LAYOUT_SCALES[layout.nombre]
+        if (autoScale) { setPrintScale(autoScale) }
+            for (const ls of LAYOUT_SCALES) { if (layout.nombre === ls.nombre) { setPrintScale(ls.escala); break } }
             toast({ title: 'Layout cargado', description: `"${layout.nombre}"` })
           }
         })
@@ -1337,7 +1360,7 @@ function CertVisualEditorContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nombre: saveName.trim(),
-          datos: gridConfig,
+          datos: { ...gridConfig, _printScale: printScale },
         }),
       })
 
@@ -1390,6 +1413,7 @@ function CertVisualEditorContent() {
 
       if (parsed.rows && Array.isArray(parsed.rows) && parsed.totalCols) {
         setGridConfig(patchDataBindings(parsed))
+        for (const ls of LAYOUT_SCALES) { if (layout.nombre === ls.nombre) { setPrintScale(ls.escala); break } }
         setSelectedCell(null)
         setShowLayoutsDialog(false)
         toast({ title: 'Layout cargado', description: `"${layout.nombre}" se cargó correctamente.` })
@@ -1480,7 +1504,6 @@ function CertVisualEditorContent() {
   }
 
   const executePrint = (scale: number) => {
-    setShowPrintDialog(false)
     const { tableHtml } = buildTableHtml()
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
@@ -1489,7 +1512,7 @@ function CertVisualEditorContent() {
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 /* La tabla sigue teniendo el tamaño ARCH B internamente */
-table{border-collapse:collapse;width:816px;height:1728px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
+ table{border-collapse:collapse;width:205.9mm;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -1525,7 +1548,7 @@ img{max-width:100%;height:auto}
     }
   }
 
-  const handlePrint = () => setShowPrintDialog(true)
+  const handlePrint = () => executePrint(printScale)
 
   // Selected cell data
   const selectedCellData = useMemo(() => {
@@ -1822,44 +1845,6 @@ img{max-width:100%;height:auto}
         onDelete={handleDeleteLayout}
         loading={loadingLayouts || loadingLayout}
       />
-
-      {/* === Print Dialog === */}
-      <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
-        <DialogContent className="sm:max-w-[380px]">
-          <DialogHeader>
-            <DialogTitle>Imprimir Certificación</DialogTitle>
-            <DialogDescription>Configura la escala antes de imprimir.</DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Escala</Label>
-                <span className="text-sm font-semibold text-primary">{printScale}%</span>
-              </div>
-              <input
-                type="range"
-                min={50}
-                max={150}
-                step={5}
-                value={printScale}
-                onChange={(e) => setPrintScale(Number(e.target.value))}
-                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-                <span>50%</span>
-                <span>100%</span>
-                <span>150%</span>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShowPrintDialog(false)}>Cancelar</Button>
-            <Button onClick={() => executePrint(printScale)}>
-              <Printer className="h-4 w-4 mr-1.5" /> Imprimir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AppShell>
   )
 }

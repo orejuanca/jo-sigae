@@ -10,22 +10,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
     const where: any = {}
     if (q.trim()) {
-      const cq = q.trim()
-      const numOnly = cq.replace(/^[A-Za-z]\s*/, '')
       where.OR = [
-        { cedula: { contains: cq } },
+        { cedula: { contains: q.trim() } },
+        { apellidos: { contains: q.trim() } },
+        { nombres: { contains: q.trim() } },
       ]
-      if (cq.length >= 3) {
-        where.OR.push({ rawData: { contains: cq } })
-      }
-      if (numOnly) {
-        where.OR.push(
-          { cedula: { contains: numOnly } },
-        )
-        if (numOnly.length >= 3) {
-          where.OR.push({ rawData: { contains: numOnly } })
-        }
-      }
     }
     const [records, total] = await Promise.all([
       prisma.planDerogado.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limit }),

@@ -603,7 +603,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
   }
 
   // === URL base según plan ===
-  const apiBase = plan === 'vigente' ? '/api/plan-vigente' : '/api/students'
+  const apiBase = plan === 'vigente' ? '/api/plan-vigente' : '/api/plan-derogado'
 
   // === BUSCAR ESTUDIANTE ===
   const doSearch = useCallback(async (q: string) => {
@@ -612,7 +612,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     try {
       const url = plan === 'vigente'
         ? `/api/plan-vigente?q=${encodeURIComponent(q.trim())}&limit=10`
-        : `/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`
+        : `/api/plan-derogado?q=${encodeURIComponent(q.trim())}&limit=50`
       const res = await fetch(url); const data = await res.json(); setSearchResults(data.students || [])
     } catch { setSearchResults([]) }
     setSearching(false)
@@ -640,7 +640,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setSaveStatus('ELIMINANDO...')
       const deleteUrl = plan === 'vigente'
         ? `/api/plan-vigente/${studentId}`
-        : `/api/students/${studentId}?plan=${plan}`
+        : `/api/plan-derogado/${studentId}`
       const res = await fetch(deleteUrl, { method: 'DELETE' })
       if (!res.ok) { setSaveStatus('ERROR AL ELIMINAR'); setTimeout(() => setSaveStatus(''), 3000); return }
       setSaveStatus('REGISTRO ELIMINADO ✓'); setTimeout(() => setSaveStatus(''), 3000)
@@ -653,7 +653,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     try {
       const loadUrl = plan === 'vigente'
         ? `/api/plan-vigente/${studentId}`
-        : `/api/students/${studentId}?plan=${plan}`
+        : `/api/plan-derogado/${studentId}`
       const res = await fetch(loadUrl)
       if (!res.ok) return
       const student = await res.json()
@@ -700,7 +700,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setSaveStatus('VERIFICANDO CÉDULA...')
       const checkUrl = plan === 'vigente'
         ? `/api/plan-vigente?cedula_exact=${encodeURIComponent(cedula)}`
-        : `/api/students?cedula_exact=${encodeURIComponent(cedula)}&plan=${plan}`
+        : `/api/plan-derogado?q=${encodeURIComponent(cedula)}&limit=1`
       const checkRes = await fetch(checkUrl)
       const checkData = await checkRes.json()
       if (checkData.exists) { setSaveStatus(''); if (!window.confirm(`Ya existe un alumno con la cédula: "${cedula}"\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
@@ -711,7 +711,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     const newStudent = { cedula, apellidos: m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : '', nombres: m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : '', fechaNacimiento: m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : '', pais: m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA', estado: m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : '', municipio: m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : '', rawData: JSON.stringify(rawData), plan }
     try {
       setSaveStatus('GUARDANDO NUEVO REGISTRO...')
-      const postUrl = plan === 'vigente' ? '/api/plan-vigente' : '/api/students'
+      const postUrl = plan === 'vigente' ? '/api/plan-vigente' : '/api/plan-derogado'
       const res = await fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newStudent) })
       const result = await res.json()
       if (!res.ok) { setSaveStatus(''); if (!window.confirm(`Error al guardar: ${result.error || 'desconocido'}\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }
@@ -726,7 +726,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       const currentCells = stateRef.current.cells
       const getEditUrl = plan === 'vigente'
         ? `/api/plan-vigente/${editingStudentId}`
-        : `/api/students/${editingStudentId}?plan=${plan}`
+        : `/api/plan-derogado/${editingStudentId}`
       const studentData = await fetch(getEditUrl)
       const student = await studentData.json()
       let originalRaw: Record<string, unknown> = {}
@@ -894,7 +894,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                       )
                     })()
                     : (() => {
-                      const isAutoFill = plan === 'vigente' && r >= 14 && r <= 18 && (c === 8 || c === 11)
+                      const isAutoFill = ceList.length > 0 && (c === 8 || c === 11) && (
+    (plan === 'vigente' && r >= 14 && r <= 18) ||
+    (plan === 'derogado' && (r >= 14 && r <= 18 || r >= 20 && r <= 24))
+  )
                       const inputVal = cells[r]?.[c] || ''
                       return isAutoFill ? (
                         <input id={`inp-${r}-${c}`} key={`af-${r}-${c}-${dataLoadKey}`} type="text" value={inputVal} readOnly className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />

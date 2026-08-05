@@ -1,0 +1,146 @@
+REVISION GENERAL - JO-SIGAE
+U.E.N. Creacion Cua - Sistema de Certificaciones
+https://jo-sigae.vercel.app/
+Fecha: 2026-08-05
+
+========================================
+
+ROJO - CRITICO - Seguridad
+----------------------------------------
+
+1. Contrasena hardcodeada en el cliente
+   La contrasena "3143" esta escrita directamente en el JavaScript del cliente:
+   if("3143"===e){ sessionStorage.setItem(u,"true"); ... }
+   Cualquier persona puede abrir las herramientas de desarrollo (F12) y verla.
+   Esto no es autenticacion real.
+
+   Recomendacion: Implementar autenticacion del lado del servidor (Next.js API Routes + bcrypt + JWT o cookies httpOnly).
+
+2. Auth basada solo en sessionStorage
+   El estado de autenticacion es sessionStorage.getItem("certificaciones_auth") === "true".
+   Cualquier usuario puede abrir la consola y escribir:
+     sessionStorage.setItem("certificaciones_auth", "true")
+     location.reload()
+   ...y tendria acceso completo al sistema.
+
+3. No hay proteccion de rutas en el servidor
+   El dashboard se carga como un componente cliente (ssr: false). Si no hay middleware
+   de servidor que valide la sesion, los endpoints API (si existen) podrian ser accesibles
+   sin autenticacion.
+
+========================================
+
+NARANJA - ALTO - Errores de Ortografia/Tildes
+----------------------------------------
+
+4. "Educacion" sin tilde
+   Aparece como "Educacion" en multiples lugares:
+   - Login: "Ministerio del Poder Popular para la Educacion"
+   - Dashboard: texto del pie del Ministerio
+   Correcto: "Educacion"
+
+5. "Codigo" sin tilde
+   Aparece como "Codigo OD16751520" en la pagina de login.
+   Correcto: "Codigo"
+
+6. Otros textos
+   Revisar todos los textos estaticos en espanol para asegurar tildes correctas,
+   especialmente en nombres oficiales de instituciones.
+
+========================================
+
+AMARILLO - MEDIO - Diseno y UX
+----------------------------------------
+
+7. Pagina 404 en ingles
+   La pagina 404 predeterminada de Next.js muestra "This page could not be found." en ingles.
+   Deberia estar en espanol.
+
+8. Pagina de error expone stack traces
+   El error boundary (error-d1389c6c40875d80.js) muestra r.stack directamente en pantalla:
+     r.stack && <pre>{r.stack}</pre>
+   Esto expone detalles internos del codigo al usuario. En produccion, nunca se debe mostrar el stack.
+
+9. Navegacion tipo "arcoiris" (demasiados colores)
+   La barra de navegacion tiene 12 botones cada uno de un color diferente
+   (emerald, blue, amber, purple, pink, teal, orange, red, cyan, indigo, rose, slate). Esto:
+   - Cansa visualmente
+   - No indica jerarquia ni agrupacion
+   - Parece no tener un patron semantico
+
+   Recomendacion: Usar 2-3 colores maximo que correspondan a grupos funcionales
+   (ej: verde=gestion, azul=consultas, rojo=procesos criticos).
+
+10. Dos botones "TITULO" y "TITULOS"
+    Hay un boton /titulos (singular, label "TITULO") y otro /titulos-lista (plural, label "TITULOS").
+    La diferencia no es clara para el usuario.
+    Renombrar para que sea obvio (ej: "EMITIR TITULO" vs "LISTA DE TITULOS").
+
+11. Boton "CE" critptico
+    El boton "CE" para "Centros Escolares" no es intuitivo.
+    Los usuarios no sabran que significa.
+
+12. Textos extremadamente pequenos en el dashboard
+    El editor de datos usa tamano de text-[8px], text-[9px], text-[10px].
+    En pantallas estandar esto es casi ilegible. El minimo recomendado es text-xs (12px).
+
+13. Tabla del editor con 40 columnas
+    La tabla de entrada de datos tiene 40 columnas (51f x 40c). Esto es muy dificil de usar
+    en pantalla, especialmente en moviles.
+    Considerar:
+    - Dividir en secciones/pestanas por ano
+    - Usar un diseno de formularios en lugar de una tabla gigante
+
+14. Boton "Cerrar Sesion" poco visible
+    Esta en la esquina superior con text-xs y bg-red-700 sobre fondo bg-gray-950.
+    Podria confundirse con otros elementos.
+
+========================================
+
+AZUL - BAJO - Codigo y Estructura
+----------------------------------------
+
+15. Datos de la escuela embebidos en el JS compilado
+    Toda la informacion institucional (nombre, codigo OD, direccion, materias por ano, director)
+    esta hardcodeada en el bundle de JavaScript. Esto:
+    - Dificulta actualizar datos sin redeployar
+    - Expone informacion internas al cliente
+    - Hace imposible tener multi-escuela
+
+    Recomendacion: Mover a una base de datos o al menos a variables de entorno / archivo de configuracion.
+
+16. Materias duplicadas en el codigo
+    Los arrays de materias para cada ano estan repetidos (ej: t y r en el componente del dashboard
+    tienen casi las mismas materias en distinto orden). Podria extraerse a una funcion o constante compartida.
+
+17. Layout de navegacion duplicado para desktop y movil
+    El menu de navegacion esta duplicado: una version hidden lg:flex y otra lg:hidden grid.
+    Podria refactorizarse con un solo array mapeado y clases responsive.
+
+18. Dos planes (Vigente/Derogado) comparten mucha logica
+    Los arrays s (vigente) e i (derogado) tienen muchos elementos identicos.
+    La logica de cambio de plan usa localStorage + eventos custom, lo cual es fragil.
+    Considerar usar un context de React o estado global (Zustand).
+
+19. No hay favicon personalizado
+    La aplicacion no muestra un favicon propio. Deberia tener el logo o escudo de la escuela.
+
+20. Error page usa estilos inline en vez de Tailwind
+    El componente de error (error.js) usa style={{}} en vez de las clases de Tailwind
+    que usa el resto de la app.
+
+========================================
+
+RESUMEN DE PRIORIDADES
+----------------------------------------
+
+Prioridad  | Issue                          | Impacto
+-----------|--------------------------------|------------------------------------------
+CRITICO    | Contrasena en cliente          | Cualquiera puede acceder
+CRITICO    | sessionStorage bypassable       | Sin seguridad real
+ALTO       | Faltan tildes en textos oficiales | Un profesionalismo
+MEDIO      | Pagina 404 en ingles           | Mala experiencia
+MEDIO      | Stack traces visibles          | Fuga de informacion
+MEDIO      | Navegacion arcoiris            | Fatiga visual
+BAJO       | Datos hardcodeados              | Mantenibilidad
+BAJO       | Codigo duplicado                | Calidad del codigo

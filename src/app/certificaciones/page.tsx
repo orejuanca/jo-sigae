@@ -631,7 +631,7 @@ export default function CertificacionesPage() {
             <CardTitle className="text-base">Buscar Alumno</CardTitle>
           </CardHeader>
           <CardContent>
-            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cédula, apellidos o nombres..." plan={plan} />
+            <StudentSearch onSelect={handleSelectStudent} placeholder="Buscar alumno por cédula, apellidos o nombres..." plan="all" />
           </CardContent>
         </Card>
 

@@ -53,12 +53,27 @@ export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, ape
 
     setLoading(true)
     try {
-    const apiUrl = plan === 'derogado'
-      ? `/api/plan-derogado?q=${encodeURIComponent(q)}&limit=10`
-      : `/api/plan-vigente?q=${encodeURIComponent(q)}&limit=10`
-    const res = await fetch(apiUrl)
-      const data = await res.json()
-      setResults(data.students || [])
+      let students: Student[] = []
+
+      if (plan === 'all') {
+        // Buscar en ambas tablas (PlanVigente y PlanDerogado) en paralelo
+        const [resVigente, resDerogado] = await Promise.all([
+          fetch(`/api/plan-vigente?q=${encodeURIComponent(q)}&limit=10`).then(r => r.json()).catch(() => ({ students: [] })),
+          fetch(`/api/plan-derogado?q=${encodeURIComponent(q)}&limit=10`).then(r => r.json()).catch(() => ({ students: [] })),
+        ])
+        const vigenteStudents = (resVigente.students || []).map((s: Student) => ({ ...s, plan: 'vigente' }))
+        const derogadoStudents = (resDerogado.students || []).map((s: Student) => ({ ...s, plan: 'derogado' }))
+        students = [...vigenteStudents, ...derogadoStudents].slice(0, 10)
+      } else {
+        const apiUrl = plan === 'derogado'
+          ? `/api/plan-derogado?q=${encodeURIComponent(q)}&limit=10`
+          : `/api/plan-vigente?q=${encodeURIComponent(q)}&limit=10`
+        const res = await fetch(apiUrl)
+        const data = await res.json()
+        students = data.students || []
+      }
+
+      setResults(students)
       setIsOpen(true)
     } catch {
       setResults([])

@@ -82,6 +82,8 @@ const FIELD_MAP_KEYS = new Set([
 // Campos de fecha que SIEMPRE pasan por fmtDate
 const DATE_FIELDS = new Set([
   ...Array.from(FIELD_MAP_KEYS).filter(k => k.startsWith('MES.') || k === 'FECHA' || k === 'CERT.EXPEDICION' || k === 'TITULO.EXPEDICION'),
+  // Campos de fecha del plan derogado
+  'FECHAEMISIONT', 'FECHAEMISIONN',
 ])
 
 /**

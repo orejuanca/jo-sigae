@@ -717,7 +717,15 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     const rawData: Record<string, string> = {}
     for (const [campo, celda] of fieldMap) { const pos = cellRef(celda); if (pos) rawData[campo] = currentCells[pos.r]?.[pos.c] || '' }
     const m6 = cellRef('M6'), m7 = cellRef('M7'), m8 = cellRef('M8'), m9 = cellRef('M9'), m10 = cellRef('M10'), m11 = cellRef('M11')
-    const newStudent = { cedula, apellidos: m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : '', nombres: m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : '', fechaNacimiento: m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : '', pais: m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA', estado: m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : '', municipio: m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : '', rawData: JSON.stringify(rawData), plan }
+    const apellidos = m7 ? (currentCells[m7.r]?.[m7.c] || '').trim() : ''
+    const nombres = m8 ? (currentCells[m8.r]?.[m8.c] || '').trim() : ''
+    if (!apellidos || apellidos.includes('*')) { if (!window.confirm('Los apellidos están vacíos o contienen asteriscos.\n¿Corregir o cancelar?')) { restoreInitialState(); return }; return }
+    if (!nombres || nombres.includes('*')) { if (!window.confirm('Los nombres están vacíos o contienen asteriscos.\n¿Corregir o cancelar?')) { restoreInitialState(); return }; return }
+    const fechaNacimiento = m6 ? (currentCells[m6.r]?.[m6.c] || '').trim() : ''
+    const pais = m9 ? (currentCells[m9.r]?.[m9.c] || '').trim() : 'VENEZUELA'
+    const estado = m10 ? (currentCells[m10.r]?.[m10.c] || '').trim() : ''
+    const municipio = m11 ? (currentCells[m11.r]?.[m11.c] || '').trim() : ''
+    const newStudent = { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData: JSON.stringify(rawData) }
     try {
       setSaveStatus('GUARDANDO NUEVO REGISTRO...')
       const postUrl = plan === 'vigente' ? '/api/plan-vigente' : '/api/plan-derogado'

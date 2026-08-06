@@ -313,7 +313,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       updateCell(2, 7, ds)
     } catch {}
   }, [plan, updateCell])
-  useEffect(() => { loadCount() }, [loadCount])
+  useEffect(() => { if (dbLoaded) loadCount() }, [loadCount, dbLoaded])
 
   const colLetter = (i: number) => { let s = ''; let n = i; while (n >= 0) { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1 } return s }
   const colToIndex = (letters: string): number | null => { let idx = 0; for (let i = 0; i < letters.length; i++) { const ch = letters.charCodeAt(i); if (ch < 65 || ch > 90) return null; idx = idx * 26 + (ch - 64) } return idx - 1 }
@@ -545,13 +545,6 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (hasFlatFieldMapKeys) {
       const fieldMapSet = new Set(fieldMap.map(([k]) => k))
       for (const key of rawKeys) { if (fieldMapSet.has(key) && raw[key] != null && raw[key] !== undefined) { const sv = String(raw[key]); if (sv) out[key] = sv } }
-      // Aplicar formato de fecha DD/MM/AAAA a campos de fecha
-      for (const key of Object.keys(out)) {
-        if (key.startsWith('MES.') || key === 'FECHA' || key === 'CERT.EXPEDICION' || key === 'TITULO.EXPEDICION' ||
-            key === 'FECHAEMISIONT' || key === 'FECHAEMISIONN') {
-          out[key] = fmtDate(out[key])
-        }
-      }
       return out
     }
 
@@ -675,6 +668,10 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       vals['APELLIDOS'] = student.apellidos || ''; vals['NOMBRES'] = student.nombres || ''
       vals['PAIS'] = student.pais || ''; vals['ESTADO'] = student.estado || ''; vals['MUNICIPIO'] = student.municipio || ''
       for (const [campo, valor] of Object.entries(flat)) { if (valor) vals[campo] = String(valor) }
+      // Formato DD/MM/AAAA únicamente para FECHA, FECHAEMISIONT, FECHAEMISIONN
+      if (vals['FECHA']) vals['FECHA'] = fmtDate(vals['FECHA'])
+      if (vals['FECHAEMISIONT']) vals['FECHAEMISIONT'] = fmtDate(vals['FECHAEMISIONT'])
+      if (vals['FECHAEMISIONN']) vals['FECHAEMISIONN'] = fmtDate(vals['FECHAEMISIONN'])
       let notaSum = 0, notaCount = 0
       const fieldPositions: Array<[string, string, {r:number;c:number}|null]> = []
       for (const [campo, celda] of fieldMap) { const pos = cellRef(celda); const val = vals[campo] || ''; fieldPositions.push([campo, val, pos]); if (campo.startsWith('NOTA.')) { const n = parseFloat(val); if (!isNaN(n) && n >= 1 && n <= 20) { notaSum += n; notaCount++ } } }

@@ -907,9 +907,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     (plan === 'vigente' && r >= 14 && r <= 18) ||
     (plan === 'derogado' && (r >= 14 && r <= 18 || r >= 20 && r <= 24))
   )
+                      const isCedulaCell = r === 4 && c === 12
+                      const isReadOnlyCell = isAutoFill || (editMode && isCedulaCell)
                       const inputVal = cells[r]?.[c] || ''
-                      return isAutoFill ? (
-                        <input id={`inp-${r}-${c}`} key={`af-${r}-${c}-${dataLoadKey}`} type="text" value={inputVal} readOnly className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
+                      return isReadOnlyCell ? (
+                        <input id={`inp-${r}-${c}`} key={`ro-${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" value={inputVal} readOnly className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: editMode && isCedulaCell ? '#888' : 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
                       ) : (
                         <input id={`inp-${r}-${c}`} key={`${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" defaultValue={inputVal} onBlur={(e) => handleInputBlur(r, c, e.target.value, e.target)} onFocus={() => { setActiveCell({r,c}); setSelectedCell({r,c}); setSelectionStart({r,c}); setSelectionEnd({r,c}) }} onKeyDown={(e) => handleInputKeyDown(e, r, c)} className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />
                       )

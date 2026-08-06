@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
-import { flattenRawData, fmtDate } from '@/lib/flatten-raw'
+import { fmtDate } from '@/lib/flatten-raw'
 import { FIELD_MAP_VIGENTE, FIELD_MAP_DEROGADO } from '@/lib/field-maps'
 import * as XLSX from 'xlsx'
 
-// Campos fijos (se extraen directamente del registro, no del rawData)
-const BASE_FIELDS = ['CEDULA','FECHA','APELLIDOS','NOMBRES','PAIS','ESTADO','MUNICIPIO'] as const
+// Campos que se extraen directamente del registro (no del rawData)
+const BASE_FIELDS = new Set(['CEDULA','FECHA','APELLIDOS','NOMBRES','PAIS','ESTADO','MUNICIPIO'])
 
 // Obtener la lista de campos según el plan (mismo orden que el dashboard)
 function getFieldsForPlan(plan: string): string[] {
   const map = plan === 'derogado' ? FIELD_MAP_DEROGADO : FIELD_MAP_VIGENTE
-  // Extraer solo los nombres de campo (primer elemento de cada par)
   return map.map(([field]) => field)
 }
 
@@ -24,24 +23,17 @@ export async function GET(request: NextRequest) {
     const debug = request.nextUrl.searchParams.get('debug') === '1'
     const ALL_FIELDS = getFieldsForPlan(plan)
     const db = getDb(plan)
-    // Usar la tabla correcta según el plan (no la tabla genérica Student)
     const students = plan === 'vigente'
       ? await db.planVigente.findMany({ orderBy: { cedula: 'asc' } })
       : await db.planDerogado.findMany({ orderBy: { cedula: 'asc' } })
 
-    // Para cada estudiante, extraer todos los campos del plan
+    // Para cada estudiante, leer directamente del rawData parseado
     const rows = students.map((s, idx) => {
-      let flat: Record<string, string> = {}
-      let rawDebug: { format: string; keys: string[]; flatCount: number } | undefined
+      let raw: Record<string, unknown> = {}
       try {
         const parsed = typeof s.rawData === 'string' ? JSON.parse(s.rawData) : (s.rawData || {})
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          flat = flattenRawData(parsed as Record<string, unknown>)
-          rawDebug = {
-            format: String(parsed._format || 'none'),
-            keys: Object.keys(parsed).slice(0, 15),
-            flatCount: Object.keys(flat).length,
-          }
+          raw = parsed
         }
       } catch (e) {
         console.error(`[EXPORT] Error parseando rawData estudiante #${idx + 1}:`, e)
@@ -49,21 +41,25 @@ export async function GET(request: NextRequest) {
 
       const row: Record<string, string> = { '#': String(idx + 1) }
       for (const field of ALL_FIELDS) {
-        switch (field) {
-          case 'CEDULA':    row[field] = s.cedula || ''; break
-          case 'FECHA':     row[field] = fmtDate(s.fechaNacimiento); break
-          case 'APELLIDOS': row[field] = s.apellidos || ''; break
-          case 'NOMBRES':   row[field] = s.nombres || ''; break
-          case 'PAIS':      row[field] = s.pais || 'VENEZUELA'; break
-          case 'ESTADO':    row[field] = s.estado || ''; break
-          case 'MUNICIPIO': row[field] = s.municipio || ''; break
-          default:          row[field] = flat[field] || ''; break
+        if (BASE_FIELDS.has(field)) {
+          switch (field) {
+            case 'CEDULA':    row[field] = s.cedula || ''; break
+            case 'FECHA':     row[field] = fmtDate(s.fechaNacimiento); break
+            case 'APELLIDOS': row[field] = s.apellidos || ''; break
+            case 'NOMBRES':   row[field] = s.nombres || ''; break
+            case 'PAIS':      row[field] = s.pais || 'VENEZUELA'; break
+            case 'ESTADO':    row[field] = s.estado || ''; break
+            case 'MUNICIPIO': row[field] = s.municipio || ''; break
+          }
+        } else {
+          // Leer directamente del rawData — los datos ya están con la clave correcta
+          row[field] = raw[field] != null ? String(raw[field]).trim() : ''
         }
       }
-      return debug ? { row, rawDebug } : row
+      return row
     })
 
-    // MODO DEBUG: retornar JSON en vez de XLSX
+    // MODO DEBUG
     if (debug) {
       return NextResponse.json({
         plan,

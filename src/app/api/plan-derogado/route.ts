@@ -106,9 +106,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData } = body
 
-    if (!cedula || !apellidos || !nombres) {
+    if (!cedula) {
       return NextResponse.json(
-        { error: 'Cédula, apellidos y nombres son requeridos' },
+        { error: 'La cédula es requerida' },
         { status: 400 }
       )
     }

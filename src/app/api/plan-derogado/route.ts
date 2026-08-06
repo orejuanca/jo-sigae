@@ -12,8 +12,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q') || ''
+    const cedulaExact = searchParams.get('cedula_exact') || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+
+    // Verificación exacta de cédula para duplicados
+    if (cedulaExact) {
+      const existing = await prisma.planDerogado.findFirst({
+        where: { cedula: cedulaExact.trim() },
+      })
+      return NextResponse.json({ exists: !!existing, student: existing || null })
+    }
 
     // Listar todos sin búsqueda
     if (!q.trim()) {
@@ -95,13 +104,34 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { cedula, rawData } = body
-    if (!cedula || !rawData) return NextResponse.json({ error: 'Cedula y rawData son requeridos' }, { status: 400 })
-    const existing = await prisma.planDerogado.findUnique({ where: { cedula: cedula.trim() } })
-    if (existing) return NextResponse.json({ error: 'Ya existe un registro con esa cedula' }, { status: 409 })
-    const record = await prisma.planDerogado.create({ data: { cedula: cedula.trim(), rawData } })
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData } = body
+
+    if (!cedula || !apellidos || !nombres) {
+      return NextResponse.json(
+        { error: 'Cédula, apellidos y nombres son requeridos' },
+        { status: 400 }
+      )
+    }
+
+    const record = await prisma.planDerogado.create({
+      data: {
+        cedula: cedula.trim(),
+        apellidos: apellidos.trim(),
+        nombres: nombres.trim(),
+        fechaNacimiento: fechaNacimiento?.trim() || null,
+        pais: pais?.trim() || 'VENEZUELA',
+        estado: estado?.trim() || '',
+        municipio: municipio?.trim() || '',
+        rawData: rawData || '{}',
+      },
+    })
+
     return NextResponse.json(record, { status: 201 })
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as { code?: string }
+    if (err.code === 'P2002') {
+      return NextResponse.json({ error: 'Ya existe un alumno con esa cédula' }, { status: 409 })
+    }
     console.error('POST /api/plan-derogado:', error)
     return NextResponse.json({ error: 'Error al crear registro' }, { status: 500 })
   }

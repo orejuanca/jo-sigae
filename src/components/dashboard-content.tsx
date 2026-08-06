@@ -709,7 +709,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       setSaveStatus('VERIFICANDO CÉDULA...')
       const checkUrl = plan === 'vigente'
         ? `/api/plan-vigente?cedula_exact=${encodeURIComponent(cedula)}`
-        : `/api/plan-derogado?q=${encodeURIComponent(cedula)}&limit=1`
+        : `/api/plan-derogado?cedula_exact=${encodeURIComponent(cedula)}`
       const checkRes = await fetch(checkUrl)
       const checkData = await checkRes.json()
       if (checkData.exists) { setSaveStatus(''); if (!window.confirm(`Ya existe un alumno con la cédula: "${cedula}"\n¿Corregir o cancelar?`)) { restoreInitialState(); return }; return }

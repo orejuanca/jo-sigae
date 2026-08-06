@@ -70,9 +70,10 @@ export async function GET(request: NextRequest) {
 
     const debug = request.nextUrl.searchParams.get('debug') === '1'
     const db = getDb(plan)
-    const students = await db.student.findMany({
-      orderBy: { cedula: 'asc' },
-    })
+    // Usar la tabla correcta según el plan (no la tabla genérica Student)
+    const students = plan === 'vigente'
+      ? await db.planVigente.findMany({ orderBy: { cedula: 'asc' } })
+      : await db.planDerogado.findMany({ orderBy: { cedula: 'asc' } })
 
     // Para cada estudiante, extraer los 261 campos
     const rows = students.map((s, idx) => {

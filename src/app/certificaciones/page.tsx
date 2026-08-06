@@ -222,9 +222,9 @@ export default function CertificacionesPage() {
     setDataLoaded(false)
     try {
       // Plan vigente: leer de PlanVigente; otro plan: leer de Student
-      const certApiUrl = plan === 'vigente'
-        ? `/api/plan-vigente/${student.id}/cert-data`
-        : `/api/students/${student.id}/cert-data?plan=${plan}`
+      const certApiUrl = student.plan === 'derogado'
+        ? `/api/plan-derogado/${student.id}/cert-data`
+        : `/api/plan-vigente/${student.id}/cert-data`
       const res = await fetch(certApiUrl)
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
@@ -321,7 +321,7 @@ export default function CertificacionesPage() {
     setCertData(baseData)
 
     // Intentar cargar borrador guardado primero
-    const draft = await loadDraft(student.id)
+    const draft = await loadDraft(student.id, student.plan)
     if (draft) {
       // Asegurar que los campos del estudiante estén actualizados con los datos del modelo
       draft.estudiante = {
@@ -431,9 +431,9 @@ export default function CertificacionesPage() {
     setSavingTab(tabName)
     setLastSavedTab(null)
     try {
-      const draftApiUrl = plan === 'vigente'
-        ? `/api/plan-vigente/${selectedStudent.id}/cert-draft`
-        : `/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`
+      const draftApiUrl = selectedStudent.plan === 'derogado'
+        ? `/api/plan-derogado/${selectedStudent.id}/cert-draft`
+        : `/api/plan-vigente/${selectedStudent.id}/cert-draft`
       const res = await fetch(draftApiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -450,11 +450,11 @@ export default function CertificacionesPage() {
   }
 
   // Cargar borrador guardado previamente
-  const loadDraft = async (studentId: string): Promise<CertData | null> => {
+  const loadDraft = async (studentId: string, studentPlan?: string | null): Promise<CertData | null> => {
     try {
-      const draftLoadUrl = plan === 'vigente'
-        ? `/api/plan-vigente/${studentId}/cert-draft`
-        : `/api/students/${studentId}/cert-draft?plan=${plan}`
+      const draftLoadUrl = studentPlan === 'derogado'
+        ? `/api/plan-derogado/${studentId}/cert-draft`
+        : `/api/plan-vigente/${studentId}/cert-draft`
       const res = await fetch(draftLoadUrl)
       if (!res.ok) return null
       const { draft } = await res.json()

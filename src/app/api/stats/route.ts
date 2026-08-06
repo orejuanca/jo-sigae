@@ -10,38 +10,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const plan = searchParams.get('plan') || 'vigente'
 
-    // Plan Vigente usa tabla independiente PlanVigente
+    // Cada plan usa su tabla independiente
+    let totalStudents = 0
     if (plan === 'vigente') {
-      const totalStudents = await prismaDirect.planVigente.count()
-      return NextResponse.json({
-        totalStudents,
-        totalCertificaciones: 0,
-        totalConstancias: 0,
-        totalBoletines: 0,
-        totalTitulos: 0,
-        totalDocumentos: 0,
-      })
+      totalStudents = await prismaDirect.planVigente.count()
+    } else if (plan === 'derogado') {
+      totalStudents = await prismaDirect.planDerogado.count()
+    } else {
+      const db = getDb(plan)
+      totalStudents = await db.student.count({ where: { plan } })
     }
-
-    const planFilter = { plan }
-    const db = getDb(plan)
-
-    const [totalStudents, totalCertificaciones, totalConstancias, totalBoletines, totalTitulos] =
-      await Promise.all([
-        db.student.count({ where: planFilter }),
-        db.certification.count({ where: { tipo: 'CERTIFICACION', student: planFilter } }),
-        db.certification.count({ where: { tipo: 'CONSTANCIA', student: planFilter } }),
-        db.certification.count({ where: { tipo: 'BOLETIN', student: planFilter } }),
-        db.certification.count({ where: { tipo: 'TITULO', student: planFilter } }),
-      ])
 
     return NextResponse.json({
       totalStudents,
-      totalCertificaciones,
-      totalConstancias,
-      totalBoletines,
-      totalTitulos,
-      totalDocumentos: totalCertificaciones + totalConstancias + totalBoletines + totalTitulos,
+      totalCertificaciones: 0,
+      totalConstancias: 0,
+      totalBoletines: 0,
+      totalTitulos: 0,
+      totalDocumentos: 0,
     })
   } catch (error) {
     console.error('Error fetching stats:', error)

@@ -3,6 +3,8 @@
 // Usado por: dashboard-content.tsx y api/export/route.ts
 
 // Formatear fecha a DD/MM/AAAA
+// Maneja: DD/MM/AAAA, DD/MM/AA, YYYY-MM-DD, ISO, números seriales de Excel,
+// strings de Date JS, y cualquier formato que new Date() pueda parsear.
 export function fmtDate(val: unknown): string {
   if (!val) return ''
   const s = String(val).trim()
@@ -12,13 +14,39 @@ export function fmtDate(val: unknown): string {
     const p = s.split('/')
     return `${p[0].padStart(2, '0')}/${p[1].padStart(2, '0')}/${p[2]}`
   }
+  // DD/MM/YY (2 dígitos año)
+  if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)) {
+    const p = s.split('/')
+    let yy = parseInt(p[2])
+    yy = yy >= 30 ? 1900 + yy : 2000 + yy
+    return `${p[0].padStart(2, '0')}/${p[1].padStart(2, '0')}/${yy}`
+  }
   // YYYY-MM-DD o ISO
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
     try {
       const p = s.substring(0, 10).split('-')
       return `${p[2].padStart(2, '0')}/${p[1].padStart(2, '0')}/${p[0]}`
-    } catch { /* return s */ }
+    } catch { /* fall through */ }
   }
+  // Número serial de Excel (rango típico: 1–2958465 = 1900-2099)
+  if (/^\d{4,5}$/.test(s)) {
+    const n = parseInt(s)
+    if (n > 1 && n < 2958466) {
+      // Excel epoch: 1 = 1900-01-01 (with the 1900 leap year bug)
+      const excelEpoch = new Date(1899, 11, 30)
+      const date = new Date(excelEpoch.getTime() + n * 86400000)
+      if (!isNaN(date.getTime()) && date.getFullYear() >= 1900 && date.getFullYear() < 2100) {
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+      }
+    }
+  }
+  // Fallback: intentar new Date() para strings como "Tue Jun 15 2000..." o "2000/06/15"
+  try {
+    const d = new Date(s)
+    if (!isNaN(d.getTime()) && d.getFullYear() >= 1900 && d.getFullYear() < 2100) {
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+    }
+  } catch { /* return s */ }
   return s
 }
 

@@ -30,18 +30,43 @@ function formatFecha(val: unknown): string {
     return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
   }
 
+  // DD/MM/YY (2-digit year)
+  if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)) {
+    const p = s.split('/')
+    let yy = parseInt(p[2])
+    yy = yy >= 30 ? 1900 + yy : 2000 + yy
+    return `${p[0].padStart(2, '0')}/${p[1].padStart(2, '0')}/${yy}`
+  }
+
   // ISO format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS
   if (/^\d{4}-\d{2}-\d{2}/.test(s) || s.includes('T')) {
     try {
       const d = new Date(s)
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0')
-        const month = String(d.getMonth() + 1).padStart(2, '0')
-        const year = d.getFullYear()
-        return `${day}/${month}/${year}`
+      if (!isNaN(d.getTime()) && d.getFullYear() >= 1900 && d.getFullYear() < 2100) {
+        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
       }
     } catch { /* ignore */ }
   }
+
+  // Excel serial number (typical range: 1–2958465)
+  if (/^\d{4,5}$/.test(s)) {
+    const n = parseInt(s)
+    if (n > 1 && n < 2958466) {
+      const excelEpoch = new Date(1899, 11, 30)
+      const date = new Date(excelEpoch.getTime() + n * 86400000)
+      if (!isNaN(date.getTime()) && date.getFullYear() >= 1900 && date.getFullYear() < 2100) {
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+      }
+    }
+  }
+
+  // Fallback: try new Date()
+  try {
+    const d = new Date(s)
+    if (!isNaN(d.getTime()) && d.getFullYear() >= 1900 && d.getFullYear() < 2100) {
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+    }
+  } catch { /* ignore */ }
 
   return s
 }

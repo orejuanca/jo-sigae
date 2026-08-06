@@ -1508,7 +1508,7 @@ function CertVisualEditorContent() {
 
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
 /* FORZAMOS EL TAMAÑO LEGAL EN LA IMPRESORA */
-@page{size: Legal; margin:5mm}
+@page{size: Legal; margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 /* La tabla sigue teniendo el tamaño ARCH B internamente */

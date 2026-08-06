@@ -519,6 +519,57 @@ export default function CertificacionesPage() {
     return Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && c.nota !== 'PE').length
   }
 
+  // === IMPRESIÓN POR IFRAME (Legal size, sin márgenes del navegador) ===
+  const executeCertPrint = () => {
+    const previewEl = document.getElementById('cert-preview')
+    if (!previewEl) { console.error('cert-preview not found'); return }
+    const content = previewEl.innerHTML
+
+    const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
+@page { size: legal; margin: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 215.9mm; background: white; }
+body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; }
+#cert-print-content { width: 215.9mm; border: 1px solid #000; }
+#cert-print-content table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; table-layout: fixed; }
+#cert-print-content td { border: 1px solid #000; padding: 1px 2px; font-size: 9pt; overflow: hidden; }
+#cert-print-content img { max-width: 100%; height: auto; display: block; object-fit: contain; }
+@media print {
+  html, body { width: 215.9mm; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+}
+</style></head><body><div id="cert-print-content">${content}</div></body></html>`
+
+    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.id = 'cert-print-frame'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+      document.body.appendChild(iframe)
+    }
+    const doc = iframe.contentDocument!
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    // Esperar a que las imágenes carguen antes de imprimir
+    const imgs = doc.querySelectorAll('img')
+    if (imgs.length > 0) {
+      let loaded = 0
+      const onDone = () => {
+        loaded++
+        if (loaded >= imgs.length) {
+          setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+        }
+      }
+      imgs.forEach(img => {
+        if (img.complete) { onDone() } else { img.onload = onDone; img.onerror = onDone }
+      })
+    } else {
+      setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+    }
+  }
+
   // Helper styles for cert preview tables — Excel format: Arial 9pt, thin borders, NO backgrounds
   const tbS: React.CSSProperties = { borderCollapse: 'collapse', fontSize: '9pt', lineHeight: '1.2', fontFamily: 'Arial, sans-serif' }
   const bd: React.CSSProperties = { border: '1px solid #000', padding: '1px 2px', fontSize: '9pt' }
@@ -1018,7 +1069,7 @@ export default function CertificacionesPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">Vista Previa — Documento Oficial</CardTitle>
-                      <Button variant="outline" size="sm" onClick={() => window.print()}>
+                      <Button variant="outline" size="sm" onClick={executeCertPrint}>
                         <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
                       </Button>
                     </div>
@@ -1028,7 +1079,7 @@ export default function CertificacionesPage() {
                     <div
                       className="border border-black bg-white text-black mx-auto overflow-x-auto"
                       id="cert-preview"
-                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', maxWidth: '260mm', padding: '0' }}
+                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '9pt', lineHeight: '1.2', width: '215.9mm', padding: '0' }}
                     >
                       {/* ====== ROW 1-3: ENCABEZADO (Title, Plan, Lugar/Fecha) ====== */}
                       {/* Excel: Row 1: title M1:AA1, Row 2: plan M2:V2 + code W2:AA2, Row 3: lugar M3:S3 + T3:V3 + fecha W3:AA3 */}

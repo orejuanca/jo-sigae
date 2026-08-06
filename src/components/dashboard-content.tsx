@@ -545,6 +545,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     if (hasFlatFieldMapKeys) {
       const fieldMapSet = new Set(fieldMap.map(([k]) => k))
       for (const key of rawKeys) { if (fieldMapSet.has(key) && raw[key] != null && raw[key] !== undefined) { const sv = String(raw[key]); if (sv) out[key] = sv } }
+      // Para derogado, complementar con claves numéricas BD2 que RAMA A no cubre (ej: 297→SECCION.4)
+      if (plan === 'derogado') {
+        const dMap = buildDerogadoFlatMap(raw as Record<string, any>)
+        for (const [k, v] of Object.entries(dMap)) { if (v && !out[k]) out[k] = v }
+      }
       return out
     }
 

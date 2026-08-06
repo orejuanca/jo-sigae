@@ -16,13 +16,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
     const body = await request.json()
-    const { cedula, rawData, certDraft } = body
+    const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData, certDraft } = body
     const record = await prisma.planDerogado.findUnique({ where: { id } })
     if (!record) return NextResponse.json({ error: 'Registro no encontrado' }, { status: 404 })
     const updated = await prisma.planDerogado.update({
       where: { id },
       data: {
         ...(cedula !== undefined && { cedula: cedula.trim() }),
+        ...(apellidos !== undefined && { apellidos: apellidos.trim() }),
+        ...(nombres !== undefined && { nombres: nombres.trim() }),
+        ...(fechaNacimiento !== undefined && { fechaNacimiento: fechaNacimiento || null }),
+        ...(pais !== undefined && { pais: pais?.trim() || 'VENEZUELA' }),
+        ...(estado !== undefined && { estado: estado?.trim() || '' }),
+        ...(municipio !== undefined && { municipio: municipio?.trim() || '' }),
         ...(rawData !== undefined && { rawData }),
         ...(certDraft !== undefined && { certDraft }),
       },

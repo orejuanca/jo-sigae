@@ -750,7 +750,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
       updateData.rawData = JSON.stringify(originalRaw)
       const putUrl = plan === 'vigente'
         ? `/api/plan-vigente/${editingStudentId}`
-        : `/api/students/${editingStudentId}?plan=${plan}`
+        : `/api/plan-derogado/${editingStudentId}`
       await fetch(putUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData) })
       restoreInitialState(); setSaveStatus('DATOS GUARDADOS ✓'); setTimeout(() => setSaveStatus(''), 3000)
     } catch (e) { console.error('[SAVE EDITED ERROR]', e); setSaveStatus('ERROR AL GUARDAR'); setTimeout(() => setSaveStatus(''), 3000) }

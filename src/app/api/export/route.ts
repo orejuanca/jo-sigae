@@ -1,65 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
 import { flattenRawData, fmtDate } from '@/lib/flatten-raw'
+import { FIELD_MAP_VIGENTE, FIELD_MAP_DEROGADO } from '@/lib/field-maps'
 import * as XLSX from 'xlsx'
 
-// === CAMPOS DEL DASHBOARD (mismo orden que FIELD_MAP en dashboard-content.tsx) ===
-const ALL_FIELDS: string[] = [
-  'CEDULA','FECHA','APELLIDOS','NOMBRES','PAIS','ESTADO','MUNICIPIO',
-  'INST.1','LOCAL.1','EF.1',
-  'INST.2','LOCAL.2','EF.2',
-  'INST.3','LOCAL.3','EF.3',
-  'INST.4','LOCAL.4','EF.4',
-  'INST.5','LOCAL.5','EF.5',
-  'NOTA.CA.1','EVAL.CA.1','MES.CA.1','AÑO.CA.1','INST.CA.1',
-  'NOTA.IN.1','EVAL.IN.1','MES.IN.1','AÑO.IN.1','INST.IN.1',
-  'NOTA.MA.1','EVAL.MA.1','MES.MA.1','AÑO.MA.1','INST.MA.1',
-  'NOTA.EF.1','EVAL.EF.1','MES.EF.1','AÑO.EF.1','INST.EF.1',
-  'NOTA.AP.1','EVAL.AP.1','MES.AP.1','AÑO.AP.1','INST.AP.1',
-  'NOTA.CN.1','EVAL.CN.1','MES.CN.1','AÑO.CN.1','INST.CN.1',
-  'NOTA.GH.1','EVAL.GH.1','MES.GH.1','AÑO.GH.1','INST.GH.1',
-  'NOTA.CA.2','EVAL.CA.2','MES.CA.2','AÑO.CA.2','INST.CA.2',
-  'NOTA.IN.2','EVAL.IN.2','MES.IN.2','AÑO.IN.2','INST.IN.2',
-  'NOTA.MA.2','EVAL.MA.2','MES.MA.2','AÑO.MA.2','INST.MA.2',
-  'NOTA.EF.2','EVAL.EF.2','MES.EF.2','AÑO.EF.2','INST.EF.2',
-  'NOTA.AP.2','EVAL.AP.2','MES.AP.2','AÑO.AP.2','INST.AP.2',
-  'NOTA.CN.2','EVAL.CN.2','MES.CN.2','AÑO.CN.2','INST.CN.2',
-  'NOTA.GH.2','EVAL.GH.2','MES.GH.2','AÑO.GH.2','INST.GH.2',
-  'NOTA.CA.3','EVAL.CA.3','MES.CA.3','AÑO.CA.3','INST.CA.3',
-  'NOTA.IN.3','EVAL.IN.3','MES.IN.3','AÑO.IN.3','INST.IN.3',
-  'NOTA.MA.3','EVAL.MA.3','MES.MA.3','AÑO.MA.3','INST.MA.3',
-  'NOTA.EF.3','EVAL.EF.3','MES.EF.3','AÑO.EF.3','INST.EF.3',
-  'NOTA.FI.3','EVAL.FI.3','MES.FI.3','AÑO.FI.3','INST.FI.3',
-  'NOTA.QU.3','EVAL.QU.3','MES.QU.3','AÑO.QU.3','INST.QU.3',
-  'NOTA.BI.3','EVAL.BI.3','MES.BI.3','AÑO.BI.3','INST.BI.3',
-  'NOTA.GH.3','EVAL.GH.3','MES.GH.3','AÑO.GH.3','INST.GH.3',
-  'NOTA.CA.4','EVAL.CA.4','MES.CA.4','AÑO.CA.4','INST.CA.4',
-  'NOTA.IN.4','EVAL.IN.4','MES.IN.4','AÑO.IN.4','INST.IN.4',
-  'NOTA.MA.4','EVAL.MA.4','MES.MA.4','AÑO.MA.4','INST.MA.4',
-  'NOTA.EF.4','EVAL.EF.4','MES.EF.4','AÑO.EF.4','INST.EF.4',
-  'NOTA.FI.4','EVAL.FI.4','MES.FI.4','AÑO.FI.4','INST.FI.4',
-  'NOTA.QU.4','EVAL.QU.4','MES.QU.4','AÑO.QU.4','INST.QU.4',
-  'NOTA.BI.4','EVAL.BI.4','MES.BI.4','AÑO.BI.4','INST.BI.4',
-  'NOTA.GH.4','EVAL.GH.4','MES.GH.4','AÑO.GH.4','INST.GH.4',
-  'NOTA.FS.4','EVAL.FS.4','MES.FS.4','AÑO.FS.4','INST.FS.4',
-  'NOTA.CA.5','EVAL.CA.5','MES.CA.5','AÑO.CA.5','INST.CA.5',
-  'NOTA.IN.5','EVAL.IN.5','MES.IN.5','AÑO.IN.5','INST.IN.5',
-  'NOTA.MA.5','EVAL.MA.5','MES.MA.5','AÑO.MA.5','INST.MA.5',
-  'NOTA.EF.5','EVAL.EF.5','MES.EF.5','AÑO.EF.5','INST.EF.5',
-  'NOTA.FI.5','EVAL.FI.5','MES.FI.5','AÑO.FI.5','INST.FI.5',
-  'NOTA.QU.5','EVAL.QU.5','MES.QU.5','AÑO.QU.5','INST.QU.5',
-  'NOTA.BI.5','EVAL.BI.5','MES.BI.5','AÑO.BI.5','INST.BI.5',
-  'NOTA.CT.5','EVAL.CT.5','MES.CT.5','AÑO.CT.5','INST.CT.5',
-  'NOTA.GH.5','EVAL.GH.5','MES.GH.5','AÑO.GH.5','INST.GH.5',
-  'NOTA.FS.5','EVAL.FS.5','MES.FS.5','AÑO.FS.5','INST.FS.5',
-  'OC.LITERAL.1','OC.LITERAL.2','OC.LITERAL.3','OC.LITERAL.4','OC.LITERAL.5',
-  'PG.GRUPO.1','PG.GRUPO.2','PG.GRUPO.3','PG.GRUPO.4','PG.GRUPO.5',
-  'PG.LITERAL.1','PG.LITERAL.2','PG.LITERAL.3','PG.LITERAL.4','PG.LITERAL.5',
-  'OBS.CERT.L1','OBS.CERT.L2','OBS.NOTAS.L1','OBS.NOTAS.L2','OBS.NOTAS.L3',
-  'SECCION.1','SECCION.2','SECCION.3','SECCION.4','SECCION.5',
-  'TITULO.SERIAL','TITULO.EXPEDICION','TITULO.EGRESO','CERT.EXPEDICION',
-  'OBS.BOLETA.L1','OBS.BOLETA.L2','OBS.BOLETA.L3','OBS.CERT.L3','OBS.CERT.L4',
-]
+// Campos fijos (se extraen directamente del registro, no del rawData)
+const BASE_FIELDS = ['CEDULA','FECHA','APELLIDOS','NOMBRES','PAIS','ESTADO','MUNICIPIO'] as const
+
+// Obtener la lista de campos según el plan (mismo orden que el dashboard)
+function getFieldsForPlan(plan: string): string[] {
+  const map = plan === 'derogado' ? FIELD_MAP_DEROGADO : FIELD_MAP_VIGENTE
+  // Extraer solo los nombres de campo (primer elemento de cada par)
+  return map.map(([field]) => field)
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,25 +22,24 @@ export async function GET(request: NextRequest) {
     }
 
     const debug = request.nextUrl.searchParams.get('debug') === '1'
+    const ALL_FIELDS = getFieldsForPlan(plan)
     const db = getDb(plan)
     // Usar la tabla correcta según el plan (no la tabla genérica Student)
     const students = plan === 'vigente'
       ? await db.planVigente.findMany({ orderBy: { cedula: 'asc' } })
       : await db.planDerogado.findMany({ orderBy: { cedula: 'asc' } })
 
-    // Para cada estudiante, extraer los 261 campos
+    // Para cada estudiante, extraer todos los campos del plan
     const rows = students.map((s, idx) => {
-      // Parsear rawData y aplanar con la misma lógica del dashboard
       let flat: Record<string, string> = {}
       let rawDebug: { format: string; keys: string[]; flatCount: number } | undefined
       try {
         const parsed = typeof s.rawData === 'string' ? JSON.parse(s.rawData) : (s.rawData || {})
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          const rawKeys = Object.keys(parsed)
           flat = flattenRawData(parsed as Record<string, unknown>)
           rawDebug = {
             format: String(parsed._format || 'none'),
-            keys: rawKeys.slice(0, 15),
+            keys: Object.keys(parsed).slice(0, 15),
             flatCount: Object.keys(flat).length,
           }
         }
@@ -98,14 +50,14 @@ export async function GET(request: NextRequest) {
       const row: Record<string, string> = { '#': String(idx + 1) }
       for (const field of ALL_FIELDS) {
         switch (field) {
-          case 'CEDULA':   row[field] = s.cedula || ''; break
-          case 'FECHA':    row[field] = fmtDate(s.fechaNacimiento); break
+          case 'CEDULA':    row[field] = s.cedula || ''; break
+          case 'FECHA':     row[field] = fmtDate(s.fechaNacimiento); break
           case 'APELLIDOS': row[field] = s.apellidos || ''; break
-          case 'NOMBRES':  row[field] = s.nombres || ''; break
-          case 'PAIS':     row[field] = s.pais || 'VENEZUELA'; break
-          case 'ESTADO':   row[field] = s.estado || ''; break
+          case 'NOMBRES':   row[field] = s.nombres || ''; break
+          case 'PAIS':      row[field] = s.pais || 'VENEZUELA'; break
+          case 'ESTADO':    row[field] = s.estado || ''; break
           case 'MUNICIPIO': row[field] = s.municipio || ''; break
-          default:         row[field] = flat[field] || ''; break
+          default:          row[field] = flat[field] || ''; break
         }
       }
       return debug ? { row, rawDebug } : row
@@ -114,8 +66,10 @@ export async function GET(request: NextRequest) {
     // MODO DEBUG: retornar JSON en vez de XLSX
     if (debug) {
       return NextResponse.json({
+        plan,
         totalStudents: students.length,
         totalFields: ALL_FIELDS.length,
+        fields: ALL_FIELDS,
         first3: rows.slice(0, 3),
       })
     }

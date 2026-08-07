@@ -1,6 +1,25 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+
+// Medidor de texto para auto-shrink (cache de canvas por font)
+const _textCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
+const _textCtx = _textCanvas?.getContext('2d')
+function measureTextWidth(text: string, font: string): number {
+  if (!_textCtx) return 0
+  _textCtx.font = font
+  return _textCtx.measureText(text).width
+}
+function computeShrink(text: string, baseFontSize: number, fontFamily: string, bold: boolean, cellWidth: number): number | null {
+  if (!text || cellWidth <= 0) return null
+  const weight = bold ? 'bold' : 'normal'
+  const fontStr = `${weight} ${baseFontSize}px ${fontFamily || 'Arial'}`
+  const textW = measureTextWidth(text, fontStr)
+  const available = cellWidth - 2 // px-0.5 padding each side
+  if (textW <= available) return null
+  const scale = available / textW
+  return Math.max(scale, 0.5) // never shrink below 50%
+}
 import { AppShell } from '@/components/app-shell'
 import * as VT from '@/lib/templates/vigente-template'
 import * as DT from '@/lib/templates/derogado-template'
@@ -847,8 +866,18 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
                 (plan === 'vigente' && r >= 14 && r <= 18) ||
                 (plan === 'derogado' && (r >= 14 && r <= 18 || r >= 20 && r <= 24))
                 )
+                // Auto-shrink: calcular si el texto necesita reducirse
+                const cellText = (cells[r]?.[c] || '').toString()
+                const baseFontSize = fontSizes[r]?.[c] || 9
+                const cellFont = fontFamilies[r]?.[c] || 'Arial'
+                const cellBold = !!boldCells[r]?.[c]
+                const effectiveWidth = colSpan > 1
+                  ? Array.from({length: colSpan}, (_, i) => colWidths[c + i] || 80).reduce((a, b) => a + b, 0)
+                  : (colWidths[c] || 80)
+                const shrink = computeShrink(cellText, baseFontSize, cellFont, cellBold, effectiveWidth)
+                const autoFontSize = shrink ? baseFontSize * shrink : baseFontSize
                 return (
-                  <td key={c} data-r={r} data-c={c} onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }} colSpan={colSpan > 1 ? colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined} className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`} style={{ backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'), color: fontColors[r]?.[c] || '#333', fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal', fontStyle: 'normal', fontSize: `${fontSizes[r]?.[c] || 9}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', verticalAlign: 'middle' }}>
+                  <td key={c} data-r={r} data-c={c} onClick={(e) => { if (!isBtnCell) handleCellClick(r, c, e.shiftKey) }} colSpan={colSpan > 1 ? colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined} className={`p-0 relative ${selected && !isBtnCell ? 'ring-2 ring-blue-400 z-10' : ''} ${cellBorder ? 'border border-gray-400' : ''}`} style={{ backgroundColor: selected ? '#bbdefb' : (bgColors[r]?.[c] || '#ffffff'), color: fontColors[r]?.[c] || '#333', fontWeight: boldCells[r]?.[c] ? 'bold' : 'normal', fontStyle: 'normal', fontSize: `${autoFontSize}px`, fontFamily: fontFamilies[r]?.[c] || 'Arial', textAlign: textAligns[r]?.[c] || 'left', verticalAlign: 'middle' }}>
                     {isSwitchCell ? (
                       <button onClick={(e) => { e.stopPropagation(); if (!editMode) doSave(plan); if (editMode) restoreInitialState(); onSwitchPlan() }} onMouseEnter={() => setBtnHover(btnKey)} onMouseLeave={() => { setBtnHover(null); setBtnDown(null) }} onMouseDown={() => setBtnDown(btnKey)} onMouseUp={() => setBtnDown(null)} className="w-full h-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: isDn ? '#1d4ed8' : '#2563eb', color: '#ffffff', fontSize: '11px', fontFamily: 'Arial', fontWeight: 'bold', border: '1px solid #1e40af', borderRadius: '2px', userSelect: 'none', whiteSpace: 'pre-line', boxShadow: isDn ? 'inset 0 1px 2px rgba(0,0,0,0.3)' : '1px 1px 3px rgba(0,0,0,0.3)', transform: isDn ? 'translateY(1px)' : 'none' }}>{switchBtnLabel}</button>
                     ) : isPrintCell ? (

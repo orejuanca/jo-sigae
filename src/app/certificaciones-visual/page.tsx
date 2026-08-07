@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
@@ -30,6 +30,39 @@ import {
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
 } from 'lucide-react'
+
+// === Medidor de texto para auto-fit ===
+const _autoFitCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
+const _autoFitCtx = _autoFitCanvas?.getContext('2d')
+function computeAutoFitFontSize(text: string, baseFontSize: number, fontWeight: string, maxWidth: number): number {
+  if (!_autoFitCtx || !text || maxWidth <= 0) return baseFontSize
+  const fontStr = `${fontWeight} ${baseFontSize}pt Arial, sans-serif`
+  _autoFitCtx.font = fontStr
+  const textW = _autoFitCtx.measureText(text).width
+  const available = maxWidth - 4
+  if (textW <= available) return baseFontSize
+  const scale = available / textW
+  return Math.max(baseFontSize * scale, baseFontSize * 0.5)
+}
+
+// Componente wrapper que mide el ancho disponible y ajusta fontSize
+function AutoFitCell({ children, fontSize, fontWeight, autoFit }: {
+  children: React.ReactNode; fontSize: number; fontWeight: string; autoFit: boolean
+}) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [scaledSize, setScaledSize] = useState(fontSize)
+  useEffect(() => {
+    if (!autoFit || !ref.current) { setScaledSize(fontSize); return }
+    const td = ref.current.closest('td') as HTMLElement | null
+    if (!td) { setScaledSize(fontSize); return }
+    const text = ref.current.textContent || ''
+    if (!text) { setScaledSize(fontSize); return }
+    const w = td.clientWidth
+    const newSize = computeAutoFitFontSize(text, fontSize, fontWeight, w)
+    setScaledSize(newSize)
+  }, [autoFit, fontSize, fontWeight, children])
+  return <span ref={ref} style={{ fontSize: autoFit ? `${scaledSize}pt` : undefined }}>{children}</span>
+}
 
 // === Student & CertData types (local to this page) ===
 // === Escala automática por layout ===
@@ -278,6 +311,7 @@ function GridTable({
                     {isPreview && cell.dataBinding && !displayContent ? (
                       <span style={{ color: '#ccc' }}>—</span>
                     ) : isPreview && cell.dataBinding && onCellEdit ? (
+                      <AutoFitCell fontSize={cell.fontSize} fontWeight={cell.fontWeight} autoFit={!!cell.autoFit}>
                       <span
                         data-editable
                         style={{ cursor: 'text', outline: 'none', minWidth: '20px', display: 'inline-block', minHeight: '1em' }}
@@ -301,6 +335,7 @@ function GridTable({
                       >
                         {displayContent}
                       </span>
+                      </AutoFitCell>
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         <img
@@ -310,7 +345,9 @@ function GridTable({
                         />
                       </div>
                     ) : (
-                      displayContent
+                      <AutoFitCell fontSize={cell.fontSize} fontWeight={cell.fontWeight} autoFit={!!cell.autoFit}>
+                        {displayContent}
+                      </AutoFitCell>
                     )}
                   </td>
                 )

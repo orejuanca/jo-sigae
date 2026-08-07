@@ -629,7 +629,7 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
     try {
       const url = plan === 'vigente'
         ? `/api/plan-vigente?q=${encodeURIComponent(q.trim())}&limit=10`
-        : `/api/students?q=${encodeURIComponent(q.trim())}&plan=${plan}&limit=10`
+        : `/api/plan-derogado?q=${encodeURIComponent(q.trim())}&limit=10`
       const res = await fetch(url); const data = await res.json(); setDeleteResults(data.students || [])
     } catch { setDeleteResults([]) }
     setDeleteSearching(false)

@@ -458,7 +458,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
               </FieldRow>
               <FieldRow label="Ajustar texto:">
                 <Switch
-                  checked={cell.autoFit}
+                  checked={!!cell.autoFit}
                   onCheckedChange={(checked) => onUpdate({ autoFit: checked })}
                 />
               </FieldRow>

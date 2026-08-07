@@ -40,12 +40,8 @@ function AutoFitCell({ children, fontSize, fontWeight, autoFit }: {
 
   useLayoutEffect(() => {
     const span = ref.current
-    if (!span) {
-      if (autoFit) console.log('[AutoFit] ERROR: autoFit=true pero span es null')
-      return
-    }
+    if (!span) return
 
-    // Si autoFit está desactivado, restaurar estilos originales
     if (!autoFit) {
       if (scaledRef.current !== null) {
         scaledRef.current = null
@@ -54,49 +50,38 @@ function AutoFitCell({ children, fontSize, fontWeight, autoFit }: {
       return
     }
 
-    console.log('[AutoFit] autoFit=true, midiendo...')
-
     const td = span.closest('td') as HTMLTableCellElement | null
-    if (!td) { console.log('[AutoFit] ERROR: no encontró td'); return }
+    if (!td) return
 
     const text = span.textContent || ''
-    if (!text.trim()) { console.log('[AutoFit] skip: sin texto'); return }
+    if (!text.trim()) return
 
-    // Ancho disponible dentro del TD
     const cs = window.getComputedStyle(td)
     const pl = parseFloat(cs.paddingLeft) || 0
     const pr = parseFloat(cs.paddingRight) || 0
     const available = td.clientWidth - pl - pr
     if (available <= 0) return
 
-    // Paso 1: Resetear fontSize al original para medir correctamente
+    // Resetear al fontSize original y forzar nowrap para medir ancho natural
     span.style.fontSize = `${fontSize}pt`
     span.style.whiteSpace = 'nowrap'
     span.style.display = 'inline-block'
     span.style.maxWidth = 'none'
     span.style.overflow = 'visible'
 
-    // Paso 2: Medir el ancho natural del texto
-    // IMPORTANTE: usar offsetWidth (layout, NO afectado por transform:scale del padre)
-    // getBoundingClientRect SÍ está afectado por el scale → comparación incorrecta
+    // offsetWidth = layout width, NO afectado por transform:scale del padre
     const textW = span.offsetWidth
-
-    console.log(`[AutoFit] fontSize=${fontSize}pt textW=${textW.toFixed(1)} avail=${available.toFixed(1)} overflow=${textW > available} text="${text.slice(0,25)}"`)
 
     if (textW > available) {
       const ratio = (available * 0.95) / textW
       const newSize = Math.max(Math.round(fontSize * ratio * 10) / 10, fontSize * 0.5)
       scaledRef.current = newSize
       span.style.fontSize = `${newSize}pt`
-      // Mantener nowrap para que no se corte
       span.style.overflow = 'hidden'
       span.style.maxWidth = `${available}px`
-      console.log(`[AutoFit] → APLICADO ${newSize}pt`)
     } else {
       scaledRef.current = null
-      // Restaurar todo — el texto cabe al tamaño original
       span.style.cssText = ''
-      console.log('[AutoFit] → cabe, sin cambio')
     }
   })
 

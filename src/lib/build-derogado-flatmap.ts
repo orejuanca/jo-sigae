@@ -260,6 +260,20 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     }
   }
 
+  // 3.5 Si hay NOTA.* planas (field-map desde dashboard) pero sin calificaciones estructuradas
+  //      ni claves numéricas BD2, generar LITERAL.* desde las NOTA.* existentes
+  const hasNotaFlatKeys = Object.keys(map).some(k => k.startsWith('NOTA.') && k !== 'NOTA_EN_LETRAS')
+  if (hasNotaFlatKeys && calificaciones.length === 0 && !hasFlatInstKeys) {
+    for (const [key, val] of Object.entries(map)) {
+      if (!key.startsWith('NOTA.') || key === 'NOTA_EN_LETRAS') continue
+      if (!val || val.trim() === '') continue
+      const literalKey = 'LITERAL' + key.substring(4) // NOTA.CA.1 → LITERAL.CA.1
+      if (!map[literalKey]) {
+        map[literalKey] = notaToLiteral(val)
+      }
+    }
+  }
+
   // 4. Secciones — tres orígenes posibles para SECCION.1-5:
   //    a) rawData.secciones (array, formato estructurado desde importDerogadoFromJSON)
   //    b) rawData['SECCION'] (objeto con claves numéricas o string)

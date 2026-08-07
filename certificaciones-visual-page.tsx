@@ -173,7 +173,7 @@ function GridTable({
       style={{ maxWidth: '860px', margin: '0 auto', overflow: 'visible' }}
       onMouseUp={() => !isPreview && onCellMouseUp()}
     >
-      <div style={{ width: '816px', minHeight: '1728px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', paddingBottom: '20px', overflow: 'visible' }}>
+      <div style={{ width: '816px', minHeight: '1344px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', paddingBottom: '20px', overflow: 'visible' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
           <colgroup>
             {config.columnWidths.map((w, i) => (
@@ -1490,7 +1490,7 @@ function CertVisualEditorContent() {
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 /* La tabla sigue teniendo el tama├▒o ARCH B internamente */
-table{border-collapse:collapse;width:816px;height:1728px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
+table{border-collapse:collapse;width:816px;height:1344px;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}

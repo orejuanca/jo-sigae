@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { AppShell } from '@/components/app-shell'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -19,7 +19,6 @@ import { useRouter } from 'next/navigation'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
 import {
   FolderOpen, Trash2, Eye, Upload, Loader2, Plus, FileText,
-  Clock, CalendarDays,
 } from 'lucide-react'
 
 interface SavedLayout {
@@ -122,51 +121,28 @@ export default function EditorFormatosPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
             {layouts.map(layout => (
-              <Card key={layout.id} className="bg-gray-800 border-gray-700 hover:border-gray-500 transition-colors">
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="h-4 w-4 text-blue-400 shrink-0" />
-                      <CardTitle className="text-sm font-semibold text-white truncate">
-                        {layout.nombre}
-                      </CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-3">
-                  <div className="flex items-center gap-4 text-[10px] text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      Creado: {formatDate(layout.createdAt)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-[10px] text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Modificado: {formatDate(layout.updatedAt)}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      className="flex-1 h-7 text-xs bg-blue-600 hover:bg-blue-500"
-                      onClick={() => handleOpenInEditor(layout.id)}
-                    >
-                      <Eye className="h-3 w-3 mr-1" /> Abrir
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs text-red-400 border-red-800 hover:bg-red-900/30 hover:text-red-300"
-                      onClick={() => setDeleteId(layout.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={layout.id} className="flex items-center gap-3 bg-gray-800 border border-gray-700 hover:border-gray-500 rounded-md px-3 py-2 transition-colors">
+                <FileText className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                <span className="flex-1 text-xs font-medium text-white truncate">{layout.nombre}</span>
+                <span className="text-[10px] text-gray-500 hidden sm:inline">{formatDate(layout.updatedAt)}</span>
+                <Button
+                  size="sm"
+                  className="h-6 text-[10px] px-2 bg-blue-600 hover:bg-blue-500"
+                  onClick={() => handleOpenInEditor(layout.id)}
+                >
+                  <Eye className="h-3 w-3 mr-1" /> Abrir
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-[10px] px-2 text-red-400 border-red-800 hover:bg-red-900/30 hover:text-red-300"
+                  onClick={() => setDeleteId(layout.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             ))}
           </div>
         )}

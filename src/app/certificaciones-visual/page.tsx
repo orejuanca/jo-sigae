@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
@@ -31,37 +31,76 @@ import {
   Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
 } from 'lucide-react'
 
-// === Medidor de texto para auto-fit ===
-const _autoFitCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
-const _autoFitCtx = _autoFitCanvas?.getContext('2d')
-function computeAutoFitFontSize(text: string, baseFontSize: number, fontWeight: string, maxWidth: number): number {
-  if (!_autoFitCtx || !text || maxWidth <= 0) return baseFontSize
-  const fontStr = `${fontWeight} ${baseFontSize}pt Arial, sans-serif`
-  _autoFitCtx.font = fontStr
-  const textW = _autoFitCtx.measureText(text).width
-  const available = maxWidth - 4
-  if (textW <= available) return baseFontSize
-  const scale = available / textW
-  return Math.max(baseFontSize * scale, baseFontSize * 0.5)
-}
-
-// Componente wrapper que mide el ancho disponible y ajusta fontSize
+// === Auto-fit: reduce fontSize para que el texto quepa en la celda ===
 function AutoFitCell({ children, fontSize, fontWeight, autoFit }: {
   children: React.ReactNode; fontSize: number; fontWeight: string; autoFit: boolean
 }) {
   const ref = useRef<HTMLSpanElement>(null)
-  const [scaledSize, setScaledSize] = useState(fontSize)
-  useEffect(() => {
-    if (!autoFit || !ref.current) { setScaledSize(fontSize); return }
-    const td = ref.current.closest('td') as HTMLElement | null
-    if (!td) { setScaledSize(fontSize); return }
-    const text = ref.current.textContent || ''
-    if (!text) { setScaledSize(fontSize); return }
-    const w = td.clientWidth
-    const newSize = computeAutoFitFontSize(text, fontSize, fontWeight, w)
-    setScaledSize(newSize)
-  }, [autoFit, fontSize, fontWeight, children])
-  return <span ref={ref} style={{ fontSize: autoFit ? `${scaledSize}pt` : undefined }}>{children}</span>
+  const scaledRef = useRef<number | null>(null)
+
+  useLayoutEffect(() => {
+    const span = ref.current
+    if (!span) {
+      if (autoFit) console.log('[AutoFit] ERROR: autoFit=true pero span es null')
+      return
+    }
+
+    // Si autoFit está desactivado, restaurar estilos originales
+    if (!autoFit) {
+      if (scaledRef.current !== null) {
+        scaledRef.current = null
+        span.style.cssText = ''
+      }
+      return
+    }
+
+    console.log('[AutoFit] autoFit=true, midiendo...')
+
+    const td = span.closest('td') as HTMLTableCellElement | null
+    if (!td) { console.log('[AutoFit] ERROR: no encontró td'); return }
+
+    const text = span.textContent || ''
+    if (!text.trim()) { console.log('[AutoFit] skip: sin texto'); return }
+
+    // Ancho disponible dentro del TD
+    const cs = window.getComputedStyle(td)
+    const pl = parseFloat(cs.paddingLeft) || 0
+    const pr = parseFloat(cs.paddingRight) || 0
+    const available = td.clientWidth - pl - pr
+    if (available <= 0) return
+
+    // Paso 1: Resetear fontSize al original para medir correctamente
+    span.style.fontSize = `${fontSize}pt`
+    span.style.whiteSpace = 'nowrap'
+    span.style.display = 'inline-block'
+    span.style.maxWidth = 'none'
+    span.style.overflow = 'visible'
+
+    // Paso 2: Medir el ancho natural del texto
+    // IMPORTANTE: usar offsetWidth (layout, NO afectado por transform:scale del padre)
+    // getBoundingClientRect SÍ está afectado por el scale → comparación incorrecta
+    const textW = span.offsetWidth
+
+    console.log(`[AutoFit] fontSize=${fontSize}pt textW=${textW.toFixed(1)} avail=${available.toFixed(1)} overflow=${textW > available} text="${text.slice(0,25)}"`)
+
+    if (textW > available) {
+      const ratio = (available * 0.95) / textW
+      const newSize = Math.max(Math.round(fontSize * ratio * 10) / 10, fontSize * 0.5)
+      scaledRef.current = newSize
+      span.style.fontSize = `${newSize}pt`
+      // Mantener nowrap para que no se corte
+      span.style.overflow = 'hidden'
+      span.style.maxWidth = `${available}px`
+      console.log(`[AutoFit] → APLICADO ${newSize}pt`)
+    } else {
+      scaledRef.current = null
+      // Restaurar todo — el texto cabe al tamaño original
+      span.style.cssText = ''
+      console.log('[AutoFit] → cabe, sin cambio')
+    }
+  })
+
+  return <span ref={ref}>{children}</span>
 }
 
 // === Student & CertData types (local to this page) ===
@@ -1001,7 +1040,7 @@ function CertVisualEditorContent() {
     'fontSize', 'fontWeight', 'fontStyle', 'textDecoration', 'textAlign', 'verticalAlign',
     'color', 'whiteSpace', 'padding', 'bgColor',
     'borderTop', 'borderRight', 'borderBottom', 'borderLeft', 'borderColor',
-    'width', 'height',
+    'width', 'height', 'autoFit',
   ])
 
   // Unified update handler: format props go to range, content/binding/merge go to single cell

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, Suspense } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
@@ -30,6 +30,64 @@ import {
   FolderOpen, Trash2, CheckCircle2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   Combine, TableCellsMerge, TableCellsSplit, Group, Printer,
 } from 'lucide-react'
+
+// === Auto-fit: reduce fontSize para que el texto quepa en la celda ===
+function AutoFitCell({ children, fontSize, fontWeight, autoFit }: {
+  children: React.ReactNode; fontSize: number; fontWeight: string; autoFit: boolean
+}) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const scaledRef = useRef<number | null>(null)
+
+  useLayoutEffect(() => {
+    const span = ref.current
+    if (!span) return
+
+    if (!autoFit) {
+      if (scaledRef.current !== null) {
+        scaledRef.current = null
+        span.style.cssText = ''
+      }
+      return
+    }
+
+    const td = span.closest('td') as HTMLTableCellElement | null
+    if (!td) return
+
+    const text = span.textContent || ''
+    if (!text.trim()) return
+
+    const cs = window.getComputedStyle(td)
+    const pl = parseFloat(cs.paddingLeft) || 0
+    const pr = parseFloat(cs.paddingRight) || 0
+    const available = td.clientWidth - pl - pr
+    if (available <= 0) return
+
+    // Resetear al fontSize original y forzar nowrap para medir ancho natural
+    span.style.fontSize = `${fontSize}pt`
+    span.style.whiteSpace = 'nowrap'
+    span.style.display = 'inline-block'
+    span.style.maxWidth = 'none'
+    span.style.overflow = 'visible'
+
+    // offsetWidth = layout width, NO afectado por transform:scale del padre
+    const textW = span.offsetWidth
+
+    if (textW > available) {
+      const ratio = (available * 0.99) / textW
+      const newSize = Math.max(Math.round(fontSize * ratio * 10) / 10, fontSize * 0.5)
+      scaledRef.current = newSize
+      span.style.fontSize = `${newSize}pt`
+      span.style.whiteSpace = 'nowrap'
+      span.style.overflow = 'hidden'
+      span.style.maxWidth = `${available}px`
+    } else {
+      scaledRef.current = null
+      span.style.cssText = ''
+    }
+  })
+
+  return <span ref={ref}>{children}</span>
+}
 
 // === Student & CertData types (local to this page) ===
 // === Escala automática por layout ===
@@ -278,6 +336,7 @@ function GridTable({
                     {isPreview && cell.dataBinding && !displayContent ? (
                       <span style={{ color: '#ccc' }}>—</span>
                     ) : isPreview && cell.dataBinding && onCellEdit ? (
+                      <AutoFitCell fontSize={cell.fontSize} fontWeight={cell.fontWeight} autoFit={!!cell.autoFit}>
                       <span
                         data-editable
                         style={{ cursor: 'text', outline: 'none', minWidth: '20px', display: 'inline-block', minHeight: '1em' }}
@@ -301,6 +360,7 @@ function GridTable({
                       >
                         {displayContent}
                       </span>
+                      </AutoFitCell>
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         <img
@@ -310,7 +370,9 @@ function GridTable({
                         />
                       </div>
                     ) : (
-                      displayContent
+                      <AutoFitCell fontSize={cell.fontSize} fontWeight={cell.fontWeight} autoFit={!!cell.autoFit}>
+                        {displayContent}
+                      </AutoFitCell>
                     )}
                   </td>
                 )
@@ -964,7 +1026,7 @@ function CertVisualEditorContent() {
     'fontSize', 'fontWeight', 'fontStyle', 'textDecoration', 'textAlign', 'verticalAlign',
     'color', 'whiteSpace', 'padding', 'bgColor',
     'borderTop', 'borderRight', 'borderBottom', 'borderLeft', 'borderColor',
-    'width', 'height',
+    'width', 'height', 'autoFit',
   ])
 
   // Unified update handler: format props go to range, content/binding/merge go to single cell
@@ -1494,7 +1556,11 @@ function CertVisualEditorContent() {
           ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
           : ''
         const text = imgTag || (content || '')
-        cellsHtml += `<td${csAttr}${rsAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${text}</td>`
+        const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
+        const autoFitSpan = (cell.autoFit && !imgTag && content)
+          ? `<span style="display:inline-block;white-space:nowrap">${content}</span>`
+          : text
+        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }
@@ -1516,13 +1582,32 @@ body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style></head><body>${tableHtml}</body></html>`
+</style></head><body>${tableHtml}<script>
+// Auto-fit: reducir fontSize en celdas marcadas con data-autofit
+ document.querySelectorAll('td[data-autofit]').forEach(function(td){
+  var span = td.querySelector('span');
+  if(!span || !span.textContent.trim()) return;
+  var cs = getComputedStyle(td);
+  var avail = td.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if(avail <= 0) return;
+  var textW = span.offsetWidth;
+  if(textW > avail){
+    var origSize = parseFloat(td.style.fontSize) || 9;
+    var ratio = (avail * 0.99) / textW;
+    var newSize = Math.max(Math.round(origSize * ratio * 10) / 10, origSize * 0.5);
+    td.style.fontSize = newSize + 'pt';
+    span.style.whiteSpace = 'nowrap';
+    span.style.overflow = 'hidden';
+    span.style.maxWidth = avail + 'px';
+  }
+});
+</script></body></html>`
 
     let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
     if (!iframe) {
       iframe = document.createElement('iframe')
       iframe.id = 'cert-print-frame'
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:220mm;height:400mm;border:none'
       document.body.appendChild(iframe)
     }
     const doc = iframe.contentDocument!
@@ -1530,22 +1615,27 @@ img{max-width:100%;height:auto}
     doc.write(html)
     doc.close()
 
-    const imgs = doc.querySelectorAll('img')
-    if (imgs.length > 0) {
-      let loaded = 0
-      const onDone = () => {
-        loaded++
-        if (loaded >= imgs.length) {
-          setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+    // Esperar a que el script de autoFit se ejecute, luego imprimir
+    const doPrint = () => {
+      const imgs = doc.querySelectorAll('img')
+      if (imgs.length > 0) {
+        let loaded = 0
+        const onDone = () => {
+          loaded++
+          if (loaded >= imgs.length) {
+            setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+          }
         }
+        imgs.forEach(img => {
+          if (img.complete) { onDone() }
+          else { img.onload = onDone; img.onerror = onDone }
+        })
+      } else {
+        setTimeout(() => { iframe!.contentWindow!.print() }, 300)
       }
-      imgs.forEach(img => {
-        if (img.complete) { onDone() }
-        else { img.onload = onDone; img.onerror = onDone }
-      })
-    } else {
-      setTimeout(() => { iframe!.contentWindow!.print() }, 300)
     }
+    // Dar tiempo al script inline del iframe para ejecutarse y al layout estabilizarse
+    setTimeout(doPrint, 150)
   }
 
   const handlePrint = () => executePrint(printScale)

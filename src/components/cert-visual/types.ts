@@ -23,6 +23,7 @@ export interface CellConfig {
   padding: string           // Default '1px 2px'
   fontStyle: 'normal' | 'italic'
   textDecoration: 'none' | 'underline'
+  autoFit: boolean         // Default false - reduce font-size si texto desborda
 }
 
 export interface GridRow {
@@ -43,7 +44,7 @@ export function emptyCell(overrides?: Partial<CellConfig>): CellConfig {
     textAlign: 'left', verticalAlign: 'middle',
     borderTop: true, borderRight: true, borderBottom: true, borderLeft: true,
     borderColor: '#000000', bgColor: '', color: '', whiteSpace: 'normal',
-    padding: '1px 2px', fontStyle: 'normal', textDecoration: 'none',
+    padding: '1px 2px', fontStyle: 'normal', textDecoration: 'none', autoFit: false,
     ...overrides,
   }
 }

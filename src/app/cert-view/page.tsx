@@ -41,7 +41,10 @@ function CertViewContent() {
     fetch(`/api/cert-layouts/${layoutId}?plan=${plan}`)
       .then(r => r.ok ? r.json() : null)
       .then(layout => {
-        if (layout?.gridConfig) setGridConfig(layout.gridConfig as GridConfig)
+        if (layout?.datos) {
+          const parsed = typeof layout.datos === 'string' ? JSON.parse(layout.datos) : layout.datos
+          setGridConfig(parsed as GridConfig)
+        }
         else toast({ title: 'Error', description: 'No se pudo cargar el formato.', variant: 'destructive' })
       })
       .catch(() => toast({ title: 'Error', description: 'Error cargando formato.', variant: 'destructive' }))

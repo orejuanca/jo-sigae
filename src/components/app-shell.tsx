@@ -6,7 +6,7 @@ import { useEffect, useState, ReactNode } from 'react'
 
 const navVigente = [
   { href: '/dashboard', label: 'AGREGAR DATOS', bg: 'bg-emerald-600 hover:bg-emerald-500', setPlan: 'vigente' },
-  { href: '/cert-view?layout=cmsj178qz0000po90v4z3ijl4&plan=vigente', label: 'EMG 31059', bg: 'bg-blue-600 hover:bg-blue-500' },
+  { href: '/cert-view?layout=cmshg3vl7000epolgcnwltmpb&plan=vigente', label: 'EMG 31059', bg: 'bg-blue-600 hover:bg-blue-500' },
   { href: '/constancias', label: 'CONSTANCIA DE NOTAS', bg: 'bg-amber-600 hover:bg-amber-500' },
   { href: '/validar', label: 'VALIDAR NOTAS', bg: 'bg-purple-600 hover:bg-purple-500' },
   { href: '/validar-titulo', label: 'VALIDAR TITULO', bg: 'bg-pink-600 hover:bg-pink-500' },
@@ -22,12 +22,12 @@ const navVigente = [
 const navDerogado = [
   { href: '/dashboard', label: 'AGREGAR ANTIGUOS', bg: 'bg-emerald-600 hover:bg-emerald-500', setPlan: 'derogado' },
   { href: '/validar', label: 'VALIDAR NOTAS ANTI.', bg: 'bg-purple-600 hover:bg-purple-500' },
-  { href: '/cert-view?layout=cmsj1rx4i0004po90x67iovoj&plan=derogado', label: 'III Etapa Basica', bg: 'bg-pink-600 hover:bg-pink-500' },
+  { href: '/cert-view?layout=cmsfay6xq0001pob03mryw4ra&plan=derogado', label: 'III Etapa Basica', bg: 'bg-pink-600 hover:bg-pink-500' },
   { href: '/centros-escolares', label: 'CE', bg: 'bg-teal-600 hover:bg-teal-500' },
-  { href: '/cert-view?layout=cmsj1x8150006po9013fgohej&plan=derogado', label: 'Media Diversificada', bg: 'bg-orange-600 hover:bg-orange-500' },
-  { href: '/cert-view?layout=cmsj1zc3p0007po909nnsp9i0&plan=derogado', label: 'Formato Basica', bg: 'bg-cyan-600 hover:bg-cyan-500' },
-  { href: '/cert-view?layout=cmsj1pwtp0003po90ed3q3zo7&plan=derogado', label: 'Formato Diversificado', bg: 'bg-indigo-600 hover:bg-indigo-500' },
-  { href: '/cert-view?layout=cmsj1uwx80005po90rfa9mk6y&plan=derogado', label: 'FORMATO UNIVERSAL', bg: 'bg-rose-600 hover:bg-rose-500' },
+  { href: '/cert-view?layout=cmshgpmlt000wpolgjm8ii75f&plan=derogado', label: 'Media Diversificada', bg: 'bg-orange-600 hover:bg-orange-500' },
+  { href: '/cert-view?layout=cmsf8jhrb0009po4wbi2yj68t&plan=derogado', label: 'Formato Basica', bg: 'bg-cyan-600 hover:bg-cyan-500' },
+  { href: '/cert-view?layout=cmsfcdbuo0002pob0quq7504z&plan=derogado', label: 'Formato Diversificado', bg: 'bg-indigo-600 hover:bg-indigo-500' },
+  { href: '/cert-view?layout=cmshgl27m000vpolgzhgmnmeu&plan=derogado', label: 'FORMATO UNIVERSAL', bg: 'bg-rose-600 hover:bg-rose-500' },
   { href: '/alumnos', label: 'ALUMNOS', bg: 'bg-slate-600 hover:bg-slate-500' },
 ]
 

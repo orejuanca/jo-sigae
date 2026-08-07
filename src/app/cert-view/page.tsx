@@ -205,6 +205,7 @@ function CertViewContent() {
   }
 
   const handlePrint = () => {
+    if (!gridConfig) return
     const tableHtml = buildTableHtml()
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
 @page{size:Legal;margin:0}
@@ -293,7 +294,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
               </span>
             </div>
           )}
-          <Button size="sm" variant="outline" onClick={handlePrint} disabled={!enrichedDisplayData}
+          <Button size="sm" variant="outline" onClick={handlePrint} disabled={!enrichedDisplayData || !gridConfig}
             className="h-8 text-xs">
             <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
           </Button>

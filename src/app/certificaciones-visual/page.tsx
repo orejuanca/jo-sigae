@@ -658,7 +658,7 @@ function CertVisualEditorContent() {
     try {
       const certApiUrl = plan === 'vigente'
        ? `/api/plan-vigente/${student.id}/cert-data`
-       : `/api/students/${student.id}/cert-data?plan=${plan}`
+       : `/api/plan-derogado/${student.id}/cert-data`
       const res = await fetch(certApiUrl)
       if (!res.ok) {
         toast({ title: 'Sin datos', description: `No se encontraron datos de calificaciones para ${student.cedula}.`, variant: 'destructive' })
@@ -680,7 +680,7 @@ function CertVisualEditorContent() {
         try {
           const draftLoadUrl = plan === 'vigente'
            ? `/api/plan-vigente/${student.id}/cert-draft`
-           : `/api/students/${student.id}/cert-draft?plan=${plan}`
+           : `/api/plan-derogado/${student.id}/cert-draft`
          const draftRes = await fetch(draftLoadUrl)
           if (draftRes.ok) {
             const draftData = await draftRes.json()
@@ -741,7 +741,7 @@ function CertVisualEditorContent() {
       setSavingDraft(true)
       const draftSaveUrl = plan === 'vigente'
        ? `/api/plan-vigente/${selectedStudent.id}/cert-draft`
-       : `/api/students/${selectedStudent.id}/cert-draft?plan=${plan}`
+       : `/api/plan-derogado/${selectedStudent.id}/cert-draft`
      fetch(draftSaveUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

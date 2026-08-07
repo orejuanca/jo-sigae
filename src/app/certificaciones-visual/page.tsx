@@ -73,10 +73,11 @@ function AutoFitCell({ children, fontSize, fontWeight, autoFit }: {
     const textW = span.offsetWidth
 
     if (textW > available) {
-      const ratio = (available * 0.95) / textW
+      const ratio = (available * 0.99) / textW
       const newSize = Math.max(Math.round(fontSize * ratio * 10) / 10, fontSize * 0.5)
       scaledRef.current = newSize
       span.style.fontSize = `${newSize}pt`
+      span.style.whiteSpace = 'nowrap'
       span.style.overflow = 'hidden'
       span.style.maxWidth = `${available}px`
     } else {
@@ -1592,9 +1593,10 @@ img{max-width:100%;height:auto}
   var textW = span.offsetWidth;
   if(textW > avail){
     var origSize = parseFloat(td.style.fontSize) || 9;
-    var ratio = (avail * 0.95) / textW;
+    var ratio = (avail * 0.99) / textW;
     var newSize = Math.max(Math.round(origSize * ratio * 10) / 10, origSize * 0.5);
     td.style.fontSize = newSize + 'pt';
+    span.style.whiteSpace = 'nowrap';
     span.style.overflow = 'hidden';
     span.style.maxWidth = avail + 'px';
   }
@@ -1605,7 +1607,7 @@ img{max-width:100%;height:auto}
     if (!iframe) {
       iframe = document.createElement('iframe')
       iframe.id = 'cert-print-frame'
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:220mm;height:400mm;border:none'
       document.body.appendChild(iframe)
     }
     const doc = iframe.contentDocument!
@@ -1632,8 +1634,8 @@ img{max-width:100%;height:auto}
         setTimeout(() => { iframe!.contentWindow!.print() }, 300)
       }
     }
-    // Dar tiempo al script inline del iframe para ejecutarse
-    setTimeout(doPrint, 50)
+    // Dar tiempo al script inline del iframe para ejecutarse y al layout estabilizarse
+    setTimeout(doPrint, 150)
   }
 
   const handlePrint = () => executePrint(printScale)

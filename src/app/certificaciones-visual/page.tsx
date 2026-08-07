@@ -880,14 +880,49 @@ function CertVisualEditorContent() {
     // For plan derogado with only rawDataFlat (no parsed certData), return minimal DisplayData with rawDataMap
     if (!certData) {
       if (rawDataMap && Object.keys(rawDataMap).length > 0) {
+        // Build calificaciones from rawDataMap so calif.*.literal bindings work
+        const YEAR_NAME_MAP_FB: Record<string, string> = { '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año', '4': 'Cuarto Año', '5': 'Quinto Año' }
+        const SUBJECT_CODES_FB: Record<number, string[]> = {
+          1: ['CA', 'IN', 'MA', 'EN', 'HV', 'EFC', 'GG', 'EA', 'EF', 'EPT'],
+          2: ['CA', 'IN', 'MA', 'EPS', 'CB', 'HV', 'HU', 'EA', 'EF', 'ET'],
+          3: ['CA', 'IN', 'MA', 'CB', 'FI', 'QU', 'HVCB', 'GV', 'EF', 'ET'],
+          4: ['CA', 'MA', 'HC', 'IN', 'EF', 'FI', 'QU', 'BI', 'DT', 'FIL', 'IPM'],
+          5: ['IN', 'EF', 'GEV', 'CA', 'MA', 'FI', 'QU', 'BI', 'CT', 'IPM'],
+        }
+        const calificacionesFB: Record<string, any[]> = {}
+        for (let y = 1; y <= 5; y++) {
+          const codes = SUBJECT_CODES_FB[y]
+          if (!codes) continue
+          const yearName = YEAR_NAME_MAP_FB[String(y)]
+          const yearCals: any[] = []
+          for (let i = 0; i < codes.length; i++) {
+            const code = codes[i]
+            const nota = rawDataMap[`NOTA.${code}.${y}`] || ''
+            const literal = rawDataMap[`LITERAL.${code}.${y}`] || ''
+            const eval_ = rawDataMap[`EVAL.${code}.${y}`] || ''
+            const mes = rawDataMap[`MES.${code}.${y}`] || ''
+            const anio = rawDataMap[`AÑO.${code}.${y}`] || ''
+            const inst = rawDataMap[`INST.${code}.${y}`] || ''
+            if (nota || literal) {
+              yearCals.push({ materia: code, numero: i + 1, nota, literal, tipoEvaluacion: eval_, fechaMes: mes, fechaAnio: anio, instEduc: inst })
+            }
+          }
+          if (yearCals.length > 0) calificacionesFB[yearName] = yearCals
+        }
+        // Build literalesFinales from rawDataMap
+        const literalesFB: string[] = []
+        for (let i = 1; i <= 5; i++) {
+          const val = rawDataMap[`LITERAL.FINAL.${i}`]
+          if (val) literalesFB.push(val)
+        }
         return {
-          lugar: '', fechaExpedicion: '', planEstudio: '', planCodigo: schoolConfig.planCodigo,
-          od: '', denominacion: '', direccion: '', telefono: '', municipio: '', estado: '', cdcce: '',
-          estudiante: { cedula: rawDataMap.CEDULA || '', fechaNacimiento: rawDataMap.FECHA || '', apellidos: rawDataMap.APELLIDOS || '', nombres: rawDataMap.NOMBRES || '', pais: rawDataMap.PAIS || '', estado: rawDataMap.ESTADO || '', municipio: rawDataMap.MUNICIPIO || '' },
-          instituciones: buildInstitucionesFromRaw(rawDataMap), calificaciones: {}, orientacion: [], grupos: [],
-          observaciones: '', observacionesLines: [], promedioAcumulado: '',
-          director: { apellidosNombres: '', cedula: '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
-          acta: '', actaFecha: '', actaAnio: '', literalesFinales: [],
+          lugar: rawDataMap['EXPEDICION.LUGAR'] || '', fechaExpedicion: rawDataMap['EXPEDICION.FECHA'] || '', planEstudio: '', planCodigo: schoolConfig.planCodigo,
+          od: rawDataMap['OD'] || '', denominacion: rawDataMap['DENOMINACION'] || '', direccion: '', telefono: '', municipio: rawDataMap['MUNICIPIO'] || '', estado: rawDataMap['ESTADO'] || '', cdcce: rawDataMap['CDCEE'] || '',
+          estudiante: { cedula: rawDataMap.CEDULA || '', fechaNacimiento: rawDataMap.FECHA || '', apellidos: rawDataMap.APELLIDOS || '', nombres: rawDataMap.NOMBRES || '', pais: rawDataMap.PAIS || 'VENEZUELA', estado: rawDataMap.ESTADO || '', municipio: rawDataMap.MUNICIPIO || '' },
+          instituciones: buildInstitucionesFromRaw(rawDataMap), calificaciones: calificacionesFB, orientacion: [], grupos: [],
+          observaciones: '', observacionesLines: [], promedioAcumulado: rawDataMap['PROMEDIO.BASICA'] || '',
+          director: { apellidosNombres: rawDataMap['DIRECTOR.NOMBRE'] || '', cedula: rawDataMap['DIRECTOR.CEDULA'] || '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
+          acta: rawDataMap['ACTA'] || '', actaFecha: rawDataMap['FECHAEMISIONT'] || '', actaAnio: rawDataMap['EGRESOAÑO'] || '', literalesFinales: literalesFB,
           rawDataMap,
         }
       }
@@ -1577,8 +1612,7 @@ function CertVisualEditorContent() {
 @page{size: Legal; margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
-/* La tabla sigue teniendo el tamaño ARCH B internamente */
- table{border-collapse:collapse;width:205.9mm;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
+ table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform:scale(${scale / 100});transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -1607,7 +1641,7 @@ img{max-width:100%;height:auto}
     if (!iframe) {
       iframe = document.createElement('iframe')
       iframe.id = 'cert-print-frame'
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:220mm;height:400mm;border:none'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:215.9mm;height:400mm;border:none'
       document.body.appendChild(iframe)
     }
     const doc = iframe.contentDocument!

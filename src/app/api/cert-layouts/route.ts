@@ -12,8 +12,9 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id')
     if (id) {
       const layouts = await db.certLayout.findMany({ where: { activo: true } })
+      const ids = layouts.map((l: { id: string }) => l.id)
       const layout = layouts.find((l: { id: string }) => l.id === id)
-      if (!layout) return NextResponse.json({ error: 'Layout no encontrado.' }, { status: 404 })
+      if (!layout) return NextResponse.json({ error: 'Layout no encontrado.', lookingFor: id, availableIds: ids }, { status: 404 })
       return NextResponse.json(layout)
     }
 

@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     // Si se pasa ?id=..., devolver layout completo con datos
     const id = searchParams.get('id')
     if (id) {
-      const layout = await db.certLayout.findFirst({ where: { id } })
+      const layouts = await db.certLayout.findMany({ where: { activo: true } })
+      const layout = layouts.find((l: { id: string }) => l.id === id)
       if (!layout) return NextResponse.json({ error: 'Layout no encontrado.' }, { status: 404 })
       return NextResponse.json(layout)
     }

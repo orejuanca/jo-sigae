@@ -99,7 +99,12 @@ const LAYOUT_SCALES: Record<string, number> = {
   'EDUCACION MEDIA GENERAL BASICA OFICIAL': 89,
   'CERTIFICACION EMG OFICIAL': 97,
 }
-
+const PAGE_SIZES: Record<string, { width: number; height: number; label: string; cssSize: string }> = {
+  carta:  { width: 816,  height: 1056, label: 'Carta',  cssSize: 'letter' },
+  a4:     { width: 794,  height: 1122, label: 'A4',     cssSize: 'A4' },
+  flsa:   { width: 816,  height: 1248, label: 'FLSA',   cssSize: '8.5in 13in' },
+  legal:  { width: 816,  height: 1344, label: 'Legal',  cssSize: 'legal' },
+}
 interface Student {
   id: string; cedula: string; apellidos: string; nombres: string
   fechaNacimiento?: string | null; pais?: string | null
@@ -183,6 +188,8 @@ function GridTable({
   onCellEdit,
   savingDraft,
   draftOverrides,
+  pageWidth,
+  pageHeight,
 }: {
   config: GridConfig
   selectedCell: { row: number; col: number } | null
@@ -195,6 +202,8 @@ function GridTable({
   onCellEdit?: (binding: string, newValue: string) => void
   savingDraft?: boolean
   draftOverrides?: Record<string, string>
+  pageWidth?: number
+  pageHeight?: number
 }) {
   // Recompute occupied set on every render to track rowspan AND colspan correctly
   const occupied = useMemo(() => {
@@ -241,7 +250,7 @@ function GridTable({
       style={{ maxWidth: '860px', margin: '0 auto', overflow: 'visible' }}
       onMouseUp={() => !isPreview && onCellMouseUp()}
     >
-      <div style={{ width: '816px', height: '1344px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflowY: 'auto', overflowX: 'hidden' }}>
+      <div style={{ width: `${pageWidth || 816}px`, height: `${pageHeight || 1344}px`, maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflowY: 'auto', overflowX: 'hidden', background: 'white' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
           <colgroup>
             {config.columnWidths.map((w, i) => (
@@ -581,7 +590,7 @@ function CertVisualEditorContent() {
   const [loadingLayout, setLoadingLayout] = useState(false)
   const searchParams = useSearchParams()
   const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null)
-
+  const [pageSize, setPageSize] = useState<string>('legal')
   // Load grid from localStorage on mount (or from ?layout= param)
   useEffect(() => {
     const lid = searchParams.get('layout')
@@ -614,7 +623,19 @@ function CertVisualEditorContent() {
           setGridInitialized(true)
         })
     } else {
-      setGridConfig(loadGridConfig())
+      localStorage.removeItem(STORAGE_KEY)
+      const blankCols = 8
+      setGridConfig({
+        totalCols: blankCols,
+        rows: Array.from({ length: 1 }, () => ({
+          height: '24px',
+          cells: { [0]: { ...emptyCell(), content: '' } },
+        })),
+        columnWidths: Array(blankCols).fill(`${100 / blankCols}%`),
+        orientation: 'portrait',
+      })
+      setEditingLayoutId(null)
+      setSaveName('')
       setGridInitialized(true)
     }
   }, [searchParams, plan, toast])
@@ -1728,6 +1749,15 @@ img{max-width:100%;height:auto}
               <Button size="sm" variant="outline" onClick={handleDeleteLastRow} className="h-7 text-xs">
                 <Minus className="h-3 w-3 mr-1" /> Eliminar
               </Button>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(e.target.value)}
+                className="bg-gray-700 text-white text-xs border border-gray-600 rounded px-2 py-1"
+              >
+                {Object.entries(PAGE_SIZES).map(([key, ps]) => (
+                  <option key={key} value={key}>{ps.label}</option>
+                ))}
+              </select>
 
               <div className="w-px h-5 bg-border" />
 
@@ -1910,6 +1940,8 @@ img{max-width:100%;height:auto}
             onCellEdit={handleCellEdit}
             savingDraft={savingDraft}
             draftOverrides={draftOverrides}
+            pageWidth={PAGE_SIZES[pageSize]?.width}
+            pageHeight={PAGE_SIZES[pageSize]?.height}
           />
         </div>
 

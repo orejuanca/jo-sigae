@@ -40,11 +40,9 @@ function CertViewContent() {
     if (!layoutId) { setLoadingLayout(false); return }
     fetch(`/api/cert-layouts?plan=${plan}&id=${layoutId}`)
       .then(async r => {
-        if (!r.ok) { console.error('cert-layouts API error:', r.status, await r.text()) }
         return r.ok ? r.json() : null
       })
       .then(layout => {
-        console.log('layout response:', layout?.id, layout?.nombre, layout?.datos ? 'datos=OK len=' + layout.datos.length : 'datos=NULL')
         if (layout?.datos) {
           const parsed = typeof layout.datos === 'string' ? JSON.parse(layout.datos) : layout.datos
           setGridConfig(parsed as GridConfig)

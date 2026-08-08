@@ -8,6 +8,14 @@ export async function GET(request: NextRequest) {
     const plan = searchParams.get('plan') || 'vigente'
     const db = getDb(plan)
 
+    // Si se pasa ?id=..., devolver layout completo con datos
+    const id = searchParams.get('id')
+    if (id) {
+      const layout = await db.certLayout.findFirst({ where: { id } })
+      if (!layout) return NextResponse.json({ error: 'Layout no encontrado.' }, { status: 404 })
+      return NextResponse.json(layout)
+    }
+
     const layouts = await db.certLayout.findMany({
       where: { activo: true },
       orderBy: { updatedAt: 'desc' },

@@ -580,15 +580,14 @@ function CertVisualEditorContent() {
   const [loadingLayouts, setLoadingLayouts] = useState(false)
   const [loadingLayout, setLoadingLayout] = useState(false)
   const searchParams = useSearchParams()
-  const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null)
 
   // Load grid from localStorage on mount (or from ?layout= param)
   useEffect(() => {
-    const lid = searchParams.get('layout')
-    if (lid) {
-      setEditingLayoutId(lid)
+    const layoutId = searchParams.get('layout')
+    if (layoutId) {
+      // Load layout from DB
       setLoadingLayout(true)
-      fetch(`/api/cert-layouts?id=${lid}&plan=${plan}`)
+      fetch(`/api/cert-layouts/${layoutId}?plan=${plan}`)
         .then(res => {
           if (!res.ok) throw new Error('Layout no encontrado')
           return res.json()
@@ -602,7 +601,6 @@ function CertVisualEditorContent() {
         const autoScale = LAYOUT_SCALES[layout.nombre]
         if (autoScale) { setPrintScale(autoScale) }
             for (const ls of LAYOUT_SCALES) { if (layout.nombre === ls.nombre) { setPrintScale(ls.escala); break } }
-            setSaveName(layout.nombre || '')
             toast({ title: 'Layout cargado', description: `"${layout.nombre}"` })
           }
         })
@@ -617,7 +615,7 @@ function CertVisualEditorContent() {
       setGridConfig(loadGridConfig())
       setGridInitialized(true)
     }
-  }, [searchParams, plan, toast])
+  }, [searchParams, toast])
 
   // Persist grid changes to localStorage (debounced auto-save)
   useEffect(() => {
@@ -1442,7 +1440,7 @@ function CertVisualEditorContent() {
 
   // === Save to DB (opens dialog for name) ===
   const handleOpenSaveDialog = () => {
-    if (!editingLayoutId) setSaveName('')
+    setSaveName('')
     setShowSaveDialog(true)
   }
 
@@ -1454,43 +1452,25 @@ function CertVisualEditorContent() {
 
     setSaving(true)
     try {
-      if (editingLayoutId) {
-        const res = await fetch(`/api/cert-layouts?id=${editingLayoutId}&plan=${plan}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombre: saveName.trim(),
-            datos: { ...gridConfig, _printScale: printScale },
-          }),
-        })
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || 'Error al actualizar')
-        }
-        setShowSaveDialog(false)
-        toast({
-          title: '¡Actualizado!',
-          description: `"${saveName.trim()}" se actualizó correctamente.`,
-        })
-      } else {
-        const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombre: saveName.trim(),
-            datos: { ...gridConfig, _printScale: printScale },
-          }),
-        })
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || 'Error al guardar')
-        }
-        setShowSaveDialog(false)
-        toast({
-          title: '¡Guardado exitoso!',
-          description: `"${saveName.trim()}" se guardó correctamente en la base de datos.`,
-        })
+      const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: saveName.trim(),
+          datos: { ...gridConfig, _printScale: printScale },
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Error al guardar')
       }
+
+      setShowSaveDialog(false)
+      toast({
+        title: '¡Guardado exitoso!',
+        description: `El layout "${saveName.trim()}" se guardó correctamente en la base de datos.`,
+      })
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Error desconocido'
       toast({ title: 'Error al guardar', description: msg, variant: 'destructive' })

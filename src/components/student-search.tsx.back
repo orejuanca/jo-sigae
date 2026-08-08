@@ -114,7 +114,7 @@ export function StudentSearch({ onSelect, placeholder = 'Buscar por cédula, ape
           placeholder={placeholder}
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
-          className="pl-9 pr-9 bg-gray-800 text-white border-gray-600 placeholder:text-gray-400"
+          className="pl-9 pr-9"
           autoFocus={autoFocus}
         />
         {loading && (

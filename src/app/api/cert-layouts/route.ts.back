@@ -71,33 +71,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
-
-// PUT /api/cert-layouts?id=XXX&plan=derogado — Actualizar layout existente
-export async function PUT(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const plan = searchParams.get('plan') || 'vigente'
-    const id = searchParams.get('id')
-
-    if (!id) {
-      return NextResponse.json({ error: 'Se requiere el parámetro id.' }, { status: 400 })
-    }
-
-    const db = getDb(plan)
-    const body = await request.json()
-    const { nombre, datos } = body
-
-    const layout = await db.certLayout.update({
-      where: { id },
-      data: {
-        nombre: nombre?.trim(),
-        datos: typeof datos === 'string' ? datos : JSON.stringify(datos),
-      },
-    })
-
-    return NextResponse.json(layout)
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Error desconocido'
-    return NextResponse.json({ error: msg }, { status: 500 })
-  }
-}

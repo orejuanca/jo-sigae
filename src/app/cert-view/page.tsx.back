@@ -272,25 +272,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
     }
     return occ
   }, [gridConfig])
-  // === AutoFit en pantalla ===
-  const tableRef = useRef<HTMLTableElement>(null)
-  useEffect(() => {
-    if (!gridConfig || !tableRef.current) return
-    const tds = tableRef.current.querySelectorAll('td[data-autofit="1"]')
-    tds.forEach(td => {
-      const span = td.querySelector('span') as HTMLSpanElement | null
-      if (!span?.textContent?.trim()) return
-      const cs = getComputedStyle(td)
-      const avail = td.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
-      if (avail <= 0) return
-      if (span.scrollWidth > avail) {
-        const origSize = parseFloat(td.style.fontSize) || 9
-        const ratio = (avail * 0.99) / span.scrollWidth
-        const newSize = Math.max(Math.round(origSize * ratio * 10) / 10, origSize * 0.5)
-        ;(td as HTMLElement).style.fontSize = newSize + 'pt'
-      }
-    })
-  }, [gridConfig, enrichedDisplayData])
+
   return (
     <AppShell>
       <div className="space-y-3">
@@ -335,7 +317,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
         ) : (
           <div className="bg-white p-2 rounded border" style={{ maxWidth: '860px', margin: '0 auto' }}>
             <div style={{ width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
-              <table ref={tableRef} style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
+              <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
                 <colgroup>
                   {gridConfig.columnWidths.map((w, i) => (
                     <col key={i} style={{ width: w || `${100 / gridConfig.totalCols}%` }} />
@@ -354,8 +336,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                       const borderS = (enabled: boolean) => enabled ? `1px solid ${cell.borderColor}` : 'none'
                       cells.push(
                         <td
-			  key={`${r}-${c}`}
-                          data-autofit={cell.autoFit ? '1' : undefined}
+                          key={`${r}-${c}`}
                           colSpan={cell.colspan > 1 ? cell.colspan : undefined}
                           rowSpan={cell.rowspan > 1 ? cell.rowspan : undefined}
                           style={{
@@ -371,11 +352,9 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                             userSelect: 'none', position: 'relative', overflow: 'hidden',
                           }}
                         >
-                          {cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
-			  <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
-			) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
-			  <img src={`${window.location.origin}/logo-gob-mppe.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
-			) : (displayContent || ''))}
+                          {displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
+                            <img src={`${window.location.origin}/logo-gob-mppe.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                          ) : (displayContent || '')}
                         </td>
                       )
                     }

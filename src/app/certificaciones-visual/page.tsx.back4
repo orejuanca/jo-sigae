@@ -272,8 +272,8 @@ function GridTable({
                   displayContent = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config)
                 }
 
-      		const borderStyle = (enabled: boolean) =>
-                  	enabled ? `${(cell.borderStyle === 'double' || cell.borderStyle === 'groove' || cell.borderStyle === 'ridge') ? '3px' : '1px'} ${cell.borderStyle || 'solid'} ${cell.borderColor}` : 'none'
+                const borderStyle = (enabled: boolean) =>
+                  enabled ? `1px solid ${cell.borderColor}` : 'none'
 
                 const cellIsSelected = isSingleSelected && selectedCell?.row === r && selectedCell?.col === c
                 const cellInRange = isRangeActive && inRange(r, c)
@@ -310,9 +310,7 @@ function GridTable({
                         : cellIsSelected
                           ? 'rgba(59,130,246,0.06)'
                           : cell.bgColor || undefined,
-                      writingMode: cell.writingMode || undefined,
-                      transform: cell.writingMode === 'rotate-180' ? 'rotate(180deg)' : undefined,
-                      userSelect: 'none',                      
+                      userSelect: 'none',
                       position: 'relative',
                       overflow: 'hidden',
                     }}

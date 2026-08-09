@@ -342,7 +342,27 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                   onCheckedChange={(checked) => onUpdate({ borderLeft: checked })}
                 />
               </FieldRow>
-              <FieldRow label="Color Borde:">
+              
+              <FieldRow label="Tipo Línea:">
+                <Select
+                  value={cell.borderStyle || 'solid'}
+                  onValueChange={(v) => onUpdate({ borderStyle: v })}
+                >
+                  <SelectTrigger className="h-7 text-xs w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="solid">Sólida</SelectItem>
+                    <SelectItem value="dashed">Punteada</SelectItem>
+                    <SelectItem value="dotted">Puntos</SelectItem>
+                    <SelectItem value="double">Doble</SelectItem>
+                    <SelectItem value="groove">Ranura</SelectItem>
+                    <SelectItem value="ridge">Cresta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FieldRow>
+
+		<FieldRow label="Color Borde:">
                 <input
                   type="color"
                   value={cell.borderColor}
@@ -389,6 +409,24 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                   onCheckedChange={(checked) => onUpdate({ textDecoration: checked ? 'underline' : 'none' })}
                 />
               </FieldRow>
+              <FieldRow label="Dirección Texto:">
+                <Select
+                  value={cell.writingMode || 'horizontal-tb'}
+                  onValueChange={(v) => onUpdate({ writingMode: v })}
+                >
+                  <SelectTrigger className="h-7 text-xs w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="horizontal-tb">Normal</SelectItem>
+                    <SelectItem value="vertical-rl">Vertical Der. ↑↓</SelectItem>
+                    <SelectItem value="vertical-lr">Vertical Izq. ↑↓</SelectItem>
+                    <SelectItem value="sideways-rl">Rotado Der. ↓↑</SelectItem>
+                    <SelectItem value="sideways-lr">Rotado Izq. ↓↑</SelectItem>                  
+		</SelectContent>
+                </Select>
+
+	      </FieldRow>
               <FieldRow label="Alineación Horiz.:">
                 <Select
                   value={cell.textAlign}

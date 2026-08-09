@@ -24,9 +24,6 @@ export interface CellConfig {
   fontStyle: 'normal' | 'italic'
   textDecoration: 'none' | 'underline'
   autoFit: boolean         // Default false - reduce font-size si texto desborda
-  writingMode: string      // Default 'horizontal-tb' - dirección del texto
-  borderStyle: string      // Default 'solid' - tipo de línea de borde
-
 }
 
 export interface GridRow {
@@ -48,7 +45,6 @@ export function emptyCell(overrides?: Partial<CellConfig>): CellConfig {
     borderTop: true, borderRight: true, borderBottom: true, borderLeft: true,
     borderColor: '#000000', bgColor: '', color: '', whiteSpace: 'normal',
     padding: '1px 2px', fontStyle: 'normal', textDecoration: 'none', autoFit: false,
-    writingMode: 'horizontal-tb', borderStyle: 'solid',
     ...overrides,
   }
 }

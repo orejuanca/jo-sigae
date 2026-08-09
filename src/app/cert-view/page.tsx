@@ -182,7 +182,11 @@ function CertViewContent() {
         if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
       }
     }
-    const borderStyle = (enabled: boolean, color: string) => enabled ? `1px solid ${color}` : 'none'
+      const borderStyle = (enabled: boolean, color: string, bs?: string) => {
+      const style = bs || 'solid'
+      const width = (style === 'double' || style === 'groove' || style === 'ridge') ? '3px' : '1px'
+      return enabled ? `${width} ${style} ${color}` : 'none'
+    }
     const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
     let rowsHtml = ''
     for (let r = 0; r < cfg.rows.length; r++) {
@@ -201,7 +205,7 @@ function CertViewContent() {
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
         const autoFitSpan = (cell.autoFit && !imgTag && content)
           ? `<span style="display:inline-block;white-space:nowrap">${content}</span>` : text
-        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
+        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};writing-mode:${cell.writingMode || 'horizontal-tb'};background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }
@@ -351,7 +355,11 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                       if (cell.dataBinding && enrichedDisplayData) {
                         displayContent = resolveBinding(cell.dataBinding, enrichedDisplayData, gridConfig) || ''
                       }
-                      const borderS = (enabled: boolean) => enabled ? `1px solid ${cell.borderColor}` : 'none'
+                      const borderS = (enabled: boolean) => {
+                        const bs = cell.borderStyle || 'solid'
+                        const bw = (bs === 'double' || bs === 'groove' || bs === 'ridge') ? '3px' : '1px'
+                        return enabled ? `${bw} ${bs} ${cell.borderColor}` : 'none'
+                      }
                       cells.push(
                         <td
 			  key={`${r}-${c}`}
@@ -368,6 +376,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                             textAlign: cell.textAlign, verticalAlign: cell.verticalAlign,
                             color: cell.color || undefined, whiteSpace: cell.whiteSpace,
                             padding: cell.padding, background: cell.bgColor || undefined,
+                            writingMode: cell.writingMode || undefined,
                             userSelect: 'none', position: 'relative', overflow: 'hidden',
                           }}
                         >

@@ -7,7 +7,7 @@ import { useEffect, useState, ReactNode } from 'react'
 const navVigente = [
   { href: '/dashboard', label: 'AGREGAR DATOS', bg: 'bg-emerald-600 hover:bg-emerald-500', setPlan: 'vigente' },
   { href: '/cert-view?layout=cmsj178qz0000po90v4z3ijl4&plan=vigente', label: 'EMG 31059', bg: 'bg-blue-600 hover:bg-blue-500' },
-  { href: '/constancias', label: 'CONSTANCIA DE NOTAS', bg: 'bg-amber-600 hover:bg-amber-500' },
+  { href: '/cert-view?layout=cmskvk7860002jy0421kqpf4x&plan=vigente', label: 'CONSTANCIA DE NOTAS', bg: 'bg-amber-600 hover:bg-amber-500' },
   { href: '/validar', label: 'VALIDAR NOTAS', bg: 'bg-purple-600 hover:bg-purple-500' },
   { href: '/validar-titulo', label: 'VALIDAR TITULO', bg: 'bg-pink-600 hover:bg-pink-500' },
   { href: '/centros-escolares', label: 'CE', bg: 'bg-teal-600 hover:bg-teal-500' },

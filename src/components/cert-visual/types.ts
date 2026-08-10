@@ -123,6 +123,13 @@ const YEAR_NAME_MAP: Record<string, string> = {
 
 export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
   if (!path || !data) return ''
+
+  // Soporte para multiples bindings separados por coma
+  if (path.includes(',')) {
+    const parts = path.split(',').map(p => p.trim()).filter(Boolean)
+    const resolved = parts.map(p => resolveBinding(p, data, gridConfig)).filter(Boolean)
+    return resolved.join(', ')
+  }
   const [domain, ...rest] = path.split('.')
   switch (domain) {
     case 'student': return rest.reduce((o: any, k: string) => o?.[k], data.estudiante) || ''

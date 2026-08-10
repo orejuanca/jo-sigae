@@ -902,7 +902,18 @@ export function parseCertData(rawDataStr: string | null | undefined, plan: strin
     return null
   }
 }
-
+// Helper para convertir DD/MM/YYYY a "29 DE OCTUBRE DE 2001"
+function formatDateLarga(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('/')
+  if (parts.length !== 3) return dateStr
+  const day = parseInt(parts[0])
+  const month = parseInt(parts[1])
+  const year = parts[2]
+  const MESES = ['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
+  const mes = MESES[month] || ''
+  return `${day} DE ${mes} DE ${year}`
+}
 // Helper para formatear fechas a DD/MM/YYYY
 function formatDateVal(dateStr: string): string {
   if (!dateStr) return ''
@@ -1021,6 +1032,12 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
       pais: student.pais || 'VENEZUELA',
       estado: student.estado || '',
       municipio: student.municipio || '',
+      lugarFechaNac: (() => {
+        const estado = (student.estado || '').toUpperCase()
+        const municipio = (student.municipio || '').toUpperCase()
+        const fecha = formatDateLarga(formatDateVal(student.fechaNacimiento || ''))
+        return fecha ? `${estado}, ${municipio}, ${fecha}` : ''
+      })(),
     },
     instituciones: instituciones.slice(0, 5),
     calificaciones,

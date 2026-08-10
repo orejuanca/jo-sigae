@@ -7,9 +7,12 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Settings2, ChevronDown } from 'lucide-react'
-import { useState } from 'react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Settings2, ChevronDown, Search, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import type { CellConfig } from './types'
+import { getDataBindings } from './types'
 
 interface PropertiesPanelProps {
   cell: CellConfig | null
@@ -37,7 +40,7 @@ function SectionHeader({ title, defaultOpen, children }: { title: string; defaul
     <Collapsible open={open} onOpenChange={setOpen} className="space-y-2">
       <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors py-1">
         {title}
-        <ChevronDown className={"h-3.5 w-3.5 transition-transform " + (open ? 'rotate-180' : '')} />
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-2.5 pl-1">
@@ -48,15 +51,106 @@ function SectionHeader({ title, defaultOpen, children }: { title: string; defaul
   )
 }
 
-// Binding section: Ninguno o Directo con input de texto
-function BindingSection({ dataBinding, onUpdate }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void }) {
-  const hasBinding = dataBinding && dataBinding.trim().length > 0
-  const [mode, setMode] = useState<'none' | 'direct'>(hasBinding ? 'direct' : 'none')
+function BindingCombobox({ value, onChange, plan }: { value: string; onChange: (v: string) => void; plan: string }) {
+  const [open, setOpen] = useState(false)
+  const bindings = getDataBindings(plan)
+  const selected = value
+    ? bindings.flatMap(g => g.bindings).find(b => b.value === value)
+    : null
 
-  // Sync when dataBinding changes externally
-  if ((mode === 'none' && hasBinding) || (mode === 'direct' && !hasBinding)) {
-    setMode(hasBinding ? 'direct' : 'none')
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="h-7 text-xs w-full flex items-center justify-between rounded-md border border-input bg-background px-2 hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+        >
+          {selected ? (
+            <span className="truncate">{selected.label}</span>
+          ) : value ? (
+            <span className="font-mono truncate text-muted-foreground">{value}</span>
+          ) : (
+            <span className="text-muted-foreground">Buscar campo de datos...</span>
+          )}
+          <Search className="h-3 w-3 ml-1 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0" align="start">
+        <Command shouldFilter={true}>
+          <CommandInput placeholder="Buscar campo..." className="h-8 text-xs" />
+          <CommandList className="max-h-[300px]">
+            <CommandEmpty className="text-xs py-2 px-2">Sin resultados</CommandEmpty>
+            {bindings.map((group) => (
+              <CommandGroup key={group.group} heading={group.group}>
+                <CommandItem
+                  value="__none__"
+                  onSelect={() => { onChange(''); setOpen(false) }}
+                  className="text-xs"
+                >
+                  <span className="opacity-60">— Quitar enlace —</span>
+                </CommandItem>
+                {group.bindings.map((binding) => (
+                  <CommandItem
+                    key={binding.value}
+                    value={`${binding.label} ${binding.value}`}
+                    onSelect={() => { onChange(binding.value); setOpen(false) }}
+                    className="text-xs"
+                  >
+                    <Check className={`h-3 w-3 mr-2 ${value === binding.value ? 'opacity-100' : 'opacity-0'}`} />
+                    {binding.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// Helper: check if a binding path exists in the DATA_BINDINGS catalog
+function isCatalogBinding(value: string, plan: string): boolean {
+  if (!value || value.includes(',')) return false
+  return getDataBindings(plan).some(g => g.bindings.some(b => b.value === value))
+}
+
+// Mutually-exclusive binding mode: catalog dropdown OR free-text direct path
+function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void; plan: string }) {
+  const isDirect = dataBinding !== '' && !isCatalogBinding(dataBinding, plan)
+  const [mode, setMode] = useState<'none' | 'catalog' | 'direct'>(
+    !dataBinding ? 'none' : isDirect ? 'direct' : 'catalog'
+  )
+
+  // Sync mode when dataBinding changes externally (e.g. patchDataBindings)
+  const effectiveIsDirect = dataBinding !== '' && !isCatalogBinding(dataBinding, plan)
+  const effectiveMode = !dataBinding ? 'none' : effectiveIsDirect ? 'direct' : 'catalog'
+
+  useEffect(() => {
+    // setMode(effectiveMode) // Desactivado: no auto-cambiar modo
+  }, [effectiveMode])
+
+  const handleModeChange = (newMode: 'none' | 'catalog' | 'direct') => {
+    setMode(newMode)
+    if (newMode === 'none') {
+      onUpdate({ dataBinding: '' })
+    } else if (newMode === 'catalog') {
+      // Clear any direct binding so user picks from catalog
+      if (isDirect) onUpdate({ dataBinding: '' })
+    } else if (newMode === 'direct') {
+      // Clear any catalog binding so user types freely
+      if (!isDirect && dataBinding) onUpdate({ dataBinding: '' })
+    }
   }
+
+  const handleCatalogChange = (v: string) => {
+    onUpdate({ dataBinding: v })
+  }
+
+  const handleDirectChange = (v: string) => {
+    onUpdate({ dataBinding: v })
+  }
+
+  const currentMode = mode
 
   return (
     <div className="space-y-2.5">
@@ -65,36 +159,57 @@ function BindingSection({ dataBinding, onUpdate }: { dataBinding: string; onUpda
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={() => { setMode('none'); onUpdate({ dataBinding: '' }) }}
-            className={"px-2 py-0.5 text-[10px] rounded border transition-colors " + (
-              mode === 'none'
+            onClick={() => handleModeChange('none')}
+            className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+              currentMode === 'none'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-background border-input hover:bg-accent'
-            )}
+            }`}
           >
             Ninguno
           </button>
           <button
             type="button"
-            onClick={() => { setMode('direct'); if (!hasBinding) onUpdate({ dataBinding: '' }) }}
-            className={"px-2 py-0.5 text-[10px] rounded border transition-colors " + (
-              mode === 'direct'
+            onClick={() => handleModeChange('catalog')}
+            className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+              currentMode === 'catalog'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-background border-input hover:bg-accent'
-            )}
+            }`}
+          >
+            Catálogo
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange('direct')}
+            className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+              currentMode === 'direct'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background border-input hover:bg-accent'
+            }`}
           >
             Directo
           </button>
         </div>
       </div>
 
-      {mode === 'direct' && (
+      {currentMode === 'catalog' && (
+        <FieldRow label="Enlazar a dato:">
+          <BindingCombobox
+            value={dataBinding}
+            onChange={handleCatalogChange}
+            plan={plan}
+          />
+        </FieldRow>
+      )}
+
+      {currentMode === 'direct' && (
         <FieldRow label="Enlace directo:">
           <Input
             value={dataBinding}
-            onChange={(e) => onUpdate({ dataBinding: e.target.value })}
+            onChange={(e) => handleDirectChange(e.target.value)}
             className="h-7 text-xs font-mono"
-            placeholder="rawData.CEDULA, rawData.APELLIDOS"
+            placeholder="student.cedula"
           />
         </FieldRow>
       )}
@@ -123,8 +238,8 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
           <CardTitle className="text-sm">Celda [{row}, {col}]</CardTitle>
           <span className="text-[10px] text-muted-foreground font-mono">
             {cell.colspan > 1 || cell.rowspan > 1
-              ? cell.colspan + "x" + cell.rowspan
-              : '1x1'}
+              ? `${cell.colspan}×${cell.rowspan}`
+              : '1×1'}
           </span>
         </div>
       </CardHeader>
@@ -133,29 +248,30 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
           <div className="space-y-3 pr-2" style={{ minWidth: 340 }}>
             {isRangeMode && (
               <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary">
-                Modo seleccion activo: los cambios de formato se aplicaran a todas las celdas seleccionadas.
+                Modo selección activo: los cambios de formato se aplicarán a todas las celdas seleccionadas.
               </div>
             )}
 
             {/* CONTENIDO */}
             <SectionHeader title="Contenido" defaultOpen>
-              <FieldRow label="Texto estatico:">
+              <FieldRow label="Texto estático:">
                 <Input
                   value={cell.content}
                   onChange={(e) => onUpdate({ content: e.target.value })}
                   className="h-7 text-xs"
                 />
               </FieldRow>
-              <BindingSection
+              <BindingModeSection
                 dataBinding={cell.dataBinding}
                 onUpdate={onUpdate}
+                plan={plan}
               />
             </SectionHeader>
 
             <Separator />
 
-            {/* COMBINACION DE CELDAS */}
-            <SectionHeader title="Combinacion de Celdas" defaultOpen>
+            {/* COMBINACIÓN DE CELDAS */}
+            <SectionHeader title="Combinación de Celdas" defaultOpen>
               <FieldRow label="Columnas (colspan):">
                 <Input
                   type="number"
@@ -227,7 +343,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                 />
               </FieldRow>
               
-              <FieldRow label="Tipo Linea:">
+              <FieldRow label="Tipo Línea:">
                 <Select
                   value={cell.borderStyle || 'solid'}
                   onValueChange={(v) => onUpdate({ borderStyle: v })}
@@ -236,7 +352,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="solid">Solida</SelectItem>
+                    <SelectItem value="solid">Sólida</SelectItem>
                     <SelectItem value="dashed">Punteada</SelectItem>
                     <SelectItem value="dotted">Puntos</SelectItem>
                     <SelectItem value="double">Doble</SelectItem>
@@ -246,7 +362,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                 </Select>
               </FieldRow>
 
-                <FieldRow label="Color Borde:">
+		<FieldRow label="Color Borde:">
                 <input
                   type="color"
                   value={cell.borderColor}
@@ -265,7 +381,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
 
             {/* TEXTO */}
             <SectionHeader title="Texto" defaultOpen>
-              <FieldRow label="Tamano Fuente (pt):">
+              <FieldRow label="Tamaño Fuente (pt):">
                 <Input
                   type="number"
                   min={6}
@@ -293,7 +409,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                   onCheckedChange={(checked) => onUpdate({ textDecoration: checked ? 'underline' : 'none' })}
                 />
               </FieldRow>
-              <FieldRow label="Direccion Texto:">
+              <FieldRow label="Dirección Texto:">
                 <Select
                   value={cell.writingMode || 'horizontal-tb'}
                   onValueChange={(v) => onUpdate({ writingMode: v })}
@@ -303,15 +419,15 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="horizontal-tb">Normal</SelectItem>
-                    <SelectItem value="vertical-rl">Vertical Der.</SelectItem>
-                    <SelectItem value="vertical-lr">Vertical Izq.</SelectItem>
-                    <SelectItem value="sideways-rl">Rotado Der.</SelectItem>
-                    <SelectItem value="sideways-lr">Rotado Izq.</SelectItem>                  
-                </SelectContent>
+                    <SelectItem value="vertical-rl">Vertical Der. ↑↓</SelectItem>
+                    <SelectItem value="vertical-lr">Vertical Izq. ↑↓</SelectItem>
+                    <SelectItem value="sideways-rl">Rotado Der. ↓↑</SelectItem>
+                    <SelectItem value="sideways-lr">Rotado Izq. ↓↑</SelectItem>                  
+		</SelectContent>
                 </Select>
 
-              </FieldRow>
-              <FieldRow label="Alineacion Horiz.:">
+	      </FieldRow>
+              <FieldRow label="Alineación Horiz.:">
                 <Select
                   value={cell.textAlign}
                   onValueChange={(v) => onUpdate({ textAlign: v as CellConfig['textAlign'] })}
@@ -326,7 +442,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                   </SelectContent>
                 </Select>
               </FieldRow>
-              <FieldRow label="Alineacion Vert.:">
+              <FieldRow label="Alineación Vert.:">
                 <Select
                   value={cell.verticalAlign}
                   onValueChange={(v) => onUpdate({ verticalAlign: v as CellConfig['verticalAlign'] })}

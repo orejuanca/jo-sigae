@@ -1503,6 +1503,7 @@ function CertVisualEditorContent() {
           title: '¡Actualizado!',
           description: `"${saveName.trim()}" se actualizó correctamente.`,
         })
+        router.push('/editor-formatos')
       } else {
         const datosWithMeta = { ...gridConfig, _printScale: printScale, meta: { ...(gridConfig as any).meta, plan } }
         const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
@@ -1522,6 +1523,7 @@ function CertVisualEditorContent() {
           title: '¡Guardado exitoso!',
           description: `"${saveName.trim()}" se guardó correctamente en la base de datos.`,
         })
+        router.push('/editor-formatos')
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Error desconocido'

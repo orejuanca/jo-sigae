@@ -272,8 +272,8 @@ function GridTable({
                   displayContent = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config)
                 }
 
-      		const borderStyle = (enabled: boolean) =>
-                  	enabled ? `${(cell.borderStyle === 'double' || cell.borderStyle === 'groove' || cell.borderStyle === 'ridge') ? '3px' : '1px'} ${cell.borderStyle || 'solid'} ${cell.borderColor}` : 'none'
+                const borderStyle = (enabled: boolean) =>
+                        enabled ? `${(cell.borderStyle === 'double' || cell.borderStyle === 'groove' || cell.borderStyle === 'ridge') ? '3px' : '1px'} ${cell.borderStyle || 'solid'} ${cell.borderColor}` : 'none'
 
                 const cellIsSelected = isSingleSelected && selectedCell?.row === r && selectedCell?.col === c
                 const cellInRange = isRangeActive && inRange(r, c)
@@ -533,7 +533,15 @@ function SavedLayoutsDialog({
 
 // === Main Page Component ===
 function CertVisualEditorContent() {
-  const plan = useCurrentPlan()
+  const currentPlan = useCurrentPlan()
+  const searchParams = useSearchParams()
+  // Cuando se abre un layout desde editor-formatos, la URL incluye ?plan=derogado/vigente.
+  // Se lee de searchParams y como respaldo directo de window.location.search
+  // para garantizar que el editor use el plan correcto en la busqueda de alumnos
+  // y en el catalogo de bindings.
+  const urlPlan = searchParams.get('plan')
+    || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('plan'))
+  const plan = (urlPlan === 'derogado' || urlPlan === 'vigente') ? urlPlan : currentPlan
   const { toast } = useToast()
 
   // Grid state
@@ -590,7 +598,6 @@ function CertVisualEditorContent() {
   const [savedLayouts, setSavedLayouts] = useState<SavedLayout[]>([])
   const [loadingLayouts, setLoadingLayouts] = useState(false)
   const [loadingLayout, setLoadingLayout] = useState(false)
-  const searchParams = useSearchParams()
   const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState<string>('legal')
   // Load grid from localStorage on mount (or from ?layout= param)

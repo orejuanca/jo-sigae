@@ -11,19 +11,18 @@ export async function GET(request: NextRequest) {
     // Si se pasa ?id=..., devolver layout completo con datos
     const id = searchParams.get('id')
     if (id) {
-      const layouts = await db.certLayout.findMany({ where: { activo: true } })
-      const ids = layouts.map((l: { id: string }) => l.id)
-      const layout = layouts.find((l: { id: string }) => l.id === id)
+      const layout = await db.certLayout.findFirst({ where: { id, activo: true } })
       if (!layout) return NextResponse.json({ error: 'Layout no encontrado.' }, { status: 404 })
       return NextResponse.json(layout)
     }
 
     const layouts = await db.certLayout.findMany({
-      where: { activo: true },
+      where: { activo: true, plan },
       orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
         nombre: true,
+        plan: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -62,6 +61,7 @@ export async function POST(request: NextRequest) {
       data: {
         nombre: nombre.trim(),
         datos: typeof datos === 'string' ? datos : JSON.stringify(datos),
+        plan,
       },
     })
 
@@ -80,7 +80,7 @@ export async function PUT(request: NextRequest) {
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'Se requiere el parámetro id.' }, { status: 400 })
+      return NextResponse.json({ error: 'Se requiere el parametro id.' }, { status: 400 })
     }
 
     const db = getDb(plan)

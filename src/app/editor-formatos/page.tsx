@@ -52,9 +52,11 @@ export default function EditorFormatosPage() {
     }
   }
 
-  useEffect(() => { loadLayouts() }, [])
+  useEffect(() => { loadLayouts() }, [plan])
 
   const handleOpenInEditor = (id: string) => {
+    // Asegurar que localStorage tiene el plan correcto antes de navegar
+    localStorage.setItem('jo-sigae-current-plan', plan)
     router.push(`/certificaciones-visual?layout=${id}&plan=${plan}`)
   }
 
@@ -115,7 +117,7 @@ export default function EditorFormatosPage() {
               <Button
                 size="sm"
                 className="mt-4 text-xs"
-                onClick={() => router.push('/certificaciones-visual')}
+                onClick={() => router.push(`/certificaciones-visual?plan=${plan}`)}
               >
                 <Plus className="h-3 w-3 mr-1" /> Crear nuevo layout
               </Button>
@@ -155,7 +157,7 @@ export default function EditorFormatosPage() {
               variant="outline"
               size="sm"
               className="text-xs"
-              onClick={() => router.push('/certificaciones-visual')}
+              onClick={() => router.push(`/certificaciones-visual?plan=${plan}`)}
             >
               <Plus className="h-3 w-3 mr-1" /> Crear nuevo layout en el editor
             </Button>

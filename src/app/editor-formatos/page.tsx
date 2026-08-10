@@ -95,6 +95,14 @@ export default function EditorFormatosPage() {
     } catch { return d }
   }
 
+  const vigenteBtnClass = selectedPlan === 'vigente'
+    ? 'px-4 py-1.5 text-xs font-medium transition-colors bg-blue-600 text-white'
+    : 'px-4 py-1.5 text-xs font-medium transition-colors bg-gray-800 text-gray-400 hover:bg-gray-700'
+
+  const derogadoBtnClass = selectedPlan === 'derogado'
+    ? 'px-4 py-1.5 text-xs font-medium transition-colors bg-orange-600 text-white'
+    : 'px-4 py-1.5 text-xs font-medium transition-colors bg-gray-800 text-gray-400 hover:bg-gray-700'
+
   return (
     <AppShell>
       <div className="space-y-4">
@@ -120,22 +128,13 @@ export default function EditorFormatosPage() {
           <div className="flex rounded-md overflow-hidden border border-gray-700">
             <button
               onClick={() => switchPlan('vigente')}
-              className={`px-4 py-1.5 text-xs font-medium transition-colors ${
-                selectedPlan === 'vigente'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-              }`
-            }
+              className={vigenteBtnClass}
             >
               Vigente
             </button>
             <button
               onClick={() => switchPlan('derogado')}
-              className={`px-4 py-1.5 text-xs font-medium transition-colors ${
-                selectedPlan === 'derogado'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-              }`
+              className={derogadoBtnClass}
             >
               Derogado
             </button>
@@ -177,7 +176,7 @@ export default function EditorFormatosPage() {
           <div className="flex flex-col gap-1.5">
             {layouts.map(layout => (
               <div key={layout.id} className="flex items-center gap-3 bg-gray-800 border border-gray-700 hover:border-gray-500 rounded-md px-3 py-2 transition-colors">
-                <FileText className={`h-3.5 w-3.5 shrink-0 ${layout.plan === 'derogado' ? 'text-orange-400' : 'text-blue-400'}`} />
+                <FileText className={"h-3.5 w-3.5 shrink-0 " + (layout.plan === 'derogado' ? 'text-orange-400' : 'text-blue-400')} />
                 <span className="flex-1 text-xs font-medium text-white truncate">{layout.nombre}</span>
                 <Badge variant={layout.plan === 'derogado' ? 'destructive' : 'default'} className="text-[9px] px-1.5 py-0">
                   {layout.plan === 'derogado' ? 'DEROGADO' : 'VIGENTE'}

@@ -372,4 +372,22 @@ export const DATA_BINDINGS_DEROGADO: { group: string; bindings: { value: string;
     { value: 'rawData.AÑO.EF.5', label: 'Quinto Año — Educación Física — Año' },
     { value: 'rawData.INST.EF.5', label: 'Quinto Año — Educación Física — Inst.' },
   ]},
+,
+  { group: 'Plantel por Materia (Constancia)', bindings: [
+    { value: 'rawData.INST_NAME.CA.1', label: 'Nombre Plantel - Castellano (1)' },
+    { value: 'rawData.INST_LOCAL.CA.1', label: 'Localidad Plantel - Castellano (1)' },
+    { value: 'rawData.INST_EF.CA.1', label: 'E.F. Plantel - Castellano (1)' },
+    { value: 'rawData.INST_NAME.CA.2', label: 'Nombre Plantel - Castellano (2)' },
+    { value: 'rawData.INST_LOCAL.CA.2', label: 'Localidad Plantel - Castellano (2)' },
+    { value: 'rawData.INST_EF.CA.2', label: 'E.F. Plantel - Castellano (2)' },
+    { value: 'rawData.INST_NAME.CA.3', label: 'Nombre Plantel - Castellano (3)' },
+    { value: 'rawData.INST_LOCAL.CA.3', label: 'Localidad Plantel - Castellano (3)' },
+    { value: 'rawData.INST_EF.CA.3', label: 'E.F. Plantel - Castellano (3)' },
+    { value: 'rawData.INST_NAME.CA.4', label: 'Nombre Plantel - Castellano (4)' },
+    { value: 'rawData.INST_LOCAL.CA.4', label: 'Localidad Plantel - Castellano (4)' },
+    { value: 'rawData.INST_EF.CA.4', label: 'E.F. Plantel - Castellano (4)' },
+    { value: 'rawData.INST_NAME.CA.5', label: 'Nombre Plantel - Castellano (5)' },
+    { value: 'rawData.INST_LOCAL.CA.5', label: 'Localidad Plantel - Castellano (5)' },
+    { value: 'rawData.INST_EF.CA.5', label: 'E.F. Plantel - Castellano (5)' },
+  ]}
 ]

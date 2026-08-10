@@ -412,5 +412,20 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
   map['PROMEDIO.BASICA'] = calcPromedio([1, 2, 3])
   map['PROMEDIO.DIVERSIFICADO'] = calcPromedio([4, 5])
 
+  // 12. Resolver numeros de plantel por materia a nombre, localidad y E.F.
+  for (const [key, val] of Object.entries(map)) {
+    if (!key.startsWith('INST.') || key.startsWith('INST.BASICA.') || key.startsWith('INST.DIV.')) continue
+    const idx = parseInt(val) - 1
+    if (isNaN(idx) || idx < 0) continue
+    const parts = key.split('.')
+    const year = parseInt(parts[parts.length - 1])
+    if (isNaN(year)) continue
+    const prefix = year <= 3 ? 'BASICA' : 'DIV'
+    const suffix = key.substring(4)
+    map[`INST_NAME${suffix}`] = map[`INST.${prefix}.${idx + 1}`] || val
+    map[`INST_LOCAL${suffix}`] = map[`LOCAL.${prefix}.${idx + 1}`] || ''
+    map[`INST_EF${suffix}`] = map[`EF.${prefix}.${idx + 1}`] || ''
+  }
+
   return map
 }

@@ -121,13 +121,29 @@ const YEAR_NAME_MAP: Record<string, string> = {
   '4': 'Cuarto Año', '5': 'Quinto Año',
 }
 
+const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'] as const
+
+function formatDateLong(dateStr: string): string {
+  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!m) return dateStr
+  return `${parseInt(m[1])} DE ${MESES[parseInt(m[2]) - 1]} DE ${m[3]}`
+}
+
+const COMBINED_DATE_FIELDS = ['fechaNacimiento']
+
 export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
   if (!path || !data) return ''
 
   // Soporte para multiples bindings separados por coma
   if (path.includes(',')) {
     const parts = path.split(',').map(p => p.trim()).filter(Boolean)
-    const resolved = parts.map(p => resolveBinding(p, data, gridConfig)).filter(Boolean)
+    const resolved = parts.map(p => {
+      const val = resolveBinding(p, data, gridConfig)
+      if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
+        return formatDateLong(val)
+      }
+      return val
+    }).filter(Boolean)
     return resolved.join(', ')
   }
   const [domain, ...rest] = path.split('.')

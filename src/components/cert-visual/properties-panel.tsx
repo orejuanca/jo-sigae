@@ -7,12 +7,9 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { Settings2, ChevronDown, Search, Check, X, Plus } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { Settings2, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 import type { CellConfig } from './types'
-import { getDataBindings } from './types'
 
 interface PropertiesPanelProps {
   cell: CellConfig | null
@@ -40,7 +37,7 @@ function SectionHeader({ title, defaultOpen, children }: { title: string; defaul
     <Collapsible open={open} onOpenChange={setOpen} className="space-y-2">
       <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors py-1">
         {title}
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={"h-3.5 w-3.5 transition-transform " + (open ? 'rotate-180' : '')} />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-2.5 pl-1">
@@ -51,119 +48,14 @@ function SectionHeader({ title, defaultOpen, children }: { title: string; defaul
   )
 }
 
-// Helper: parse comma-separated bindings into array
-function parseBindings(dataBinding: string): string[] {
-  if (!dataBinding) return []
-  return dataBinding.split(',').map(s => s.trim()).filter(Boolean)
-}
+// Binding section: Ninguno o Directo con input de texto
+function BindingSection({ dataBinding, onUpdate }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void }) {
+  const hasBinding = dataBinding && dataBinding.trim().length > 0
+  const [mode, setMode] = useState<'none' | 'direct'>(hasBinding ? 'direct' : 'none')
 
-// Helper: join array back to comma-separated string
-function joinBindings(parts: string[]): string {
-  return parts.join(', ')
-}
-
-// Helper: find label for a binding value in the catalog
-function findBindingLabel(value: string, plan: string): string | null {
-  const bindings = getDataBindings(plan)
-  const found = bindings.flatMap(g => g.bindings).find(b => b.value === value)
-  return found ? found.label : null
-}
-
-// Helper: check if ALL parts are catalog bindings
-function areAllCatalogBindings(dataBinding: string, plan: string): boolean {
-  const parts = parseBindings(dataBinding)
-  if (parts.length === 0) return false
-  return parts.every(p => {
-    const bindings = getDataBindings(plan)
-    return bindings.some(g => g.bindings.some(b => b.value === p))
-  })
-}
-
-// Combobox to ADD a binding (does not replace existing)
-function AddBindingCombobox({ existingBindings, onAdd, plan }: { existingBindings: string[]; onAdd: (v: string) => void; plan: string }) {
-  const [open, setOpen] = useState(false)
-  const bindings = getDataBindings(plan)
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="h-6 text-[10px] flex items-center gap-1 rounded border border-dashed border-input bg-background px-2 hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground hover:text-foreground"
-        >
-          <Plus className="h-3 w-3" />
-          Agregar enlace
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0" align="start">
-        <Command shouldFilter={true}>
-          <CommandInput placeholder="Buscar campo..." className="h-8 text-xs" />
-          <CommandList className="max-h-[300px]">
-            <CommandEmpty className="text-xs py-2 px-2">Sin resultados</CommandEmpty>
-            {bindings.map((group) => (
-              <CommandGroup key={group.group} heading={group.group}>
-                {group.bindings.map((binding) => {
-                  const alreadyAdded = existingBindings.includes(binding.value)
-                  return (
-                    <CommandItem
-                      key={binding.value}
-                      value={`${binding.label} ${binding.value}`}
-                      onSelect={() => { if (!alreadyAdded) { onAdd(binding.value); setOpen(false) } }}
-                      className={`text-xs ${alreadyAdded ? 'opacity-40 pointer-events-none' : ''}`}
-                      disabled={alreadyAdded}
-                    >
-                      <Check className={`h-3 w-3 mr-2 ${alreadyAdded ? 'opacity-100' : 'opacity-0'}`} />
-                      {binding.label}
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-// Multi-binding section: shows chips + add button
-function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: string; onUpdate: (updates: Partial<CellConfig>) => void; plan: string }) {
-  const parts = useMemo(() => parseBindings(dataBinding), [dataBinding])
-  const allCatalog = areAllCatalogBindings(dataBinding, plan)
-  const hasDirect = parts.some(p => !findBindingLabel(p, plan))
-  const [mode, setMode] = useState<'none' | 'catalog' | 'direct'>(
-    parts.length === 0 ? 'none' : hasDirect ? 'direct' : 'catalog'
-  )
-
-  // Sync mode when dataBinding changes externally
-  const effectiveHasDirect = parts.some(p => !findBindingLabel(p, plan))
-  const effectiveMode = parts.length === 0 ? 'none' : effectiveHasDirect ? 'direct' : 'catalog'
-  useEffect(() => { setMode(effectiveMode) }, [effectiveMode])
-
-  const handleModeChange = (newMode: 'none' | 'catalog' | 'direct') => {
-    setMode(newMode)
-    if (newMode === 'none') {
-      onUpdate({ dataBinding: '' })
-    } else if (newMode === 'catalog') {
-      // Remove any non-catalog parts
-      if (hasDirect) {
-        const catalogOnly = parts.filter(p => findBindingLabel(p, plan))
-        onUpdate({ dataBinding: joinBindings(catalogOnly) })
-      }
-    } else if (newMode === 'direct') {
-      // Clear everything for direct input
-      if (parts.length > 0) onUpdate({ dataBinding: '' })
-    }
-  }
-
-  const handleAddFromCatalog = (value: string) => {
-    const newParts = [...parts, value]
-    onUpdate({ dataBinding: joinBindings(newParts) })
-  }
-
-  const handleRemoveBinding = (index: number) => {
-    const newParts = parts.filter((_, i) => i !== index)
-    onUpdate({ dataBinding: joinBindings(newParts) })
+  // Sync when dataBinding changes externally
+  if ((mode === 'none' && hasBinding) || (mode === 'direct' && !hasBinding)) {
+    setMode(hasBinding ? 'direct' : 'none')
   }
 
   return (
@@ -173,7 +65,7 @@ function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: stri
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={() => handleModeChange('none')}
+            onClick={() => { setMode('none'); onUpdate({ dataBinding: '' }) }}
             className={"px-2 py-0.5 text-[10px] rounded border transition-colors " + (
               mode === 'none'
                 ? 'bg-primary text-primary-foreground border-primary'
@@ -184,18 +76,7 @@ function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: stri
           </button>
           <button
             type="button"
-            onClick={() => handleModeChange('catalog')}
-            className={"px-2 py-0.5 text-[10px] rounded border transition-colors " + (
-              mode === 'catalog'
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-background border-input hover:bg-accent'
-            )}
-          >
-            Catalogo
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeChange('direct')}
+            onClick={() => { setMode('direct'); if (!hasBinding) onUpdate({ dataBinding: '' }) }}
             className={"px-2 py-0.5 text-[10px] rounded border transition-colors " + (
               mode === 'direct'
                 ? 'bg-primary text-primary-foreground border-primary'
@@ -207,47 +88,13 @@ function BindingModeSection({ dataBinding, onUpdate, plan }: { dataBinding: stri
         </div>
       </div>
 
-      {/* Catalog mode: chips + add button */}
-      {mode === 'catalog' && (
-        <div className="space-y-2">
-          {parts.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {parts.map((part, idx) => {
-                const label = findBindingLabel(part, plan)
-                return (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 text-[10px] bg-primary/15 text-primary border border-primary/25 rounded px-1.5 py-0.5"
-                  >
-                    <span className="truncate max-w-[180px]">{label || part}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveBinding(idx)}
-                      className="hover:bg-primary/30 rounded p-0.5 transition-colors"
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </button>
-                  </span>
-                )
-              })}
-            </div>
-          )}
-          <AddBindingCombobox
-            existingBindings={parts}
-            onAdd={handleAddFromCatalog}
-            plan={plan}
-          />
-        </div>
-      )}
-
-      {/* Direct mode: free text input */}
       {mode === 'direct' && (
         <FieldRow label="Enlace directo:">
           <Input
             value={dataBinding}
             onChange={(e) => onUpdate({ dataBinding: e.target.value })}
             className="h-7 text-xs font-mono"
-            placeholder="student.cedula, rawData.APELLIDOS"
+            placeholder="rawData.CEDULA, rawData.APELLIDOS"
           />
         </FieldRow>
       )}
@@ -276,7 +123,7 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
           <CardTitle className="text-sm">Celda [{row}, {col}]</CardTitle>
           <span className="text-[10px] text-muted-foreground font-mono">
             {cell.colspan > 1 || cell.rowspan > 1
-              ? `${cell.colspan}x${cell.rowspan}`
+              ? cell.colspan + "x" + cell.rowspan
               : '1x1'}
           </span>
         </div>
@@ -299,10 +146,9 @@ export function PropertiesPanel({ cell, row, col, onUpdate, plan = 'vigente', is
                   className="h-7 text-xs"
                 />
               </FieldRow>
-              <BindingModeSection
+              <BindingSection
                 dataBinding={cell.dataBinding}
                 onUpdate={onUpdate}
-                plan={plan}
               />
             </SectionHeader>
 

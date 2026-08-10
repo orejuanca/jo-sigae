@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Button } from '@/components/ui/button'
@@ -533,6 +533,7 @@ function SavedLayoutsDialog({
 
 // === Main Page Component ===
 function CertVisualEditorContent() {
+  const router = useRouter()
   const currentPlan = useCurrentPlan()
   const searchParams = useSearchParams()
   // Cuando se abre un layout desde editor-formatos, la URL incluye ?plan=derogado/vigente.

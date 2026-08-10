@@ -1485,12 +1485,13 @@ function CertVisualEditorContent() {
     setSaving(true)
     try {
       if (editingLayoutId) {
+        const datosWithMeta = { ...gridConfig, _printScale: printScale, meta: { ...(gridConfig as any).meta, plan } }
         const res = await fetch(`/api/cert-layouts?id=${editingLayoutId}&plan=${plan}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nombre: saveName.trim(),
-            datos: { ...gridConfig, _printScale: printScale },
+            datos: datosWithMeta,
           }),
         })
         if (!res.ok) {
@@ -1503,12 +1504,13 @@ function CertVisualEditorContent() {
           description: `"${saveName.trim()}" se actualizó correctamente.`,
         })
       } else {
+        const datosWithMeta = { ...gridConfig, _printScale: printScale, meta: { ...(gridConfig as any).meta, plan } }
         const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nombre: saveName.trim(),
-            datos: { ...gridConfig, _printScale: printScale },
+            datos: datosWithMeta,
           }),
         })
         if (!res.ok) {

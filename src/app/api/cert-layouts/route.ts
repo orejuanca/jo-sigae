@@ -1,40 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
 
-// GET /api/cert-layouts?plan=derogado — Listar layouts del plan indicado
+/**
+ * Extrae el plan de un layout leyendo meta.plan del JSON.
+ * Si no tiene meta.plan, devuelve "vigente" por defecto (layouts antiguos).
+ */
+function extractPlan(datos: string): string {
+  try {
+    const parsed = JSON.parse(datos)
+    if (parsed?.meta?.plan === 'derogado' || parsed?.meta?.plan === 'vigente') {
+      return parsed.meta.plan
+    }
+  } catch {}
+  return 'vigente'
+}
+
+// GET /api/cert-layouts?plan=all — Listar layouts
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const plan = searchParams.get('plan') || 'vigente'
-    const db = getDb(plan)
+    const planFilter = searchParams.get('plan') || 'all'
+    const db = getDb(planFilter)
 
-    // Si se pasa ?id=..., devolver layout completo con datos
     const id = searchParams.get('id')
     if (id) {
       const layout = await db.certLayout.findFirst({ where: { id, activo: true } })
       if (!layout) return NextResponse.json({ error: 'Layout no encontrado.' }, { status: 404 })
-      return NextResponse.json(layout)
+      const detectedPlan = extractPlan(layout.datos)
+      return NextResponse.json({ ...layout, plan: detectedPlan })
     }
 
     const layouts = await db.certLayout.findMany({
-      where: { activo: true, plan },
+      where: { activo: true },
       orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        nombre: true,
-        plan: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     })
-    return NextResponse.json(layouts)
+
+    const withPlan = layouts.map(l => ({
+      id: l.id,
+      nombre: l.nombre,
+      plan: extractPlan(l.datos),
+      createdAt: l.createdAt,
+      updatedAt: l.updatedAt,
+    }))
+
+    const filtered = planFilter === 'all'
+      ? withPlan
+      : withPlan.filter(l => l.plan === planFilter)
+
+    return NextResponse.json(filtered)
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Error desconocido'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
 
-// POST /api/cert-layouts?plan=derogado — Crear layout en el plan indicado
+// POST /api/cert-layouts?plan=derogado — Crear layout
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -45,23 +65,16 @@ export async function POST(request: NextRequest) {
     const { nombre, datos } = body
 
     if (!nombre || !nombre.trim()) {
-      return NextResponse.json(
-        { error: 'El nombre del layout es obligatorio.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'El nombre del layout es obligatorio.' }, { status: 400 })
     }
     if (!datos) {
-      return NextResponse.json(
-        { error: 'Los datos del layout son obligatorios.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Los datos del layout son obligatorios.' }, { status: 400 })
     }
 
     const layout = await db.certLayout.create({
       data: {
         nombre: nombre.trim(),
         datos: typeof datos === 'string' ? datos : JSON.stringify(datos),
-        plan,
       },
     })
 
@@ -72,7 +85,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT /api/cert-layouts?id=XXX&plan=derogado — Actualizar layout existente
+// PUT /api/cert-layouts?id=XXX&plan=derogado — Actualizar layout
 export async function PUT(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

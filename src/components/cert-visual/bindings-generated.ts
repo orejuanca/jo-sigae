@@ -67,6 +67,9 @@ export const DATA_BINDINGS_VIGENTE: { group: string; bindings: { value: string; 
     { value: 'obsCert.1', label: 'OBS.CERT — Línea 2' },
     { value: 'obsCert.2', label: 'OBS.CERT — Línea 3' },
     { value: 'obsCert.3', label: 'OBS.CERT — Línea 4' },
+    { value: 'rawData.OBS.NOTAS.L1', label: 'Obs. Notas — Linea 1' },
+    { value: 'rawData.OBS.NOTAS.L2', label: 'Obs. Notas — Linea 2' },
+    { value: 'rawData.OBS.NOTAS.L3', label: 'Obs. Notas — Linea 3' },
   ]},
   { group: 'Literales Finales', bindings: [
     { value: 'doc.literalFinal.0', label: 'Literal Final — 1er Año' },
@@ -223,9 +226,9 @@ export const DATA_BINDINGS_VIGENTE: { group: string; bindings: { value: string; 
     { value: 'rawData.INST_NAME.GH.4', label: 'Nombre Plantel - Geografía, Hist. y Ciudad. (4)' },
     { value: 'rawData.INST_LOCAL.GH.4', label: 'Localidad Plantel - Geografía, Hist. y Ciudad. (4)' },
     { value: 'rawData.INST_EF.GH.4', label: 'E.F. Plantel - Geografía, Hist. y Ciudad. (4)' },
-    { value: 'rawData.INST_NAME.FSN.4', label: 'Nombre Plantel - Form. para la Sober. Nal. (4)' },
-    { value: 'rawData.INST_LOCAL.FSN.4', label: 'Localidad Plantel - Form. para la Sober. Nal. (4)' },
-    { value: 'rawData.INST_EF.FSN.4', label: 'E.F. Plantel - Form. para la Sober. Nal. (4)' },
+    { value: 'rawData.INST_NAME.FS.4', label: 'Nombre Plantel - Form. para la Sober. Nal. (4)' },
+    { value: 'rawData.INST_LOCAL.FS.4', label: 'Localidad Plantel - Form. para la Sober. Nal. (4)' },
+    { value: 'rawData.INST_EF.FS.4', label: 'E.F. Plantel - Form. para la Sober. Nal. (4)' },
     { value: 'rawData.INST_NAME.CA.5', label: 'Nombre Plantel - Castellano (5)' },
     { value: 'rawData.INST_LOCAL.CA.5', label: 'Localidad Plantel - Castellano (5)' },
     { value: 'rawData.INST_EF.CA.5', label: 'E.F. Plantel - Castellano (5)' },
@@ -253,9 +256,9 @@ export const DATA_BINDINGS_VIGENTE: { group: string; bindings: { value: string; 
     { value: 'rawData.INST_NAME.GH.5', label: 'Nombre Plantel - Geografía, Hist. y Ciudad. (5)' },
     { value: 'rawData.INST_LOCAL.GH.5', label: 'Localidad Plantel - Geografía, Hist. y Ciudad. (5)' },
     { value: 'rawData.INST_EF.GH.5', label: 'E.F. Plantel - Geografía, Hist. y Ciudad. (5)' },
-    { value: 'rawData.INST_NAME.FSN.5', label: 'Nombre Plantel - Form. para la Sober. Nal. (5)' },
-    { value: 'rawData.INST_LOCAL.FSN.5', label: 'Localidad Plantel - Form. para la Sober. Nal. (5)' },
-    { value: 'rawData.INST_EF.FSN.5', label: 'E.F. Plantel - Form. para la Sober. Nal. (5)' }
+    { value: 'rawData.INST_NAME.FS.5', label: 'Nombre Plantel - Form. para la Sober. Nal. (5)' },
+    { value: 'rawData.INST_LOCAL.FS.5', label: 'Localidad Plantel - Form. para la Sober. Nal. (5)' },
+    { value: 'rawData.INST_EF.FS.5', label: 'E.F. Plantel - Form. para la Sober. Nal. (5)' }
   ]}
 ]
 

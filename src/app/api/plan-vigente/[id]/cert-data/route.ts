@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { parseCertData, parsedToCertData } from '@/lib/parse-rawdata';
+import { buildVigenteFlatMap } from '@/lib/build-vigente-flatmap';
 
 // GET /api/plan-vigente/[id]/cert-data — Certificación EMG desde PlanVigente
 export async function GET(
@@ -53,11 +54,16 @@ export async function GET(
     const certData = parsedToCertData(parsed, studentLike);
     const gradeCount = Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '').length;
 
+    // Build flat map for rawData.* bindings
+    const rawObj = JSON.parse(record.rawData);
+    const rawDataFlat = buildVigenteFlatMap(rawObj);
+
     return NextResponse.json({
       student: studentLike,
       parsed,
       certData,
       gradeCount,
+      rawDataFlat,
     });
   } catch (error) {
     console.error('Error parsing cert data from PlanVigente:', error);

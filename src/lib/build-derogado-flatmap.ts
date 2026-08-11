@@ -427,5 +427,24 @@ export function buildDerogadoFlatMap(rawData: Record<string, any>): Record<strin
     map[`INST_EF${suffix}`] = map[`EF.${prefix}.${idx + 1}`] || ''
   }
 
+
+  // Resolver INST_NAME / INST_LOCAL / INST_EF por materia
+  const instArr = rawData['instituciones'] || []
+  for (const [key, slotStr] of Object.entries(map)) {
+    if (!key.startsWith('INST.') || key.startsWith('INST.BASICA') || key.startsWith('INST.DIV')) continue
+    const parts = key.split(".")
+    if (parts.length !== 3) continue
+    const code = parts[1]
+    const year = parts[2]
+    const slotNum = parseInt(slotStr, 10)
+    if (isNaN(slotNum) || slotNum < 1) continue
+    const suffix = "." + code + "." + year
+    const denom = map['INST.' + slotNum] || map['INST.BASICA.' + slotNum] || (instArr[slotNum - 1]?.denominacion || '')
+    const local = map['LOCAL.' + slotNum] || map['LOCAL.BASICA.' + slotNum] || (instArr[slotNum - 1]?.localidad || '')
+    const ef = map['EF.' + slotNum] || map['EF.BASICA.' + slotNum] || (instArr[slotNum - 1]?.ef || '')
+    if (denom) map['INST_NAME' + suffix] = denom
+    if (local) map['INST_LOCAL' + suffix] = local
+    if (ef) map['INST_EF' + suffix] = ef
+  }
   return map
 }

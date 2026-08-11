@@ -103,6 +103,10 @@ export default function EditorFormatosPage() {
     ? 'px-4 py-1.5 text-xs font-medium transition-colors bg-orange-600 text-white'
     : 'px-4 py-1.5 text-xs font-medium transition-colors bg-gray-800 text-gray-400 hover:bg-gray-700'
 
+  const handleOpenDashboard = (p: PlanType) => {
+    router.push(`/editor-formatos/dashboard?plan=${p}`)
+  }
+
   return (
     <AppShell>
       <div className="space-y-4">
@@ -110,7 +114,7 @@ export default function EditorFormatosPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-white">Editor de Formatos</h1>
-            <p className="text-xs text-gray-400">Administra tus layouts de certificaciones guardados</p>
+            <p className="text-xs text-gray-400">Administra tus layouts de certificaciones y dashboards</p>
           </div>
           <Button
             size="sm"
@@ -120,6 +124,34 @@ export default function EditorFormatosPage() {
           >
             <Upload className="h-3 w-3 mr-1" /> Actualizar
           </Button>
+        </div>
+
+        {/* Dashboard Layouts */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+          <h2 className="text-sm font-bold text-white mb-3">Diseño de Dashboards</h2>
+          <p className="text-[10px] text-gray-400 mb-3">Edita el diseño visual de los dashboards (colores, fuentes, anchos, merges). Los cambios se reflejan en caliente.</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleOpenDashboard('vigente')}
+              className="flex-1 flex items-center gap-2 bg-blue-900/50 hover:bg-blue-800/60 border border-blue-700 rounded-lg px-4 py-3 transition-colors cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white text-xs font-bold">V</div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-blue-300">Plan Vigente</div>
+                <div className="text-[10px] text-gray-400">Editar diseño del dashboard</div>
+              </div>
+            </button>
+            <button
+              onClick={() => handleOpenDashboard('derogado')}
+              className="flex-1 flex items-center gap-2 bg-orange-900/50 hover:bg-orange-800/60 border border-orange-700 rounded-lg px-4 py-3 transition-colors cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded bg-orange-600 flex items-center justify-center text-white text-xs font-bold">D</div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-orange-300">Plan Derogado</div>
+                <div className="text-[10px] text-gray-400">Editar diseño del dashboard</div>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Plan Selector */}

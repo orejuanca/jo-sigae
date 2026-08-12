@@ -269,19 +269,19 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
   }, [])
 
   useEffect(() => {
-    if (!loaded || !dbLoaded || editMode || hasNewData) return
+    if (!loaded || !dbLoaded || editMode || hasNewData || designLocked) return
     const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
     return () => clearTimeout(timer)
-  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
+  }, [loaded, dbLoaded, plan, editMode, designLocked, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
 
   useEffect(() => {
-    if (!loaded || !dbLoaded || editMode || hasNewData) return
+    if (!loaded || !dbLoaded || editMode || hasNewData || designLocked) return
     const timer = setTimeout(() => { saveToDb(plan, stateRef.current) }, 3000)
     return () => clearTimeout(timer)
-  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
+  }, [loaded, dbLoaded, plan, editMode, designLocked, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
 
   useEffect(() => {
-    if (!loaded || !dbLoaded || editMode || hasNewData) return
+    if (!loaded || !dbLoaded || editMode || hasNewData || designLocked) return
     const handler = () => {
       try { const json = JSON.stringify(stateRef.current); localStorage.setItem(STORAGE_KEY(plan), json); navigator.sendBeacon(`/api/dashboard-state?plan=${plan}`, JSON.stringify({ datos: stateRef.current })) } catch {}
     }
@@ -532,7 +532,7 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
   }
   const navigateTo = (r: number, c: number) => {
     let nr = r, nc = c, tries = 0
-    while (isHidden(nr, nc) && tries < 500) { if(nr>nr)nr++;else if(nr<r)nr--;else if(nc>c)nc++;else nc--; nr=Math.max(0,Math.min(nr,numRows-1));nc=Math.max(0,Math.min(nc,numCols-1));tries++ }
+    while (isHidden(nr, nc) && tries < 500) { if(nr>r)nr++;else if(nr<r)nr--;else if(nc>c)nc++;else nc--; nr=Math.max(0,Math.min(nr,numRows-1));nc=Math.max(0,Math.min(nc,numCols-1));tries++ }
     setSelectedCell({r:nr,c:nc}); setSelectionStart({r:nr,c:nc}); setSelectionEnd({r:nr,c:nc}); setTimeout(()=>focusInput(nr,nc),0)
   }
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {

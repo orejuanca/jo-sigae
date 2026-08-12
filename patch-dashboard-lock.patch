@@ -1,0 +1,203 @@
+diff --git a/src/app/editor-formatos/dashboard/page.tsx b/src/app/editor-formatos/dashboard/page.tsx
+new file mode 100644
+index 0000000..93db511
+--- /dev/null
++++ b/src/app/editor-formatos/dashboard/page.tsx
+@@ -0,0 +1,29 @@
++'use client'
++
++import { useState } from 'react'
++import { AppShell } from '@/components/app-shell'
++import { SheetEditor } from '@/components/dashboard-content'
++
++type PlanType = 'vigente' | 'derogado'
++
++export default function EditorDashboardPage() {
++  const [plan, setPlan] = useState<PlanType>(() => {
++    if (typeof window !== 'undefined') {
++      const params = new URLSearchParams(window.location.search)
++      return params.get('plan') === 'derogado' ? 'derogado' : 'vigente'
++    }
++    return 'vigente'
++  })
++
++  const handleSwitch = () => {
++    const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'
++    setPlan(newPlan)
++    window.history.replaceState(null, '', `/editor-formatos/dashboard?plan=${newPlan}`)
++  }
++
++  return (
++    <AppShell>
++      <SheetEditor key={plan} plan={plan} onSwitchPlan={handleSwitch} />
++    </AppShell>
++  )
++}
+diff --git a/src/app/editor-formatos/page.tsx b/src/app/editor-formatos/page.tsx
+index 2ee2ef6..601db19 100755
+--- a/src/app/editor-formatos/page.tsx
++++ b/src/app/editor-formatos/page.tsx
+@@ -103,6 +103,10 @@ export default function EditorFormatosPage() {
+     ? 'px-4 py-1.5 text-xs font-medium transition-colors bg-orange-600 text-white'
+     : 'px-4 py-1.5 text-xs font-medium transition-colors bg-gray-800 text-gray-400 hover:bg-gray-700'
+ 
++  const handleOpenDashboard = (p: PlanType) => {
++    router.push(`/editor-formatos/dashboard?plan=${p}`)
++  }
++
+   return (
+     <AppShell>
+       <div className="space-y-4">
+@@ -110,7 +114,7 @@ export default function EditorFormatosPage() {
+         <div className="flex items-center justify-between">
+           <div>
+             <h1 className="text-lg font-bold text-white">Editor de Formatos</h1>
+-            <p className="text-xs text-gray-400">Administra tus layouts de certificaciones guardados</p>
++            <p className="text-xs text-gray-400">Administra tus layouts de certificaciones y dashboards</p>
+           </div>
+           <Button
+             size="sm"
+@@ -122,6 +126,34 @@ export default function EditorFormatosPage() {
+           </Button>
+         </div>
+ 
++        {/* Dashboard Layouts */}
++        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
++          <h2 className="text-sm font-bold text-white mb-3">Diseño de Dashboards</h2>
++          <p className="text-[10px] text-gray-400 mb-3">Edita el diseño visual de los dashboards (colores, fuentes, anchos, merges). Los cambios se reflejan en caliente.</p>
++          <div className="flex gap-3">
++            <button
++              onClick={() => handleOpenDashboard('vigente')}
++              className="flex-1 flex items-center gap-2 bg-blue-900/50 hover:bg-blue-800/60 border border-blue-700 rounded-lg px-4 py-3 transition-colors cursor-pointer"
++            >
++              <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white text-xs font-bold">V</div>
++              <div className="text-left">
++                <div className="text-xs font-bold text-blue-300">Plan Vigente</div>
++                <div className="text-[10px] text-gray-400">Editar diseño del dashboard</div>
++              </div>
++            </button>
++            <button
++              onClick={() => handleOpenDashboard('derogado')}
++              className="flex-1 flex items-center gap-2 bg-orange-900/50 hover:bg-orange-800/60 border border-orange-700 rounded-lg px-4 py-3 transition-colors cursor-pointer"
++            >
++              <div className="w-8 h-8 rounded bg-orange-600 flex items-center justify-center text-white text-xs font-bold">D</div>
++              <div className="text-left">
++                <div className="text-xs font-bold text-orange-300">Plan Derogado</div>
++                <div className="text-[10px] text-gray-400">Editar diseño del dashboard</div>
++              </div>
++            </button>
++          </div>
++        </div>
++
+         {/* Plan Selector */}
+         <div className="flex items-center gap-2">
+           <span className="text-xs text-gray-400">Plan:</span>
+diff --git a/src/components/dashboard-content.tsx b/src/components/dashboard-content.tsx
+index 14236db..c92ed53 100755
+--- a/src/components/dashboard-content.tsx
++++ b/src/components/dashboard-content.tsx
+@@ -88,7 +88,7 @@ async function saveToDb(plan: string, state: SheetState): Promise<boolean> {
+ /*  SheetEditor – manages its own state, loads/saves from localStorage[plan]  */
+ /* ─────────────────────────────────────────────────────────────────────────── */
+ 
+-function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () => void }) {
++function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwitchPlan: () => void; designLocked?: boolean }) {
+   // Seleccionar plantilla según plan
+   const tpl = plan === 'derogado' ? DT : VT
+   const INIT_COLS = tpl.INIT_COLS
+@@ -289,6 +289,32 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
+     return () => window.removeEventListener('beforeunload', handler)
+   }, [loaded, dbLoaded, plan, editMode, hasNewData])
+ 
++  // BroadcastChannel para notificar cambios de diseño (en caliente)
++  const bc = useRef(typeof window !== 'undefined' ? new BroadcastChannel('jo-sigae-dashboard') : null)
++
++  // Escuchar cambios de diseño desde el editor (hot reload)
++  useEffect(() => {
++    if (!designLocked) return
++    const ch = bc.current
++    if (!ch) return
++    const handler = (ev: MessageEvent) => {
++      if (ev.data?.type === 'dashboard-layout-updated' && ev.data?.plan === plan) {
++        loadFromDb(plan).then(state => {
++          if (!state) return
++          setCells(state.cells); setColWidths(state.colWidths)
++          setRowHeights(state.rowHeights); setBgColors(state.bgColors)
++          setTextAligns(state.textAligns as any); setMerges(state.merges || [])
++          setNumRows(state.numRows); setNumCols(state.numCols)
++          setFontFamilies(state.fontFamilies); setFontSizes(state.fontSizes)
++          setFontColors(state.fontColors); setBorders(state.borders)
++          setBoldCells(state.boldCells)
++        })
++      }
++    }
++    ch.addEventListener('message', handler)
++    return () => ch.removeEventListener('message', handler)
++  }, [designLocked, plan])
++
+   const handleRestore = () => {
+     if (!confirm('Restaurar todo al diseño original? Se perderan todos los cambios.')) return
+     localStorage.removeItem(STORAGE_KEY(plan))
+@@ -782,7 +808,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
+ 
+   return (
+     <div className="overflow-auto">
+-      {/* TOOLBAR ROW 1 */}
++      {/* TOOLBAR ROW 1 — oculto en modo diseño bloqueado */}
++      {!designLocked && (
+       <div className="sticky top-0 z-30 bg-gray-800 text-white text-[10px] px-3 py-1.5 flex flex-wrap items-center gap-1.5">
+         <span className="font-bold text-[10px]">Plan: {plan.toUpperCase()}</span>
+         <button onClick={handleToggleBold} disabled={!selectedCell} className="bg-gray-700 hover:bg-gray-600 disabled:opacity-40 px-2 py-0.5 rounded text-[9px] font-bold border border-gray-500" title="Negrita">B</button>
+@@ -812,15 +839,16 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
+         {hasSelection && <span className="text-yellow-300">{colLetter(selMinC)}{selMinR+1}:{colLetter(selMaxC)}{selMaxR+1} ({selMaxR-selMinR+1}f x {selMaxC-selMinC+1}c)</span>}
+         <span className="text-cyan-300 text-[8px]">{loadInfo}</span>
+         {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
+-        <button onClick={async () => { try { const json = JSON.stringify(stateRef.current); localStorage.setItem(STORAGE_KEY(plan), json); await saveToDb(plan, stateRef.current); saveCountRef.current++; setSaveStatus(`GUARDADO #${saveCountRef.current} (BD+Cache) ${(json.length/1024).toFixed(0)}KB ✓`) } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }; setTimeout(() => setSaveStatus(''), 4000) }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
++        <button onClick={async () => { try { const json = JSON.stringify(stateRef.current); localStorage.setItem(STORAGE_KEY(plan), json); await saveToDb(plan, stateRef.current); saveCountRef.current++; setSaveStatus(`GUARDADO #${saveCountRef.current} (BD+Cache) ${(json.length/1024).toFixed(0)}KB ✓`); bc.postMessage({ type: 'dashboard-layout-updated', plan }) } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }; setTimeout(() => setSaveStatus(''), 4000) }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
+         <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
+         <span className="text-gray-600">|</span>
+         <input type="text" value={rangeInput} onChange={e => setRangeInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRangeSubmit() } }} placeholder="A1:D5" className="w-16 bg-gray-700 text-yellow-300 text-[9px] px-1 py-0.5 rounded border border-gray-500 placeholder-gray-500 text-center" title="Escribe rango y presiona Enter" />
+         <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
+       </div>
++      )}
+ 
+-      {/* TOOLBAR ROW 2 */}
+-      {selectedCell && (
++      {/* TOOLBAR ROW 2 — oculto en modo diseño bloqueado */}
++      {!designLocked && selectedCell && (
+         <div className="sticky top-7 z-30 bg-gray-700 text-white text-[10px] px-3 py-1 flex flex-wrap items-center gap-2">
+           <b>{colLetter(selectedCell.c)}{selectedCell.r+1}</b>
+           <span className="text-gray-500">|</span>
+@@ -838,11 +866,11 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
+         </div>
+       )}
+ 
+-      <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown} style={{ marginTop: selectedCell ? '52px' : '28px' }}>
++      <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown} style={{ marginTop: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}>
+         <colgroup><col style={{ width: '35px' }} />{colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}</colgroup>
+         <tbody>
+-          <tr><td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20" style={{ top: selectedCell ? '52px' : '28px' }}></td>
+-            {Array.from({ length: numCols }).map((_, c) => { const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1; return (<td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)} className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`} style={{ top: selectedCell ? '52px' : '28px', position: 'sticky', zIndex: 15 }}>{colLetter(c)}</td>) })}
++          <tr><td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20" style={{ top: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}></td>
++            {Array.from({ length: numCols }).map((_, c) => { const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1; return (<td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)} className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`} style={{ top: designLocked ? '0px' : (selectedCell ? '52px' : '28px'), position: 'sticky', zIndex: 15 }}>{colLetter(c)}</td>) })}
+           </tr>
+           {Array.from({ length: numRows }).map((_, r) => (
+             <tr key={r} style={{ height: `${rowHeights[r] || 20}px` }}>
+@@ -1019,6 +1047,8 @@ function SheetEditor({ plan, onSwitchPlan }: { plan: string; onSwitchPlan: () =>
+   )
+ }
+ 
++export { SheetEditor }
++
+ export default function DashboardPage() {
+   const [plan, setPlan] = useState<'vigente' | 'derogado'>(() => {
+     if (typeof window !== 'undefined') { const stored = localStorage.getItem('jo-sigae-current-plan'); return stored === 'derogado' ? 'derogado' : 'vigente' }
+@@ -1027,7 +1057,7 @@ export default function DashboardPage() {
+   const handleSwitch = () => { const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'; setPlan(newPlan); localStorage.setItem('jo-sigae-current-plan', newPlan); window.dispatchEvent(new Event('plan-changed')) }
+   return (
+     <AppShell>
+-      <SheetEditor key={plan} plan={plan} onSwitchPlan={handleSwitch} />
++      <SheetEditor key={plan} plan={plan} onSwitchPlan={handleSwitch} designLocked />
+     </AppShell>
+   )
+ }

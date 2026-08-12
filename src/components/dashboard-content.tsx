@@ -107,6 +107,17 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
   const fieldMap = plan === 'derogado' ? FIELD_MAP_DEROGADO : FIELD_MAP_VIGENTE
   const PROMEDIO_CELL = plan === 'derogado' ? cellRef('AJ34') : cellRef('AJ35')
 
+  // Celdas editables en modo designLocked: solo campos de datos + CE dropdowns
+  const editableCellsRef = useMemo(() => {
+    if (!designLocked) return null
+    const set = new Set<string>()
+    for (const [, celda] of fieldMap) {
+      const pos = cellRef(celda)
+      if (pos) set.add(`${pos.r}-${pos.c}`)
+    }
+    return set
+  }, [designLocked, fieldMap])
+
   const [totalRecords, setTotalRecords] = useState(0)
   const [loaded, setLoaded] = useState(false)
   const [dbLoaded, setDbLoaded] = useState(false)
@@ -965,7 +976,8 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
     (plan === 'derogado' && (r >= 14 && r <= 18 || r >= 20 && r <= 24))
   )
                       const isCedulaCell = r === 4 && c === 12
-                      const isReadOnlyCell = isAutoFill || (editMode && isCedulaCell)
+                      const isLockedDesign = !!editableCellsRef && !editableCellsRef.has(`${r}-${c}`)
+                      const isReadOnlyCell = isAutoFill || (editMode && isCedulaCell) || isLockedDesign
                       const inputVal = cells[r]?.[c] || ''
                       return isReadOnlyCell ? (
                         <input id={`inp-${r}-${c}`} key={`ro-${r}-${c}-${editingStudentId || '_'}-${dataLoadKey}`} type="text" value={inputVal} readOnly className="w-full h-full bg-transparent border-0 outline-none p-0 px-0.5" style={{ color: editMode && isCedulaCell ? '#888' : 'inherit', fontWeight: 'inherit', fontStyle: 'inherit', fontSize: 'inherit', fontFamily: 'inherit', textAlign: 'inherit', minHeight: `${rowHeights[r] || 20}px`, lineHeight: `${rowHeights[r] || 20}px` }} />

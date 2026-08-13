@@ -1,25 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db-helper'
+import { PrismaClient } from '@prisma/client'
 
-// Convertir fecha de cualquier formato a DD/MM/YYYY
-function normalizeFecha(fecha: string): string {
-  if (!fecha) return ''
-  const trimmed = fecha.trim()
-  if (!trimmed) return ''
-  // Ya en DD/MM/YYYY
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
-    const parts = trimmed.split('/')
-    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
-  }
-  // Formato YYYY-MM-DD (de input type="date") → DD/MM/YYYY
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const [year, month, day] = trimmed.split('-')
-    return `${day}/${month}/${year}`
-  }
-  return trimmed
+const prisma = new PrismaClient()
+
+function getModel(plan: string) {
+  return plan === 'derogado' ? prisma.planDerogado : prisma.planVigente
 }
 
-// GET /api/students/[id]
+// GET /api/students/[id]?plan=vigente|derogado
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,11 +15,8 @@ export async function GET(
   try {
     const { id } = await params
     const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
-    const db = getDb(plan)
-    const student = await db.student.findUnique({
-      where: { id },
-      include: { certifications: { orderBy: { fechaEmision: 'desc' } } },
-    })
+    const model = getModel(plan)
+    const student = await model.findUnique({ where: { id } })
 
     if (!student) {
       return NextResponse.json({ error: 'Alumno no encontrado' }, { status: 404 })
@@ -44,7 +29,7 @@ export async function GET(
   }
 }
 
-// PUT /api/students/[id]
+// PUT /api/students/[id]?plan=vigente|derogado
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -54,19 +39,21 @@ export async function PUT(
     const body = await request.json()
     const { cedula, apellidos, nombres, fechaNacimiento, pais, estado, municipio, rawData } = body
     const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
-    const db = getDb(plan)
-    const student = await db.student.update({
+    const model = getModel(plan)
+
+    const updateData: Record<string, string | null> = {}
+    if (cedula !== undefined) updateData.cedula = cedula.trim()
+    if (apellidos !== undefined) updateData.apellidos = apellidos.trim()
+    if (nombres !== undefined) updateData.nombres = nombres.trim()
+    if (fechaNacimiento !== undefined) updateData.fechaNacimiento = fechaNacimiento?.trim() || null
+    if (pais !== undefined) updateData.pais = pais?.trim() || 'VENEZUELA'
+    if (estado !== undefined) updateData.estado = estado?.trim() || ''
+    if (municipio !== undefined) updateData.municipio = municipio?.trim() || ''
+    if (rawData !== undefined) updateData.rawData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData)
+
+    const student = await model.update({
       where: { id },
-      data: {
-        ...(cedula && { cedula: cedula.trim() }),
-        ...(apellidos && { apellidos: apellidos.trim() }),
-        ...(nombres && { nombres: nombres.trim() }),
-        ...(fechaNacimiento !== undefined && { fechaNacimiento: normalizeFecha(fechaNacimiento) || null }),
-        ...(pais !== undefined && { pais: pais?.trim() || 'VENEZUELA' }),
-        ...(estado !== undefined && { estado: estado?.trim() || '' }),
-        ...(municipio !== undefined && { municipio: municipio?.trim() || '' }),
-        ...(rawData !== undefined && { rawData: typeof rawData === 'string' ? rawData : JSON.stringify(rawData) }),
-      },
+      data: updateData,
     })
 
     return NextResponse.json(student)
@@ -83,7 +70,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/students/[id]
+// DELETE /api/students/[id]?plan=vigente|derogado
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -91,8 +78,8 @@ export async function DELETE(
   try {
     const { id } = await params
     const plan = request.nextUrl.searchParams.get('plan') || 'vigente'
-    const db = getDb(plan)
-    await db.student.delete({ where: { id } })
+    const model = getModel(plan)
+    await model.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const err = error as { code?: string }

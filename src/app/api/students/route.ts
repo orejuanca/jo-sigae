@@ -1,61 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db-helper'
+import { PrismaClient } from '@prisma/client'
 
-// Convertir fecha de cualquier formato a DD/MM/YYYY
-function normalizeFecha(fecha: string): string {
-  if (!fecha) return ''
-  const trimmed = fecha.trim()
-  if (!trimmed) return ''
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
-    const parts = trimmed.split('/')
-    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`
-  }
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const [year, month, day] = trimmed.split('-')
-    return `${day}/${month}/${year}`
-  }
-  return trimmed
-}
+const prisma = new PrismaClient()
 
-// Normalize cedula: remove spaces, dashes, dots for flexible search
-function normalizeCedula(c: string): string {
-  return c.replace(/[\s.\-]/g, '').toUpperCase()
-}
-
-// GET /api/students?q=...&page=1&limit=20&plan=vigente
+// GET /api/students?q=...&page=1&limit=20&plan=vigente|derogado
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q') || ''
-    const cedulaExact = searchParams.get('cedula_exact') || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const plan = searchParams.get('plan') || 'vigente'
 
-    const planFilter = { plan }
-
-    const db = getDb(plan)
-
-    // Verificación exacta de cédula para duplicados
-    if (cedulaExact) {
-      const existing = await db.student.findFirst({
-        where: { ...planFilter, cedula: cedulaExact.trim() },
-      })
-      return NextResponse.json({ exists: !!existing, student: existing || null })
-    }
+    const model = plan === 'derogado' ? prisma.planDerogado : prisma.planVigente
 
     if (!q) {
       const [students, total] = await Promise.all([
-        db.student.findMany({ where: planFilter, take: limit, skip: (page - 1) * limit, orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }] }),
-        db.student.count({ where: planFilter }),
+        model.findMany({
+          take: limit,
+          skip: (page - 1) * limit,
+          orderBy: [{ cedula: 'asc' }, { apellidos: 'asc' }],
+        }),
+        model.count(),
       ])
       return NextResponse.json({ students, total, page, limit, totalPages: Math.ceil(total / limit) })
     }
 
-    const normalized = normalizeCedula(q)
-
     const where = {
-      ...planFilter,
       OR: [
         { cedula: { contains: q } },
         { cedula: { contains: q.toUpperCase() } },
@@ -65,49 +36,14 @@ export async function GET(request: NextRequest) {
     }
 
     const [students, total] = await Promise.all([
-      db.student.findMany({
+      model.findMany({
         where,
         take: limit,
         skip: (page - 1) * limit,
-        orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }],
+        orderBy: [{ cedula: 'asc' }, { apellidos: 'asc' }],
       }),
-      db.student.count({ where }),
+      model.count({ where }),
     ])
-
-    // If no results with strict search, try normalized cedula matching
-    if (students.length === 0 && normalized.length >= 4) {
-      // Get all students and filter by normalized cedula on the app side
-      // This is a fallback for when the user types "V12345678" but DB has "V 12345678"
-      const allStudents = await db.student.findMany({
-        where: {
-          ...planFilter,
-          OR: [
-            { cedula: { contains: normalized.substring(0, 3) } },
-            { cedula: { contains: q.substring(0, 3) } },
-          ],
-        },
-        take: limit * 5,
-        orderBy: [{ cedula: 'asc' }, { seccion: 'asc' }, { apellidos: 'asc' }],
-      })
-
-      const filtered = allStudents.filter(s =>
-        normalizeCedula(s.cedula).includes(normalized)
-      )
-
-      if (filtered.length > 0) {
-        const totalFiltered = await db.student.count({
-          where: { id: { in: filtered.map(s => s.id) } },
-        })
-
-        return NextResponse.json({
-          students: filtered.slice(0, limit),
-          total: totalFiltered,
-          page,
-          limit,
-          totalPages: Math.ceil(totalFiltered / limit),
-        })
-      }
-    }
 
     return NextResponse.json({
       students,
@@ -136,19 +72,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = getDb(plan)
+    const model = plan === 'derogado' ? prisma.planDerogado : prisma.planVigente
 
-    const student = await db.student.create({
+    const student = await model.create({
       data: {
         cedula: cedula.trim(),
         apellidos: apellidos.trim(),
         nombres: nombres.trim(),
-        fechaNacimiento: normalizeFecha(fechaNacimiento) || null,
+        fechaNacimiento: fechaNacimiento?.trim() || null,
         pais: pais?.trim() || 'VENEZUELA',
         estado: estado?.trim() || '',
         municipio: municipio?.trim() || '',
-        plan,
         rawData: rawData || '{}',
+        ...(plan === 'derogado' ? { certDraft: null } : {}),
       },
     })
 

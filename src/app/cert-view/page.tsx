@@ -12,6 +12,7 @@ import {
   emptyCell, resolveBinding,
 } from '@/components/cert-visual/types'
 import { notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
+import { useDashboardBindings } from '@/hooks/use-dashboard-bindings'
 import { Loader2, Printer } from 'lucide-react'
 
 interface Student {
@@ -27,6 +28,7 @@ function CertViewContent() {
   const layoutId = searchParams.get('layout') || ''
   const plan = searchParams.get('plan') || 'vigente'
   const { toast } = useToast()
+  const dash = useDashboardBindings(plan)
 
   const [gridConfig, setGridConfig] = useState<GridConfig | null>(null)
   const [loadingLayout, setLoadingLayout] = useState(true)
@@ -164,7 +166,7 @@ function CertViewContent() {
     data.calificaciones = cals
     data.rawDataMap = rawDataFlat
     return data
-  }, [displayData, rawDataFlat])
+  }, [displayData, rawDataFlat, dash.loaded, dash.lugarExpedicion, dash.fechaExpedicion, dash.directorNombre, dash.directorCedula])
 
   // === Print ===
   const buildTableHtml = () => {

@@ -1,0 +1,16 @@
+﻿{
+  "name": "SIGAE - Sistema de Certificaciones",
+  "short_name": "SIGAE",
+  "description": "Sistema de gestion de certificaciones escolares para la U.E.N. Creacion Cua",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

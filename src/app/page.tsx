@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -40,9 +40,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4">
       <div className="bg-white rounded-xl shadow-lg border border-emerald-200 py-8 w-full max-w-md">
-        <div className="text-center space-y-4 px-6 pb-2">
+        <header className="text-center space-y-4 px-6 pb-2">
           <div className="mx-auto w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-200 bg-emerald-100 flex items-center justify-center">
             <svg className="w-10 h-10 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -62,10 +62,10 @@ export default function LoginPage() {
         </div>
 
         <div className="px-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulario de inicio de sesion">
             <div className="space-y-2">
               <label htmlFor="login-password" className="text-sm font-medium flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 Contraseña de Acceso
@@ -84,13 +84,13 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>
+              <p id="login-error" className="text-sm text-red-600 bg-red-50 p-2 rounded-lg" role="alert">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full h-10 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:bg-emerald-300 text-white font-semibold rounded-lg transition text-sm"
+              className="w-full h-10 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:bg-emerald-300 text-white font-semibold rounded-lg transition text-sm"`n              aria-busy={loading}
             >
               {loading ? 'Verificando...' : 'Iniciar Sesión'}
             </button>
@@ -100,7 +100,5 @@ export default function LoginPage() {
             </p>
           </form>
         </div>
-      </div>
-    </div>
-  )
+      </div>`n    </main>`n  )
 }

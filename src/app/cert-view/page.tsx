@@ -129,9 +129,11 @@ function CertViewContent() {
   }, [plan, toast])
 
   // Enrich displayData with rawDataMap literals (same safety net as editor)
+  // Enrich displayData: overlay dashboard bindings (Z4/AH4/Z6/Z7) + rawDataMap literals
   const enrichedDisplayData = useMemo(() => {
-    if (!displayData || !rawDataFlat) return displayData
+    if (!displayData) return displayData
     const data = { ...displayData }
+    // Overlay valores del dashboard (fecha, lugar, director) siempre que ya cargaron
     if (dash.loaded) {
       data.lugar = dash.lugarExpedicion
       data.fechaExpedicion = dash.fechaExpedicion
@@ -144,6 +146,7 @@ function CertViewContent() {
         data.rawDataMap['DIRECTOR.CEDULA'] = dash.directorCedula
       }
     }
+    if (!rawDataFlat) return data
     const cals = { ...data.calificaciones }
     const YEAR_TO_NUM: Record<string, number> = {
       'Primer Año': 1, 'Segundo Año': 2, 'Tercer Año': 3, 'Cuarto Año': 4, 'Quinto Año': 5,

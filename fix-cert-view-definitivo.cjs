@@ -1,3 +1,9 @@
+const fs = require('fs');
+const path = require('path');
+
+const filePath = path.join(__dirname, 'src', 'app', 'cert-view', 'page.tsx');
+
+const newFile = `\
 'use client'
 
 import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
@@ -39,7 +45,7 @@ function CertViewContent() {
   // Load layout on mount
   useEffect(() => {
     if (!layoutId) { setLoadingLayout(false); return }
-    fetch(`/api/cert-layouts?plan=${plan}&id=${layoutId}`)
+    fetch(\`/api/cert-layouts?plan=\${plan}&id=\${layoutId}\`)
       .then(async r => r.ok ? r.json() : null)
       .then(layout => {
         if (layout?.datos) {
@@ -54,7 +60,7 @@ function CertViewContent() {
 
   // Load dashboard cells (same as editor)
   const reloadDashboardCells = useCallback(() => {
-    fetch(`/api/dashboard-state?plan=${plan}`)
+    fetch(\`/api/dashboard-state?plan=\${plan}\`)
       .then(res => res.json())
       .then(data => {
         if (data.found && data.datos) {
@@ -82,7 +88,7 @@ function CertViewContent() {
       const dd = String(today.getDate()).padStart(2, '0')
       const mm = String(today.getMonth() + 1).padStart(2, '0')
       const yyyy = today.getFullYear()
-      dashboardExtra['EXPEDICION.FECHA'] = z4 || `${dd}/${mm}/${yyyy}`
+      dashboardExtra['EXPEDICION.FECHA'] = z4 || \`\${dd}/\${mm}/\${yyyy}\`
       dashboardExtra['EXPEDICION.LUGAR'] = ah4 || 'MIRANDA'
       const z6 = dashboardCells[5]?.[25]?.trim() || ''
       const z7 = dashboardCells[6]?.[25]?.trim() || ''
@@ -111,12 +117,12 @@ function CertViewContent() {
           const yearCals: any[] = []
           for (let i = 0; i < codes.length; i++) {
             const code = codes[i]
-            const nota = rawDataMap[`NOTA.${code}.${y}`] || ''
-            const literal = rawDataMap[`LITERAL.${code}.${y}`] || ''
-            const eval_ = rawDataMap[`EVAL.${code}.${y}`] || ''
-            const mes = rawDataMap[`MES.${code}.${y}`] || ''
-            const anio = rawDataMap[`AÑO.${code}.${y}`] || ''
-            const inst = rawDataMap[`INST.${code}.${y}`] || ''
+            const nota = rawDataMap[\`NOTA.\${code}.\${y}\`] || ''
+            const literal = rawDataMap[\`LITERAL.\${code}.\${y}\`] || ''
+            const eval_ = rawDataMap[\`EVAL.\${code}.\${y}\`] || ''
+            const mes = rawDataMap[\`MES.\${code}.\${y}\`] || ''
+            const anio = rawDataMap[\`A\u00d1O.\${code}.\${y}\`] || ''
+            const inst = rawDataMap[\`INST.\${code}.\${y}\`] || ''
             if (nota || literal) {
               yearCals.push({ materia: code, numero: i + 1, nota, literal, tipoEvaluacion: eval_, fechaMes: mes, fechaAnio: anio, instEduc: inst })
             }
@@ -125,7 +131,7 @@ function CertViewContent() {
         }
         const literalesFB: string[] = []
         for (let i = 1; i <= 5; i++) {
-          const val = rawDataMap[`LITERAL.FINAL.${i}`]
+          const val = rawDataMap[\`LITERAL.FINAL.\${i}\`]
           if (val) literalesFB.push(val)
         }
         return {
@@ -135,7 +141,7 @@ function CertViewContent() {
           instituciones: [], calificaciones: calificacionesFB, orientacion: [], grupos: [],
           observaciones: '', observacionesLines: [], promedioAcumulado: rawDataMap['PROMEDIO.BASICA'] || '',
           director: { apellidosNombres: rawDataMap['DIRECTOR.NOMBRE'] || '', cedula: rawDataMap['DIRECTOR.CEDULA'] || '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
-          acta: rawDataMap['ACTA'] || '', actaFecha: rawDataMap['FECHAEMISIONT'] || '', actaAnio: rawDataMap['EGRESOAÑO'] || '', literalesFinales: literalesFB,
+          acta: rawDataMap['ACTA'] || '', actaFecha: rawDataMap['FECHAEMISIONT'] || '', actaAnio: rawDataMap['EGRESOA\u00d1O'] || '', literalesFinales: literalesFB,
           rawDataMap,
         }
       }
@@ -144,9 +150,9 @@ function CertViewContent() {
 
     // Plan vigente: build from certData (same as editor)
     let fechaExp = certData.fechaExpedicion
-    if (/^d{4}-d{2}-d{2}$/.test(fechaExp)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
       const [y, m, d] = fechaExp.split('-')
-      fechaExp = `${d}/${m}/${y}`
+      fechaExp = \`\${d}/\${m}/\${y}\`
     }
 
     const dashLugar = dashboardExtra['EXPEDICION.LUGAR'] || ''
@@ -195,11 +201,11 @@ function CertViewContent() {
     setLoadingData(true)
     try {
       const certApiUrl = plan === 'vigente'
-        ? `/api/plan-vigente/${student.id}/cert-data`
-        : `/api/plan-derogado/${student.id}/cert-data`
+        ? \`/api/plan-vigente/\${student.id}/cert-data\`
+        : \`/api/plan-derogado/\${student.id}/cert-data\`
       const res = await fetch(certApiUrl)
       if (!res.ok) {
-        toast({ title: 'Sin datos', description: `No se encontraron datos para ${student.cedula}.`, variant: 'destructive' })
+        toast({ title: 'Sin datos', description: \`No se encontraron datos para \${student.cedula}.\`, variant: 'destructive' })
         setLoadingData(false)
         return
       }
@@ -244,45 +250,45 @@ function CertViewContent() {
         const c = Number(key)
         const rs = cell.rowspan || 1
         const cs = cell.colspan || 1
-        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occupied.add(`${r + dr}-${c}`) }
-        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
+        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occupied.add(\`\${r + dr}-\${c}\`) }
+        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(\`\${r}-\${c + dc}\`) }
       }
     }
       const borderStyle = (enabled: boolean, color: string, bs?: string) => {
       const style = bs || 'solid'
       const width = (style === 'double' || style === 'groove' || style === 'ridge') ? '3px' : '1px'
-      return enabled ? `${width} ${style} ${color}` : 'none'
+      return enabled ? \`\${width} \${style} \${color}\` : 'none'
     }
-    const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
+    const logoSrc = \`\${window.location.origin}/logo-gob-mppe.png\`
     let rowsHtml = ''
     for (let r = 0; r < cfg.rows.length; r++) {
       const gridRow = cfg.rows[r]
       let cellsHtml = ''
       for (let c = 0; c < cfg.totalCols; c++) {
-        if (occupied.has(`${r}-${c}`)) continue
+        if (occupied.has(\`\${r}-\${c}\`)) continue
         const cell = gridRow.cells[c] || emptyCell()
         let content = cell.content
         if (cell.dataBinding && data) content = resolveBinding(cell.dataBinding, data, cfg) || ''
-        const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
-        const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
+        const csAttr = cell.colspan > 1 ? \` colspan="\${cell.colspan}"\` : ''
+        const rsAttr = cell.rowspan > 1 ? \` rowspan="\${cell.rowspan}"\` : ''
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">` : ''
+          ? \`<img src="\${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">\` : ''
         const text = imgTag || (content || '')
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
         const autoFitSpan = (cell.autoFit && !imgTag && content)
-          ? `<span style="display:inline-block;white-space:nowrap">${content}</span>` : text
-        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};writing-mode:${cell.writingMode || 'horizontal-tb'};background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
+          ? \`<span style="display:inline-block;white-space:nowrap">\${content}</span>\` : text
+        cellsHtml += \`<td\${csAttr}\${rsAttr}\${autoFitAttr} style="border-top:\${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:\${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:\${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:\${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:\${cell.width || 'auto'};height:\${cell.height || 'auto'};font-size:\${cell.fontSize}pt;font-weight:\${cell.fontWeight};font-style:\${cell.fontStyle};text-decoration:\${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:\${cell.textAlign};vertical-align:\${cell.verticalAlign};color:\${cell.color || 'inherit'};white-space:\${cell.whiteSpace};padding:\${cell.padding};writing-mode:\${cell.writingMode || 'horizontal-tb'};background:\${cell.bgColor || 'transparent'}">\${autoFitSpan}</td>\`
       }
-      rowsHtml += `<tr>${cellsHtml}</tr>`
+      rowsHtml += \`<tr>\${cellsHtml}</tr>\`
     }
-    const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
-    return `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`
+    const colgroupHtml = cfg.columnWidths.map(w => \`<col style="width:\${w || 'auto'}">\`).join('')
+    return \`<table><colgroup>\${colgroupHtml}</colgroup><tbody>\${rowsHtml}</tbody></table>\`
   }
 
   const handlePrint = () => {
     if (!gridConfig) return
     const tableHtml = buildTableHtml()
-    const html = `<!DOCTYPE html><html><head><title>Certificacion</title><style>
+    const html = \`<!DOCTYPE html><html><head><title>Certificacion</title><style>
 @page{size:Legal;margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
@@ -290,7 +296,7 @@ table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size
 td{overflow:hidden}
 img{max-width:100%;height:auto}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style></head><body>${tableHtml}<script>
+</style></head><body>\${tableHtml}<script>
 document.querySelectorAll('td[data-autofit]').forEach(function(td){
   var span=td.querySelector('span');
   if(!span||!span.textContent.trim())return;
@@ -306,7 +312,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
     span.style.whiteSpace='nowrap';span.style.overflow='hidden';span.style.maxWidth=avail+'px';
   }
 });
-</script></body></html>`
+</script></body></html>\`
     let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
     if (!iframe) {
       iframe = document.createElement('iframe')
@@ -336,8 +342,8 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
       for (const [key, cell] of Object.entries(row.cells)) {
         const c = Number(key)
         const rs = cell.rowspan || 1; const cs = cell.colspan || 1
-        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occ.add(`${r + dr}-${c}`) }
-        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occ.add(`${r}-${c + dc}`) }
+        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occ.add(\`\${r + dr}-\${c}\`) }
+        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occ.add(\`\${r}-\${c + dc}\`) }
       }
     }
     return occ
@@ -407,14 +413,14 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
               <table ref={tableRef} style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
                 <colgroup>
                   {gridConfig.columnWidths.map((w, i) => (
-                    <col key={i} style={{ width: w || `${100 / gridConfig.totalCols}%` }} />
+                    <col key={i} style={{ width: w || \`\${100 / gridConfig.totalCols}%\` }} />
                   ))}
                 </colgroup>
                 <tbody>
                   {gridConfig.rows.map((gridRow, r) => {
                     const cells: React.ReactNode[] = []
                     for (let c = 0; c < gridConfig.totalCols; c++) {
-                      if (occupied.has(`${r}-${c}`)) continue
+                      if (occupied.has(\`\${r}-\${c}\`)) continue
                       const cell = gridRow.cells[c] || emptyCell()
                       let displayContent = cell.content
                       if (cell.dataBinding && displayData) {
@@ -423,11 +429,11 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                       const borderS = (enabled: boolean) => {
                         const bs = cell.borderStyle || 'solid'
                         const bw = (bs === 'double' || bs === 'groove' || bs === 'ridge') ? '3px' : '1px'
-                        return enabled ? `${bw} ${bs} ${cell.borderColor}` : 'none'
+                        return enabled ? \`\${bw} \${bs} \${cell.borderColor}\` : 'none'
                       }
                       cells.push(
                         <td
-                          key={`${r}-${c}`}
+                          key={\`\${r}-\${c}\`}
                           data-autofit={cell.autoFit ? '1' : undefined}
                           colSpan={cell.colspan > 1 ? cell.colspan : undefined}
                           rowSpan={cell.rowspan > 1 ? cell.rowspan : undefined}
@@ -435,7 +441,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                             borderTop: borderS(cell.borderTop), borderRight: borderS(cell.borderRight),
                             borderBottom: borderS(cell.borderBottom), borderLeft: borderS(cell.borderLeft),
                             width: cell.width || undefined, height: cell.height || '24px',
-                            fontSize: `${cell.fontSize}pt`, fontWeight: cell.fontWeight,
+                            fontSize: \`\${cell.fontSize}pt\`, fontWeight: cell.fontWeight,
                             fontStyle: cell.fontStyle,
                             textDecoration: cell.textDecoration === 'underline' ? 'underline' : undefined,
                             textAlign: cell.textAlign, verticalAlign: cell.verticalAlign,
@@ -448,7 +454,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                           {cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
                           <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
                         ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
-                          <img src={`${window.location.origin}/logo-gob-mppe.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                          <img src={\`\${window.location.origin}/logo-gob-mppe.png\`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
                         ) : (displayContent || ''))}
                         </td>
                       )
@@ -476,3 +482,8 @@ export default function CertViewPage() {
     </Suspense>
   )
 }
+`
+
+fs.writeFileSync(filePath, newFile, 'utf8');
+console.log('OK. Archivo reescrito con logica identica al editor de formatos.');
+console.log('Ejecuta: git add . && git commit -m "fix: cert-view usa misma logica que editor de formatos" && git push');

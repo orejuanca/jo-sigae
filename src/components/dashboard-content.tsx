@@ -877,15 +877,17 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
         </div>
       )}
 
-      <table ref={tableRef} className="border-separate border-spacing-0" onKeyDown={handleKeyDown} style={{ marginTop: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}>
-        <colgroup><col style={{ width: '35px' }} />{colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}</colgroup>
-        <tbody>
+      <table ref={tableRef} className="border-separate border-spacing-0 table-fixed" onKeyDown={handleKeyDown} style={{ marginTop: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}>
+        <colgroup><col style={{ width: designLocked ? '0px' : '35px' }} />{colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}</colgroup>
+        <thead style={{ display: designLocked ? 'none' : '' }}>
           <tr><td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20" style={{ top: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}></td>
             {Array.from({ length: numCols }).map((_, c) => { const colSel = selMinC <= c && c <= selMaxC && selMinR === 0 && selMaxR === numRows - 1; return (<td key={c} onClick={(e) => handleColHeaderClick(c, e.shiftKey)} className={`border border-gray-400 text-[8px] text-center font-mono cursor-pointer select-none ${colSel ? 'bg-blue-400 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`} style={{ top: designLocked ? '0px' : (selectedCell ? '52px' : '28px'), position: 'sticky', zIndex: 15 }}>{colLetter(c)}</td>) })}
           </tr>
+        </thead>
+        <tbody>
           {Array.from({ length: numRows }).map((_, r) => (
             <tr key={r} style={{ height: `${rowHeights[r] || 20}px` }}>
-              <td onClick={(e) => handleRowHeaderClick(r, e.shiftKey)} className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5 ${selMinR<=r&&r<=selMaxR&&selMinC===0&&selMaxC===numCols-1?'bg-blue-400 text-white':'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>{r + 1}</td>
+              <td onClick={(e) => handleRowHeaderClick(r, e.shiftKey)} style={{ visibility: designLocked ? 'collapse' : 'visible' }} className={`border border-gray-400 text-[8px] text-center cursor-pointer select-none sticky left-0 z-5 ${selMinR<=r&&r<=selMaxR&&selMinC===0&&selMaxC===numCols-1?'bg-blue-400 text-white':'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>{r + 1}</td>
               {Array.from({ length: numCols }).map((_, c) => {
                 if (isHidden(r, c) && !CMD_BUTTONS.find(b => b.sr === r && b.sc === c)) return null
                 const merge = getMerge(r, c)
@@ -976,7 +978,8 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
     (plan === 'derogado' && (r >= 14 && r <= 18 || r >= 20 && r <= 24))
   )
                       const isCedulaCell = r === 4 && c === 12
-                      const isLockedDesign = !!editableCellsRef && !editableCellsRef.has(`${r}-${c}`)
+                      const isUnlockedCell = ((r === 3 || r === 5 || r === 6) && c === 25) || (r === 3 && c === 33)
+                      const isLockedDesign = !!editableCellsRef && !editableCellsRef.has(`${r}-${c}`) && !isUnlockedCell
                       const isReadOnlyCell = isAutoFill || (editMode && isCedulaCell) || isLockedDesign
                       const inputVal = cells[r]?.[c] || ''
                       return isReadOnlyCell ? (

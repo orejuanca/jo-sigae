@@ -500,7 +500,6 @@ export const DATA_BINDINGS_DEROGADO: { group: string; bindings: { value: string;
     { value: 'rawData.AÑO.EF.5', label: 'Quinto Año — Educación Física — Año' },
     { value: 'rawData.INST.EF.5', label: 'Quinto Año — Educación Física — Inst.' },
   ]},
-<<<<<<< Updated upstream
 ,
   { group: 'Plantel por Materia (Constancia)', bindings: [
     { value: 'rawData.INST_NAME.CA.1', label: 'Nombre Plantel - Castellano (1)' },
@@ -519,6 +518,4 @@ export const DATA_BINDINGS_DEROGADO: { group: string; bindings: { value: string;
     { value: 'rawData.INST_LOCAL.CA.5', label: 'Localidad Plantel - Castellano (5)' },
     { value: 'rawData.INST_EF.CA.5', label: 'E.F. Plantel - Castellano (5)' },
   ]}
-=======
->>>>>>> Stashed changes
 ]

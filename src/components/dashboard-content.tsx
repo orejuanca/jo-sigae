@@ -317,6 +317,20 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
     return () => clearTimeout(timer)
   }, [loaded, dbLoaded, plan, editMode, cells])
 
+  const bindingCellsRef = useRef({ z4: '', ah4: '', z6: '', z7: '' })
+  useEffect(() => {
+    if (!loaded || !dbLoaded || editMode) return
+    const z4 = cells[3]?.[25] || ''
+    const ah4 = cells[3]?.[33] || ''
+    const z6 = cells[5]?.[25] || ''
+    const z7 = cells[6]?.[25] || ''
+    const prev = bindingCellsRef.current
+    if (z4 === prev.z4 && ah4 === prev.ah4 && z6 === prev.z6 && z7 === prev.z7) return
+    bindingCellsRef.current = { z4, ah4, z6, z7 }
+    const timer = setTimeout(() => { saveToDb(plan, stateRef.current) }, 2000)
+    return () => clearTimeout(timer)
+  }, [loaded, dbLoaded, plan, editMode, cells])
+
   // BroadcastChannel para notificar cambios de diseño (en caliente)
   const bc = useRef(typeof window !== 'undefined' ? new BroadcastChannel('jo-sigae-dashboard') : null)
 

@@ -132,6 +132,18 @@ function CertViewContent() {
   const enrichedDisplayData = useMemo(() => {
     if (!displayData || !rawDataFlat) return displayData
     const data = { ...displayData }
+    if (dash.loaded) {
+      data.lugar = dash.lugarExpedicion
+      data.fechaExpedicion = dash.fechaExpedicion
+      data.director = { apellidosNombres: dash.directorNombre, cedula: dash.directorCedula }
+      if (data.rawDataMap) {
+        data.rawDataMap = { ...data.rawDataMap }
+        if (dash.lugarExpedicion) data.rawDataMap['EXPEDICION.LUGAR'] = dash.lugarExpedicion
+        if (dash.fechaExpedicion) data.rawDataMap['EXPEDICION.FECHA'] = dash.fechaExpedicion
+        data.rawDataMap['DIRECTOR.NOMBRE'] = dash.directorNombre
+        data.rawDataMap['DIRECTOR.CEDULA'] = dash.directorCedula
+      }
+    }
     const cals = { ...data.calificaciones }
     const YEAR_TO_NUM: Record<string, number> = {
       'Primer Año': 1, 'Segundo Año': 2, 'Tercer Año': 3, 'Cuarto Año': 4, 'Quinto Año': 5,

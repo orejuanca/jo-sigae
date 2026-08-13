@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 
@@ -299,6 +299,23 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [loaded, dbLoaded, plan, editMode, hasNewData])
+
+  // Guardado independiente de celdas de binding (Z4, AH4, Z6, Z7)
+  // Este efecto NO es bloqueado por hasNewData, garantizando que los valores
+  // de fecha/lugar/director siempre se guarden en la BD para los documentos.
+  const bindingCellsRef = useRef({ z4: '', ah4: '', z6: '', z7: '' })
+  useEffect(() => {
+    if (!loaded || !dbLoaded || editMode) return
+    const z4 = cells[3]?.[25] || ''
+    const ah4 = cells[3]?.[33] || ''
+    const z6 = cells[5]?.[25] || ''
+    const z7 = cells[6]?.[25] || ''
+    const prev = bindingCellsRef.current
+    if (z4 === prev.z4 && ah4 === prev.ah4 && z6 === prev.z6 && z7 === prev.z7) return
+    bindingCellsRef.current = { z4, ah4, z6, z7 }
+    const timer = setTimeout(() => { saveToDb(plan, stateRef.current) }, 2000)
+    return () => clearTimeout(timer)
+  }, [loaded, dbLoaded, plan, editMode, cells])
 
   // BroadcastChannel para notificar cambios de diseño (en caliente)
   const bc = useRef(typeof window !== 'undefined' ? new BroadcastChannel('jo-sigae-dashboard') : null)

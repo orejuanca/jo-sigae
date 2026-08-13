@@ -1,8 +1,8 @@
-// === Cell-by-Cell Grid Builder Types ===
+﻿// === Cell-by-Cell Grid Builder Types ===
 import { DATA_BINDINGS_VIGENTE, DATA_BINDINGS_DEROGADO } from './bindings-generated'
 
 export interface CellConfig {
-  content: string           // Static text label (e.g., "Código:")
+  content: string           // Static text label (e.g., "CÃ³digo:")
   dataBinding: string       // Dot-path to data field (e.g., "student.cedula", "school.denominacion")
   colspan: number           // Default 1
   rowspan: number           // Default 1
@@ -24,8 +24,8 @@ export interface CellConfig {
   fontStyle: 'normal' | 'italic'
   textDecoration: 'none' | 'underline'
   autoFit: boolean         // Default false - reduce font-size si texto desborda
-  writingMode: string      // Default 'horizontal-tb' - dirección del texto
-  borderStyle: string      // Default 'solid' - tipo de línea de borde
+  writingMode: string      // Default 'horizontal-tb' - direcciÃ³n del texto
+  borderStyle: string      // Default 'solid' - tipo de lÃ­nea de borde
 
 }
 
@@ -117,8 +117,8 @@ export interface DisplayData {
 
 // === Data Resolution for Preview ===
 const YEAR_NAME_MAP: Record<string, string> = {
-  '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año',
-  '4': 'Cuarto Año', '5': 'Quinto Año',
+  '1': 'Primer AÃ±o', '2': 'Segundo AÃ±o', '3': 'Tercer AÃ±o',
+  '4': 'Cuarto AÃ±o', '5': 'Quinto AÃ±o',
 }
 
 const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'] as const
@@ -137,17 +137,7 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
   // Soporte para multiples bindings separados por coma
   if (path.includes(',')) {
     const parts = path.split(',').map(p => p.trim()).filter(Boolean)
-<<<<<<< Updated upstream
-    const resolved = parts.map(p => {
-      const val = resolveBinding(p, data, gridConfig)
-      if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
-        return formatDateLong(val)
-      }
-      return val
-    }).filter(Boolean)
-=======
     const resolved = parts.map(p => resolveBinding(p, data, gridConfig)).filter(Boolean)
->>>>>>> Stashed changes
     return resolved.join(', ')
   }
   const [domain, ...rest] = path.split('.')
@@ -269,13 +259,11 @@ function h(content: string, overrides?: Partial<CellConfig>): CellConfig {
   return emptyCell({ content, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', ...overrides })
 }
 
-// ============================================================
 // Patch calif/orient/grupo/obs bindings onto ANY loaded template
 // Call this after loading from localStorage or DB so bindings
 // are always up-to-date without losing visual corrections.
-// ============================================================
 export function patchDataBindings(config: GridConfig): GridConfig {
-  // No inyectar enlaces automáticos — los enlaces se asignan manualmente por plan
+  // No inyectar enlaces automÃ¡ticos â€” los enlaces se asignan manualmente por plan
   return config
 }
 
@@ -314,26 +302,26 @@ export function createDefaultTemplate(): GridConfig {
 
   const rows: GridRow[] = []
 
-  // Row 1 — Logo + Título
+  // Row 1 â€” Logo + TÃ­tulo
   {
     const c = emptyRow(totalCols)
     c.cells[0] = emptyCell({ content: '##LOGO_CEMG##', colspan: 11, textAlign: 'center', verticalAlign: 'middle', bgColor: '' })
-    c.cells[12] = emptyCell({ content: 'CERTIFICACIÓN DE CALIFICACIONES  EMG', colspan: 15, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ content: 'CERTIFICACIÃ“N DE CALIFICACIONES  EMG', colspan: 15, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
 
   // Row 2
   {
     const c = emptyRow(totalCols)
-    c.cells[12] = emptyCell({ content: 'I. Plan de Estudio:  EDUCACIÓN MEDIA GENERAL', colspan: 10, fontWeight: 'bold', verticalAlign: 'center' })
-    c.cells[22] = emptyCell({ content: 'Código 31059', colspan: 5, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ content: 'I. Plan de Estudio:  EDUCACIÃ“N MEDIA GENERAL', colspan: 10, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[22] = emptyCell({ content: 'CÃ³digo 31059', colspan: 5, fontWeight: 'bold', verticalAlign: 'center' })
     rows.push(c)
   }
 
   // Row 3
   {
     const c = emptyRow(totalCols)
-    c.cells[12] = emptyCell({ content: 'Lugar y Fecha de Expedición:', colspan: 7, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[12] = emptyCell({ content: 'Lugar y Fecha de ExpediciÃ³n:', colspan: 7, fontWeight: 'bold', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 3, textAlign: 'right', verticalAlign: 'center', borderRight: false })
     c.cells[22] = emptyCell({ colspan: 5, verticalAlign: 'center', borderLeft: false })
     rows.push(c)
@@ -347,26 +335,26 @@ export function createDefaultTemplate(): GridConfig {
   // Row 5
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'II. Datos de la Institución Educativa o  Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'II. Datos de la InstituciÃ³n Educativa o  Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la CertificaciÃ³n:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
     rows.push(c)
   }
 
   // Row 6
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Código:', colspan: 3, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'CÃ³digo:', colspan: 3, verticalAlign: 'center' })
     c.cells[3] = emptyCell({ content: 'OD16751520', colspan: 5, verticalAlign: 'center' })
-    c.cells[8] = emptyCell({ content: 'Denominación y Epónimo:', colspan: 5, textAlign: 'center', verticalAlign: 'center', borderRight: false })
-    c.cells[14] = emptyCell({ content: 'U E N CREACIÓN CÚA', colspan: 13, verticalAlign: 'center' })
+    c.cells[8] = emptyCell({ content: 'DenominaciÃ³n y EpÃ³nimo:', colspan: 5, textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[14] = emptyCell({ content: 'U E N CREACIÃ“N CÃšA', colspan: 13, verticalAlign: 'center' })
     rows.push(c)
   }
 
   // Row 7
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Dirección:', colspan: 3, verticalAlign: 'center' })
-    c.cells[3] = emptyCell({ content: 'Urb. José de S. Martín - Sector Los Bloques - Nueva Cúa', colspan: 15, verticalAlign: 'center' })
-    c.cells[18] = emptyCell({ content: 'Teléfono:', colspan: 3, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'DirecciÃ³n:', colspan: 3, verticalAlign: 'center' })
+    c.cells[3] = emptyCell({ content: 'Urb. JosÃ© de S. MartÃ­n - Sector Los Bloques - Nueva CÃºa', colspan: 15, verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'TelÃ©fono:', colspan: 3, verticalAlign: 'center' })
     c.cells[21] = emptyCell({ content: '(0239) 7163530', colspan: 6, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -386,14 +374,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 9
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'III. Datos de Identificación del Estudiante:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'III. Datos de IdentificaciÃ³n del Estudiante:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
     rows.push(c)
   }
 
   // Row 10
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Cédula de Identidad:', colspan: 4, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'CÃ©dula de Identidad:', colspan: 4, verticalAlign: 'center' })
     c.cells[4] = emptyCell({ content: 'V 27545879', colspan: 5, verticalAlign: 'center', bgColor: '#CCFFCC' })
     c.cells[9] = emptyCell({ content: 'Fecha de Nacimiento:', colspan: 6, verticalAlign: 'center' })
     c.cells[15] = emptyCell({ colspan: 12, verticalAlign: 'center' })
@@ -413,7 +401,7 @@ export function createDefaultTemplate(): GridConfig {
   // Row 12
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Lugar de Nacimiento País:', colspan: 5, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'Lugar de Nacimiento PaÃ­s:', colspan: 5, verticalAlign: 'center' })
     c.cells[5] = emptyCell({ verticalAlign: 'center', borderRight: false })
     c.cells[11] = emptyCell({ content: 'Estado:', colspan: 2, textAlign: 'center', verticalAlign: 'center' })
     c.cells[13] = emptyCell({ verticalAlign: 'center', borderRight: false, borderLeft: false })
@@ -425,9 +413,9 @@ export function createDefaultTemplate(): GridConfig {
   // Row 13
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'IV. Instituciones Educativas donde Cursó Estudios', colspan: 13, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
-    c.cells[14] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
-    c.cells[15] = emptyCell({ content: 'Denominación y Epónimo de la Institución Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'IV. Instituciones Educativas donde CursÃ³ Estudios', colspan: 13, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
+    c.cells[15] = emptyCell({ content: 'DenominaciÃ³n y EpÃ³nimo de la InstituciÃ³n Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[21] = emptyCell({ content: 'Localidad', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[26] = emptyCell({ content: 'E.F.', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false })
     rows.push(c)
@@ -436,8 +424,8 @@ export function createDefaultTemplate(): GridConfig {
   // Row 14
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[1] = emptyCell({ content: 'Denominación y Epónimo de la Institución Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[1] = emptyCell({ content: 'DenominaciÃ³n y EpÃ³nimo de la InstituciÃ³n Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[7] = emptyCell({ content: 'Localidad', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ content: 'E.F.', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[14] = emptyCell({ content: '3', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
@@ -485,21 +473,21 @@ export function createDefaultTemplate(): GridConfig {
   // Row 18
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'PRIMER AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false })
-    c.cells[14] = emptyCell({ content: 'SEGUNDO AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
+    c.cells[0] = emptyCell({ content: 'PRIMER AÃ‘O', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false })
+    c.cells[14] = emptyCell({ content: 'SEGUNDO AÃ‘O', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
     rows.push(c)
   }
 
   // Row 19
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false })
-    c.cells[4] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'ÃREAS DE FORMACIÃ“N', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+    c.cells[4] = emptyCell({ content: 'CALIFICACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[9] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[10] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[18] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'ÃREAS DE FORMACIÃ“N', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'CALIFICACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[23] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[24] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[26] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center' })
@@ -509,14 +497,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 20
   {
     const c = emptyRow(totalCols)
-    c.cells[4] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[4] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[5] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[10] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[11] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[18] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[11] = emptyCell({ content: 'AÃ±o', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[24] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[25] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[25] = emptyCell({ content: 'AÃ±o', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
 
@@ -543,14 +531,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 22
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'InglÃ©s y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[11] = emptyCell({ verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'InglÃ©s y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -563,14 +551,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 23
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top', borderTop: false })
+    c.cells[0] = emptyCell({ content: 'MatemÃ¡ticas', colspan: 4, verticalAlign: 'top', borderTop: false })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[11] = emptyCell({ verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top', borderTop: false })
+    c.cells[14] = emptyCell({ content: 'MatemÃ¡ticas', colspan: 4, verticalAlign: 'top', borderTop: false })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -583,14 +571,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 24
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'EducaciÃ³n FÃ­sica', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[11] = emptyCell({ verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'EducaciÃ³n FÃ­sica', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -643,14 +631,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 27
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'GeografÃ­a, Historia y CiudadanÃ­a', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[11] = emptyCell({ verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'GeografÃ­a, Historia y CiudadanÃ­a', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -663,21 +651,21 @@ export function createDefaultTemplate(): GridConfig {
   // Row 28
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'TERCER AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
-    c.cells[14] = emptyCell({ content: 'CUARTO AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderBottom: false, borderLeft: false })
+    c.cells[0] = emptyCell({ content: 'TERCER AÃ‘O', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'CUARTO AÃ‘O', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderBottom: false, borderLeft: false })
     rows.push(c)
   }
 
   // Row 29
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[4] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[0] = emptyCell({ content: 'ÃREAS DE FORMACIÃ“N', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ content: 'CALIFICACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[12] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center', borderBottom: false })
-    c.cells[14] = emptyCell({ content: 'ÁREAS DE\nFORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[18] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[14] = emptyCell({ content: 'ÃREAS DE\nFORMACIÃ“N', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[18] = emptyCell({ content: 'CALIFICACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[24] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[26] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center', borderBottom: false })
@@ -687,14 +675,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 30
   {
     const c = emptyRow(totalCols)
-    c.cells[4] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[4] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[5] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
     c.cells[10] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
-    c.cells[11] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
-    c.cells[18] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[11] = emptyCell({ content: 'AÃ±o', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[18] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[19] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
     c.cells[24] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
-    c.cells[25] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[25] = emptyCell({ content: 'AÃ±o', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     rows.push(c)
   }
 
@@ -721,14 +709,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 32
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'InglÃ©s y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'InglÃ©s y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -741,14 +729,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 33
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'MatemÃ¡ticas', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'MatemÃ¡ticas', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -761,14 +749,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 34
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'EducaciÃ³n FÃ­sica', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'EducaciÃ³n FÃ­sica', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -781,14 +769,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 35
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'FÃ­sica', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Física', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'FÃ­sica', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -801,14 +789,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 36
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Química', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'QuÃ­mica', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Química', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'QuÃ­mica', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -821,14 +809,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 37
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Biología', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'BiologÃ­a', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Biología', colspan: 4, verticalAlign: 'top' })
+    c.cells[14] = emptyCell({ content: 'BiologÃ­a', colspan: 4, verticalAlign: 'top' })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -841,14 +829,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 38
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'GeografÃ­a, Historia y CiudadanÃ­a', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4, verticalAlign: 'top', borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'GeografÃ­a, Historia y CiudadanÃ­a', colspan: 4, verticalAlign: 'top', borderBottom: false })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -868,7 +856,7 @@ export function createDefaultTemplate(): GridConfig {
     c.cells[10] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
     c.cells[11] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
     c.cells[12] = emptyCell({ content: '****', textAlign: 'center', verticalAlign: 'center', borderTop: false })
-    c.cells[14] = emptyCell({ content: 'Formación para la Soberanía Nacional', colspan: 4 })
+    c.cells[14] = emptyCell({ content: 'FormaciÃ³n para la SoberanÃ­a Nacional', colspan: 4 })
     c.cells[18] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[19] = emptyCell({ colspan: 4, verticalAlign: 'center', borderRight: false })
     c.cells[23] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
@@ -881,21 +869,21 @@ export function createDefaultTemplate(): GridConfig {
   // Row 40
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'QUINTO AÑO', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
-    c.cells[14] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderBottom: false, borderLeft: false })
+    c.cells[0] = emptyCell({ content: 'QUINTO AÃ‘O', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'ÃREAS DE FORMACIÃ“N', colspan: 13, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderBottom: false, borderLeft: false })
     rows.push(c)
   }
 
   // Row 41
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'ÁREAS DE FORMACIÓN', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[4] = emptyCell({ content: 'CALIFICACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
+    c.cells[0] = emptyCell({ content: 'ÃREAS DE FORMACIÃ“N', colspan: 4, rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[4] = emptyCell({ content: 'CALIFICACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false })
     c.cells[9] = emptyCell({ content: 'T-E', rowspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ content: 'FECHA', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[12] = emptyCell({ content: 'Inst. Educ.', rowspan: 2, fontSize: 7, fontWeight: 'bold', textAlign: 'center', borderBottom: false })
-    c.cells[14] = emptyCell({ content: 'ÁREA DE FORMACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: 'AÑO', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[14] = emptyCell({ content: 'ÃREA DE FORMACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: 'AÃ‘O', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[20] = emptyCell({ content: 'LITERAL', colspan: 7, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -903,12 +891,12 @@ export function createDefaultTemplate(): GridConfig {
   // Row 42
   {
     const c = emptyRow(totalCols)
-    c.cells[4] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[4] = emptyCell({ content: 'NÂ°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[5] = emptyCell({ content: 'LETRAS', colspan: 4, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderRight: false, borderBottom: false })
     c.cells[10] = emptyCell({ content: 'Mes', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
-    c.cells[11] = emptyCell({ content: 'Año', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
-    c.cells[14] = emptyCell({ content: 'Orientaciön y Convivencia', colspan: 5, rowspan: 5, textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '1°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[11] = emptyCell({ content: 'AÃ±o', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
+    c.cells[14] = emptyCell({ content: 'OrientaciÃ¶n y Convivencia', colspan: 5, rowspan: 5, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '1Â°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -923,7 +911,7 @@ export function createDefaultTemplate(): GridConfig {
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '2°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[19] = emptyCell({ content: '2Â°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -931,14 +919,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 44
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Inglés y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
+    c.cells[0] = emptyCell({ content: 'InglÃ©s y otras Lenguas Extranjeras', colspan: 4, verticalAlign: 'top' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '3°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[19] = emptyCell({ content: '3Â°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -946,14 +934,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 45
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Matemáticas', colspan: 4, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'MatemÃ¡ticas', colspan: 4, verticalAlign: 'center' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '4°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+    c.cells[19] = emptyCell({ content: '4Â°', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
     c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -961,14 +949,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 46
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Educación Física', colspan: 4, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'EducaciÃ³n FÃ­sica', colspan: 4, verticalAlign: 'center' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '5°', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[19] = emptyCell({ content: '5Â°', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
     c.cells[20] = emptyCell({ colspan: 7, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
   }
@@ -976,15 +964,15 @@ export function createDefaultTemplate(): GridConfig {
   // Row 47
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Física', colspan: 4, verticalAlign: 'center', borderBottom: false })
+    c.cells[0] = emptyCell({ content: 'FÃ­sica', colspan: 4, verticalAlign: 'center', borderBottom: false })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'AREA DE FORMACIÓN', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: 'AÑO', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
+    c.cells[14] = emptyCell({ content: 'AREA DE FORMACIÃ“N', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: 'AÃ‘O', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false, borderLeft: false })
     c.cells[20] = emptyCell({ content: 'GRUPO', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderBottom: false })
     c.cells[25] = emptyCell({ content: 'LITERAL', colspan: 2, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -993,15 +981,15 @@ export function createDefaultTemplate(): GridConfig {
   // Row 48
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Química', colspan: 4, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'QuÃ­mica', colspan: 4, verticalAlign: 'center' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Participaciónen Grupos de Creación, Recreación y Producción', colspan: 5, rowspan: 5, textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '1°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'ParticipaciÃ³nen Grupos de CreaciÃ³n, RecreaciÃ³n y ProducciÃ³n', colspan: 5, rowspan: 5, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '1Â°', textAlign: 'center', verticalAlign: 'center' })
     c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
     c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -1010,14 +998,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 49
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Biología', colspan: 4, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'BiologÃ­a', colspan: 4, verticalAlign: 'center' })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '2°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '2Â°', textAlign: 'center', verticalAlign: 'center' })
     c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
     c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -1033,7 +1021,7 @@ export function createDefaultTemplate(): GridConfig {
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '3°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '3Â°', textAlign: 'center', verticalAlign: 'center' })
     c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
     c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -1042,14 +1030,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 51
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Geografía, Historia y Ciudadanía', colspan: 4 })
+    c.cells[0] = emptyCell({ content: 'GeografÃ­a, Historia y CiudadanÃ­a', colspan: 4 })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '4°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '4Â°', textAlign: 'center', verticalAlign: 'center' })
     c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
     c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -1058,14 +1046,14 @@ export function createDefaultTemplate(): GridConfig {
   // Row 52
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Formación para la Soberanía Nacional', colspan: 4, borderBottom: false })
+    c.cells[0] = emptyCell({ content: 'FormaciÃ³n para la SoberanÃ­a Nacional', colspan: 4, borderBottom: false })
     c.cells[4] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[5] = emptyCell({ colspan: 4, verticalAlign: 'center' })
     c.cells[9] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[10] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[11] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
     c.cells[12] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
-    c.cells[19] = emptyCell({ content: '5°', textAlign: 'center', verticalAlign: 'center' })
+    c.cells[19] = emptyCell({ content: '5Â°', textAlign: 'center', verticalAlign: 'center' })
     c.cells[20] = emptyCell({ colspan: 5, verticalAlign: 'center' })
     c.cells[25] = emptyCell({ colspan: 2, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -1105,7 +1093,7 @@ export function createDefaultTemplate(): GridConfig {
   // Row 57
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'VII. Institución Educativa', colspan: 13, fontWeight: 'bold', borderTop: false })
+    c.cells[0] = emptyCell({ content: 'VII. InstituciÃ³n Educativa', colspan: 13, fontWeight: 'bold', borderTop: false })
     c.cells[14] = emptyCell({ content: 'VIII. Centro de Desarrollo de la Calidad Educativa Estadal', colspan: 13, fontWeight: 'bold', borderTop: false })
     rows.push(c)
   }
@@ -1114,7 +1102,7 @@ export function createDefaultTemplate(): GridConfig {
   {
     const c = emptyRow(totalCols)
     c.cells[0] = emptyCell({ content: 'Director(a)', colspan: 7, textAlign: 'center', verticalAlign: 'center' })
-    c.cells[7] = emptyCell({ content: 'SELLO DE LA INSTITUCIÓN EDUCATIVA', colspan: 6, rowspan: 7, textAlign: 'center', verticalAlign: 'center' })
+    c.cells[7] = emptyCell({ content: 'SELLO DE LA INSTITUCIÃ“N EDUCATIVA', colspan: 6, rowspan: 7, textAlign: 'center', verticalAlign: 'center' })
     c.cells[14] = emptyCell({ content: 'Director(a)', colspan: 7, textAlign: 'center', verticalAlign: 'center' })
     c.cells[21] = emptyCell({ content: 'SELLO DEL CENTRO DE DESARROLLO DE LA CALIDAD EDUCATIVA ESTADAL', colspan: 6, rowspan: 7, textAlign: 'center', verticalAlign: 'center' })
     rows.push(c)
@@ -1138,8 +1126,8 @@ export function createDefaultTemplate(): GridConfig {
   // Row 61
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'Cédula de Identidad:', colspan: 7, verticalAlign: 'center' })
-    c.cells[14] = emptyCell({ content: 'Cédula de Identidad:', colspan: 7, verticalAlign: 'center' })
+    c.cells[0] = emptyCell({ content: 'CÃ©dula de Identidad:', colspan: 7, verticalAlign: 'center' })
+    c.cells[14] = emptyCell({ content: 'CÃ©dula de Identidad:', colspan: 7, verticalAlign: 'center' })
     rows.push(c)
   }
 
@@ -1169,7 +1157,7 @@ export function createDefaultTemplate(): GridConfig {
   // Row 65
   {
     const c = emptyRow(totalCols)
-    c.cells[0] = emptyCell({ content: 'VALOR FISCAL: Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres décimas de la Unidad Tributaria (0,3 U.T.)', colspan: 27, fontSize: 6, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })
+    c.cells[0] = emptyCell({ content: 'VALOR FISCAL: Para su validez legal y de acuerdo al Ramo de Estampillas, al dorso de este documento se le debe colocar tres dÃ©cimas de la Unidad Tributaria (0,3 U.T.)', colspan: 27, fontSize: 6, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false, borderLeft: false })
     rows.push(c)
   }
 

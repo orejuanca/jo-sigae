@@ -137,6 +137,7 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
   // Soporte para multiples bindings separados por coma
   if (path.includes(',')) {
     const parts = path.split(',').map(p => p.trim()).filter(Boolean)
+<<<<<<< Updated upstream
     const resolved = parts.map(p => {
       const val = resolveBinding(p, data, gridConfig)
       if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
@@ -144,6 +145,9 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       }
       return val
     }).filter(Boolean)
+=======
+    const resolved = parts.map(p => resolveBinding(p, data, gridConfig)).filter(Boolean)
+>>>>>>> Stashed changes
     return resolved.join(', ')
   }
   const [domain, ...rest] = path.split('.')

@@ -1,4 +1,5 @@
-﻿'use client'
+﻿Set-Content -Path "D:\jo-sigae\src\app\page.tsx" -Value @'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -33,9 +34,9 @@ export default function LoginPage() {
 
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-400">Cargando...</p>
-      </div>
+      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-400" aria-live="polite">Cargando...</p>
+      </main>
     )
   }
 
@@ -43,8 +44,8 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4">
       <div className="bg-white rounded-xl shadow-lg border border-emerald-200 py-8 w-full max-w-md">
         <header className="text-center space-y-4 px-6 pb-2">
-          <div className="mx-auto w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-200 bg-emerald-100 flex items-center justify-center">
-            <svg className="w-10 h-10 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mx-auto w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-200 bg-emerald-100 flex items-center justify-center" aria-hidden="true">
+            <svg className="w-10 h-10 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
@@ -59,7 +60,7 @@ export default function LoginPage() {
             <p>{schoolConfig.direccion}</p>
             <p>Municipio {schoolConfig.municipio}, {schoolConfig.estado}</p>
           </div>
-        </div>
+        </header>
 
         <div className="px-6">
           <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulario de inicio de sesion">
@@ -75,6 +76,9 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 autoComplete="current-password"
+                required
+                aria-describedby={error ? "login-error" : undefined}
+                aria-invalid={error ? true : undefined}
                 className="w-full h-10 px-3 rounded-lg border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm"
                 placeholder="Ingrese la contraseña del sistema"
                 value={password}
@@ -90,15 +94,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full h-10 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:bg-emerald-300 text-white font-semibold rounded-lg transition text-sm"`n              aria-busy={loading}
+              className="w-full h-10 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:bg-emerald-300 text-white font-semibold rounded-lg transition text-sm"
+              aria-busy={loading}
             >
               {loading ? 'Verificando...' : 'Iniciar Sesión'}
             </button>
 
-            <p className="text-xs text-center text-gray-400">
+            <footer className="text-xs text-center text-gray-400">
               Gobierno Bolivariano de Venezuela — Ministerio del Poder Popular para la Educacion
-            </p>
+            </footer>
           </form>
         </div>
-      </div>`n    </main>`n  )
+      </div>
+    </main>
+  )
 }
+'@ -Encoding UTF8

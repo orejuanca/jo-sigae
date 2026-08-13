@@ -1,5 +1,4 @@
-﻿Set-Content -Path "D:\jo-sigae\src\app\page.tsx" -Value @'
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -109,4 +108,3 @@ export default function LoginPage() {
     </main>
   )
 }
-'@ -Encoding UTF8

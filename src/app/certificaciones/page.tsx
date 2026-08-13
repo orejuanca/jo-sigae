@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -199,6 +199,21 @@ export default function CertificacionesPage() {
   const { toast } = useToast()
 
   const [certData, setCertData] = useState<CertData>(emptyCertData())
+
+  // Re-aplicar bindings cuando el hook del dashboard termine de cargar (fix race condition)
+  // Sin este efecto, si el usuario selecciona un alumno antes de que carguen los valores
+  // del dashboard, se quedan los defaults en lugar de los valores reales de Z4/AH4/Z6/Z7.
+  const prevDashLoaded = useRef(false)
+  useEffect(() => {
+    if (!dash.loaded || !dataLoaded) return
+    // Re-aplicar siempre que dash.fechaExpedicion cambie (ej: usuario edito en dashboard y volvio)
+    setCertData(prev => ({
+      ...prev,
+      lugar: dash.lugarExpedicion,
+      fechaExpedicion: dash.fechaExpedicionISO,
+      director: { ...dash.director },
+    }))
+  }, [dash.loaded, dash.fechaExpedicion, dash.lugarExpedicion, dash.directorNombre, dash.directorCedula])
   const [loadedData, setLoadedData] = useState<CertData | null>(null)
 
   // Plan activo basado en los datos cargados

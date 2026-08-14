@@ -611,7 +611,10 @@ export default function ValidarPage() {
                 </Button>
               </div>
               <div className="text-[10px] text-gray-500">
-                <strong>Campos disponibles:</strong> {{'{{denominacion}}'}}, {{'{{od}}'}}, {{'{{estado}}'}}, {{'{{municipio}}'}}, {{'{{direccion}}'}}, {{'{{telefono}}'}}, {{'{{planEstudio}}'}}, {{'{{director.apellidosNombres}}'}}, {{'{{director.cedula}}'}}, {{'{{estudiante.apellidos}}'}}, {{'{{estudiante.nombres}}'}}, {{'{{estudiante.cedula}}'}}, {{'{{estudiante.fechaNacimiento}}'}}, {{'{{promedioAcumulado}}'}}, {{'{{lugar}}'}}, {{'{{fechaExpedicion}}'}}
+                <strong>Campos disponibles:</strong>{' '}
+                {['denominacion','od','estado','municipio','direccion','telefono','planEstudio','director.apellidosNombres','director.cedula','estudiante.apellidos','estudiante.nombres','estudiante.cedula','estudiante.fechaNacimiento','promedioAcumulado','lugar','fechaExpedicion'].map((f,i) => (
+                  <span key={f}>{i > 0 && ', '}{`{{${f}}}`}</span>
+                ))}
               </div>
             </CardContent>
           </Card>

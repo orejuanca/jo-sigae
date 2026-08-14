@@ -4,15 +4,13 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StudentSearch } from '@/components/student-search'
 import { useToast } from '@/hooks/use-toast'
-import { schoolConfig, planEMG, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
+import { notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
-  Search, Printer, Loader2, Save, Edit3, Eye, Pencil,
+  Search, Printer, Loader2,
 } from 'lucide-react'
 
 // === Types ===
@@ -44,36 +42,36 @@ interface CertData {
 
 // Template text document structure
 interface TextTemplate {
-  headerLines: string[]    // Lines of institutional header (ministry, school name, etc.)
-  bodyParagraphs: string[]  // Paragraphs with {{placeholder}} tokens
-  footerLines: string[]    // Signature lines, footer text
+  headerLines: string[]
+  bodyParagraphs: string[]
+  footerLines: string[]
   pageSize: 'carta' | 'legal' | 'a4'
-  showGradesTable: boolean  // Whether to include the grades table in the document
-  gradesTableTitle: string // Title above the grades table
+  showGradesTable: boolean
+  gradesTableTitle: string
 }
 
-// Default template for "Validación de Notas"
+// Default template for "Validacion de Notas"
 const DEFAULT_TEMPLATE: TextTemplate = {
   headerLines: [
-    'REPÚBLICA BOLIVARIANA DE VENEZUELA',
-    'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN',
+    'REPUBLICA BOLIVARIANA DE VENEZUELA',
+    'MINISTERIO DEL PODER POPULAR PARA LA EDUCACION',
     '{{denominacion}}',
-    '{{estado}} — {{municipio}}',
+    '{{estado}} - {{municipio}}',
   ],
   bodyParagraphs: [
-    'Validación de Notas',
+    'Validacion de Notas',
     '',
-    'Quien suscribe, {{director.apellidosNombres}}, C.I. {{director.cedula}}, en mi condición de Directora del Plantel {{denominacion}}, código {{od}}, hace constar que el(la) ciudadano(a):',
+    'Quien suscribe, {{director.apellidosNombres}}, C.I. {{director.cedula}}, en mi condicion de Directora del Plantel {{denominacion}}, codigo {{od}}, hace constar que el(la) ciudadano(a):',
     '',
     '{{estudiante.apellidos}} {{estudiante.nombres}}',
     'C.I.: {{estudiante.cedula}}',
     '',
-    'cursó y aprobó en esta institución las asignaturas correspondientes al {{planEstudio}}, según se detalla a continuación:',
+    'curso y aprobo en esta institucion las asignaturas correspondientes al {{planEstudio}}, segun se detalla a continuacion:',
   ],
   footerLines: [
     'Obteniendo un promedio acumulado de {{promedioAcumulado}} puntos.',
     '',
-    'Las calificaciones aquí expresadas son fieles copia de los registros llevados en este plantel. Se expide a solicitud de la parte interesada, en {{lugar}}, a los {{fechaExpedicion}}.',
+    'Las calificaciones aqui expresadas son fieles copia de los registros llevados en este plantel. Se expide a solicitud de la parte interesada, en {{lugar}}, a los {{fechaExpedicion}}.',
     '',
     '___________________________',
     '{{director.apellidosNombres}}',
@@ -85,10 +83,9 @@ const DEFAULT_TEMPLATE: TextTemplate = {
   ],
   pageSize: 'legal',
   showGradesTable: true,
-  gradesTableTitle: 'RELACIÓN DE CALIFICACIONES',
+  gradesTableTitle: 'RELACION DE CALIFICACIONES',
 }
 
-const STORAGE_KEY_TEMPLATE = 'validar-notas-template'
 const LAYOUT_NAME = 'VALIDACION DE NOTAS'
 
 function formatDateLong(dateStr: string): string {
@@ -105,10 +102,8 @@ function formatDateLong(dateStr: string): string {
 function resolveTemplateToken(token: string, data: CertData | null): string {
   if (!data) return token
   const t = token.trim()
-  // Remove {{ and }}
   const key = t.replace(/^\{\{|\}\}$/g, '').trim()
 
-  // Dot-path resolution
   const parts = key.split('.')
   let value = ''
   if (parts[0] === 'estudiante') {
@@ -127,7 +122,6 @@ function resolveTemplateToken(token: string, data: CertData | null): string {
     }
   }
 
-  // Format fechaExpedicion as long date
   if (key === 'fechaExpedicion' && value) {
     value = formatDateLong(value)
   }
@@ -143,18 +137,15 @@ function processTemplateLine(line: string, data: CertData | null): React.ReactNo
   let match: RegExpExecArray | null
 
   while ((match = regex.exec(line)) !== null) {
-    // Add text before the token
     if (match.index > lastIndex) {
       parts.push(line.substring(lastIndex, match.index))
     }
-    // Add resolved token
     const resolved = resolveTemplateToken(match[0], data)
     parts.push(
       <span key={match.index} className="font-semibold">{resolved}</span>
     )
     lastIndex = regex.lastIndex
   }
-  // Add remaining text
   if (lastIndex < line.length) {
     parts.push(line.substring(lastIndex))
   }
@@ -164,10 +155,10 @@ function processTemplateLine(line: string, data: CertData | null): React.ReactNo
 
 // Build the grades table HTML for print
 function buildGradesTableHtml(data: CertData): string {
-  const yearOrder = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+  const yearOrder = ['Primer Ano', 'Segundo Ano', 'Tercer Ano', 'Cuarto Ano', 'Quinto Ano']
   let html = '<table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;margin:12pt 0">'
   html += '<thead><tr style="background:#f0f0f0">'
-  html += '<th style="border:1px solid #333;padding:4px 6px;text-align:center">Año</th>'
+  html += '<th style="border:1px solid #333;padding:4px 6px;text-align:center">Ano</th>'
   html += '<th style="border:1px solid #333;padding:4px 6px;text-align:center">Asignatura</th>'
   html += '<th style="border:1px solid #333;padding:4px 6px;text-align:center">Nota</th>'
   html += '<th style="border:1px solid #333;padding:4px 6px;text-align:center">Literal</th>'
@@ -202,52 +193,38 @@ export default function ValidarPage() {
   const plan = useCurrentPlan()
   const { toast } = useToast()
 
-  // State
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certData, setCertData] = useState<CertData | null>(null)
   const [loadingData, setLoadingData] = useState(false)
-  const [editing, setEditing] = useState(false)
   const [template, setTemplate] = useState<TextTemplate>(DEFAULT_TEMPLATE)
-  const [editBody, setEditBody] = useState('')
-  const [editHeader, setEditHeader] = useState('')
-  const [editFooter, setEditFooter] = useState('')
-  const [templateLoaded, setTemplateLoaded] = useState(false)
-  const [saving, setSaving] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
 
-  // Load template from DB (CertLayouts) on mount
+  // Load template from DB (CertLayouts) on mount — the template is edited
+  // exclusively in the Editor de Formatos page and stored as a CertLayout.
+  // Here we only read it.
   useEffect(() => {
     async function loadTemplate() {
       try {
-        // Try to find a text template layout by name
         const res = await fetch(`/api/cert-layouts?plan=${plan}`)
         if (res.ok) {
           const layouts = await res.json()
-          const found = layouts.find((l: any) => l.nombre === `${LAYOUT_NAME} ${plan === 'derogado' ? '(DEROGADO)' : '(VIGENTE)'}`)
+          const layoutName = plan === 'derogado'
+            ? `${LAYOUT_NAME} (DEROGADO)`
+            : `${LAYOUT_NAME} (VIGENTE)`
+          const found = layouts.find((l: any) => l.nombre === layoutName)
           if (found) {
             const detailRes = await fetch(`/api/cert-layouts?id=${found.id}&plan=${plan}`)
             if (detailRes.ok) {
               const detail = await detailRes.json()
               const parsed = typeof detail.datos === 'string' ? JSON.parse(detail.datos) : detail.datos
-              if (parsed.templateType === 'text-document') {
+              if (parsed.templateType === 'text-document' && parsed.template) {
                 setTemplate(parsed.template)
-                setTemplateLoaded(true)
                 return
               }
             }
           }
         }
-      } catch { /* ignore */ }
-
-      // Fallback: try localStorage
-      try {
-        const stored = localStorage.getItem(`${STORAGE_KEY_TEMPLATE}-${plan}`)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          setTemplate(parsed)
-        }
       } catch { /* use default */ }
-      setTemplateLoaded(true)
     }
     loadTemplate()
   }, [plan])
@@ -270,7 +247,6 @@ export default function ValidarPage() {
       const result = await res.json()
       if (result.certData) {
         const cd = result.certData
-        // Fix literals
         if (cd.calificaciones) {
           for (const anio of Object.keys(cd.calificaciones)) {
             for (const cal of cd.calificaciones[anio]) {
@@ -292,68 +268,6 @@ export default function ValidarPage() {
     }
   }, [plan, toast])
 
-  // Enter/exit edit mode
-  const enterEditMode = () => {
-    setEditHeader(template.headerLines.join('\n'))
-    setEditBody(template.bodyParagraphs.join('\n'))
-    setEditFooter(template.footerLines.join('\n'))
-    setEditing(true)
-  }
-
-  const exitEditMode = () => {
-    setEditing(false)
-  }
-
-  // Save template edits
-  const saveTemplateEdits = async () => {
-    const updated: TextTemplate = {
-      ...template,
-      headerLines: editHeader.split('\n'),
-      bodyParagraphs: editBody.split('\n'),
-      footerLines: editFooter.split('\n'),
-    }
-    setTemplate(updated)
-    setEditing(false)
-    setSaving(true)
-
-    try {
-      // Save to DB as a CertLayout
-      const layoutPayload = {
-        templateType: 'text-document',
-        template: updated,
-        meta: { plan },
-      }
-      // Check if layout exists
-      const listRes = await fetch(`/api/cert-layouts?plan=${plan}`)
-      const layouts = listRes.ok ? await listRes.json() : []
-      const existing = layouts.find((l: any) => l.nombre === `${LAYOUT_NAME} ${plan === 'derogado' ? '(DEROGADO)' : '(VIGENTE)'}`)
-
-      if (existing) {
-        await fetch(`/api/cert-layouts?id=${existing.id}&plan=${plan}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ datos: layoutPayload }),
-        })
-      } else {
-        await fetch(`/api/cert-layouts?plan=${plan}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombre: `${LAYOUT_NAME} ${plan === 'derogado' ? '(DEROGADO)' : '(VIGENTE)'}`,
-            datos: layoutPayload,
-          }),
-        })
-      }
-      // Also save to localStorage as backup
-      localStorage.setItem(`${STORAGE_KEY_TEMPLATE}-${plan}`, JSON.stringify(updated))
-      toast({ title: 'Plantilla guardada', description: 'Los cambios se guardaron correctamente.' })
-    } catch {
-      toast({ title: 'Error', description: 'No se pudo guardar la plantilla.', variant: 'destructive' })
-    } finally {
-      setSaving(false)
-    }
-  }
-
   // Print
   const handlePrint = () => {
     if (!certData || !previewRef.current) return
@@ -362,7 +276,6 @@ export default function ValidarPage() {
     const pageWidths: Record<string, string> = { carta: '8.5in', legal: '8.5in', a4: '210mm' }
     const pageHeights: Record<string, string> = { carta: '11in', legal: '14in', a4: '297mm' }
 
-    // Build document HTML
     let docHtml = '<!DOCTYPE html><html><head><title>Validacion de Notas</title>'
     docHtml += `<style>`
     docHtml += `@page{size:${pageSizes[pageSize]};margin:1in 1.2in}`
@@ -393,7 +306,6 @@ export default function ValidarPage() {
     for (const line of template.headerLines) {
       const resolved = resolveTemplateToken(line, certData)
       if (resolved.includes('{{')) {
-        // Still unresolved, use as-is
         const plain = line.replace(/\{\{[^}]+\}\}/g, '')
         if (plain.trim()) {
           if (line.includes('denominacion')) docHtml += `<span class="line school-name">${plain}</span>`
@@ -415,16 +327,13 @@ export default function ValidarPage() {
       const resolved = para.replace(/\{\{[^}]+\}\}/g, (token) => resolveTemplateToken(token, certData))
 
       if (!foundTitle && (para.trim() === '' || para === template.bodyParagraphs[0])) {
-        // Check if this is the title line
         if (template.bodyParagraphs[0] && !template.bodyParagraphs[0].includes('{{') && template.bodyParagraphs[0].trim().length > 0 && template.bodyParagraphs[0] === template.bodyParagraphs[template.headerLines.length > 0 ? 1 : 0]) {
-          // It's the document title
           docHtml += `<div class="doc-title">${resolved}</div>`
           foundTitle = true
           continue
         }
       }
 
-      // Student name block
       if (para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')) {
         docHtml += '<div style="text-align:center;margin:12pt 0;padding:8pt;border:1px solid #999;display:inline-block;min-width:300pt">'
         docHtml += `<div class="student-name">${resolved}</div>`
@@ -480,19 +389,17 @@ export default function ValidarPage() {
     setTimeout(() => { iframe!.contentWindow!.print() }, 300)
   }
 
-  // Count grades with actual data
   const gradeCount = useMemo(() => {
     if (!certData) return 0
     return Object.values(certData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && !/^\*+$/.test(c.nota)).length
   }, [certData])
 
-  // Year-ordered grades for preview
-  const yearOrder = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+  const yearOrder = ['Primer Ano', 'Segundo Ano', 'Tercer Ano', 'Cuarto Ano', 'Quinto Ano']
 
   return (
     <AppShell>
       <div className="space-y-4">
-        {/* Top bar: search + actions */}
+        {/* Top bar: search + print */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[250px]">
             <StudentSearch
@@ -521,107 +428,16 @@ export default function ValidarPage() {
             </div>
           )}
           {certData && (
-            <>
-              <Button size="sm" variant="outline" onClick={enterEditMode}
-                className="h-8 text-xs border-amber-700 text-amber-400 hover:bg-amber-900/30">
-                <Pencil className="h-3 w-3 mr-1" /> Editar Plantilla
-              </Button>
-              <Button size="sm" variant="outline" onClick={handlePrint}
-                className="h-8 text-xs">
-                <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
-              </Button>
-            </>
+            <Button size="sm" variant="outline" onClick={handlePrint}
+              className="h-8 text-xs">
+              <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+            </Button>
           )}
           {loadingData && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
         </div>
 
-        {/* Edit template mode */}
-        {editing && (
-          <Card className="bg-gray-800 border-amber-700">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-amber-300 flex items-center gap-2">
-                <Edit3 className="h-4 w-4" /> Editar Plantilla de Validación de Notas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-xs text-gray-400">Encabezado (una línea por fila, usa {{campo}} para insertar datos)</Label>
-                <textarea
-                  className="w-full bg-gray-900 text-white border border-gray-700 rounded p-2 text-xs font-mono min-h-[80px] focus:border-amber-600 focus:outline-none"
-                  value={editHeader}
-                  onChange={(e) => setEditHeader(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Cuerpo del documento</Label>
-                <textarea
-                  className="w-full bg-gray-900 text-white border border-gray-700 rounded p-2 text-xs font-mono min-h-[160px] focus:border-amber-600 focus:outline-none"
-                  value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Pie de página (firmas, observaciones)</Label>
-                <textarea
-                  className="w-full bg-gray-900 text-white border border-gray-700 rounded p-2 text-xs font-mono min-h-[100px] focus:border-amber-600 focus:outline-none"
-                  value={editFooter}
-                  onChange={(e) => setEditFooter(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-xs text-gray-400">Tamaño hoja:</Label>
-                <select
-                  className="bg-gray-900 text-white border border-gray-700 rounded px-2 py-1 text-xs"
-                  value={template.pageSize}
-                  onChange={(e) => setTemplate(prev => ({ ...prev, pageSize: e.target.value as any }))}
-                >
-                  <option value="carta">Carta</option>
-                  <option value="legal">Legal</option>
-                  <option value="a4">A4</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="show-grades-table"
-                  checked={template.showGradesTable}
-                  onChange={(e) => setTemplate(prev => ({ ...prev, showGradesTable: e.target.checked }))}
-                  className="rounded"
-                />
-                <Label htmlFor="show-grades-table" className="text-xs text-gray-400">Incluir tabla de calificaciones</Label>
-              </div>
-              {template.showGradesTable && (
-                <div>
-                  <Label className="text-xs text-gray-400">Título de la tabla</Label>
-                  <Input
-                    className="bg-gray-900 text-white border-gray-700 text-xs h-8"
-                    value={template.gradesTableTitle}
-                    onChange={(e) => setTemplate(prev => ({ ...prev, gradesTableTitle: e.target.value }))}
-                  />
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Button size="sm" onClick={saveTemplateEdits} disabled={saving}
-                  className="h-8 text-xs bg-amber-600 hover:bg-amber-500">
-                  {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-                  {saving ? 'Guardando...' : 'Guardar Plantilla'}
-                </Button>
-                <Button size="sm" variant="outline" onClick={exitEditMode} className="h-8 text-xs">
-                  Cancelar
-                </Button>
-              </div>
-              <div className="text-[10px] text-gray-500">
-                <strong>Campos disponibles:</strong>{' '}
-                {['denominacion','od','estado','municipio','direccion','telefono','planEstudio','director.apellidosNombres','director.cedula','estudiante.apellidos','estudiante.nombres','estudiante.cedula','estudiante.fechaNacimiento','promedioAcumulado','lugar','fechaExpedicion'].map((f,i) => (
-                  <span key={f}>{i > 0 && ', '}{`{{${f}}}`}</span>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Document preview */}
-        {certData && !editing && (
+        {certData && (
           <div className="bg-white rounded border shadow-lg mx-auto" style={{ maxWidth: '760px' }}>
             <div ref={previewRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.6', color: '#000' }}>
               {/* Header */}
@@ -641,8 +457,6 @@ export default function ValidarPage() {
               {/* Body paragraphs */}
               {template.bodyParagraphs.map((para, i) => {
                 const isStudentLine = para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')
-
-                // Detect title line (usually the first non-empty line after header)
                 const isTitle = i === 0 && !para.includes('{{') && para.trim().length > 0
 
                 if (isTitle) {
@@ -686,7 +500,7 @@ export default function ValidarPage() {
                     <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', margin: '8pt 0' }}>
                       <thead>
                         <tr style={{ background: '#f0f0f0' }}>
-                          <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Año</th>
+                          <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Ano</th>
                           <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Asignatura</th>
                           <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Nota</th>
                           <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Literal</th>
@@ -750,7 +564,7 @@ export default function ValidarPage() {
           <div className="text-center py-16">
             <Search className="h-10 w-10 mx-auto text-gray-600 mb-3" />
             <p className="text-gray-400 text-sm">
-              Busca un alumno para generar la Validación de Notas
+              Busca un alumno para generar la Validacion de Notas
             </p>
           </div>
         )}

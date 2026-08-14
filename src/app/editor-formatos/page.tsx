@@ -66,8 +66,20 @@ export default function EditorFormatosPage() {
 
   useEffect(() => { loadLayouts() }, [loadLayouts])
 
-  const handleOpenInEditor = (id: string) => {
+  const handleOpenInEditor = async (id: string) => {
     localStorage.setItem('jo-sigae-current-plan', selectedPlan)
+    try {
+      // Check template type to route to the correct editor
+      const res = await fetch(`/api/cert-layouts?id=${id}&plan=${selectedPlan}`)
+      if (res.ok) {
+        const detail = await res.json()
+        const parsed = typeof detail.datos === 'string' ? JSON.parse(detail.datos) : detail.datos
+        if (parsed?.templateType === 'text-document') {
+          router.push(`/editor-formatos/text-editor?id=${id}&plan=${selectedPlan}&name=${encodeURIComponent(detail.nombre || '')}`)
+          return
+        }
+      }
+    } catch { /* fallback to visual editor */ }
     router.push(`/certificaciones-visual?layout=${id}&plan=${selectedPlan}`)
   }
 

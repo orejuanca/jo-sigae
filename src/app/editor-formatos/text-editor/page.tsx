@@ -1,18 +1,17 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef, Suspense } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { StudentSearch } from '@/components/student-search'
 import { useToast } from '@/hooks/use-toast'
 import { notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
-  Save, Loader2, ArrowLeft, Printer, Eye, EyeOff, Search,
+  Save, Loader2, ArrowLeft, Printer, Search, Plus, Trash2,
 } from 'lucide-react'
 
 // === Types ===
@@ -92,7 +91,7 @@ function processTemplateLine(line: string, data: CertData | null): React.ReactNo
   while ((match = regex.exec(line)) !== null) {
     if (match.index > lastIndex) parts.push(line.substring(lastIndex, match.index))
     const resolved = resolveTemplateToken(match[0], data)
-    parts.push(<span key={match.index} className="font-semibold text-blue-700">{resolved}</span>)
+    parts.push(<span key={match.index} className="font-semibold">{resolved}</span>)
     lastIndex = regex.lastIndex
   }
   if (lastIndex < line.length) parts.push(line.substring(lastIndex))
@@ -103,9 +102,9 @@ function processTemplateLine(line: string, data: CertData | null): React.ReactNo
 const SAMPLE_CERT_DATA: CertData = {
   lugar: 'Caracas',
   fechaExpedicion: '15/08/2026',
-  planEstudio: 'Plan de Estudios vigente (Ley Orgánica de Educación)',
+  planEstudio: 'Plan de Estudios vigente (Ley Organica de Educacion)',
   od: 'OD-12345',
-  denominacion: 'U.E. COLEGIO BOLIVARIANO "JUAN ANTONIO RODRÍGUEZ DOMÍNGUEZ"',
+  denominacion: 'U.E. COLEGIO BOLIVARIANO "JUAN ANTONIO RODRIGUEZ DOMINGUEZ"',
   direccion: 'Av. Principal, Zona Educativa',
   telefono: '0212-1234567',
   municipio: 'Sucre',
@@ -114,8 +113,8 @@ const SAMPLE_CERT_DATA: CertData = {
   estudiante: {
     cedula: 'V-12.345.678',
     fechaNacimiento: '15/03/2005',
-    apellidos: 'GARCÍA RODRÍGUEZ',
-    nombres: 'MARÍA JOSEFINA',
+    apellidos: 'GARCIA RODRIGUEZ',
+    nombres: 'MARIA JOSEFINA',
     pais: 'Venezuela',
     estado: 'Miranda',
     municipio: 'Sucre',
@@ -126,12 +125,12 @@ const SAMPLE_CERT_DATA: CertData = {
   calificaciones: {
     'Primer Año': [
       { materia: 'Castellano y Literatura', numero: 1, nota: '18', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
-      { materia: 'Matemática', numero: 2, nota: '16', literal: 'B', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+      { materia: 'Matematica', numero: 2, nota: '16', literal: 'B', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
       { materia: 'Ciencias de la Naturaleza', numero: 3, nota: '15', literal: 'B', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
     ],
     'Segundo Año': [
       { materia: 'Castellano y Literatura', numero: 1, nota: '17', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
-      { materia: 'Matemática', numero: 2, nota: '19', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+      { materia: 'Matematica', numero: 2, nota: '19', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
     ],
   },
   orientacion: [],
@@ -139,12 +138,99 @@ const SAMPLE_CERT_DATA: CertData = {
   observaciones: '',
   observacionesLines: [],
   promedioAcumulado: '16.80',
-  director: { apellidosNombres: 'ANA MARÍA PÉREZ', cedula: 'V-8.765.432' },
-  directorCdcce: { apellidosNombres: 'JOSÉ LUIS MARTÍNEZ', cedula: 'V-5.432.109' },
+  director: { apellidosNombres: 'ANA MARIA PEREZ', cedula: 'V-8.765.432' },
+  directorCdcce: { apellidosNombres: 'JOSE LUIS MARTINEZ', cedula: 'V-5.432.109' },
   acta: '',
   actaFecha: '',
   actaAnio: '',
   literalesFinales: [],
+}
+
+// Inline editable line component
+function EditableLine({
+  value,
+  onChange,
+  onRemove,
+  onAddAfter,
+  canRemove,
+  className,
+  style,
+  placeholder,
+  isTextArea,
+}: {
+  value: string
+  onChange: (val: string) => void
+  onRemove: () => void
+  onAddAfter: () => void
+  canRemove: boolean
+  className?: string
+  style?: React.CSSProperties
+  placeholder?: string
+  isTextArea?: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [localValue, setLocalValue] = useState(value)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setLocalValue(value) }, [value])
+
+  const handleBlur = () => {
+    setEditing(false)
+    if (localValue !== value) onChange(localValue)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleBlur()
+    }
+  }
+
+  return (
+    <div className="group relative flex items-start gap-1" style={style}>
+      {/* Editable content */}
+      {editing ? (
+        <textarea
+          ref={ref as any}
+          className="flex-1 border border-blue-400 bg-blue-50/80 rounded px-1 py-0.5 text-[inherit] font-[inherit] text-left outline-none resize-none focus:ring-1 focus:ring-blue-400"
+          style={{ fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit', color: '#000', minHeight: '1.4em' }}
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          rows={1}
+        />
+      ) : (
+        <div
+          className={`flex-1 cursor-text hover:bg-blue-50/60 rounded px-1 py-0.5 transition-colors min-h-[1.4em] ${className || ''}`}
+          style={style}
+          onClick={() => setEditing(true)}
+        >
+          {value || <span className="text-gray-300 italic">{placeholder || 'Doble clic para editar...'}</span>}
+        </div>
+      )}
+      {/* Action buttons - show on hover */}
+      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-px">
+        <button
+          onClick={onAddAfter}
+          className="w-4 h-4 flex items-center justify-center rounded bg-green-100 hover:bg-green-200 text-green-700"
+          title="Agregar linea"
+        >
+          <Plus className="w-2.5 h-2.5" />
+        </button>
+        {canRemove && (
+          <button
+            onClick={onRemove}
+            className="w-4 h-4 flex items-center justify-center rounded bg-red-100 hover:bg-red-200 text-red-700"
+            title="Eliminar linea"
+          >
+            <Trash2 className="w-2.5 h-2.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function TextEditorContent() {
@@ -159,18 +245,11 @@ function TextEditorContent() {
   const [template, setTemplate] = useState<TextTemplate | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [editHeader, setEditHeader] = useState('')
-  const [editBody, setEditBody] = useState('')
-  const [editFooter, setEditFooter] = useState('')
-  const [editGradesTitle, setEditGradesTitle] = useState('')
-  const [editPageSize, setEditPageSize] = useState<'carta' | 'legal' | 'a4'>('legal')
-  const [editShowGrades, setEditShowGrades] = useState(true)
 
   // Preview state
   const [previewStudent, setPreviewStudent] = useState<Student | null>(null)
   const [previewCertData, setPreviewCertData] = useState<CertData | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
-  const [showPreview, setShowPreview] = useState(true)
   const previewRef = useRef<HTMLDivElement>(null)
 
   // Load template
@@ -182,14 +261,7 @@ function TextEditorContent() {
         const detail = await res.json()
         const parsed = typeof detail.datos === 'string' ? JSON.parse(detail.datos) : detail.datos
         if (parsed.templateType === 'text-document' && parsed.template) {
-          const t = parsed.template as TextTemplate
-          setTemplate(t)
-          setEditHeader(t.headerLines.join('\n'))
-          setEditBody(t.bodyParagraphs.join('\n'))
-          setEditFooter(t.footerLines.join('\n'))
-          setEditGradesTitle(t.gradesTableTitle || '')
-          setEditPageSize(t.pageSize || 'legal')
-          setEditShowGrades(t.showGradesTable !== false)
+          setTemplate(parsed.template)
         } else {
           toast({ title: 'Error', description: 'Este layout no es un documento de texto.', variant: 'destructive' })
         }
@@ -231,22 +303,78 @@ function TextEditorContent() {
     finally { setLoadingPreview(false) }
   }, [plan])
 
+  // Template line editors
+  const updateHeaderLine = (index: number, value: string) => {
+    if (!template) return
+    const updated = { ...template, headerLines: [...template.headerLines] }
+    updated.headerLines[index] = value
+    setTemplate(updated)
+  }
+
+  const addHeaderLine = (index: number) => {
+    if (!template) return
+    const updated = { ...template, headerLines: [...template.headerLines] }
+    updated.headerLines.splice(index + 1, 0, '')
+    setTemplate(updated)
+  }
+
+  const removeHeaderLine = (index: number) => {
+    if (!template || template.headerLines.length <= 1) return
+    const updated = { ...template, headerLines: [...template.headerLines] }
+    updated.headerLines.splice(index, 1)
+    setTemplate(updated)
+  }
+
+  const updateBodyLine = (index: number, value: string) => {
+    if (!template) return
+    const updated = { ...template, bodyParagraphs: [...template.bodyParagraphs] }
+    updated.bodyParagraphs[index] = value
+    setTemplate(updated)
+  }
+
+  const addBodyLine = (index: number) => {
+    if (!template) return
+    const updated = { ...template, bodyParagraphs: [...template.bodyParagraphs] }
+    updated.bodyParagraphs.splice(index + 1, 0, '')
+    setTemplate(updated)
+  }
+
+  const removeBodyLine = (index: number) => {
+    if (!template || template.bodyParagraphs.length <= 1) return
+    const updated = { ...template, bodyParagraphs: [...template.bodyParagraphs] }
+    updated.bodyParagraphs.splice(index, 1)
+    setTemplate(updated)
+  }
+
+  const updateFooterLine = (index: number, value: string) => {
+    if (!template) return
+    const updated = { ...template, footerLines: [...template.footerLines] }
+    updated.footerLines[index] = value
+    setTemplate(updated)
+  }
+
+  const addFooterLine = (index: number) => {
+    if (!template) return
+    const updated = { ...template, footerLines: [...template.footerLines] }
+    updated.footerLines.splice(index + 1, 0, '')
+    setTemplate(updated)
+  }
+
+  const removeFooterLine = (index: number) => {
+    if (!template || template.footerLines.length <= 1) return
+    const updated = { ...template, footerLines: [...template.footerLines] }
+    updated.footerLines.splice(index, 1)
+    setTemplate(updated)
+  }
+
   // Save
   const handleSave = async () => {
     if (!template) return
-    const updated: TextTemplate = {
-      headerLines: editHeader.split('\n'),
-      bodyParagraphs: editBody.split('\n'),
-      footerLines: editFooter.split('\n'),
-      pageSize: editPageSize,
-      showGradesTable: editShowGrades,
-      gradesTableTitle: editGradesTitle,
-    }
     setSaving(true)
     try {
       const payload = {
         templateType: 'text-document',
-        template: updated,
+        template,
         meta: { plan },
       }
       await fetch(`/api/cert-layouts?id=${layoutId}&plan=${plan}`, {
@@ -254,7 +382,6 @@ function TextEditorContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datos: payload }),
       })
-      setTemplate(updated)
       toast({ title: 'Guardado', description: 'Plantilla actualizada correctamente.' })
     } catch {
       toast({ title: 'Error', description: 'No se pudo guardar.', variant: 'destructive' })
@@ -263,24 +390,14 @@ function TextEditorContent() {
     }
   }
 
-  // Print from preview
+  // Print
   const handlePrint = () => {
-    if (!previewCertData && !previewRef.current) return
+    if (!template || !previewRef.current) return
     const data = previewCertData || SAMPLE_CERT_DATA
-    if (!previewRef.current) return
-    const pageSize = editPageSize
+    const pageSize = template.pageSize
     const pageSizes: Record<string, string> = { carta: 'letter', legal: 'legal', a4: 'A4' }
     const pageWidths: Record<string, string> = { carta: '8.5in', legal: '8.5in', a4: '210mm' }
     const pageHeights: Record<string, string> = { carta: '11in', legal: '14in', a4: '297mm' }
-
-    const currentTemplate: TextTemplate = {
-      headerLines: editHeader.split('\n'),
-      bodyParagraphs: editBody.split('\n'),
-      footerLines: editFooter.split('\n'),
-      pageSize: editPageSize,
-      showGradesTable: editShowGrades,
-      gradesTableTitle: editGradesTitle,
-    }
 
     let docHtml = '<!DOCTYPE html><html><head><title>Documento</title>'
     docHtml += `<style>`
@@ -305,7 +422,7 @@ function TextEditorContent() {
     docHtml += `</style></head><body>`
 
     docHtml += '<div class="header">'
-    for (const line of currentTemplate.headerLines) {
+    for (const line of template.headerLines) {
       const resolved = line.replace(/\{\{[^}]+\}\}/g, (tok) => resolveTemplateToken(tok, data))
       if (line.includes('denominacion')) docHtml += `<span class="line school-name">${resolved}</span>`
       else if (line.includes('estado')) docHtml += `<span class="line location">${resolved}</span>`
@@ -314,15 +431,13 @@ function TextEditorContent() {
     }
     docHtml += '</div>'
 
-    for (const para of currentTemplate.bodyParagraphs) {
+    for (const para of template.bodyParagraphs) {
       const resolved = para.replace(/\{\{[^}]+\}\}/g, (tok) => resolveTemplateToken(tok, data))
-      const isTitle = !para.includes('{{') && para.trim().length > 0 && currentTemplate.bodyParagraphs.indexOf(para) === 0
+      const isTitle = !para.includes('{{') && para.trim().length > 0 && template.bodyParagraphs.indexOf(para) === 0
       if (isTitle) {
         docHtml += `<div class="doc-title">${resolved}</div>`
       } else if (para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')) {
-        docHtml += '<div class="student-block">'
-        docHtml += `<div class="student-name">${resolved}</div>`
-        docHtml += '</div>'
+        docHtml += '<div class="student-block"><div class="student-name">' + resolved + '</div></div>'
       } else if (resolved.trim() === '') {
         docHtml += '<br/>'
       } else {
@@ -330,15 +445,11 @@ function TextEditorContent() {
       }
     }
 
-    if (currentTemplate.showGradesTable) {
+    if (template.showGradesTable) {
       const yearOrder = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
-      docHtml += `<p style="text-align:center;font-weight:bold;margin:12pt 0">${currentTemplate.gradesTableTitle}</p>`
+      docHtml += `<p style="text-align:center;font-weight:bold;margin:12pt 0">${template.gradesTableTitle}</p>`
       docHtml += '<table><thead><tr style="background:#f0f0f0">'
-      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Año</th>'
-      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Asignatura</th>'
-      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Nota</th>'
-      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Literal</th>'
-      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Eval.</th>'
+      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Año</th><th style="border:1px solid #333;padding:4px 6px">Asignatura</th><th style="border:1px solid #333;padding:4px 6px">Nota</th><th style="border:1px solid #333;padding:4px 6px">Literal</th><th style="border:1px solid #333;padding:4px 6px">Eval.</th>'
       docHtml += '</tr></thead><tbody>'
       for (const yearName of yearOrder) {
         const grades = data.calificaciones?.[yearName]
@@ -348,18 +459,14 @@ function TextEditorContent() {
         for (const g of validGrades) {
           docHtml += '<tr>'
           if (first) { docHtml += `<td style="border:1px solid #333;padding:4px 6px;font-weight:bold" rowspan="${validGrades.length}">${yearName}</td>`; first = false }
-          docHtml += `<td style="border:1px solid #333;padding:4px 6px">${g.materia}</td>`
-          docHtml += `<td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.nota}</td>`
-          docHtml += `<td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.literal}</td>`
-          docHtml += `<td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.tipoEvaluacion || ''}</td>`
-          docHtml += '</tr>'
+          docHtml += `<td style="border:1px solid #333;padding:4px 6px">${g.materia}</td><td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.nota}</td><td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.literal}</td><td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.tipoEvaluacion || ''}</td></tr>`
         }
       }
       docHtml += '</tbody></table>'
     }
 
     docHtml += '<div class="signatures">'
-    for (const line of currentTemplate.footerLines) {
+    for (const line of template.footerLines) {
       const resolved = line.replace(/\{\{[^}]+\}\}/g, (tok) => resolveTemplateToken(tok, data))
       if (resolved.trim() === '') { docHtml += '<br/>'; continue }
       if (/^_{3,}/.test(resolved.trim())) { docHtml += `<div class="sig-line">${resolved}</div>`; continue }
@@ -382,20 +489,10 @@ function TextEditorContent() {
     setTimeout(() => { iframe!.contentWindow!.print() }, 300)
   }
 
-  // Current template for preview (live from edits)
-  const liveTemplate: TextTemplate = {
-    headerLines: editHeader.split('\n'),
-    bodyParagraphs: editBody.split('\n'),
-    footerLines: editFooter.split('\n'),
-    pageSize: editPageSize,
-    showGradesTable: editShowGrades,
-    gradesTableTitle: editGradesTitle,
-  }
-
   const previewData = previewCertData || SAMPLE_CERT_DATA
   const yearOrder = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
 
-  if (loading) {
+  if (loading || !template) {
     return (
       <AppShell>
         <div className="flex items-center justify-center py-20">
@@ -406,277 +503,273 @@ function TextEditorContent() {
     )
   }
 
+  const gradeCount = previewCertData
+    ? Object.values(previewCertData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && !/^\*+$/.test(c.nota)).length
+    : 0
+
   return (
     <AppShell>
-      <div className="space-y-3">
-        {/* Top bar */}
+      <div className="space-y-4">
+        {/* Top bar - SAME layout as /validar */}
         <div className="flex items-center gap-3 flex-wrap">
           <Button size="sm" variant="outline" onClick={() => router.push('/editor-formatos')} className="h-8 text-xs">
             <ArrowLeft className="h-3 w-3 mr-1" /> Volver
           </Button>
-          <div className="flex-1">
-            <h1 className="text-sm font-bold text-white">{layoutName}</h1>
-            <p className="text-[10px] text-gray-400">Editor de documento de texto</p>
+          <div className="flex-1 min-w-[250px]">
+            <StudentSearch
+              onSelect={handleSelectPreviewStudent}
+              placeholder="Buscar alumno para vista previa con datos reales..."
+              plan={plan}
+              autoFocus
+            />
           </div>
-          <Badge variant={plan === 'derogado' ? 'destructive' : 'default'} className="text-[10px]">
-            {plan === 'derogado' ? 'DEROGADO' : 'VIGENTE'}
-          </Badge>
-          <Button size="sm" variant="outline" onClick={() => setShowPreview(!showPreview)} className="h-8 text-xs">
-            {showPreview ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
-            {showPreview ? 'Ocultar Vista' : 'Vista Previa'}
+          {previewStudent && (
+            <div className="flex items-center gap-2">
+              <Badge variant={plan === 'derogado' ? 'destructive' : 'default'}>
+                {plan === 'derogado' ? 'Plan Derogado' : 'Plan Vigente'}
+              </Badge>
+              <span className="text-sm font-medium text-white">
+                {previewStudent.apellidos}, {previewStudent.nombres}
+              </span>
+              <span className="text-xs text-gray-400">
+                C.I.: {formatCedulaFinal(previewStudent.cedula)}
+              </span>
+              {gradeCount > 0 && (
+                <Badge variant="outline" className="text-emerald-400 border-emerald-700">
+                  {gradeCount} notas
+                </Badge>
+              )}
+            </div>
+          )}
+          <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 text-xs">
+            <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 text-xs bg-blue-600 hover:bg-blue-500">
             {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
             {saving ? 'Guardando...' : 'Guardar'}
           </Button>
-          <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 text-xs">
-            <Printer className="h-3 w-3 mr-1" /> Imprimir
-          </Button>
+          {loadingPreview && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
         </div>
 
-        {/* Preview student search */}
-        {showPreview && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <StudentSearch
-              onSelect={handleSelectPreviewStudent}
-              placeholder="Buscar alumno para vista previa con datos reales..."
-              plan={plan}
-            />
-            {previewStudent && (
-              <Badge variant="outline" className="text-emerald-400 border-emerald-700 text-[10px]">
-                {previewStudent.apellidos}, {previewStudent.nombres}
-              </Badge>
-            )}
-            {!previewStudent && (
-              <span className="text-[10px] text-gray-500">Mostrando datos de ejemplo</span>
-            )}
-            {loadingPreview && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
+        {/* Config bar */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-gray-400">Tamano hoja:</Label>
+            <select
+              className="bg-gray-900 text-white border border-gray-700 rounded px-2 py-1 text-xs"
+              value={template.pageSize}
+              onChange={(e) => setTemplate({ ...template, pageSize: e.target.value as any })}
+            >
+              <option value="carta">Carta</option>
+              <option value="legal">Legal</option>
+              <option value="a4">A4</option>
+            </select>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="show-grades-edit"
+              checked={template.showGradesTable}
+              onChange={(e) => setTemplate({ ...template, showGradesTable: e.target.checked })}
+              className="rounded"
+            />
+            <Label htmlFor="show-grades-edit" className="text-xs text-gray-400">Tabla de calificaciones</Label>
+          </div>
+          {template.showGradesTable && (
+            <Input
+              className="bg-gray-900 text-white border-gray-700 text-xs h-8 max-w-[250px]"
+              value={template.gradesTableTitle}
+              onChange={(e) => setTemplate({ ...template, gradesTableTitle: e.target.value })}
+              placeholder="Titulo de la tabla"
+            />
+          )}
+          <span className="text-[10px] text-gray-500 italic">
+            Haz clic en cualquier linea del documento para editarla
+          </span>
+        </div>
 
-        {/* Two-column layout: editor + preview */}
-        <div className="flex gap-3" style={{ alignItems: 'flex-start' }}>
-          {/* Left: Editor panel */}
-          <div className={`space-y-3 shrink-0 ${showPreview ? 'w-[420px]' : 'w-full'}`}>
-            {/* Header lines */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-xs text-gray-300">Encabezado</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 pb-3">
-                <textarea
-                  className="w-full bg-gray-900 text-white border border-gray-700 rounded p-2 text-xs font-mono min-h-[80px] focus:border-blue-600 focus:outline-none resize-y"
-                  value={editHeader}
-                  onChange={(e) => setEditHeader(e.target.value)}
-                  placeholder="Una linea por fila. Usa {{campo}} para insertar datos dinamicos."
-                />
-              </CardContent>
-            </Card>
+        {/* Document - SAME structure as /validar but every line is editable */}
+        <div className="bg-white rounded border shadow-lg mx-auto" style={{ maxWidth: '760px' }}>
+          <div ref={previewRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.6', color: '#000' }}>
+
+            {/* Header */}
+            <div className="text-center" style={{ marginBottom: '20pt' }}>
+              {template.headerLines.map((line, i) => {
+                const isSchoolName = line.includes('{{denominacion}}')
+                const isLocation = line.includes('{{estado}}')
+                return (
+                  <EditableLine
+                    key={`h-${i}`}
+                    value={line}
+                    onChange={(val) => updateHeaderLine(i, val)}
+                    onRemove={() => removeHeaderLine(i)}
+                    onAddAfter={() => addHeaderLine(i)}
+                    canRemove={template.headerLines.length > 1}
+                    className={isSchoolName ? 'font-bold text-sm text-center' : isLocation ? 'text-[10pt] text-center' : 'text-center'}
+                    placeholder={`Linea de encabezado ${i + 1}`}
+                  />
+                )
+              })}
+            </div>
 
             {/* Body paragraphs */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-xs text-gray-300">Cuerpo del Documento</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 pb-3">
-                <textarea
-                  className="w-full bg-gray-900 text-white border border-gray-700 rounded p-2 text-xs font-mono min-h-[200px] focus:border-blue-600 focus:outline-none resize-y"
-                  value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
-                  placeholder="Una linea por fila. Lineas vacias generan espacios. Usa {{campo}} para insertar datos."
-                />
-              </CardContent>
-            </Card>
+            {template.bodyParagraphs.map((para, i) => {
+              const isStudentLine = para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')
+              const isTitle = i === 0 && !para.includes('{{') && para.trim().length > 0
 
-            {/* Footer lines */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-xs text-gray-300">Pie de Pagina (Firmas, Observaciones)</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 pb-3">
-                <textarea
-                  className="w-full bg-gray-900 text-white border border-gray-700 rounded p-2 text-xs font-mono min-h-[120px] focus:border-blue-600 focus:outline-none resize-y"
-                  value={editFooter}
-                  onChange={(e) => setEditFooter(e.target.value)}
-                  placeholder="Una linea por fila. Usa _____ para lineas de firma."
-                />
-              </CardContent>
-            </Card>
-
-            {/* Settings */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <CardTitle className="text-xs text-gray-300">Configuracion</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 pb-3 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Label className="text-xs text-gray-400 w-24 shrink-0">Tamano hoja:</Label>
-                  <select
-                    className="bg-gray-900 text-white border border-gray-700 rounded px-2 py-1 text-xs flex-1"
-                    value={editPageSize}
-                    onChange={(e) => setEditPageSize(e.target.value as any)}
-                  >
-                    <option value="carta">Carta</option>
-                    <option value="legal">Legal</option>
-                    <option value="a4">A4</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="show-grades"
-                    checked={editShowGrades}
-                    onChange={(e) => setEditShowGrades(e.target.checked)}
-                    className="rounded"
-                  />
-                  <Label htmlFor="show-grades" className="text-xs text-gray-400">Incluir tabla de calificaciones</Label>
-                </div>
-                {editShowGrades && (
-                  <div className="flex items-center gap-3">
-                    <Label className="text-xs text-gray-400 w-24 shrink-0">Titulo tabla:</Label>
-                    <Input
-                      className="bg-gray-900 text-white border-gray-700 text-xs h-8 flex-1"
-                      value={editGradesTitle}
-                      onChange={(e) => setEditGradesTitle(e.target.value)}
+              if (isTitle) {
+                return (
+                  <div key={`b-${i}`} style={{ margin: '16pt 0 10pt' }}>
+                    <EditableLine
+                      value={para}
+                      onChange={(val) => updateBodyLine(i, val)}
+                      onRemove={() => removeBodyLine(i)}
+                      onAddAfter={() => addBodyLine(i)}
+                      canRemove={template.bodyParagraphs.length > 1}
+                      className="text-center font-bold underline"
+                      style={{ fontSize: '12pt' }}
+                      placeholder="Titulo del documento"
                     />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                )
+              }
 
-            {/* Available fields */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="px-3 py-2">
-                <p className="text-[10px] text-gray-500 font-semibold mb-1">Campos disponibles:</p>
-                <div className="flex flex-wrap gap-1">
-                  {['denominacion','od','estado','municipio','direccion','telefono','planEstudio','director.apellidosNombres','director.cedula','estudiante.apellidos','estudiante.nombres','estudiante.cedula','estudiante.fechaNacimiento','promedioAcumulado','lugar','fechaExpedicion'].map(f => (
-                    <code key={f} className="text-[10px] bg-gray-900 text-blue-300 px-1.5 py-0.5 rounded">{`{{${f}}}`}</code>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right: Live preview */}
-          {showPreview && (
-            <div className="flex-1 min-w-0">
-              <div className="bg-white rounded border shadow-lg mx-auto" style={{ maxWidth: '760px' }}>
-                <div ref={previewRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.6', color: '#000' }}>
-                  {/* Header */}
-                  <div className="text-center" style={{ marginBottom: '20pt' }}>
-                    {liveTemplate.headerLines.map((line, i) => {
-                      const resolved = processTemplateLine(line, previewData)
-                      const isSchoolName = line.includes('{{denominacion}}')
-                      const isLocation = line.includes('{{estado}}')
-                      return (
-                        <div key={`h-${i}`} className={isSchoolName ? 'font-bold text-sm' : isLocation ? 'text-[10pt]' : ''}>
-                          {resolved}
-                        </div>
-                      )
-                    })}
+              if (isStudentLine) {
+                return (
+                  <div key={`b-${i}`} className="text-center" style={{ margin: '10pt 0' }}>
+                    <EditableLine
+                      value={para}
+                      onChange={(val) => updateBodyLine(i, val)}
+                      onRemove={() => removeBodyLine(i)}
+                      onAddAfter={() => addBodyLine(i)}
+                      canRemove={template.bodyParagraphs.length > 1}
+                      className="font-bold"
+                      style={{ fontSize: '12pt', display: 'inline-block', border: '1px solid #999', padding: '6pt 20pt', minWidth: '280pt' }}
+                      placeholder="Datos del estudiante"
+                    />
                   </div>
+                )
+              }
 
-                  {/* Body */}
-                  {liveTemplate.bodyParagraphs.map((para, i) => {
-                    const isStudentLine = para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')
-                    const isTitle = i === 0 && !para.includes('{{') && para.trim().length > 0
+              if (para.trim() === '') {
+                return (
+                  <EditableLine
+                    key={`b-${i}`}
+                    value={para}
+                    onChange={(val) => updateBodyLine(i, val)}
+                    onRemove={() => removeBodyLine(i)}
+                    onAddAfter={() => addBodyLine(i)}
+                    canRemove={template.bodyParagraphs.length > 1}
+                    style={{ height: '8pt' }}
+                  />
+                )
+              }
 
-                    if (isTitle) {
-                      return (
-                        <div key={`b-${i}`} className="text-center font-bold underline" style={{ fontSize: '12pt', margin: '16pt 0 10pt' }}>
-                          {para}
-                        </div>
-                      )
-                    }
-                    if (isStudentLine) {
-                      return (
-                        <div key={`b-${i}`} className="text-center" style={{ margin: '10pt 0' }}>
-                          <div style={{ display: 'inline-block', border: '1px solid #999', padding: '6pt 20pt', minWidth: '280pt' }}>
-                            <div className="font-bold" style={{ fontSize: '12pt' }}>
-                              {processTemplateLine(para, previewData)}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    }
-                    if (para.trim() === '') return <div key={`b-${i}`} style={{ height: '8pt' }} />
-                    return (
-                      <p key={`b-${i}`} className="text-justify" style={{ margin: '4pt 0' }}>
-                        {processTemplateLine(para, previewData)}
-                      </p>
-                    )
-                  })}
+              return (
+                <EditableLine
+                  key={`b-${i}`}
+                  value={para}
+                  onChange={(val) => updateBodyLine(i, val)}
+                  onRemove={() => removeBodyLine(i)}
+                  onAddAfter={() => addBodyLine(i)}
+                  canRemove={template.bodyParagraphs.length > 1}
+                  className="text-justify"
+                  style={{ margin: '4pt 0' }}
+                />
+              )
+            })}
 
-                  {/* Grades table */}
-                  {liveTemplate.showGradesTable && (
-                    <>
-                      <p className="text-center font-bold" style={{ margin: '10pt 0' }}>
-                        {liveTemplate.gradesTableTitle}
-                      </p>
-                      <div className="overflow-x-auto">
-                        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', margin: '8pt 0' }}>
-                          <thead>
-                            <tr style={{ background: '#f0f0f0' }}>
-                              <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Año</th>
-                              <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Asignatura</th>
-                              <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Nota</th>
-                              <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Literal</th>
-                              <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Eval.</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {yearOrder.map(yearName => {
-                              const grades = previewData.calificaciones?.[yearName]
-                              if (!grades || grades.length === 0) return null
-                              const validGrades = grades.filter(g => g.nota && g.nota.trim() !== '' && !/^\*+$/.test(g.nota))
-                              if (validGrades.length === 0) return null
-                              return validGrades.map((g, gi) => (
-                                <tr key={`${yearName}-${gi}`}>
-                                  {gi === 0 && (
-                                    <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center', verticalAlign: 'top', fontWeight: 'bold' }}
-                                      rowSpan={validGrades.length}>
-                                      {yearName}
-                                    </td>
-                                  )}
-                                  <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'left' }}>{g.materia}</td>
-                                  <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.nota}</td>
-                                  <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.literal}</td>
-                                  <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.tipoEvaluacion || ''}</td>
-                                </tr>
-                              ))
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Footer */}
-                  <div style={{ marginTop: '28pt' }}>
-                    {liveTemplate.footerLines.map((line, i) => {
-                      const isSigLine = /^_{3,}/.test(line.trim())
-                      const isDirectorName = line.includes('{{director.apellidosNombres}}') && !line.includes('C.I.')
-                      const isCedula = line.includes('{{director.cedula}}')
-                      const isRole = line.includes('Secretaria') || (line.includes('Director') && !line.includes('{{director'))
-
-                      if (line.trim() === '') return <div key={`f-${i}`} style={{ height: '8pt' }} />
-                      if (isSigLine) return <div key={`f-${i}`} className="text-center" style={{ marginTop: '28pt' }}>{line}</div>
-                      if (isDirectorName) return <div key={`f-${i}`} className="text-center font-bold">{processTemplateLine(line, previewData)}</div>
-                      if (isCedula) return <div key={`f-${i}`} className="text-center text-[10pt]">{processTemplateLine(line, previewData)}</div>
-                      if (isRole) return <div key={`f-${i}`} className="text-center text-[10pt]">{line}</div>
-
-                      return (
-                        <p key={`f-${i}`} className="text-justify" style={{ margin: '4pt 0' }}>
-                          {processTemplateLine(line, previewData)}
-                        </p>
-                      )
-                    })}
-                  </div>
+            {/* Grades table */}
+            {template.showGradesTable && (
+              <>
+                <div className="text-center font-bold" style={{ margin: '10pt 0' }}>
+                  {template.gradesTableTitle}
                 </div>
-              </div>
+                <div className="overflow-x-auto">
+                  <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', margin: '8pt 0' }}>
+                    <thead>
+                      <tr style={{ background: '#f0f0f0' }}>
+                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Ano</th>
+                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Asignatura</th>
+                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Nota</th>
+                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Literal</th>
+                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Eval.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {yearOrder.map(yearName => {
+                        const grades = previewData.calificaciones?.[yearName]
+                        if (!grades || grades.length === 0) return null
+                        const validGrades = grades.filter(g => g.nota && g.nota.trim() !== '' && !/^\*+$/.test(g.nota))
+                        if (validGrades.length === 0) return null
+                        return validGrades.map((g, gi) => (
+                          <tr key={`${yearName}-${gi}`}>
+                            {gi === 0 && (
+                              <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center', verticalAlign: 'top', fontWeight: 'bold' }}
+                                rowSpan={validGrades.length}>
+                                {yearName}
+                              </td>
+                            )}
+                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'left' }}>{g.materia}</td>
+                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.nota}</td>
+                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.literal}</td>
+                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.tipoEvaluacion || ''}</td>
+                          </tr>
+                        ))
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {/* Footer */}
+            <div style={{ marginTop: '28pt' }}>
+              {template.footerLines.map((line, i) => {
+                if (line.trim() === '') {
+                  return (
+                    <EditableLine
+                      key={`f-${i}`}
+                      value={line}
+                      onChange={(val) => updateFooterLine(i, val)}
+                      onRemove={() => removeFooterLine(i)}
+                      onAddAfter={() => addFooterLine(i)}
+                      canRemove={template.footerLines.length > 1}
+                      style={{ height: '8pt' }}
+                    />
+                  )
+                }
+
+                const isSigLine = /^_{3,}/.test(line.trim())
+                const isDirectorName = line.includes('{{director.apellidosNombres}}') && !line.includes('C.I.')
+                const isCedula = line.includes('{{director.cedula}}')
+                const isRole = line.includes('Secretaria') || (line.includes('Director') && !line.includes('{{director'))
+
+                return (
+                  <EditableLine
+                    key={`f-${i}`}
+                    value={line}
+                    onChange={(val) => updateFooterLine(i, val)}
+                    onRemove={() => removeFooterLine(i)}
+                    onAddAfter={() => addFooterLine(i)}
+                    canRemove={template.footerLines.length > 1}
+                    className={isDirectorName ? 'text-center font-bold' : isCedula || isRole || isSigLine ? 'text-center text-[10pt]' : 'text-justify'}
+                    style={isSigLine ? { marginTop: '28pt' } : isCedula || isRole ? {} : { margin: '4pt 0' }}
+                  />
+                )
+              })}
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Hint */}
+        {!previewStudent && (
+          <div className="text-center">
+            <span className="text-[10px] text-gray-500">
+              Mostrando datos de ejemplo. Busca un alumno arriba para ver con datos reales.
+            </span>
+          </div>
+        )}
       </div>
     </AppShell>
   )

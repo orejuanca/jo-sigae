@@ -131,21 +131,7 @@ function formatDateLong(dateStr: string): string {
 
 const COMBINED_DATE_FIELDS = ['fechaNacimiento']
 
-export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
-  if (!path || !data) return ''
-
-  // Soporte para multiples bindings separados por coma
-  if (path.includes(',')) {
-    const parts = path.split(',').map(p => p.trim()).filter(Boolean)
-    const resolved = parts.map(p => {
-      const val = resolveBinding(p, data, gridConfig)
-      if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
-        return formatDateLong(val)
-      }
-      return val
-    }).filter(Boolean)
-    return resolved.join(', ')
-  }
+function resolveSingleBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
   const [domain, ...rest] = path.split('.')
   switch (domain) {
     case 'student': return rest.reduce((o: any, k: string) => o?.[k], data.estudiante) || ''
@@ -242,6 +228,38 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
     }
     default: return ''
   }
+}
+
+export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
+  if (!path || !data) return ''
+
+  // Soporte para texto libre con bindings embebidos: "Serial: {{doc.acta}} — Fecha: {{doc.actaFecha}}"
+  if (path.includes('{{')) {
+    return path.replace(/\{\{([^}]+)\}\}/g, (_match, bindingPath: string) => {
+      const trimmed = bindingPath.trim()
+      const val = resolveSingleBinding(trimmed, data, gridConfig)
+      if (val && COMBINED_DATE_FIELDS.some(f => trimmed.endsWith(f))) {
+        return formatDateLong(val)
+      }
+      return val
+    })
+  }
+
+  // Soporte para multiples bindings separados por coma
+  if (path.includes(',')) {
+    const parts = path.split(',').map(p => p.trim()).filter(Boolean)
+    const resolved = parts.map(p => {
+      const val = resolveSingleBinding(p, data, gridConfig)
+      if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
+        return formatDateLong(val)
+      }
+      return val
+    }).filter(Boolean)
+    return resolved.join(', ')
+  }
+
+  // Binding simple (sin {{ }} ni coma)
+  return resolveSingleBinding(path, data, gridConfig)
 }
 
 // === Helpers for building template ===

@@ -26,6 +26,7 @@ export interface CellConfig {
   autoFit: boolean         // Default false - reduce font-size si texto desborda
   writingMode: string      // Default 'horizontal-tb' - dirección del texto
   borderStyle: string      // Default 'solid' - tipo de línea de borde
+  dateFormat: string       // Formato de fecha: 'DD/MM/YYYY' (default), 'DD DE MES DE YYYY', 'YYYY-MM-DD', 'MES DD, YYYY'
 
 }
 
@@ -48,7 +49,7 @@ export function emptyCell(overrides?: Partial<CellConfig>): CellConfig {
     borderTop: true, borderRight: true, borderBottom: true, borderLeft: true,
     borderColor: '#000000', bgColor: '', color: '', whiteSpace: 'normal',
     padding: '1px 2px', fontStyle: 'normal', textDecoration: 'none', autoFit: false,
-    writingMode: 'horizontal-tb', borderStyle: 'solid',
+    writingMode: 'horizontal-tb', borderStyle: 'solid', dateFormat: '',
     ...overrides,
   }
 }
@@ -123,10 +124,34 @@ const YEAR_NAME_MAP: Record<string, string> = {
 
 const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'] as const
 
+const MESES_INGLES = ['January','February','March','April','May','June','July','August','September','October','November','December'] as const
+
 function formatDateLong(dateStr: string): string {
   const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
   if (!m) return dateStr
   return `${parseInt(m[1])} DE ${MESES[parseInt(m[2]) - 1]} DE ${m[3]}`
+}
+
+/** Convierte fecha DD/MM/YYYY a otros formatos según dateFormat */
+export function formatDateWithStyle(dateStr: string, dateFormat: string): string {
+  if (!dateStr || !dateFormat) return dateStr
+  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!m) return dateStr
+  const day = parseInt(m[1])
+  const month = parseInt(m[2])
+  const year = m[3]
+  switch (dateFormat) {
+    case 'DD DE MES DE YYYY':
+      return `${day} DE ${MESES[month - 1]} DE ${year}`
+    case 'DD/MM/YYYY':
+      return `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}`
+    case 'YYYY-MM-DD':
+      return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+    case 'MES DD, YYYY':
+      return `${MESES_INGLES[month - 1]} ${day}, ${year}`
+    default:
+      return dateStr
+  }
 }
 
 const COMBINED_DATE_FIELDS = ['fechaNacimiento']
@@ -230,8 +255,13 @@ function resolveSingleBinding(path: string, data: DisplayData, gridConfig?: Grid
   }
 }
 
-export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
+export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig, dateFormat?: string): string {
   if (!path || !data) return ''
+
+  const applyFormat = (val: string): string => {
+    if (dateFormat && val) return formatDateWithStyle(val, dateFormat)
+    return val
+  }
 
   // Soporte para texto libre con bindings embebidos: "Serial: {{doc.acta}} — Fecha: {{doc.actaFecha}}"
   if (path.includes('{{')) {
@@ -239,9 +269,9 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       const trimmed = bindingPath.trim()
       const val = resolveSingleBinding(trimmed, data, gridConfig)
       if (val && COMBINED_DATE_FIELDS.some(f => trimmed.endsWith(f))) {
-        return formatDateLong(val)
+        return applyFormat(formatDateLong(val))
       }
-      return val
+      return applyFormat(val)
     })
   }
 
@@ -256,15 +286,15 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
       }
       const val = resolveSingleBinding(p, data, gridConfig)
       if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
-        return formatDateLong(val)
+        return applyFormat(formatDateLong(val))
       }
-      return val
+      return applyFormat(val)
     })
     return resolved.join('')
   }
 
   // Binding simple (sin {{ }} ni coma)
-  return resolveSingleBinding(path, data, gridConfig)
+  return applyFormat(resolveSingleBinding(path, data, gridConfig))
 }
 
 // === Helpers for building template ===

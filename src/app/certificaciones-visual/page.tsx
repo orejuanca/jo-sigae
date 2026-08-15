@@ -269,7 +269,7 @@ function GridTable({
                 let displayContent = cell.content
                 if (isPreview && cell.dataBinding && displayData) {
                   const ov = draftOverrides?.[cell.dataBinding]
-                  const resolved = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config)
+                  const resolved = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config, cell.dateFormat)
                   displayContent = resolved || cell.content
                 }
 
@@ -1639,7 +1639,7 @@ function CertVisualEditorContent() {
         const cell = gridRow.cells[c] || emptyCell()
         let content = cell.content
         if (cell.dataBinding && data) {
-          content = resolveBinding(cell.dataBinding, data, cfg) || ''
+          content = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
         }
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
@@ -1863,6 +1863,32 @@ img{max-width:100%;height:auto}
               >
                 <Combine className="h-3 w-3 mr-1" /> Parchear Bindings
               </Button>
+
+              <div className="w-px h-5 bg-border" />
+
+              {/* === FORMATO DE FECHA === */}
+              <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">FECHA</Badge>
+              <select
+                value={selectedCell ? (gridConfig.rows[selectedCell.row]?.cells[selectedCell.col]?.dateFormat || '') : ''}
+                disabled={!selectedCell}
+                onChange={(e) => {
+                  if (!selectedCell) return
+                  const newConfig = { ...gridConfig, rows: gridConfig.rows.map(r => ({ ...r, cells: { ...r.cells } })) }
+                  const cell = newConfig.rows[selectedCell.row].cells[selectedCell.col]
+                  if (cell) {
+                    newConfig.rows[selectedCell.row].cells[selectedCell.col] = { ...cell, dateFormat: e.target.value }
+                  }
+                  setGridConfig(newConfig)
+                }}
+                className="bg-gray-700 text-white text-xs border border-gray-600 rounded px-2 py-1 disabled:opacity-40"
+                title="Aplicar formato de fecha a la celda seleccionada"
+              >
+                <option value="">Sin formato</option>
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="DD DE MES DE YYYY">15 DE AGOSTO DE 2026</option>
+                <option value="YYYY-MM-DD">2026-08-15</option>
+                <option value="MES DD, YYYY">August 15, 2026</option>
+              </select>
 
               <div className="w-px h-5 bg-border" />
 

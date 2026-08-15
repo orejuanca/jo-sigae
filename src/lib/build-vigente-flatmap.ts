@@ -214,6 +214,7 @@ export function buildVigenteFlatMap(rawData: Record<string, any>): Record<string
   }
   map['PROMEDIO.BASICA'] = calcPromedio([1, 2, 3])
   map['PROMEDIO.DIVERSIFICADO'] = calcPromedio([4, 5])
+  map['PROMEDIO.TOTAL'] = calcPromedio([1, 2, 3, 4, 5])
 
   // Resolver numeros de plantel por materia a nombre, localidad y E.F.
   for (const [key, val] of Object.entries(map)) {

@@ -284,10 +284,11 @@ export const DATA_BINDINGS_DEROGADO: { group: string; bindings: { value: string;
     { value: 'director.cedula', label: 'Cédula del Director (Z7)' },
   ]},
   { group: 'Documento', bindings: [
-    { value: 'rawData.SERIALTITULO', label: 'Serial Título' },
-    { value: 'rawData.FECHAEMISIONT', label: 'Fecha Emisión Título' },
-    { value: 'rawData.EGRESOAÑO', label: 'Año Egreso Título' },
+    { value: 'rawData.SERIALTITULO', label: 'Serial T.' },
+    { value: 'rawData.FECHAEMISIONT', label: 'Fecha Emisión T.' },
+    { value: 'rawData.EGRESOAÑO', label: 'Año Egreso T.' },
     { value: 'rawData.FECHAEMISIONN', label: 'Fecha Emisión N.' },
+    { value: 'rawData.PROMEDIO.TOTAL', label: 'Promedio Total' },
   ]},
   { group: 'Educación Básica', bindings: [
     { value: 'rawData.INST.BASICA.1', label: 'Institución Básica 1' },

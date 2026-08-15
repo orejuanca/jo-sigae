@@ -269,7 +269,8 @@ function GridTable({
                 let displayContent = cell.content
                 if (isPreview && cell.dataBinding && displayData) {
                   const ov = draftOverrides?.[cell.dataBinding]
-                  displayContent = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config)
+                  const resolved = ov !== undefined && ov !== '' ? ov : resolveBinding(cell.dataBinding, displayData, config)
+                  displayContent = resolved || cell.content
                 }
 
                 const borderStyle = (enabled: boolean) =>

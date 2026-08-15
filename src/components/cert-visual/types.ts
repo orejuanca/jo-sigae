@@ -245,17 +245,22 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
     })
   }
 
-  // Soporte para multiples bindings separados por coma
+  // Soporte para multiples bindings/texto separados por coma
+  // Textos literales van entre comillas: binding1, " — ", binding2
   if (path.includes(',')) {
     const parts = path.split(',').map(p => p.trim()).filter(Boolean)
     const resolved = parts.map(p => {
+      // Texto literal entre comillas (comillas simples o dobles)
+      if ((p.startsWith('"') && p.endsWith('"')) || (p.startsWith("'") && p.endsWith("'"))) {
+        return p.slice(1, -1)
+      }
       const val = resolveSingleBinding(p, data, gridConfig)
       if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
         return formatDateLong(val)
       }
       return val
-    }).filter(Boolean)
-    return resolved.join(', ')
+    })
+    return resolved.join('')
   }
 
   // Binding simple (sin {{ }} ni coma)

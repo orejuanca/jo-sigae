@@ -1064,6 +1064,8 @@ export function parsedToCertData(parsed: ParsedCertData, student: {
     },
     acta: parsed.acta,
     actaFecha: parsed.actaFecha,
+    actaAnio: parsed.actaAnio,
+    literalesFinales: parsed.literalesFinales,
     aniosEscolares: parsed.aniosEscolares,
     planTipo: parsed.plan,
   }

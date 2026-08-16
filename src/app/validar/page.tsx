@@ -50,41 +50,8 @@ interface TextTemplate {
   gradesTableTitle: string
 }
 
-// Default template for "Validacion de Notas"
-const DEFAULT_TEMPLATE: TextTemplate = {
-  headerLines: [
-    'REPUBLICA BOLIVARIANA DE VENEZUELA',
-    'MINISTERIO DEL PODER POPULAR PARA LA EDUCACION',
-    '{{denominacion}}',
-    '{{estado}} - {{municipio}}',
-  ],
-  bodyParagraphs: [
-    'Validacion de Notas',
-    '',
-    'Quien suscribe, {{director.apellidosNombres}}, C.I. {{director.cedula}}, en mi condicion de Directora del Plantel {{denominacion}}, codigo {{od}}, hace constar que el(la) ciudadano(a):',
-    '',
-    '{{estudiante.apellidos}} {{estudiante.nombres}}',
-    'C.I.: {{estudiante.cedula}}',
-    '',
-    'curso y aprobo en esta institucion las asignaturas correspondientes al {{planEstudio}}, segun se detalla a continuacion:',
-  ],
-  footerLines: [
-    'Obteniendo un promedio acumulado de {{promedioAcumulado}} puntos.',
-    '',
-    'Las calificaciones aqui expresadas son fieles copia de los registros llevados en este plantel. Se expide a solicitud de la parte interesada, en {{lugar}}, a los {{fechaExpedicion}}.',
-    '',
-    '___________________________',
-    '{{director.apellidosNombres}}',
-    'C.I. {{director.cedula}}',
-    'Directora',
-    '',
-    '___________________________',
-    'Secretaria',
-  ],
-  pageSize: 'legal',
-  showGradesTable: true,
-  gradesTableTitle: 'RELACION DE CALIFICACIONES',
-}
+// No hay template hardcodeado — el formato se diseña exclusivamente
+// en el Editor de Formatos y se guarda como CertLayout (text-document).
 
 const LAYOUT_NAME = 'VALIDACION DE NOTAS'
 
@@ -196,7 +163,7 @@ export default function ValidarPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [certData, setCertData] = useState<CertData | null>(null)
   const [loadingData, setLoadingData] = useState(false)
-  const [template, setTemplate] = useState<TextTemplate>(DEFAULT_TEMPLATE)
+  const [template, setTemplate] = useState<TextTemplate | null>(null)
   const previewRef = useRef<HTMLDivElement>(null)
 
   // Load template from DB (CertLayouts) on mount — the template is edited
@@ -437,7 +404,7 @@ export default function ValidarPage() {
         </div>
 
         {/* Document preview */}
-        {certData && (
+        {certData && template && (
           <div className="bg-white rounded border shadow-lg mx-auto" style={{ maxWidth: '760px' }}>
             <div ref={previewRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.6', color: '#000' }}>
               {/* Header */}
@@ -559,8 +526,19 @@ export default function ValidarPage() {
           </div>
         )}
 
-        {/* No student selected */}
-        {!certData && !loadingData && (
+        {/* No template loaded */}
+        {!template && !loadingData && (
+          <div className="text-center py-16">
+            <Search className="h-10 w-10 mx-auto text-gray-600 mb-3" />
+            <p className="text-gray-400 text-sm">
+              No se encontro el template de Validacion de Notas en el Editor de Formatos.
+              Crea un layout llamado <span className="font-bold text-white">VALIDACION DE NOTAS ({plan === 'derogado' ? 'DEROGADO' : 'VIGENTE'})</span> en el Editor de Formatos.
+            </p>
+          </div>
+        )}
+
+        {/* Template loaded but no student selected */}
+        {template && !certData && !loadingData && (
           <div className="text-center py-16">
             <Search className="h-10 w-10 mx-auto text-gray-600 mb-3" />
             <p className="text-gray-400 text-sm">

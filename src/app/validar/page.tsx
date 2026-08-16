@@ -53,7 +53,6 @@ interface TextTemplate {
 // No hay template hardcodeado — el formato se diseña exclusivamente
 // en el Editor de Formatos y se guarda como CertLayout (text-document).
 
-const LAYOUT_NAME = 'VALIDACION DE NOTAS'
 
 function formatDateLong(dateStr: string): string {
   const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
@@ -168,17 +167,15 @@ export default function ValidarPage() {
 
   // Load template from DB (CertLayouts) on mount — the template is edited
   // exclusively in the Editor de Formatos page and stored as a CertLayout.
-  // Here we only read it.
+  // Here we only read it. Searches for any layout containing "validar" (case-insensitive).
   useEffect(() => {
     async function loadTemplate() {
       try {
         const res = await fetch(`/api/cert-layouts?plan=${plan}`)
         if (res.ok) {
           const layouts = await res.json()
-          const layoutName = plan === 'derogado'
-            ? `${LAYOUT_NAME} (DEROGADO)`
-            : `${LAYOUT_NAME} (VIGENTE)`
-          const found = layouts.find((l: any) => l.nombre === layoutName)
+          // Buscar cualquier layout que contenga "validar" en el nombre
+          const found = layouts.find((l: any) => l.nombre.toLowerCase().includes('validar'))
           if (found) {
             const detailRes = await fetch(`/api/cert-layouts?id=${found.id}&plan=${plan}`)
             if (detailRes.ok) {
@@ -191,7 +188,7 @@ export default function ValidarPage() {
             }
           }
         }
-      } catch { /* use default */ }
+      } catch { /* template not found */ }
     }
     loadTemplate()
   }, [plan])
@@ -531,8 +528,9 @@ export default function ValidarPage() {
           <div className="text-center py-16">
             <Search className="h-10 w-10 mx-auto text-gray-600 mb-3" />
             <p className="text-gray-400 text-sm">
-              No se encontro el template de Validacion de Notas en el Editor de Formatos.
-              Crea un layout llamado <span className="font-bold text-white">VALIDACION DE NOTAS ({plan === 'derogado' ? 'DEROGADO' : 'VIGENTE'})</span> en el Editor de Formatos.
+              No se encontro un layout de Validacion de Notas en el Editor de Formatos.
+              Crea un layout con la palabra <span className="font-bold text-white">"validar"</span> en el nombre
+              desde el Editor de Formatos (plan {plan === 'derogado' ? 'derogado' : 'vigente'}).
             </p>
           </div>
         )}

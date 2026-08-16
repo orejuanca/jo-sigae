@@ -174,8 +174,9 @@ export default function ValidarPage() {
         const res = await fetch(`/api/cert-layouts?plan=${plan}`)
         if (res.ok) {
           const layouts = await res.json()
-          // Buscar cualquier layout que contenga "validar" en el nombre
-          const found = layouts.find((l: any) => l.nombre.toLowerCase().includes('validar'))
+          // Buscar layout que contenga "validar nota" (coincide con "validar notas",
+          // "validar notas anti.", pero NO con "validar titulo")
+          const found = layouts.find((l: any) => l.nombre.toLowerCase().includes('validar nota'))
           if (found) {
             const detailRes = await fetch(`/api/cert-layouts?id=${found.id}&plan=${plan}`)
             if (detailRes.ok) {

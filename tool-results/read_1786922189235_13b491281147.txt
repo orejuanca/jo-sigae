@@ -1,0 +1,791 @@
+     1→'use client'
+     2→
+     3→import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
+     4→import { useSearchParams, useRouter } from 'next/navigation'
+     5→import { AppShell } from '@/components/app-shell'
+     6→import { Button } from '@/components/ui/button'
+     7→import { Badge } from '@/components/ui/badge'
+     8→import { Input } from '@/components/ui/input'
+     9→import { Label } from '@/components/ui/label'
+    10→import { StudentSearch } from '@/components/student-search'
+    11→import { useToast } from '@/hooks/use-toast'
+    12→import { notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
+    13→import {
+    14→  Save, Loader2, ArrowLeft, Printer, Search, Plus, Trash2,
+    15→} from 'lucide-react'
+    16→
+    17→// === Types ===
+    18→interface Student {
+    19→  id: string; cedula: string; apellidos: string; nombres: string
+    20→  fechaNacimiento?: string | null; pais?: string | null
+    21→  estado?: string | null; municipio?: string | null; plan?: string | null
+    22→}
+    23→
+    24→interface CalificacionRow {
+    25→  materia: string; numero: number; nota: string; literal: string
+    26→  tipoEvaluacion: string; fechaMes: string; fechaAnio: string; instEduc: string
+    27→}
+    28→
+    29→interface CertData {
+    30→  lugar: string; fechaExpedicion: string; planEstudio: string; od: string
+    31→  denominacion: string; direccion: string; telefono: string; municipio: string
+    32→  estado: string; cdcce: string; planTipo?: string
+    33→  estudiante: { cedula: string; fechaNacimiento: string; apellidos: string; nombres: string; pais: string; estado: string; municipio: string }
+    34→  instituciones: { numero: number; denominacion: string; localidad: string; ef: string }[]
+    35→  calificaciones: Record<string, CalificacionRow[]>
+    36→  orientacion: { anio: string; literal: string }[]
+    37→  grupos: { anio: string; grupo: string; literal: string }[]
+    38→  observaciones: string; observacionesLines: string[]; promedioAcumulado: string
+    39→  director: { apellidosNombres: string; cedula: string }
+    40→  directorCdcce: { apellidosNombres: string; cedula: string }
+    41→  acta: string; actaFecha: string; actaAnio: string; literalesFinales: string[]
+    42→}
+    43→
+    44→interface TextTemplate {
+    45→  headerLines: string[]
+    46→  bodyParagraphs: string[]
+    47→  footerLines: string[]
+    48→  pageSize: 'carta' | 'legal' | 'a4'
+    49→  showGradesTable: boolean
+    50→  gradesTableTitle: string
+    51→}
+    52→
+    53→function formatDateLong(dateStr: string): string {
+    54→  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    55→  if (!m) return dateStr
+    56→  const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+    57→  const day = parseInt(m[1])
+    58→  const month = months[parseInt(m[2]) - 1] || m[2]
+    59→  const year = m[3]
+    60→  return `${day} de ${month} de ${year}`
+    61→}
+    62→
+    63→function resolveTemplateToken(token: string, data: CertData | null): string {
+    64→  if (!data) return token
+    65→  const t = token.trim()
+    66→  const key = t.replace(/^\{\{|\}\}$/g, '').trim()
+    67→  const parts = key.split('.')
+    68→  let value = ''
+    69→  if (parts[0] === 'estudiante') {
+    70→    const obj = data.estudiante as any
+    71→    value = parts.slice(1).reduce((o: any, k: string) => o?.[k], obj) || ''
+    72→  } else if (parts[0] === 'director') {
+    73→    const obj = data.director as any
+    74→    value = parts.slice(1).reduce((o: any, k: string) => o?.[k], obj) || ''
+    75→  } else if (parts[0] === 'directorCdcce') {
+    76→    const obj = data.directorCdcce as any
+    77→    value = parts.slice(1).reduce((o: any, k: string) => o?.[k], obj) || ''
+    78→  } else {
+    79→    const top = (data as any)[key]
+    80→    if (top !== undefined && top !== null) value = String(top)
+    81→  }
+    82→  if (key === 'fechaExpedicion' && value) value = formatDateLong(value)
+    83→  return value
+    84→}
+    85→
+    86→function processTemplateLine(line: string, data: CertData | null): React.ReactNode[] {
+    87→  const parts: React.ReactNode[] = []
+    88→  const regex = /\{\{[^}]+\}\}/g
+    89→  let lastIndex = 0
+    90→  let match: RegExpExecArray | null
+    91→  while ((match = regex.exec(line)) !== null) {
+    92→    if (match.index > lastIndex) parts.push(line.substring(lastIndex, match.index))
+    93→    const resolved = resolveTemplateToken(match[0], data)
+    94→    parts.push(<span key={match.index} className="font-semibold">{resolved}</span>)
+    95→    lastIndex = regex.lastIndex
+    96→  }
+    97→  if (lastIndex < line.length) parts.push(line.substring(lastIndex))
+    98→  return parts.length > 0 ? parts : [line]
+    99→}
+   100→
+   101→// Sample certData for preview when no student is selected
+   102→const SAMPLE_CERT_DATA: CertData = {
+   103→  lugar: 'Caracas',
+   104→  fechaExpedicion: '15/08/2026',
+   105→  planEstudio: 'Plan de Estudios vigente (Ley Organica de Educacion)',
+   106→  od: 'OD-12345',
+   107→  denominacion: 'U.E. COLEGIO BOLIVARIANO "JUAN ANTONIO RODRIGUEZ DOMINGUEZ"',
+   108→  direccion: 'Av. Principal, Zona Educativa',
+   109→  telefono: '0212-1234567',
+   110→  municipio: 'Sucre',
+   111→  estado: 'Miranda',
+   112→  cdcce: 'CD-12345',
+   113→  estudiante: {
+   114→    cedula: 'V-12.345.678',
+   115→    fechaNacimiento: '15/03/2005',
+   116→    apellidos: 'GARCIA RODRIGUEZ',
+   117→    nombres: 'MARIA JOSEFINA',
+   118→    pais: 'Venezuela',
+   119→    estado: 'Miranda',
+   120→    municipio: 'Sucre',
+   121→  },
+   122→  instituciones: [
+   123→    { numero: 1, denominacion: 'U.E. Colegio Bolivariano', localidad: 'Caracas', ef: '01/09/2022' },
+   124→  ],
+   125→  calificaciones: {
+   126→    'Primer Año': [
+   127→      { materia: 'Castellano y Literatura', numero: 1, nota: '18', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+   128→      { materia: 'Matematica', numero: 2, nota: '16', literal: 'B', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+   129→      { materia: 'Ciencias de la Naturaleza', numero: 3, nota: '15', literal: 'B', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+   130→    ],
+   131→    'Segundo Año': [
+   132→      { materia: 'Castellano y Literatura', numero: 1, nota: '17', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+   133→      { materia: 'Matematica', numero: 2, nota: '19', literal: 'MB', tipoEvaluacion: 'AC', fechaMes: '', fechaAnio: '', instEduc: '' },
+   134→    ],
+   135→  },
+   136→  orientacion: [],
+   137→  grupos: [],
+   138→  observaciones: '',
+   139→  observacionesLines: [],
+   140→  promedioAcumulado: '16.80',
+   141→  director: { apellidosNombres: 'ANA MARIA PEREZ', cedula: 'V-8.765.432' },
+   142→  directorCdcce: { apellidosNombres: 'JOSE LUIS MARTINEZ', cedula: 'V-5.432.109' },
+   143→  acta: '',
+   144→  actaFecha: '',
+   145→  actaAnio: '',
+   146→  literalesFinales: [],
+   147→}
+   148→
+   149→// Inline editable line component
+   150→function EditableLine({
+   151→  value,
+   152→  onChange,
+   153→  onRemove,
+   154→  onAddAfter,
+   155→  canRemove,
+   156→  className,
+   157→  style,
+   158→  placeholder,
+   159→  isTextArea,
+   160→}: {
+   161→  value: string
+   162→  onChange: (val: string) => void
+   163→  onRemove: () => void
+   164→  onAddAfter: () => void
+   165→  canRemove: boolean
+   166→  className?: string
+   167→  style?: React.CSSProperties
+   168→  placeholder?: string
+   169→  isTextArea?: boolean
+   170→}) {
+   171→  const [editing, setEditing] = useState(false)
+   172→  const [localValue, setLocalValue] = useState(value)
+   173→  const ref = useRef<HTMLDivElement>(null)
+   174→
+   175→  useEffect(() => { setLocalValue(value) }, [value])
+   176→
+   177→  const handleBlur = () => {
+   178→    setEditing(false)
+   179→    if (localValue !== value) onChange(localValue)
+   180→  }
+   181→
+   182→  const handleKeyDown = (e: React.KeyboardEvent) => {
+   183→    if (e.key === 'Enter' && !e.shiftKey) {
+   184→      e.preventDefault()
+   185→      handleBlur()
+   186→    }
+   187→  }
+   188→
+   189→  return (
+   190→    <div className="group relative flex items-start gap-1" style={style}>
+   191→      {/* Editable content */}
+   192→      {editing ? (
+   193→        <textarea
+   194→          ref={ref as any}
+   195→          className="flex-1 border border-blue-400 bg-blue-50/80 rounded px-1 py-0.5 text-[inherit] font-[inherit] text-left outline-none resize-none focus:ring-1 focus:ring-blue-400"
+   196→          style={{ fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit', color: '#000', minHeight: '1.4em' }}
+   197→          value={localValue}
+   198→          onChange={(e) => setLocalValue(e.target.value)}
+   199→          onBlur={handleBlur}
+   200→          onKeyDown={handleKeyDown}
+   201→          autoFocus
+   202→          rows={1}
+   203→        />
+   204→      ) : (
+   205→        <div
+   206→          className={`flex-1 cursor-text hover:bg-blue-50/60 rounded px-1 py-0.5 transition-colors min-h-[1.4em] ${className || ''}`}
+   207→          style={style}
+   208→          onClick={() => setEditing(true)}
+   209→        >
+   210→          {value || <span className="text-gray-300 italic">{placeholder || 'Doble clic para editar...'}</span>}
+   211→        </div>
+   212→      )}
+   213→      {/* Action buttons - show on hover */}
+   214→      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-px">
+   215→        <button
+   216→          onClick={onAddAfter}
+   217→          className="w-4 h-4 flex items-center justify-center rounded bg-green-100 hover:bg-green-200 text-green-700"
+   218→          title="Agregar linea"
+   219→        >
+   220→          <Plus className="w-2.5 h-2.5" />
+   221→        </button>
+   222→        {canRemove && (
+   223→          <button
+   224→            onClick={onRemove}
+   225→            className="w-4 h-4 flex items-center justify-center rounded bg-red-100 hover:bg-red-200 text-red-700"
+   226→            title="Eliminar linea"
+   227→          >
+   228→            <Trash2 className="w-2.5 h-2.5" />
+   229→          </button>
+   230→        )}
+   231→      </div>
+   232→    </div>
+   233→  )
+   234→}
+   235→
+   236→function TextEditorContent() {
+   237→  const searchParams = useSearchParams()
+   238→  const router = useRouter()
+   239→  const { toast } = useToast()
+   240→
+   241→  const layoutId = searchParams.get('id') || ''
+   242→  const plan = searchParams.get('plan') || 'vigente'
+   243→  const layoutName = searchParams.get('name') || ''
+   244→
+   245→  const [template, setTemplate] = useState<TextTemplate | null>(null)
+   246→  const [loading, setLoading] = useState(true)
+   247→  const [saving, setSaving] = useState(false)
+   248→
+   249→  // Preview state
+   250→  const [previewStudent, setPreviewStudent] = useState<Student | null>(null)
+   251→  const [previewCertData, setPreviewCertData] = useState<CertData | null>(null)
+   252→  const [loadingPreview, setLoadingPreview] = useState(false)
+   253→  const previewRef = useRef<HTMLDivElement>(null)
+   254→
+   255→  // Load template
+   256→  useEffect(() => {
+   257→    async function load() {
+   258→      try {
+   259→        const res = await fetch(`/api/cert-layouts?id=${layoutId}&plan=${plan}`)
+   260→        if (!res.ok) { toast({ title: 'Error', description: 'No se pudo cargar el layout.', variant: 'destructive' }); return }
+   261→        const detail = await res.json()
+   262→        const parsed = typeof detail.datos === 'string' ? JSON.parse(detail.datos) : detail.datos
+   263→        if (parsed.templateType === 'text-document' && parsed.template) {
+   264→          setTemplate(parsed.template)
+   265→        } else {
+   266→          toast({ title: 'Error', description: 'Este layout no es un documento de texto.', variant: 'destructive' })
+   267→        }
+   268→      } catch {
+   269→        toast({ title: 'Error', description: 'Error al cargar.', variant: 'destructive' })
+   270→      } finally {
+   271→        setLoading(false)
+   272→      }
+   273→    }
+   274→    if (layoutId) load()
+   275→  }, [layoutId, plan, toast])
+   276→
+   277→  // Load preview student data
+   278→  const handleSelectPreviewStudent = useCallback(async (student: Student) => {
+   279→    setPreviewStudent(student)
+   280→    setPreviewCertData(null)
+   281→    setLoadingPreview(true)
+   282→    try {
+   283→      const certApiUrl = plan === 'vigente'
+   284→        ? `/api/plan-vigente/${student.id}/cert-data`
+   285→        : `/api/plan-derogado/${student.id}/cert-data`
+   286→      const res = await fetch(certApiUrl)
+   287→      if (!res.ok) { setLoadingPreview(false); return }
+   288→      const result = await res.json()
+   289→      if (result.certData) {
+   290→        const cd = result.certData
+   291→        if (cd.calificaciones) {
+   292→          for (const anio of Object.keys(cd.calificaciones)) {
+   293→            for (const cal of cd.calificaciones[anio]) {
+   294→              if (cal.nota === 'IN' && cal.literal !== 'INASISTENTE') cal.literal = 'INASISTENTE'
+   295→              if (cal.nota === 'PE' && cal.literal !== 'PENDIENTE') cal.literal = 'PENDIENTE'
+   296→              if (!cal.literal && cal.nota) cal.literal = notaEnLetras(cal.nota)
+   297→            }
+   298→          }
+   299→        }
+   300→        setPreviewCertData(cd)
+   301→      }
+   302→    } catch { /* ignore */ }
+   303→    finally { setLoadingPreview(false) }
+   304→  }, [plan])
+   305→
+   306→  // Template line editors
+   307→  const updateHeaderLine = (index: number, value: string) => {
+   308→    if (!template) return
+   309→    const updated = { ...template, headerLines: [...template.headerLines] }
+   310→    updated.headerLines[index] = value
+   311→    setTemplate(updated)
+   312→  }
+   313→
+   314→  const addHeaderLine = (index: number) => {
+   315→    if (!template) return
+   316→    const updated = { ...template, headerLines: [...template.headerLines] }
+   317→    updated.headerLines.splice(index + 1, 0, '')
+   318→    setTemplate(updated)
+   319→  }
+   320→
+   321→  const removeHeaderLine = (index: number) => {
+   322→    if (!template || template.headerLines.length <= 1) return
+   323→    const updated = { ...template, headerLines: [...template.headerLines] }
+   324→    updated.headerLines.splice(index, 1)
+   325→    setTemplate(updated)
+   326→  }
+   327→
+   328→  const updateBodyLine = (index: number, value: string) => {
+   329→    if (!template) return
+   330→    const updated = { ...template, bodyParagraphs: [...template.bodyParagraphs] }
+   331→    updated.bodyParagraphs[index] = value
+   332→    setTemplate(updated)
+   333→  }
+   334→
+   335→  const addBodyLine = (index: number) => {
+   336→    if (!template) return
+   337→    const updated = { ...template, bodyParagraphs: [...template.bodyParagraphs] }
+   338→    updated.bodyParagraphs.splice(index + 1, 0, '')
+   339→    setTemplate(updated)
+   340→  }
+   341→
+   342→  const removeBodyLine = (index: number) => {
+   343→    if (!template || template.bodyParagraphs.length <= 1) return
+   344→    const updated = { ...template, bodyParagraphs: [...template.bodyParagraphs] }
+   345→    updated.bodyParagraphs.splice(index, 1)
+   346→    setTemplate(updated)
+   347→  }
+   348→
+   349→  const updateFooterLine = (index: number, value: string) => {
+   350→    if (!template) return
+   351→    const updated = { ...template, footerLines: [...template.footerLines] }
+   352→    updated.footerLines[index] = value
+   353→    setTemplate(updated)
+   354→  }
+   355→
+   356→  const addFooterLine = (index: number) => {
+   357→    if (!template) return
+   358→    const updated = { ...template, footerLines: [...template.footerLines] }
+   359→    updated.footerLines.splice(index + 1, 0, '')
+   360→    setTemplate(updated)
+   361→  }
+   362→
+   363→  const removeFooterLine = (index: number) => {
+   364→    if (!template || template.footerLines.length <= 1) return
+   365→    const updated = { ...template, footerLines: [...template.footerLines] }
+   366→    updated.footerLines.splice(index, 1)
+   367→    setTemplate(updated)
+   368→  }
+   369→
+   370→  // Save
+   371→  const handleSave = async () => {
+   372→    if (!template) return
+   373→    setSaving(true)
+   374→    try {
+   375→      const payload = {
+   376→        templateType: 'text-document',
+   377→        template,
+   378→        meta: { plan },
+   379→      }
+   380→      await fetch(`/api/cert-layouts?id=${layoutId}&plan=${plan}`, {
+   381→        method: 'PUT',
+   382→        headers: { 'Content-Type': 'application/json' },
+   383→        body: JSON.stringify({ datos: payload }),
+   384→      })
+   385→      toast({ title: 'Guardado', description: 'Plantilla actualizada correctamente.' })
+   386→    } catch {
+   387→      toast({ title: 'Error', description: 'No se pudo guardar.', variant: 'destructive' })
+   388→    } finally {
+   389→      setSaving(false)
+   390→    }
+   391→  }
+   392→
+   393→  // Print
+   394→  const handlePrint = () => {
+   395→    if (!template || !previewRef.current) return
+   396→    const data = previewCertData || SAMPLE_CERT_DATA
+   397→    const pageSize = template.pageSize
+   398→    const pageSizes: Record<string, string> = { carta: 'letter', legal: 'legal', a4: 'A4' }
+   399→    const pageWidths: Record<string, string> = { carta: '8.5in', legal: '8.5in', a4: '210mm' }
+   400→    const pageHeights: Record<string, string> = { carta: '11in', legal: '14in', a4: '297mm' }
+   401→
+   402→    let docHtml = '<!DOCTYPE html><html><head><title>Documento</title>'
+   403→    docHtml += `<style>`
+   404→    docHtml += `@page{size:${pageSizes[pageSize]};margin:1in 1.2in}`
+   405→    docHtml += `*{margin:0;padding:0;box-sizing:border-box}`
+   406→    docHtml += `body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.5;color:#000}`
+   407→    docHtml += `.header{text-align:center;margin-bottom:24pt}`
+   408→    docHtml += `.header .line{display:block}`
+   409→    docHtml += `.header .school-name{font-weight:bold;font-size:12pt;margin:4pt 0}`
+   410→    docHtml += `.header .location{font-size:10pt}`
+   411→    docHtml += `.doc-title{text-align:center;font-weight:bold;font-size:12pt;text-decoration:underline;margin:18pt 0 12pt}`
+   412→    docHtml += `.student-block{text-align:center;margin:12pt 0;padding:8pt;border:1px solid #999;display:inline-block;min-width:300pt}`
+   413→    docHtml += `.student-name{font-weight:bold;font-size:12pt}`
+   414→    docHtml += `.body-text{text-align:justify;margin:6pt 0}`
+   415→    docHtml += `.signatures{margin-top:36pt}`
+   416→    docHtml += `.sig-line{margin-top:36pt;text-align:center}`
+   417→    docHtml += `.sig-name{font-weight:bold;text-align:center}`
+   418→    docHtml += `.sig-role{text-align:center;font-size:10pt}`
+   419→    docHtml += `table{border-collapse:collapse;width:100%;font-size:9pt;margin:12pt 0}`
+   420→    docHtml += `th,td{border:1px solid #333;padding:4px 6px}`
+   421→    docHtml += `th{background:#f0f0f0;font-weight:bold}`
+   422→    docHtml += `</style></head><body>`
+   423→
+   424→    docHtml += '<div class="header">'
+   425→    for (const line of template.headerLines) {
+   426→      const resolved = line.replace(/\{\{[^}]+\}\}/g, (tok) => resolveTemplateToken(tok, data))
+   427→      if (line.includes('denominacion')) docHtml += `<span class="line school-name">${resolved}</span>`
+   428→      else if (line.includes('estado')) docHtml += `<span class="line location">${resolved}</span>`
+   429→      else docHtml += `<span class="line">${resolved}</span>`
+   430→      docHtml += '<br/>'
+   431→    }
+   432→    docHtml += '</div>'
+   433→
+   434→    for (const para of template.bodyParagraphs) {
+   435→      const resolved = para.replace(/\{\{[^}]+\}\}/g, (tok) => resolveTemplateToken(tok, data))
+   436→      const isTitle = !para.includes('{{') && para.trim().length > 0 && template.bodyParagraphs.indexOf(para) === 0
+   437→      if (isTitle) {
+   438→        docHtml += `<div class="doc-title">${resolved}</div>`
+   439→      } else if (para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')) {
+   440→        docHtml += '<div class="student-block"><div class="student-name">' + resolved + '</div></div>'
+   441→      } else if (resolved.trim() === '') {
+   442→        docHtml += '<br/>'
+   443→      } else {
+   444→        docHtml += `<p class="body-text">${resolved}</p>`
+   445→      }
+   446→    }
+   447→
+   448→    if (template.showGradesTable) {
+   449→      const yearOrder = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+   450→      docHtml += `<p style="text-align:center;font-weight:bold;margin:12pt 0">${template.gradesTableTitle}</p>`
+   451→      docHtml += '<table><thead><tr style="background:#f0f0f0">'
+   452→      docHtml += '<th style="border:1px solid #333;padding:4px 6px">Año</th><th style="border:1px solid #333;padding:4px 6px">Asignatura</th><th style="border:1px solid #333;padding:4px 6px">Nota</th><th style="border:1px solid #333;padding:4px 6px">Literal</th><th style="border:1px solid #333;padding:4px 6px">Eval.</th>'
+   453→      docHtml += '</tr></thead><tbody>'
+   454→      for (const yearName of yearOrder) {
+   455→        const grades = data.calificaciones?.[yearName]
+   456→        if (!grades) continue
+   457→        let first = true
+   458→        const validGrades = grades.filter(g => g.nota && g.nota.trim() !== '' && !/^\*+$/.test(g.nota))
+   459→        for (const g of validGrades) {
+   460→          docHtml += '<tr>'
+   461→          if (first) { docHtml += `<td style="border:1px solid #333;padding:4px 6px;font-weight:bold" rowspan="${validGrades.length}">${yearName}</td>`; first = false }
+   462→          docHtml += `<td style="border:1px solid #333;padding:4px 6px">${g.materia}</td><td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.nota}</td><td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.literal}</td><td style="border:1px solid #333;padding:4px 6px;text-align:center">${g.tipoEvaluacion || ''}</td></tr>`
+   463→        }
+   464→      }
+   465→      docHtml += '</tbody></table>'
+   466→    }
+   467→
+   468→    docHtml += '<div class="signatures">'
+   469→    for (const line of template.footerLines) {
+   470→      const resolved = line.replace(/\{\{[^}]+\}\}/g, (tok) => resolveTemplateToken(tok, data))
+   471→      if (resolved.trim() === '') { docHtml += '<br/>'; continue }
+   472→      if (/^_{3,}/.test(resolved.trim())) { docHtml += `<div class="sig-line">${resolved}</div>`; continue }
+   473→      if (line.includes('{{director.apellidosNombres}}') && !line.includes('C.I.')) { docHtml += `<div class="sig-name">${resolved}</div>`; continue }
+   474→      if (line.includes('C.I. {{director.cedula}}')) { docHtml += `<div class="sig-role">${resolved}</div>`; continue }
+   475→      if (line.includes('Secretaria') || line.includes('Director')) { docHtml += `<div class="sig-role">${resolved}</div>`; continue }
+   476→      docHtml += `<p class="body-text">${resolved}</p>`
+   477→    }
+   478→    docHtml += '</div></body></html>'
+   479→
+   480→    let iframe = document.getElementById('text-editor-print-frame') as HTMLIFrameElement | null
+   481→    if (!iframe) {
+   482→      iframe = document.createElement('iframe')
+   483→      iframe.id = 'text-editor-print-frame'
+   484→      iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${pageWidths[pageSize]};height:${pageHeights[pageSize]};border:none`
+   485→      document.body.appendChild(iframe)
+   486→    }
+   487→    const doc = iframe.contentDocument!
+   488→    doc.open(); doc.write(docHtml); doc.close()
+   489→    setTimeout(() => { iframe!.contentWindow!.print() }, 300)
+   490→  }
+   491→
+   492→  const previewData = previewCertData || SAMPLE_CERT_DATA
+   493→  const yearOrder = ['Primer Año', 'Segundo Año', 'Tercer Año', 'Cuarto Año', 'Quinto Año']
+   494→
+   495→  if (loading || !template) {
+   496→    return (
+   497→      <AppShell>
+   498→        <div className="flex items-center justify-center py-20">
+   499→          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+   500→          <span className="ml-2 text-sm text-gray-400">Cargando plantilla...</span>
+   501→        </div>
+   502→      </AppShell>
+   503→    )
+   504→  }
+   505→
+   506→  const gradeCount = previewCertData
+   507→    ? Object.values(previewCertData.calificaciones).flat().filter(c => c.nota && c.nota !== '' && !/^\*+$/.test(c.nota)).length
+   508→    : 0
+   509→
+   510→  return (
+   511→    <AppShell>
+   512→      <div className="space-y-4">
+   513→        {/* Top bar - SAME layout as /validar */}
+   514→        <div className="flex items-center gap-3 flex-wrap">
+   515→          <Button size="sm" variant="outline" onClick={() => router.push('/editor-formatos')} className="h-8 text-xs">
+   516→            <ArrowLeft className="h-3 w-3 mr-1" /> Volver
+   517→          </Button>
+   518→          <div className="flex-1 min-w-[250px]">
+   519→            <StudentSearch
+   520→              onSelect={handleSelectPreviewStudent}
+   521→              placeholder="Buscar alumno para vista previa con datos reales..."
+   522→              plan={plan}
+   523→              autoFocus
+   524→            />
+   525→          </div>
+   526→          {previewStudent && (
+   527→            <div className="flex items-center gap-2">
+   528→              <Badge variant={plan === 'derogado' ? 'destructive' : 'default'}>
+   529→                {plan === 'derogado' ? 'Plan Derogado' : 'Plan Vigente'}
+   530→              </Badge>
+   531→              <span className="text-sm font-medium text-white">
+   532→                {previewStudent.apellidos}, {previewStudent.nombres}
+   533→              </span>
+   534→              <span className="text-xs text-gray-400">
+   535→                C.I.: {formatCedulaFinal(previewStudent.cedula)}
+   536→              </span>
+   537→              {gradeCount > 0 && (
+   538→                <Badge variant="outline" className="text-emerald-400 border-emerald-700">
+   539→                  {gradeCount} notas
+   540→                </Badge>
+   541→              )}
+   542→            </div>
+   543→          )}
+   544→          <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 text-xs">
+   545→            <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+   546→          </Button>
+   547→          <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 text-xs bg-blue-600 hover:bg-blue-500">
+   548→            {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+   549→            {saving ? 'Guardando...' : 'Guardar'}
+   550→          </Button>
+   551→          {loadingPreview && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+   552→        </div>
+   553→
+   554→        {/* Config bar */}
+   555→        <div className="flex items-center gap-3 flex-wrap">
+   556→          <div className="flex items-center gap-2">
+   557→            <Label className="text-xs text-gray-400">Tamano hoja:</Label>
+   558→            <select
+   559→              className="bg-gray-900 text-white border border-gray-700 rounded px-2 py-1 text-xs"
+   560→              value={template.pageSize}
+   561→              onChange={(e) => setTemplate({ ...template, pageSize: e.target.value as any })}
+   562→            >
+   563→              <option value="carta">Carta</option>
+   564→              <option value="legal">Legal</option>
+   565→              <option value="a4">A4</option>
+   566→            </select>
+   567→          </div>
+   568→          <div className="flex items-center gap-2">
+   569→            <input
+   570→              type="checkbox"
+   571→              id="show-grades-edit"
+   572→              checked={template.showGradesTable}
+   573→              onChange={(e) => setTemplate({ ...template, showGradesTable: e.target.checked })}
+   574→              className="rounded"
+   575→            />
+   576→            <Label htmlFor="show-grades-edit" className="text-xs text-gray-400">Tabla de calificaciones</Label>
+   577→          </div>
+   578→          {template.showGradesTable && (
+   579→            <Input
+   580→              className="bg-gray-900 text-white border-gray-700 text-xs h-8 max-w-[250px]"
+   581→              value={template.gradesTableTitle}
+   582→              onChange={(e) => setTemplate({ ...template, gradesTableTitle: e.target.value })}
+   583→              placeholder="Titulo de la tabla"
+   584→            />
+   585→          )}
+   586→          <span className="text-[10px] text-gray-500 italic">
+   587→            Haz clic en cualquier linea del documento para editarla
+   588→          </span>
+   589→        </div>
+   590→
+   591→        {/* Document - SAME structure as /validar but every line is editable */}
+   592→        <div className="bg-white rounded border shadow-lg mx-auto" style={{ maxWidth: '760px' }}>
+   593→          <div ref={previewRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.6', color: '#000' }}>
+   594→
+   595→            {/* Header */}
+   596→            <div className="text-center" style={{ marginBottom: '20pt' }}>
+   597→              {template.headerLines.map((line, i) => {
+   598→                const isSchoolName = line.includes('{{denominacion}}')
+   599→                const isLocation = line.includes('{{estado}}')
+   600→                return (
+   601→                  <EditableLine
+   602→                    key={`h-${i}`}
+   603→                    value={line}
+   604→                    onChange={(val) => updateHeaderLine(i, val)}
+   605→                    onRemove={() => removeHeaderLine(i)}
+   606→                    onAddAfter={() => addHeaderLine(i)}
+   607→                    canRemove={template.headerLines.length > 1}
+   608→                    className={isSchoolName ? 'font-bold text-sm text-center' : isLocation ? 'text-[10pt] text-center' : 'text-center'}
+   609→                    placeholder={`Linea de encabezado ${i + 1}`}
+   610→                  />
+   611→                )
+   612→              })}
+   613→            </div>
+   614→
+   615→            {/* Body paragraphs */}
+   616→            {template.bodyParagraphs.map((para, i) => {
+   617→              const isStudentLine = para.includes('{{estudiante.apellidos}}') || para.includes('{{estudiante.nombres}}')
+   618→              const isTitle = i === 0 && !para.includes('{{') && para.trim().length > 0
+   619→
+   620→              if (isTitle) {
+   621→                return (
+   622→                  <div key={`b-${i}`} style={{ margin: '16pt 0 10pt' }}>
+   623→                    <EditableLine
+   624→                      value={para}
+   625→                      onChange={(val) => updateBodyLine(i, val)}
+   626→                      onRemove={() => removeBodyLine(i)}
+   627→                      onAddAfter={() => addBodyLine(i)}
+   628→                      canRemove={template.bodyParagraphs.length > 1}
+   629→                      className="text-center font-bold underline"
+   630→                      style={{ fontSize: '12pt' }}
+   631→                      placeholder="Titulo del documento"
+   632→                    />
+   633→                  </div>
+   634→                )
+   635→              }
+   636→
+   637→              if (isStudentLine) {
+   638→                return (
+   639→                  <div key={`b-${i}`} className="text-center" style={{ margin: '10pt 0' }}>
+   640→                    <EditableLine
+   641→                      value={para}
+   642→                      onChange={(val) => updateBodyLine(i, val)}
+   643→                      onRemove={() => removeBodyLine(i)}
+   644→                      onAddAfter={() => addBodyLine(i)}
+   645→                      canRemove={template.bodyParagraphs.length > 1}
+   646→                      className="font-bold"
+   647→                      style={{ fontSize: '12pt', display: 'inline-block', border: '1px solid #999', padding: '6pt 20pt', minWidth: '280pt' }}
+   648→                      placeholder="Datos del estudiante"
+   649→                    />
+   650→                  </div>
+   651→                )
+   652→              }
+   653→
+   654→              if (para.trim() === '') {
+   655→                return (
+   656→                  <EditableLine
+   657→                    key={`b-${i}`}
+   658→                    value={para}
+   659→                    onChange={(val) => updateBodyLine(i, val)}
+   660→                    onRemove={() => removeBodyLine(i)}
+   661→                    onAddAfter={() => addBodyLine(i)}
+   662→                    canRemove={template.bodyParagraphs.length > 1}
+   663→                    style={{ height: '8pt' }}
+   664→                  />
+   665→                )
+   666→              }
+   667→
+   668→              return (
+   669→                <EditableLine
+   670→                  key={`b-${i}`}
+   671→                  value={para}
+   672→                  onChange={(val) => updateBodyLine(i, val)}
+   673→                  onRemove={() => removeBodyLine(i)}
+   674→                  onAddAfter={() => addBodyLine(i)}
+   675→                  canRemove={template.bodyParagraphs.length > 1}
+   676→                  className="text-justify"
+   677→                  style={{ margin: '4pt 0' }}
+   678→                />
+   679→              )
+   680→            })}
+   681→
+   682→            {/* Grades table */}
+   683→            {template.showGradesTable && (
+   684→              <>
+   685→                <div className="text-center font-bold" style={{ margin: '10pt 0' }}>
+   686→                  {template.gradesTableTitle}
+   687→                </div>
+   688→                <div className="overflow-x-auto">
+   689→                  <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', margin: '8pt 0' }}>
+   690→                    <thead>
+   691→                      <tr style={{ background: '#f0f0f0' }}>
+   692→                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Ano</th>
+   693→                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Asignatura</th>
+   694→                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Nota</th>
+   695→                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Literal</th>
+   696→                        <th style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>Eval.</th>
+   697→                      </tr>
+   698→                    </thead>
+   699→                    <tbody>
+   700→                      {yearOrder.map(yearName => {
+   701→                        const grades = previewData.calificaciones?.[yearName]
+   702→                        if (!grades || grades.length === 0) return null
+   703→                        const validGrades = grades.filter(g => g.nota && g.nota.trim() !== '' && !/^\*+$/.test(g.nota))
+   704→                        if (validGrades.length === 0) return null
+   705→                        return validGrades.map((g, gi) => (
+   706→                          <tr key={`${yearName}-${gi}`}>
+   707→                            {gi === 0 && (
+   708→                              <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center', verticalAlign: 'top', fontWeight: 'bold' }}
+   709→                                rowSpan={validGrades.length}>
+   710→                                {yearName}
+   711→                              </td>
+   712→                            )}
+   713→                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'left' }}>{g.materia}</td>
+   714→                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.nota}</td>
+   715→                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.literal}</td>
+   716→                            <td style={{ border: '1px solid #333', padding: '3px 5px', textAlign: 'center' }}>{g.tipoEvaluacion || ''}</td>
+   717→                          </tr>
+   718→                        ))
+   719→                      })}
+   720→                    </tbody>
+   721→                  </table>
+   722→                </div>
+   723→              </>
+   724→            )}
+   725→
+   726→            {/* Footer */}
+   727→            <div style={{ marginTop: '28pt' }}>
+   728→              {template.footerLines.map((line, i) => {
+   729→                if (line.trim() === '') {
+   730→                  return (
+   731→                    <EditableLine
+   732→                      key={`f-${i}`}
+   733→                      value={line}
+   734→                      onChange={(val) => updateFooterLine(i, val)}
+   735→                      onRemove={() => removeFooterLine(i)}
+   736→                      onAddAfter={() => addFooterLine(i)}
+   737→                      canRemove={template.footerLines.length > 1}
+   738→                      style={{ height: '8pt' }}
+   739→                    />
+   740→                  )
+   741→                }
+   742→
+   743→                const isSigLine = /^_{3,}/.test(line.trim())
+   744→                const isDirectorName = line.includes('{{director.apellidosNombres}}') && !line.includes('C.I.')
+   745→                const isCedula = line.includes('{{director.cedula}}')
+   746→                const isRole = line.includes('Secretaria') || (line.includes('Director') && !line.includes('{{director'))
+   747→
+   748→                return (
+   749→                  <EditableLine
+   750→                    key={`f-${i}`}
+   751→                    value={line}
+   752→                    onChange={(val) => updateFooterLine(i, val)}
+   753→                    onRemove={() => removeFooterLine(i)}
+   754→                    onAddAfter={() => addFooterLine(i)}
+   755→                    canRemove={template.footerLines.length > 1}
+   756→                    className={isDirectorName ? 'text-center font-bold' : isCedula || isRole || isSigLine ? 'text-center text-[10pt]' : 'text-justify'}
+   757→                    style={isSigLine ? { marginTop: '28pt' } : isCedula || isRole ? {} : { margin: '4pt 0' }}
+   758→                  />
+   759→                )
+   760→              })}
+   761→            </div>
+   762→          </div>
+   763→        </div>
+   764→
+   765→        {/* Hint */}
+   766→        {!previewStudent && (
+   767→          <div className="text-center">
+   768→            <span className="text-[10px] text-gray-500">
+   769→              Mostrando datos de ejemplo. Busca un alumno arriba para ver con datos reales.
+   770→            </span>
+   771→          </div>
+   772→        )}
+   773→      </div>
+   774→    </AppShell>
+   775→  )
+   776→}
+   777→
+   778→export default function TextEditorPage() {
+   779→  return (
+   780→    <Suspense fallback={
+   781→      <AppShell>
+   782→        <div className="flex items-center justify-center py-20">
+   783→          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+   784→        </div>
+   785→      </AppShell>
+   786→    }>
+   787→      <TextEditorContent />
+   788→    </Suspense>
+   789→  )
+   790→}
+   791→

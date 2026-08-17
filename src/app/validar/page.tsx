@@ -307,7 +307,7 @@ body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh
 table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:avoid;break-inside:avoid}tr{page-break-inside:avoid;break-inside:avoid}td{overflow:visible;height:auto !important}}
 </style></head><body>${tableHtml}<script>
 document.querySelectorAll('td[data-autofit]').forEach(function(td){
   var span=td.querySelector('span');

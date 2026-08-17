@@ -1665,16 +1665,14 @@ function CertVisualEditorContent() {
   const executePrint = (scale: number) => {
     const { tableHtml } = buildTableHtml()
 
-    const scalePercent = scale / 100
     const html = `<!DOCTYPE html><html><head><title>Certificación</title><style>
-/* FORZAMOS EL TAMAÑO LEGAL EN LA IMPRESORA */
-@page{size: Legal; margin:0}
+@page{size:Legal;margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
- table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center;zoom:${scalePercent}}
+table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
-@media print{table{zoom:1}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head><body>${tableHtml}<script>
 // Auto-fit: reducir fontSize en celdas marcadas con data-autofit
  document.querySelectorAll('td[data-autofit]').forEach(function(td){

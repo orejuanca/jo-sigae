@@ -300,8 +300,8 @@ export default function ValidarPage() {
   const handlePrint = () => {
     if (!gridConfig) return
     const tableHtml = buildTableHtml()
-    const html = `<!DOCTYPE html><html><head><title>Validacion de Notas</title><style>
-@page{size:letter;margin:0}
+    const html = `<!DOCTYPE html><html><head><title>Certificacion</title><style>
+@page{size:Legal;margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
@@ -325,10 +325,10 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
   }
 });
 </script></body></html>`
-    let iframe = document.getElementById('validar-print-frame') as HTMLIFrameElement | null
+    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
     if (!iframe) {
       iframe = document.createElement('iframe')
-      iframe.id = 'validar-print-frame'
+      iframe.id = 'cert-print-frame'
       iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:215.9mm;height:400mm;border:none'
       document.body.appendChild(iframe)
     }

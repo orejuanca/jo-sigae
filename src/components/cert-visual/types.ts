@@ -255,6 +255,47 @@ function resolveSingleBinding(path: string, data: DisplayData, gridConfig?: Grid
   }
 }
 
+/**
+ * Divide una cadena por comas RESPECTANDO las comillas.
+ * Ejemplo: 'student.estado, ", ", student.municipio'
+ *   → ['student.estado', ' ", "', ' student.municipio']
+ * 
+ * Maneja tanto comillas dobles ("...") como simples ('...').
+ * Las comas DENTRO de comillas no se usan como separador.
+ */
+function smartSplitComma(input: string): string[] {
+  const parts: string[] = []
+  let current = ''
+  let inQuote: string | null = null  // '"' | "'" | null
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i]
+
+    if (inQuote) {
+      current += ch
+      // Cerrar comilla del mismo tipo
+      if (ch === inQuote) {
+        inQuote = null
+      }
+    } else if (ch === '"' || ch === "'") {
+      inQuote = ch
+      current += ch
+    } else if (ch === ',') {
+      parts.push(current)
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+
+  // Agregar el ultimo segmento
+  if (current.length > 0) {
+    parts.push(current)
+  }
+
+  return parts
+}
+
 export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig, dateFormat?: string): string {
   if (!path || !data) return ''
 
@@ -276,16 +317,18 @@ export function resolveBinding(path: string, data: DisplayData, gridConfig?: Gri
   }
 
   // Soporte para multiples bindings/texto separados por coma
-  // Textos literales van entre comillas: binding1, " — ", binding2
+  // Textos literales van entre comillas: binding1, ", ", binding2, ", ", binding3
   if (path.includes(',')) {
-    const parts = path.split(',').map(p => p.trim()).filter(Boolean)
+    const parts = smartSplitComma(path)
     const resolved = parts.map(p => {
+      const trimmed = p.trim()
+      if (!trimmed) return ''
       // Texto literal entre comillas (comillas simples o dobles)
-      if ((p.startsWith('"') && p.endsWith('"')) || (p.startsWith("'") && p.endsWith("'"))) {
-        return p.slice(1, -1)
+      if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+        return trimmed.slice(1, -1)
       }
-      const val = resolveSingleBinding(p, data, gridConfig)
-      if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
+      const val = resolveSingleBinding(trimmed, data, gridConfig)
+      if (val && COMBINED_DATE_FIELDS.some(f => trimmed.endsWith(f))) {
         return applyFormat(formatDateLong(val))
       }
       return applyFormat(val)

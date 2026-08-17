@@ -301,7 +301,7 @@ export default function ValidarPage() {
     if (!gridConfig) return
     const tableHtml = buildTableHtml()
     const html = `<!DOCTYPE html><html><head><title>Validacion de Notas</title><style>
-@page{size:Legal;margin:0}
+@page{size:letter;margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
 table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}

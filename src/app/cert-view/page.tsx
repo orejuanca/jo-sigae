@@ -270,7 +270,7 @@ function CertViewContent() {
         if (occupied.has(`${r}-${c}`)) continue
         const cell = gridRow.cells[c] || emptyCell()
         let content = cell.content
-        if (cell.dataBinding && data) content = resolveBinding(cell.dataBinding, data, cfg) || ''
+        if (cell.dataBinding && data) content = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
@@ -426,7 +426,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                       const cell = gridRow.cells[c] || emptyCell()
                       let displayContent = cell.content
                       if (cell.dataBinding && displayData) {
-                        displayContent = resolveBinding(cell.dataBinding, displayData, gridConfig) || ''
+                        displayContent = resolveBinding(cell.dataBinding, displayData, gridConfig, cell.dateFormat) || ''
                       }
                       const borderS = (enabled: boolean) => {
                         const bs = cell.borderStyle || 'solid'

@@ -36,8 +36,8 @@ function CertViewContent() {
   const [rawDataFlat, setRawDataFlat] = useState<Record<string, string> | null>(null)
   const [dashboardCells, setDashboardCells] = useState<string[][] | null>(null)
 
-  // Load layout on mount
-  useEffect(() => {
+  // Reload layout (from DB, no cache)
+  const reloadLayout = useCallback(() => {
     if (!layoutId) { setLoadingLayout(false); return }
     fetch(`/api/cert-layouts?plan=${plan}&id=${layoutId}`)
       .then(async r => r.ok ? r.json() : null)
@@ -51,6 +51,14 @@ function CertViewContent() {
       .catch(() => toast({ title: 'Error', description: 'Error cargando formato.', variant: 'destructive' }))
       .finally(() => setLoadingLayout(false))
   }, [layoutId, plan])
+
+  // Load layout on mount and reload when window regains focus (editor changes)
+  useEffect(() => { reloadLayout() }, [reloadLayout])
+  useEffect(() => {
+    const onFocus = () => reloadLayout()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [reloadLayout])
 
   // Load dashboard cells (same as editor)
   const reloadDashboardCells = useCallback(() => {

@@ -1,0 +1,502 @@
+     1→     1→     1→// === Cell-by-Cell Grid Builder Types ===
+     2→     2→     2→import { DATA_BINDINGS_VIGENTE, DATA_BINDINGS_DEROGADO } from './bindings-generated'
+     3→     3→     3→
+     4→     4→     4→export interface CellConfig {
+     5→     5→     5→  content: string           // Static text label (e.g., "Código:")
+     6→     6→     6→  dataBinding: string       // Dot-path to data field (e.g., "student.cedula", "school.denominacion")
+     7→     7→     7→  colspan: number           // Default 1
+     8→     8→     8→  rowspan: number           // Default 1
+     9→     9→     9→  width: string             // e.g., '10%', '100px', '' (auto)
+    10→    10→    10→  height: string            // e.g., '20px', 'auto'
+    11→    11→    11→  fontSize: number          // Default 9
+    12→    12→    12→  fontWeight: 'normal' | 'bold'
+    13→    13→    13→  textAlign: 'left' | 'center' | 'right'
+    14→    14→    14→  verticalAlign: 'top' | 'middle' | 'bottom'
+    15→    15→    15→  borderTop: boolean        // Default true
+    16→    16→    16→  borderRight: boolean      // Default true
+    17→    17→    17→  borderBottom: boolean     // Default true
+    18→    18→    18→  borderLeft: boolean       // Default true
+    19→    19→    19→  borderColor: string       // Default '#000000'
+    20→    20→    20→  bgColor: string           // Default '' (transparent)
+    21→    21→    21→  color: string             // Default '' (inherit)
+    22→    22→    22→  whiteSpace: 'normal' | 'nowrap' | 'pre'
+    23→    23→    23→  padding: string           // Default '1px 2px'
+    24→    24→    24→  fontStyle: 'normal' | 'italic'
+    25→    25→    25→  textDecoration: 'none' | 'underline'
+    26→    26→    26→  autoFit: boolean         // Default false - reduce font-size si texto desborda
+    27→    27→    27→  writingMode: string      // Default 'horizontal-tb' - dirección del texto
+    28→    28→    28→  borderStyle: string      // Default 'solid' - tipo de línea de borde
+    29→    29→    29→  dateFormat: string       // Formato de fecha: 'DD/MM/YYYY' (default), 'DD DE MES DE YYYY', 'YYYY-MM-DD', 'MES DD, YYYY'
+    30→    30→    30→
+    31→    31→    31→}
+    32→    32→    32→
+    33→    33→    33→export interface GridRow {
+    34→    34→    34→  cells: Record<number, CellConfig>  // colIndex -> CellConfig
+    35→    35→    35→}
+    36→    36→    36→
+    37→    37→    37→export interface GridConfig {
+    38→    38→    38→  totalCols: number
+    39→    39→    39→  columnWidths: string[]   // Width per column index, e.g., ['4.57%','13%','13%',...]
+    40→    40→    40→  rows: GridRow[]
+    41→    41→    41→}
+    42→    42→    42→
+    43→    43→    43→// Factory for empty cell with defaults
+    44→    44→    44→export function emptyCell(overrides?: Partial<CellConfig>): CellConfig {
+    45→    45→    45→  return {
+    46→    46→    46→    content: '', dataBinding: '', colspan: 1, rowspan: 1,
+    47→    47→    47→    width: '', height: '', fontSize: 9, fontWeight: 'normal',
+    48→    48→    48→    textAlign: 'left', verticalAlign: 'middle',
+    49→    49→    49→    borderTop: true, borderRight: true, borderBottom: true, borderLeft: true,
+    50→    50→    50→    borderColor: '#000000', bgColor: '', color: '', whiteSpace: 'normal',
+    51→    51→    51→    padding: '1px 2px', fontStyle: 'normal', textDecoration: 'none', autoFit: false,
+    52→    52→    52→    writingMode: 'horizontal-tb', borderStyle: 'solid', dateFormat: '',
+    53→    53→    53→    ...overrides,
+    54→    54→    54→  }
+    55→    55→    55→}
+    56→    56→    56→
+    57→    57→    57→// Factory for empty row
+    58→    58→    58→export function emptyRow(totalCols: number): GridRow {
+    59→    59→    59→  const cells: Record<number, CellConfig> = {}
+    60→    60→    60→  for (let c = 0; c < totalCols; c++) {
+    61→    61→    61→    cells[c] = emptyCell()
+    62→    62→    62→  }
+    63→    63→    63→  return { cells }
+    64→    64→    64→}
+    65→    65→    65→
+    66→    66→    66→export function getDataBindings(plan: string): { group: string; bindings: { value: string; label: string }[] }[] {
+    67→    67→    67→  return plan === 'derogado' ? DATA_BINDINGS_DEROGADO : DATA_BINDINGS_VIGENTE
+    68→    68→    68→}
+    69→    69→    69→
+    70→    70→    70→// Legacy export for backward compatibility (defaults to vigente)
+    71→    71→    71→export const DATA_BINDINGS = DATA_BINDINGS_VIGENTE
+    72→    72→    72→
+    73→    73→    73→// === Display Data Interface (for preview) ===
+    74→    74→    74→export interface InstitucionEducativa {
+    75→    75→    75→  numero: number
+    76→    76→    76→  denominacion: string
+    77→    77→    77→  localidad: string
+    78→    78→    78→  ef: string
+    79→    79→    79→}
+    80→    80→    80→
+    81→    81→    81→export interface DisplayData {
+    82→    82→    82→  lugar: string
+    83→    83→    83→  fechaExpedicion: string
+    84→    84→    84→  planEstudio: string
+    85→    85→    85→  planCodigo: string
+    86→    86→    86→  od: string
+    87→    87→    87→  denominacion: string
+    88→    88→    88→  direccion: string
+    89→    89→    89→  telefono: string
+    90→    90→    90→  municipio: string
+    91→    91→    91→  estado: string
+    92→    92→    92→  cdcce: string
+    93→    93→    93→  estudiante: {
+    94→    94→    94→    cedula: string
+    95→    95→    95→    fechaNacimiento: string
+    96→    96→    96→    apellidos: string
+    97→    97→    97→    nombres: string
+    98→    98→    98→    pais: string
+    99→    99→    99→    estado: string
+   100→   100→   100→    municipio: string
+   101→   101→   101→  }
+   102→   102→   102→  instituciones: InstitucionEducativa[]
+   103→   103→   103→  calificaciones: Record<string, { materia: string; numero: number; nota: string; literal: string; tipoEvaluacion: string; fechaMes: string; fechaAnio: string; instEduc: string }[]>
+   104→   104→   104→  orientacion: { anio: string; literal: string }[]
+   105→   105→   105→  grupos: { anio: string; grupo: string; literal: string }[]
+   106→   106→   106→  observaciones: string
+   107→   107→   107→  observacionesLines: string[]
+   108→   108→   108→  promedioAcumulado: string
+   109→   109→   109→  director: { apellidosNombres: string; cedula: string }
+   110→   110→   110→  directorCdcce: { apellidosNombres: string; cedula: string }
+   111→   111→   111→  acta: string
+   112→   112→   112→  actaFecha: string
+   113→   113→   113→  actaAnio: string
+   114→   114→   114→  literalesFinales: string[]
+   115→   115→   115→  /** Flat map of rawData fields for plan derogado bindings (e.g. rawData.CEDULA, rawData.NOTA.CA.1) */
+   116→   116→   116→  rawDataMap?: Record<string, string>
+   117→   117→   117→}
+   118→   118→   118→
+   119→   119→   119→// === Data Resolution for Preview ===
+   120→   120→   120→const YEAR_NAME_MAP: Record<string, string> = {
+   121→   121→   121→  '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año',
+   122→   122→   122→  '4': 'Cuarto Año', '5': 'Quinto Año',
+   123→   123→   123→}
+   124→   124→   124→
+   125→   125→   125→const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'] as const
+   126→   126→   126→
+   127→   127→   127→const MESES_INGLES = ['January','February','March','April','May','June','July','August','September','October','November','December'] as const
+   128→   128→   128→
+   129→   129→   129→function formatDateLong(dateStr: string): string {
+   130→   130→   130→  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+   131→   131→   131→  if (!m) return dateStr
+   132→   132→   132→  return `${parseInt(m[1])} DE ${MESES[parseInt(m[2]) - 1]} DE ${m[3]}`
+   133→   133→   133→}
+   134→   134→   134→
+   135→   135→   135→/** Convierte fecha DD/MM/YYYY a otros formatos según dateFormat */
+   136→   136→   136→export function formatDateWithStyle(dateStr: string, dateFormat: string): string {
+   137→   137→   137→  if (!dateStr || !dateFormat) return dateStr
+   138→   138→   138→  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+   139→   139→   139→  if (!m) return dateStr
+   140→   140→   140→  const day = parseInt(m[1])
+   141→   141→   141→  const month = parseInt(m[2])
+   142→   142→   142→  const year = m[3]
+   143→   143→   143→  switch (dateFormat) {
+   144→   144→   144→    case 'DD DE MES DE YYYY':
+   145→   145→   145→      return `${day} DE ${MESES[month - 1]} DE ${year}`
+   146→   146→   146→    case 'DD/MM/YYYY':
+   147→   147→   147→      return `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}`
+   148→   148→   148→    case 'YYYY-MM-DD':
+   149→   149→   149→      return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+   150→   150→   150→    case 'MES DD, YYYY':
+   151→   151→   151→      return `${MESES_INGLES[month - 1]} ${day}, ${year}`
+   152→   152→   152→    default:
+   153→   153→   153→      return dateStr
+   154→   154→   154→  }
+   155→   155→   155→}
+   156→   156→   156→
+   157→   157→   157→const COMBINED_DATE_FIELDS = ['fechaNacimiento']
+   158→   158→   158→
+   159→   159→   159→function resolveSingleBinding(path: string, data: DisplayData, gridConfig?: GridConfig): string {
+   160→   160→   160→  const [domain, ...rest] = path.split('.')
+   161→   161→   161→  switch (domain) {
+   162→   162→   162→    case 'student': return rest.reduce((o: any, k: string) => o?.[k], data.estudiante) || ''
+   163→   163→   163→    case 'school': {
+   164→   164→   164→      const schoolMap: Record<string, string> = {
+   165→   165→   165→        codigo: data.od, denominacion: data.denominacion, direccion: data.direccion,
+   166→   166→   166→        telefono: data.telefono, municipio: data.municipio, estado: data.estado, cdcce: data.cdcce
+   167→   167→   167→      }
+   168→   168→   168→      return schoolMap[rest[0]] || ''
+   169→   169→   169→    }
+   170→   170→   170→    case 'doc': {
+   171→   171→   171→      // Soporte para doc.literalFinal.N
+   172→   172→   172→      if (rest[0] === 'literalFinal') {
+   173→   173→   173→        const idx = parseInt(rest[1])
+   174→   174→   174→        return data.literalesFinales?.[idx] || ''
+   175→   175→   175→      }
+   176→   176→   176→      const docMap: Record<string, string> = {
+   177→   177→   177→        planEstudio: data.planEstudio, codigo: data.planCodigo,
+   178→   178→   178→        lugar: data.lugar, fechaExpedicion: data.fechaExpedicion,
+   179→   179→   179→        observaciones: data.observaciones, promedioAcumulado: data.promedioAcumulado,
+   180→   180→   180→        acta: data.acta || '', actaFecha: data.actaFecha || '', actaAnio: data.actaAnio || '',
+   181→   181→   181→      }
+   182→   182→   182→      return docMap[rest[0]] || ''
+   183→   183→   183→    }
+   184→   184→   184→    case 'director': {
+   185→   185→   185→      if (rest[0] === 'nombre') {
+   186→   186→   186→        return data.rawDataMap?.['DIRECTOR.NOMBRE'] || data.director?.apellidosNombres || ''
+   187→   187→   187→      }
+   188→   188→   188→      if (rest[0] === 'cedula') {
+   189→   189→   189→        return data.rawDataMap?.['DIRECTOR.CEDULA'] || data.director?.cedula || ''
+   190→   190→   190→      }
+   191→   191→   191→      return ''
+   192→   192→   192→    }
+   193→   193→   193→    case 'cdcee':
+   194→   194→   194→      return rest[0] === 'nombre' ? (data.directorCdcce?.apellidosNombres || '') : (data.directorCdcce?.cedula || '')
+   195→   195→   195→    case 'inst': {
+   196→   196→   196→      const idx = parseInt(rest[0])
+   197→   197→   197→      const field = rest[1]
+   198→   198→   198→      return data.instituciones[idx]?.[field as keyof InstitucionEducativa] || '*'
+   199→   199→   199→    }
+   200→   200→   200→    case 'calif': {
+   201→   201→   201→      const yearKey = YEAR_NAME_MAP[rest[0]] || rest[0]
+   202→   202→   202→      const idx = parseInt(rest[1])
+   203→   203→   203→      const field = rest[2]
+   204→   204→   204→      const yearData = data.calificaciones?.[yearKey]
+   205→   205→   205→      if (!yearData) return ''
+   206→   206→   206→      const subj = yearData[idx]
+   207→   207→   207→      if (!subj) return ''
+   208→   208→   208→      const map: Record<string, string> = {
+   209→   209→   209→        materia: subj.materia, numero: String(subj.numero),
+   210→   210→   210→        nota: subj.nota, literal: subj.literal, te: subj.tipoEvaluacion,
+   211→   211→   211→        mes: subj.fechaMes, anio: subj.fechaAnio, inst: subj.instEduc,
+   212→   212→   212→      }
+   213→   213→   213→      return map[field] || ''
+   214→   214→   214→    }
+   215→   215→   215→    case 'orient': {
+   216→   216→   216→      const idx = parseInt(rest[0])
+   217→   217→   217→      const entry = data.orientacion?.[idx]
+   218→   218→   218→      if (!entry) return ''
+   219→   219→   219→      if (rest[1] === 'literal') return entry.literal
+   220→   220→   220→      return entry.anio || ''
+   221→   221→   221→    }
+   222→   222→   222→    case 'grupo': {
+   223→   223→   223→      const idx = parseInt(rest[0])
+   224→   224→   224→      const entry = data.grupos?.[idx]
+   225→   225→   225→      if (!entry) return ''
+   226→   226→   226→      if (rest[1] === 'literal') return entry.literal
+   227→   227→   227→      if (rest[1] === 'grupo') return entry.grupo
+   228→   228→   228→      return entry.anio || ''
+   229→   229→   229→    }
+   230→   230→   230→    case 'obsCert': {
+   231→   231→   231→      const idx = parseInt(rest[0])
+   232→   232→   232→      return data.observacionesLines?.[idx] || ''
+   233→   233→   233→    }
+   234→   234→   234→    case 'rawData': {
+   235→   235→   235→      // Plan derogado: resolve flat keys like rawData.CEDULA, rawData.NOTA.CA.1
+   236→   236→   236→      if (!data.rawDataMap) return ''
+   237→   237→   237→      const key = rest.join('.')
+   238→   238→   238→      const val = data.rawDataMap[key] || ''
+   239→   239→   239→      // Pad MES values to 2 digits (01-12)
+   240→   240→   240→      if (key.startsWith('MES.') && /^\d{1,2}$/.test(val)) {
+   241→   241→   241→        return val.padStart(2, '0')
+   242→   242→   242→      }
+   243→   243→   243→      return val
+   244→   244→   244→    }
+   245→   245→   245→    case 'expedicion': {
+   246→   246→   246→      if (rest[0] === 'fecha') {
+   247→   247→   247→        return data.rawDataMap?.['EXPEDICION.FECHA'] || data.fechaExpedicion || ''
+   248→   248→   248→      }
+   249→   249→   249→      if (rest[0] === 'lugar') {
+   250→   250→   250→        return data.rawDataMap?.['EXPEDICION.LUGAR'] || data.lugar || ''
+   251→   251→   251→      }
+   252→   252→   252→      return ''
+   253→   253→   253→    }
+   254→   254→   254→    default: return ''
+   255→   255→   255→  }
+   256→   256→   256→}
+   257→   257→   257→
+   258→   258→   258→export function resolveBinding(path: string, data: DisplayData, gridConfig?: GridConfig, dateFormat?: string): string {
+   259→   259→   259→  if (!path || !data) return ''
+   260→   260→   260→
+   261→   261→   261→  const applyFormat = (val: string): string => {
+   262→   262→   262→    if (dateFormat && val) return formatDateWithStyle(val, dateFormat)
+   263→   263→   263→    return val
+   264→   264→   264→  }
+   265→   265→   265→
+   266→   266→   266→  // Soporte para texto libre con bindings embebidos: "Serial: {{doc.acta}} — Fecha: {{doc.actaFecha}}"
+   267→   267→   267→  if (path.includes('{{')) {
+   268→   268→   268→    return path.replace(/\{\{([^}]+)\}\}/g, (_match, bindingPath: string) => {
+   269→   269→   269→      const trimmed = bindingPath.trim()
+   270→   270→   270→      const val = resolveSingleBinding(trimmed, data, gridConfig)
+   271→   271→   271→      if (val && COMBINED_DATE_FIELDS.some(f => trimmed.endsWith(f))) {
+   272→   272→   272→        return applyFormat(formatDateLong(val))
+   273→   273→   273→      }
+   274→   274→   274→      return applyFormat(val)
+   275→   275→   275→    })
+   276→   276→   276→  }
+   277→   277→   277→
+   278→   278→   278→  // Soporte para multiples bindings/texto separados por coma
+   279→   279→   279→  // Textos literales van entre comillas: binding1, " — ", binding2
+   280→   280→   280→  if (path.includes(',')) {
+   281→   281→   281→    const parts = path.split(',').map(p => p.trim()).filter(Boolean)
+   282→   282→   282→    const resolved = parts.map(p => {
+   283→   283→   283→      // Texto literal entre comillas (comillas simples o dobles)
+   284→   284→   284→      if ((p.startsWith('"') && p.endsWith('"')) || (p.startsWith("'") && p.endsWith("'"))) {
+   285→   285→   285→        return p.slice(1, -1)
+   286→   286→   286→      }
+   287→   287→   287→      const val = resolveSingleBinding(p, data, gridConfig)
+   288→   288→   288→      if (val && COMBINED_DATE_FIELDS.some(f => p.endsWith(f))) {
+   289→   289→   289→        return applyFormat(formatDateLong(val))
+   290→   290→   290→      }
+   291→   291→   291→      return applyFormat(val)
+   292→   292→   292→    })
+   293→   293→   293→    return resolved.join('')
+   294→   294→   294→  }
+   295→   295→   295→
+   296→   296→   296→  // Binding simple (sin {{ }} ni coma)
+   297→   297→   297→  return applyFormat(resolveSingleBinding(path, data, gridConfig))
+   298→   298→   298→}
+   299→   299→   299→
+   300→   300→   300→// === Helpers for building template ===
+   301→   301→   301→function c(content: string, dataBinding?: string, overrides?: Partial<CellConfig>): CellConfig {
+   302→   302→   302→  return emptyCell({ content, dataBinding, ...overrides })
+   303→   303→   303→}
+   304→   304→   304→
+   305→   305→   305→function row(cells: [number, CellConfig][]): GridRow {
+   306→   306→   306→  const allCells: Record<number, CellConfig> = {}
+   307→   307→   307→  cells.forEach(([col, cell]) => { allCells[col] = cell })
+   308→   308→   308→  return { cells: allCells }
+   309→   309→   309→}
+   310→   310→   310→
+   311→   311→   311→// Bold cell shorthand
+   312→   312→   312→function b(content: string, dataBinding?: string, overrides?: Partial<CellConfig>): CellConfig {
+   313→   313→   313→  return emptyCell({ content, dataBinding, fontWeight: 'bold', ...overrides })
+   314→   314→   314→}
+   315→   315→   315→
+   316→   316→   316→// Header cell (bold, centered, middle)
+   317→   317→   317→function h(content: string, overrides?: Partial<CellConfig>): CellConfig {
+   318→   318→   318→  return emptyCell({ content, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'middle', ...overrides })
+   319→   319→   319→}
+   320→   320→   320→
+   321→   321→   321→// ============================================================
+   322→   322→   322→// Patch calif/orient/grupo/obs bindings onto ANY loaded template
+   323→   323→   323→// Call this after loading from localStorage or DB so bindings
+   324→   324→   324→// are always up-to-date without losing visual corrections.
+   325→   325→   325→// ============================================================
+   326→   326→   326→export function patchDataBindings(config: GridConfig): GridConfig {
+   327→   327→   327→  // No inyectar enlaces automáticos — los enlaces se asignan manualmente por plan
+   328→   328→   328→  return config
+   329→   329→   329→}
+   330→   330→   330→
+   331→   331→   331→
+   332→   332→   332→export function createDefaultTemplate(): GridConfig {
+   333→   333→   333→  const totalCols = 27
+   334→   334→   334→  const columnWidths: string[] = [
+   335→   335→   335→    '1.58%',
+   336→   336→   336→    '4.5%',
+   337→   337→   337→    '4.5%',
+   338→   338→   338→    '4.5%',
+   339→   339→   339→    '4.5%',
+   340→   340→   340→    '4.5%',
+   341→   341→   341→    '4.5%',
+   342→   342→   342→    '4.5%',
+   343→   343→   343→    '4.5%',
+   344→   344→   344→    '4.5%',
+   345→   345→   345→    '4.5%',
+   346→   346→   346→    '1.73%',
+   347→   347→   347→    '1.58%',
+   348→   348→   348→    '0.25%',
+   349→   349→   349→    '1.58%',
+   350→   350→   350→    '4.5%',
+   351→   351→   351→    '4.5%',
+   352→   352→   352→    '4.5%',
+   353→   353→   353→    '4.5%',
+   354→   354→   354→    '4.5%',
+   355→   355→   355→    '4.5%',
+   356→   356→   356→    '4.5%',
+   357→   357→   357→    '4.5%',
+   358→   358→   358→    '4.5%',
+   359→   359→   359→    '4.5%',
+   360→   360→   360→    '1.73%',
+   361→   361→   361→    '1.58%',
+   362→   362→   362→  ]
+   363→   363→   363→
+   364→   364→   364→  const rows: GridRow[] = []
+   365→   365→   365→
+   366→   366→   366→  // Row 1 — Logo + Título
+   367→   367→   367→  {
+   368→   368→   368→    const c = emptyRow(totalCols)
+   369→   369→   369→    c.cells[0] = emptyCell({ content: '##LOGO_CEMG##', colspan: 11, textAlign: 'center', verticalAlign: 'middle', bgColor: '' })
+   370→   370→   370→    c.cells[12] = emptyCell({ content: 'CERTIFICACIÓN DE CALIFICACIONES  EMG', colspan: 15, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   371→   371→   371→    rows.push(c)
+   372→   372→   372→  }
+   373→   373→   373→
+   374→   374→   374→  // Row 2
+   375→   375→   375→  {
+   376→   376→   376→    const c = emptyRow(totalCols)
+   377→   377→   377→    c.cells[12] = emptyCell({ content: 'I. Plan de Estudio:  EDUCACIÓN MEDIA GENERAL', colspan: 10, fontWeight: 'bold', verticalAlign: 'center' })
+   378→   378→   378→    c.cells[22] = emptyCell({ content: 'Código 31059', colspan: 5, fontWeight: 'bold', verticalAlign: 'center' })
+   379→   379→   379→    rows.push(c)
+   380→   380→   380→  }
+   381→   381→   381→
+   382→   382→   382→  // Row 3
+   383→   383→   383→  {
+   384→   384→   384→    const c = emptyRow(totalCols)
+   385→   385→   385→    c.cells[12] = emptyCell({ content: 'Lugar y Fecha de Expedición:', colspan: 7, fontWeight: 'bold', verticalAlign: 'center' })
+   386→   386→   386→    c.cells[19] = emptyCell({ colspan: 3, textAlign: 'right', verticalAlign: 'center', borderRight: false })
+   387→   387→   387→    c.cells[22] = emptyCell({ colspan: 5, verticalAlign: 'center', borderLeft: false })
+   388→   388→   388→    rows.push(c)
+   389→   389→   389→  }
+   390→   390→   390→
+   391→   391→   391→  // Row 4 (empty)
+   392→   392→   392→  { const c = emptyRow(totalCols); rows.push(c) }
+   393→   393→   393→  // Remove borders for spacer row
+   394→   394→   394→  { const last = rows[rows.length - 1]; for (let i = 0; i < totalCols; i++) { last.cells[i].borderTop = false; last.cells[i].borderBottom = false; last.cells[i].borderLeft = false; last.cells[i].borderRight = false } }
+   395→   395→   395→
+   396→   396→   396→  // Row 5
+   397→   397→   397→  {
+   398→   398→   398→    const c = emptyRow(totalCols)
+   399→   399→   399→    c.cells[0] = emptyCell({ content: 'II. Datos de la Institución Educativa o  Centro de Desarrollo de la Calidad Educativa Estadal (CDCEE) que Emite la Certificación:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
+   400→   400→   400→    rows.push(c)
+   401→   401→   401→  }
+   402→   402→   402→
+   403→   403→   403→  // Row 6
+   404→   404→   404→  {
+   405→   405→   405→    const c = emptyRow(totalCols)
+   406→   406→   406→    c.cells[0] = emptyCell({ content: 'Código:', colspan: 3, verticalAlign: 'center' })
+   407→   407→   407→    c.cells[3] = emptyCell({ content: 'OD16751520', colspan: 5, verticalAlign: 'center' })
+   408→   408→   408→    c.cells[8] = emptyCell({ content: 'Denominación y Epónimo:', colspan: 5, textAlign: 'center', verticalAlign: 'center', borderRight: false })
+   409→   409→   409→    c.cells[14] = emptyCell({ content: 'U E N CREACIÓN CÚA', colspan: 13, verticalAlign: 'center' })
+   410→   410→   410→    rows.push(c)
+   411→   411→   411→  }
+   412→   412→   412→
+   413→   413→   413→  // Row 7
+   414→   414→   414→  {
+   415→   415→   415→    const c = emptyRow(totalCols)
+   416→   416→   416→    c.cells[0] = emptyCell({ content: 'Dirección:', colspan: 3, verticalAlign: 'center' })
+   417→   417→   417→    c.cells[3] = emptyCell({ content: 'Urb. José de S. Martín - Sector Los Bloques - Nueva Cúa', colspan: 15, verticalAlign: 'center' })
+   418→   418→   418→    c.cells[18] = emptyCell({ content: 'Teléfono:', colspan: 3, verticalAlign: 'center' })
+   419→   419→   419→    c.cells[21] = emptyCell({ content: '(0239) 7163530', colspan: 6, textAlign: 'center', verticalAlign: 'center' })
+   420→   420→   420→    rows.push(c)
+   421→   421→   421→  }
+   422→   422→   422→
+   423→   423→   423→  // Row 8
+   424→   424→   424→  {
+   425→   425→   425→    const c = emptyRow(totalCols)
+   426→   426→   426→    c.cells[0] = emptyCell({ content: 'Municipio:', colspan: 3, verticalAlign: 'center' })
+   427→   427→   427→    c.cells[3] = emptyCell({ content: 'Rafael Urdaneta', colspan: 4, textAlign: 'center', verticalAlign: 'center' })
+   428→   428→   428→    c.cells[7] = emptyCell({ content: 'Estado:', colspan: 3, verticalAlign: 'center' })
+   429→   429→   429→    c.cells[10] = emptyCell({ content: 'Miranda', colspan: 8, textAlign: 'center', verticalAlign: 'center' })
+   430→   430→   430→    c.cells[18] = emptyCell({ content: 'CDCEE:', colspan: 4, verticalAlign: 'center' })
+   431→   431→   431→    c.cells[22] = emptyCell({ content: 'Miranda', colspan: 5, textAlign: 'center', verticalAlign: 'center' })
+   432→   432→   432→    rows.push(c)
+   433→   433→   433→  }
+   434→   434→   434→
+   435→   435→   435→  // Row 9
+   436→   436→   436→  {
+   437→   437→   437→    const c = emptyRow(totalCols)
+   438→   438→   438→    c.cells[0] = emptyCell({ content: 'III. Datos de Identificación del Estudiante:', colspan: 27, fontWeight: 'bold', verticalAlign: 'center' })
+   439→   439→   439→    rows.push(c)
+   440→   440→   440→  }
+   441→   441→   441→
+   442→   442→   442→  // Row 10
+   443→   443→   443→  {
+   444→   444→   444→    const c = emptyRow(totalCols)
+   445→   445→   445→    c.cells[0] = emptyCell({ content: 'Cédula de Identidad:', colspan: 4, verticalAlign: 'center' })
+   446→   446→   446→    c.cells[4] = emptyCell({ content: 'V 27545879', colspan: 5, verticalAlign: 'center', bgColor: '#CCFFCC' })
+   447→   447→   447→    c.cells[9] = emptyCell({ content: 'Fecha de Nacimiento:', colspan: 6, verticalAlign: 'center' })
+   448→   448→   448→    c.cells[15] = emptyCell({ colspan: 12, verticalAlign: 'center' })
+   449→   449→   449→    rows.push(c)
+   450→   450→   450→  }
+   451→   451→   451→
+   452→   452→   452→  // Row 11
+   453→   453→   453→  {
+   454→   454→   454→    const c = emptyRow(totalCols)
+   455→   455→   455→    c.cells[0] = emptyCell({ content: 'Apellidos:', colspan: 3, verticalAlign: 'center' })
+   456→   456→   456→    c.cells[3] = emptyCell({ verticalAlign: 'center', borderRight: false })
+   457→   457→   457→    c.cells[11] = emptyCell({ content: 'Nombres:', colspan: 4, verticalAlign: 'center' })
+   458→   458→   458→    c.cells[15] = emptyCell({ verticalAlign: 'center', borderRight: false })
+   459→   459→   459→    rows.push(c)
+   460→   460→   460→  }
+   461→   461→   461→
+   462→   462→   462→  // Row 12
+   463→   463→   463→  {
+   464→   464→   464→    const c = emptyRow(totalCols)
+   465→   465→   465→    c.cells[0] = emptyCell({ content: 'Lugar de Nacimiento País:', colspan: 5, verticalAlign: 'center' })
+   466→   466→   466→    c.cells[5] = emptyCell({ verticalAlign: 'center', borderRight: false })
+   467→   467→   467→    c.cells[11] = emptyCell({ content: 'Estado:', colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+   468→   468→   468→    c.cells[13] = emptyCell({ verticalAlign: 'center', borderRight: false, borderLeft: false })
+   469→   469→   469→    c.cells[20] = emptyCell({ content: 'Municipio:', colspan: 2, textAlign: 'center', verticalAlign: 'center' })
+   470→   470→   470→    c.cells[22] = emptyCell({ verticalAlign: 'center', borderRight: false })
+   471→   471→   471→    rows.push(c)
+   472→   472→   472→  }
+   473→   473→   473→
+   474→   474→   474→  // Row 13
+   475→   475→   475→  {
+   476→   476→   476→    const c = emptyRow(totalCols)
+   477→   477→   477→    c.cells[0] = emptyCell({ content: 'IV. Instituciones Educativas donde Cursó Estudios', colspan: 13, fontWeight: 'bold', verticalAlign: 'center', borderTop: false, borderRight: false, borderBottom: false })
+   478→   478→   478→    c.cells[14] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false, borderLeft: false })
+   479→   479→   479→    c.cells[15] = emptyCell({ content: 'Denominación y Epónimo de la Institución Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   480→   480→   480→    c.cells[21] = emptyCell({ content: 'Localidad', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   481→   481→   481→    c.cells[26] = emptyCell({ content: 'E.F.', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderTop: false })
+   482→   482→   482→    rows.push(c)
+   483→   483→   483→  }
+   484→   484→   484→
+   485→   485→   485→  // Row 14
+   486→   486→   486→  {
+   487→   487→   487→    const c = emptyRow(totalCols)
+   488→   488→   488→    c.cells[0] = emptyCell({ content: 'N°', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   489→   489→   489→    c.cells[1] = emptyCell({ content: 'Denominación y Epónimo de la Institución Educativa', colspan: 6, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   490→   490→   490→    c.cells[7] = emptyCell({ content: 'Localidad', colspan: 5, fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   491→   491→   491→    c.cells[12] = emptyCell({ content: 'E.F.', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center' })
+   492→   492→   492→    c.cells[14] = emptyCell({ content: '3', fontWeight: 'bold', textAlign: 'center', verticalAlign: 'center', borderLeft: false })
+   493→   493→   493→    c.cells[15] = emptyCell({ colspan: 6, verticalAlign: 'center' })
+   494→   494→   494→    c.cells[21] = emptyCell({ colspan: 5, verticalAlign: 'center' })
+   495→   495→   495→    c.cells[26] = emptyCell({ textAlign: 'center', verticalAlign: 'center' })
+   496→   496→   496→    rows.push(c)
+   497→   497→   497→  }
+   498→   498→   498→
+   499→   499→   499→  // Row 15
+   500→   500→   500→  {
+
+[showing lines 1-500 of 1227; use offset=501 with limit to continue reading]

@@ -1,19 +1,22 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { AppShell } from '@/components/app-shell'
-import { Button } from '@/components/ui/button'
+import { useCurrentPlan } from '@/hooks/use-current-plan'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { StudentSearch } from '@/components/student-search'
 import { useToast } from '@/hooks/use-toast'
+import { notaEnLetras, formatCedulaFinal, schoolConfig } from '@/lib/school-config'
 import {
   type GridConfig, type DisplayData,
   emptyCell, resolveBinding,
 } from '@/components/cert-visual/types'
-import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
-import { Loader2, Printer } from 'lucide-react'
+import {
+  Search, Printer, Loader2,
+} from 'lucide-react'
 
+// === Types ===
 interface Student {
   id: string
   cedula: string
@@ -22,10 +25,11 @@ interface Student {
   plan?: string
 }
 
-function CertViewContent() {
-  const searchParams = useSearchParams()
-  const layoutId = searchParams.get('layout') || ''
-  const plan = searchParams.get('plan') || 'vigente'
+// El formato se diseña exclusivamente en el Editor de Formatos (cuadricula)
+// y se guarda como CertLayout. Esta hoja es solo para vista e impresion.
+
+export default function ValidarTituloPage() {
+  const plan = useCurrentPlan()
   const { toast } = useToast()
 
   const [gridConfig, setGridConfig] = useState<GridConfig | null>(null)
@@ -36,31 +40,35 @@ function CertViewContent() {
   const [rawDataFlat, setRawDataFlat] = useState<Record<string, string> | null>(null)
   const [dashboardCells, setDashboardCells] = useState<string[][] | null>(null)
 
-  // Reload layout (from DB, no cache)
-  const reloadLayout = useCallback(() => {
-    if (!layoutId) { setLoadingLayout(false); return }
-    fetch(`/api/cert-layouts?plan=${plan}&id=${layoutId}`)
-      .then(async r => r.ok ? r.json() : null)
-      .then(layout => {
-        if (layout?.datos) {
-          const parsed = typeof layout.datos === 'string' ? JSON.parse(layout.datos) : layout.datos
-          setGridConfig(parsed as GridConfig)
-        }
-        else toast({ title: 'Error', description: 'No se pudo cargar el formato.', variant: 'destructive' })
-      })
-      .catch(() => toast({ title: 'Error', description: 'Error cargando formato.', variant: 'destructive' }))
-      .finally(() => setLoadingLayout(false))
-  }, [layoutId, plan])
-
-  // Load layout on mount and reload when window regains focus (editor changes)
-  useEffect(() => { reloadLayout() }, [reloadLayout])
+  // Load grid layout from DB — busca layout que contenga "validar titulo"
   useEffect(() => {
-    const onFocus = () => reloadLayout()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [reloadLayout])
+    async function loadLayout() {
+      try {
+        const res = await fetch(`/api/cert-layouts?plan=${plan}`)
+        if (res.ok) {
+          const layouts = await res.json()
+          const found = layouts.find((l: any) => l.nombre.toLowerCase().includes('validar titulo'))
+          if (found) {
+            const detailRes = await fetch(`/api/cert-layouts?id=${found.id}&plan=${plan}`)
+            if (detailRes.ok) {
+              const detail = await detailRes.json()
+              const parsed = typeof detail.datos === 'string' ? JSON.parse(detail.datos) : detail.datos
+              setGridConfig(parsed as GridConfig)
+              return
+            }
+          }
+        }
+        toast({ title: 'Sin formato', description: 'No se encontro un layout de Validar Titulo en el Editor de Formatos.', variant: 'destructive' })
+      } catch {
+        toast({ title: 'Error', description: 'Error cargando formato.', variant: 'destructive' })
+      } finally {
+        setLoadingLayout(false)
+      }
+    }
+    loadLayout()
+  }, [plan, toast])
 
-  // Load dashboard cells (same as editor)
+  // Load dashboard cells (same as cert-view and editor)
   const reloadDashboardCells = useCallback(() => {
     fetch(`/api/dashboard-state?plan=${plan}`)
       .then(res => res.json())
@@ -80,7 +88,7 @@ function CertViewContent() {
     return () => window.removeEventListener('focus', onFocus)
   }, [reloadDashboardCells])
 
-  // Build displayData — EXACT same logic as certificaciones-visual/page.tsx
+  // Build displayData — same logic as cert-view and certificaciones-visual
   const displayData: DisplayData | null = useMemo(() => {
     const dashboardExtra: Record<string, string> = {}
     if (dashboardCells) {
@@ -100,10 +108,10 @@ function CertViewContent() {
 
     const rawDataMap = rawDataFlat ? { ...rawDataFlat, ...dashboardExtra } : (Object.keys(dashboardExtra).length > 0 ? dashboardExtra : undefined)
 
-    // Plan derogado: no certData, build from rawDataMap (same as editor)
+    // Plan derogado: no certData, build from rawDataMap
     if (!certData) {
       if (rawDataMap && Object.keys(rawDataMap).length > 0) {
-        const YEAR_NAME_MAP_FB: Record<string, string> = { '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año', '4': 'Cuarto Año', '5': 'Quinto Año' }
+        const YEAR_NAME_MAP_FB: Record<string, string> = { '1': 'Primer Ano', '2': 'Segundo Ano', '3': 'Tercer Ano', '4': 'Cuarto Ano', '5': 'Quinto Ano' }
         const SUBJECT_CODES_FB: Record<number, string[]> = {
           1: ['CA', 'IN', 'MA', 'EN', 'HV', 'EFC', 'GG', 'EA', 'EF', 'EPT'],
           2: ['CA', 'IN', 'MA', 'EPS', 'CB', 'HV', 'HU', 'EA', 'EF', 'ET'],
@@ -123,7 +131,7 @@ function CertViewContent() {
             const literal = rawDataMap[`LITERAL.${code}.${y}`] || ''
             const eval_ = rawDataMap[`EVAL.${code}.${y}`] || ''
             const mes = rawDataMap[`MES.${code}.${y}`] || ''
-            const anio = rawDataMap[`AÑO.${code}.${y}`] || ''
+            const anio = rawDataMap[`ANO.${code}.${y}`] || ''
             const inst = rawDataMap[`INST.${code}.${y}`] || ''
             if (nota || literal) {
               yearCals.push({ materia: code, numero: i + 1, nota, literal, tipoEvaluacion: eval_, fechaMes: mes, fechaAnio: anio, instEduc: inst })
@@ -143,16 +151,16 @@ function CertViewContent() {
           instituciones: [], calificaciones: calificacionesFB, orientacion: [], grupos: [],
           observaciones: '', observacionesLines: [], promedioAcumulado: rawDataMap['PROMEDIO.BASICA'] || '',
           director: { apellidosNombres: rawDataMap['DIRECTOR.NOMBRE'] || '', cedula: rawDataMap['DIRECTOR.CEDULA'] || '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
-          acta: rawDataMap['ACTA'] || '', actaFecha: rawDataMap['FECHAEMISIONT'] || '', actaAnio: rawDataMap['EGRESOAÑO'] || '', literalesFinales: literalesFB,
+          acta: rawDataMap['ACTA'] || '', actaFecha: rawDataMap['FECHAEMISIONT'] || '', actaAnio: rawDataMap['EGRESOANO'] || '', literalesFinales: literalesFB,
           rawDataMap,
         }
       }
       return null
     }
 
-    // Plan vigente: build from certData (same as editor)
+    // Plan vigente: build from certData
     let fechaExp = certData.fechaExpedicion
-    if (/^d{4}-d{2}-d{2}$/.test(fechaExp)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
       const [y, m, d] = fechaExp.split('-')
       fechaExp = `${d}/${m}/${y}`
     }
@@ -240,7 +248,7 @@ function CertViewContent() {
     }
   }, [plan, toast])
 
-  // === Print ===
+  // === Print === (same as cert-view)
   const buildTableHtml = () => {
     const cfg = gridConfig!
     const data = displayData
@@ -256,7 +264,7 @@ function CertViewContent() {
         if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
       }
     }
-      const borderStyle = (enabled: boolean, color: string, bs?: string) => {
+    const borderStyle = (enabled: boolean, color: string, bs?: string) => {
       const style = bs || 'solid'
       const width = (style === 'double' || style === 'groove' || style === 'ridge') ? '3px' : '1px'
       return enabled ? `${width} ${style} ${color}` : 'none'
@@ -293,14 +301,19 @@ function CertViewContent() {
     if (!gridConfig) return
     const tableHtml = buildTableHtml()
     const html = `<!DOCTYPE html><html><head><title>Certificacion</title><style>
-@page{size:Legal;margin:0}
-*{margin:0;padding:0;box-sizing:border-box}
-body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
-table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
-td{overflow:hidden}
-img{max-width:100%;height:auto}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style></head><body>${tableHtml}<script>
+@page { size: legal; margin: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 215.9mm; background: white; }
+body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; }
+#print-content { width: 215.9mm; }
+#print-content table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; table-layout: fixed; }
+#print-content td { overflow: hidden; }
+#print-content img { max-width: 100%; height: auto; display: block; object-fit: contain; }
+@media print {
+  html, body { width: 215.9mm; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+}
+</style></head><body><div id="print-content">${tableHtml}</div><script>
 document.querySelectorAll('td[data-autofit]').forEach(function(td){
   var span=td.querySelector('span');
   if(!span||!span.textContent.trim())return;
@@ -317,26 +330,25 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
   }
 });
 </script></body></html>`
-    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
-    if (!iframe) {
-      iframe = document.createElement('iframe')
-      iframe.id = 'cert-print-frame'
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:215.9mm;height:400mm;border:none'
-      document.body.appendChild(iframe)
-    }
+    const old = document.getElementById('validar-titulo-print-frame')
+    if (old) old.remove()
+    const iframe = document.createElement('iframe')
+    iframe.id = 'validar-titulo-print-frame'
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+    document.body.appendChild(iframe)
     const doc = iframe.contentDocument!
     doc.open(); doc.write(html); doc.close()
     setTimeout(() => {
       const imgs = doc.querySelectorAll('img')
       if (imgs.length > 0) {
         let loaded = 0
-        const onDone = () => { loaded++; if (loaded >= imgs.length) setTimeout(() => { iframe!.contentWindow!.print() }, 300) }
+        const onDone = () => { loaded++; if (loaded >= imgs.length) setTimeout(() => { iframe.contentWindow!.print() }, 300) }
         imgs.forEach(img => { if (img.complete) onDone(); else { img.onload = onDone; img.onerror = onDone } })
-      } else { setTimeout(() => { iframe!.contentWindow!.print() }, 300) }
+      } else { setTimeout(() => { iframe.contentWindow!.print() }, 300) }
     }, 150)
   }
 
-  // === Screen preview grid ===
+  // === Screen preview grid === (same as cert-view)
   const occupied = useMemo(() => {
     if (!gridConfig) return new Set<string>()
     const occ = new Set<string>()
@@ -374,7 +386,8 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
 
   return (
     <AppShell>
-      <div className="space-y-3">
+      <div className="space-y-3 print:hidden">
+        {/* Top bar: search + print */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[250px]">
             <StudentSearch
@@ -410,7 +423,14 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
             <span className="ml-2 text-sm text-gray-400">Cargando formato...</span>
           </div>
         ) : !gridConfig ? (
-          <div className="text-center py-16 text-gray-500 text-sm">No se encontro el formato.</div>
+          <div className="text-center py-16">
+            <Search className="h-10 w-10 mx-auto text-gray-600 mb-3" />
+            <p className="text-gray-400 text-sm">
+              No se encontro un layout de Validar Titulo en el Editor de Formatos.
+              Crea un layout con la palabra <span className="font-bold text-white">&quot;validar titulo&quot;</span> en el nombre
+              desde el Editor de Formatos (plan {plan === 'derogado' ? 'derogado' : 'vigente'}).
+            </p>
+          </div>
         ) : (
           <div className="bg-white p-2 rounded border" style={{ maxWidth: '860px', margin: '0 auto' }}>
             <div style={{ width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
@@ -456,10 +476,10 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                           }}
                         >
                           {cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
-                          <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
-                        ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
-                          <img src={`${window.location.origin}/logo-gob-mppe.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
-                        ) : (displayContent || ''))}
+                            <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
+                          ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
+                            <img src={`${window.location.origin}/logo-gob-mppe.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                          ) : (displayContent || ''))}
                         </td>
                       )
                     }
@@ -470,19 +490,17 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
             </div>
           </div>
         )}
+
+        {/* No student selected */}
+        {gridConfig && !displayData && !loadingData && (
+          <div className="text-center py-8">
+            <Search className="h-8 w-8 mx-auto text-gray-600 mb-2" />
+            <p className="text-gray-400 text-sm">
+              Busca un alumno para generar la Validacion de Titulo
+            </p>
+          </div>
+        )}
       </div>
     </AppShell>
-  )
-}
-
-export default function CertViewPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen w-screen bg-gray-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-      </div>
-    }>
-      <CertViewContent />
-    </Suspense>
   )
 }

@@ -301,14 +301,19 @@ export default function ValidarPage() {
     if (!gridConfig) return
     const tableHtml = buildTableHtml()
     const html = `<!DOCTYPE html><html><head><title>Certificacion</title><style>
-@page{size:Legal;margin:0}
-*{margin:0;padding:0;box-sizing:border-box}
-body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
-table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
-td{overflow:hidden}
-img{max-width:100%;height:auto}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}table{page-break-inside:avoid;break-inside:avoid}tr{page-break-inside:avoid;break-inside:avoid}td{overflow:visible;height:auto !important}}
-</style></head><body>${tableHtml}<script>
+@page { size: legal; margin: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 215.9mm; background: white; }
+body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; }
+#print-content { width: 215.9mm; }
+#print-content table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; table-layout: fixed; }
+#print-content td { overflow: hidden; }
+#print-content img { max-width: 100%; height: auto; display: block; object-fit: contain; }
+@media print {
+  html, body { width: 215.9mm; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+}
+</style></head><body><div id="print-content">${tableHtml}</div><script>
 document.querySelectorAll('td[data-autofit]').forEach(function(td){
   var span=td.querySelector('span');
   if(!span||!span.textContent.trim())return;
@@ -325,22 +330,21 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
   }
 });
 </script></body></html>`
-    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
-    if (!iframe) {
-      iframe = document.createElement('iframe')
-      iframe.id = 'cert-print-frame'
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:215.9mm;height:400mm;border:none'
-      document.body.appendChild(iframe)
-    }
+    const old = document.getElementById('validar-print-frame')
+    if (old) old.remove()
+    const iframe = document.createElement('iframe')
+    iframe.id = 'validar-print-frame'
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none'
+    document.body.appendChild(iframe)
     const doc = iframe.contentDocument!
     doc.open(); doc.write(html); doc.close()
     setTimeout(() => {
       const imgs = doc.querySelectorAll('img')
       if (imgs.length > 0) {
         let loaded = 0
-        const onDone = () => { loaded++; if (loaded >= imgs.length) setTimeout(() => { iframe!.contentWindow!.print() }, 300) }
+        const onDone = () => { loaded++; if (loaded >= imgs.length) setTimeout(() => { iframe.contentWindow!.print() }, 300) }
         imgs.forEach(img => { if (img.complete) onDone(); else { img.onload = onDone; img.onerror = onDone } })
-      } else { setTimeout(() => { iframe!.contentWindow!.print() }, 300) }
+      } else { setTimeout(() => { iframe.contentWindow!.print() }, 300) }
     }, 150)
   }
 
@@ -382,7 +386,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
 
   return (
     <AppShell>
-      <div className="space-y-3">
+      <div className="space-y-3 print:hidden">
         {/* Top bar: search + print */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex-1 min-w-[250px]">

@@ -48,6 +48,12 @@ export default function ValidarPage() {
         const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
         const searchTerm = 'validar nota'
 
+        // Busca layout que contenga "valida" (coincide con "validar" y "validacion") y "nota"
+        const matchesName = (nombre: string) => {
+          const n = normalize(nombre)
+          return (n.includes('validar') || n.includes('validacion') || n.includes('validadcion')) && n.includes('nota')
+        }
+
         // 1) Intentar con el plan actual
         let res = await fetch(`/api/cert-layouts?plan=${plan}`)
         if (res.ok) {
@@ -56,7 +62,7 @@ export default function ValidarPage() {
           if (Array.isArray(layouts)) {
             console.log('[Validar Notas] nombres:', layouts.map((l: any) => l.nombre))
           }
-          const found = layouts.find((l: any) => normalize(l.nombre).includes(normalize(searchTerm)))
+          const found = layouts.find((l: any) => matchesName(l.nombre))
           if (found) {
             console.log('[Validar Notas] layout encontrado:', found.nombre, found.id)
             const detailRes = await fetch(`/api/cert-layouts?id=${found.id}&plan=${plan}`)
@@ -76,7 +82,7 @@ export default function ValidarPage() {
         const resAll = await fetch('/api/cert-layouts?plan=all')
         if (resAll.ok) {
           const allLayouts = await resAll.json()
-          const foundAll = allLayouts.find((l: any) => normalize(l.nombre).includes(normalize(searchTerm)))
+          const foundAll = allLayouts.find((l: any) => matchesName(l.nombre))
           if (foundAll) {
             console.log('[Validar Notas] layout encontrado en fallback:', foundAll.nombre, foundAll.id, 'plan:', foundAll.plan)
             const detailRes = await fetch(`/api/cert-layouts?id=${foundAll.id}&plan=all`)

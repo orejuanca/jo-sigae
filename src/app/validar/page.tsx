@@ -44,11 +44,21 @@ export default function ValidarPage() {
   useEffect(() => {
     async function loadLayout() {
       try {
-        const res = await fetch(`/api/cert-layouts?plan=${plan}`)
+        // Normalizar texto: quitar acentos y pasar a minusculas
+        const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        const searchTerm = 'validar nota'
+
+        // 1) Intentar con el plan actual
+        let res = await fetch(`/api/cert-layouts?plan=${plan}`)
         if (res.ok) {
           const layouts = await res.json()
-          const found = layouts.find((l: any) => l.nombre.toLowerCase().includes('validar nota'))
+          console.log('[Validar Notas] plan=%s, layouts encontrados: %d', plan, Array.isArray(layouts) ? layouts.length : 0)
+          if (Array.isArray(layouts)) {
+            console.log('[Validar Notas] nombres:', layouts.map((l: any) => l.nombre))
+          }
+          const found = layouts.find((l: any) => normalize(l.nombre).includes(normalize(searchTerm)))
           if (found) {
+            console.log('[Validar Notas] layout encontrado:', found.nombre, found.id)
             const detailRes = await fetch(`/api/cert-layouts?id=${found.id}&plan=${plan}`)
             if (detailRes.ok) {
               const detail = await detailRes.json()
@@ -57,9 +67,31 @@ export default function ValidarPage() {
               return
             }
           }
+        } else {
+          console.warn('[Validar Notas] API respondio con error:', res.status, res.statusText)
         }
+
+        // 2) Fallback: buscar en todos los planes
+        console.log('[Validar Notas] fallback a plan=all')
+        const resAll = await fetch('/api/cert-layouts?plan=all')
+        if (resAll.ok) {
+          const allLayouts = await resAll.json()
+          const foundAll = allLayouts.find((l: any) => normalize(l.nombre).includes(normalize(searchTerm)))
+          if (foundAll) {
+            console.log('[Validar Notas] layout encontrado en fallback:', foundAll.nombre, foundAll.id, 'plan:', foundAll.plan)
+            const detailRes = await fetch(`/api/cert-layouts?id=${foundAll.id}&plan=all`)
+            if (detailRes.ok) {
+              const detail = await detailRes.json()
+              const parsed = typeof detail.datos === 'string' ? JSON.parse(detail.datos) : detail.datos
+              setGridConfig(parsed as GridConfig)
+              return
+            }
+          }
+        }
+
         toast({ title: 'Sin formato', description: 'No se encontro un layout de Validar Notas en el Editor de Formatos.', variant: 'destructive' })
-      } catch {
+      } catch (err) {
+        console.error('[Validar Notas] error cargando layout:', err)
         toast({ title: 'Error', description: 'Error cargando formato.', variant: 'destructive' })
       } finally {
         setLoadingLayout(false)

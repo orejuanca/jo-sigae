@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db-helper'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Extrae el plan de un layout leyendo meta.plan del JSON.
  * Si no tiene meta.plan, devuelve "vigente" por defecto (layouts antiguos).

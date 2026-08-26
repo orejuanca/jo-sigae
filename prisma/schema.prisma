@@ -9,24 +9,23 @@ datasource db {
 }
 
 model Student {
-  id              String   @id @default(cuid())
-  cedula          String   @unique
+  id              String          @id @default(cuid())
+  cedula          String          @unique
   fechaNacimiento String?
   apellidos       String
   nombres         String
-  pais            String   @default("VENEZUELA")
-  estado          String   @default("")
-  municipio       String   @default("")
-  seccion         String   @default("")
-  plan            String   @default("vigente")
-  rawData         String   @default("{}")
-  certDraft       String?  // Borrador de datos de certificación editados por pestaña (JSON)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  certifications Certification[]
-  boletaNotas     BoletaNota[]
+  pais            String          @default("VENEZUELA")
+  estado          String          @default("")
+  municipio       String          @default("")
+  seccion         String          @default("")
+  plan            String          @default("vigente")
+  rawData         String          @default("{}")
+  certDraft       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   boletaExtras    BoletaExtra[]
+  boletaNotas     BoletaNota[]
+  certifications  Certification[]
 
   @@index([cedula])
   @@index([apellidos])
@@ -36,90 +35,84 @@ model Student {
 model Certification {
   id           String   @id @default(cuid())
   studentId    String
-  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   tipo         String   @default("certificacion")
-  numero       String   @default("")
   fechaEmision DateTime @default(now())
   datos        String   @default("{}")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  numero       String   @default("")
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([tipo])
 }
 
-// Notas por lapso para boletines (BOLETAS)
 model BoletaNota {
   id          String   @id @default(cuid())
   studentId   String
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  anioEscolar String   // Ej: "2021-2022"
-  grado       String   // Ej: "2" (2do año)
-  seccion     String   // Ej: "A"
-  materia     String   // Ej: "Castellano"
-  lapso1      String?  // Nota numérica o IN/PE
+  anioEscolar String
+  grado       String
+  seccion     String
+  materia     String
+  lapso1      String?
   lapso2      String?
   lapso3      String?
-  revision    String?  // Nota de revisión (columna Rev. del boletín)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  revision    String?
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, anioEscolar, grado, seccion, materia])
   @@index([studentId])
   @@index([anioEscolar, grado, seccion])
 }
 
-// Datos extra por alumno en boletas (GRUPO, OBS)
 model BoletaExtra {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  anioEscolar String
-  grado       String
-  seccion     String
-  grupo1      String?   // Exoneración grupo lapso 1 (ej: "EXONERADO")
-  grupo2      String?
-  grupo3      String?
-  grupo4      String?
-  observacion String?  // Observaciones generales (col OBS del Excel)
-  obsBoletin  String?  // Observaciones del boletín (col OBSBOLETIN del Excel)
-  // Materia Pendiente (cols BD-BM del Excel)
-  materiaPendiente1 String?  // Nombre materia pendiente 1 (col MP1)
-  materiaPendiente2 String?  // Nombre materia pendiente 2 (col MP2)
-  mp1m1 String?  // Materia Pendiente 1, Momento 1 (col 1M primer set)
-  mp1m2 String?  // Materia Pendiente 1, Momento 2 (col 2M primer set)
-  mp1m3 String?  // Materia Pendiente 1, Momento 3 (col 3M primer set)
-  mp1m4 String?  // Materia Pendiente 1, Momento 4 (col 4M primer set)
-  mp2m1 String?  // Materia Pendiente 2, Momento 1 (col 1M segundo set)
-  mp2m2 String?  // Materia Pendiente 2, Momento 2 (col 2M segundo set)
-  mp2m3 String?  // Materia Pendiente 2, Momento 3 (col 3M segundo set)
-  mp2m4 String?  // Materia Pendiente 2, Momento 4 (col 4M segundo set)
-  // Pendiente Lapso (cols BO-BS del Excel)
-  pl1 String?   // Pendiente Lapso 1
-  pl2 String?   // Pendiente Lapso 2
-  pl3 String?   // Pendiente Lapso 3
-  pl4 String?   // Pendiente Lapso 4
-  pl5 String?   // Pendiente Lapso 5
-  // Notas por asignatura definitive (cols BU-CA del Excel: CA, ILE, MA, EF, AP, CN, GHC)
-  scoreCA  String?  // Castellano
-  scoreILE String?  // Inglés
-  scoreMA  String?  // Matemática
-  scoreEF  String?  // Ed. Física
-  scoreAP  String?  // Arte y Patrimonio
-  scoreCN  String?  // Cs. Naturales
-  scoreGHC String?  // Geo. Hist. y Ciudadanía
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  studentId         String
+  anioEscolar       String
+  grado             String
+  seccion           String
+  grupo1            String?
+  grupo2            String?
+  grupo3            String?
+  grupo4            String?
+  observacion       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  obsBoletin        String?
+  materiaPendiente1 String?
+  materiaPendiente2 String?
+  mp1m1             String?
+  mp1m2             String?
+  mp1m3             String?
+  mp1m4             String?
+  mp2m1             String?
+  mp2m2             String?
+  mp2m3             String?
+  mp2m4             String?
+  pl1               String?
+  pl2               String?
+  pl3               String?
+  pl4               String?
+  pl5               String?
+  scoreAP           String?
+  scoreCA           String?
+  scoreCN           String?
+  scoreEF           String?
+  scoreGHC          String?
+  scoreILE          String?
+  scoreMA           String?
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, anioEscolar, grado, seccion])
   @@index([anioEscolar, grado, seccion])
 }
 
-// Layouts guardados del editor visual de certificaciones
 model CertLayout {
   id        String   @id @default(cuid())
-  nombre    String   // Nombre descriptivo del layout
-  datos     String   // JSON string con el GridConfig completo
+  nombre    String
+  datos     String
   activo    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -127,33 +120,29 @@ model CertLayout {
   @@index([nombre])
 }
 
-// Estado del dashboard (hoja de datos) por plan — un solo registro por plan
 model DashboardState {
   id        String   @id @default(cuid())
-  plan      String   @unique  // "vigente" o "derogado"
-  datos     String   // JSON string con todo el SheetState completo
+  plan      String   @unique
+  datos     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Centros Escolares / Planteles (compartido entre ambos planes)
 model CentroEscolar {
   id        String   @id @default(cuid())
-  codigo    String   @default("")  // Codigo del plantel (ej: "PD16660105")
-  nombre    String                   // Nombre del plantel
-  localidad String   @default("")  // Localidad/ubicacion
-  ef        String   @default("")  // Codigo EF del estado (ej: "MI" = Miranda)
+  codigo    String   @default("")
+  nombre    String   @unique
+  localidad String   @default("")
+  ef        String   @default("")
   activo    Boolean  @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([codigo])
   @@index([nombre])
   @@index([ef])
 }
 
-// Tabla independiente para Plan Vigente — usada solo por el dashboard plan vigente
-// Almacena los datos completos de cada alumno (261 columnas del Excel)
 model PlanVigente {
   id              String   @id @default(cuid())
   cedula          String   @unique
@@ -163,8 +152,8 @@ model PlanVigente {
   pais            String   @default("VENEZUELA")
   estado          String   @default("")
   municipio       String   @default("")
-  rawData         String   @default("{}")  // JSON con todas las 261 columnas del Excel
-  certDraft       String?                       // Borrador de certificación (JSON)
+  rawData         String   @default("{}")
+  certDraft       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -173,8 +162,6 @@ model PlanVigente {
   @@index([nombres])
 }
 
-// Tabla independiente para Plan Derogado — usada solo por el dashboard plan derogado
-// Almacena los datos completos de cada alumno (348 columnas del Excel)
 model PlanDerogado {
   id              String   @id @default(cuid())
   cedula          String   @unique
@@ -184,7 +171,7 @@ model PlanDerogado {
   pais            String   @default("VENEZUELA")
   estado          String   @default("")
   municipio       String   @default("")
-  rawData         String   @default("{}")  // JSON con todas las columnas del Excel
+  rawData         String   @default("{}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   certDraft       String?

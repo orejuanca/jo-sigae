@@ -26,7 +26,7 @@ export interface CellConfig {
   autoFit: boolean         // Default false - reduce font-size si texto desborda
   writingMode: string      // Default 'horizontal-tb' - dirección del texto
   borderStyle: string      // Default 'solid' - tipo de línea de borde
-  dateFormat: string       // Formato de fecha: 'DD/MM/YYYY' (default), 'DD DE MES DE YYYY', 'YYYY-MM-DD', 'MES DD, YYYY'
+  dateFormat: string       // Formato de fecha: 'DD/MM/YYYY' (default), 'DD DE MES DE YYYY', 'YYYY-MM-DD', 'MES DD, YYYY', 'DD de Mes de YYYY'
 
 }
 
@@ -122,6 +122,8 @@ const YEAR_NAME_MAP: Record<string, string> = {
   '4': 'Cuarto Año', '5': 'Quinto Año',
 }
 
+const MESESM = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] as const
+
 const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'] as const
 
 const MESES_INGLES = ['January','February','March','April','May','June','July','August','September','October','November','December'] as const
@@ -129,7 +131,7 @@ const MESES_INGLES = ['January','February','March','April','May','June','July','
 function formatDateLong(dateStr: string): string {
   const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
   if (!m) return dateStr
-  return `${parseInt(m[1])} DE ${MESES[parseInt(m[2]) - 1]} DE ${m[3]}`
+  return `${parseInt(m[1])} de ${MESESM[parseInt(m[2]) - 1]} de ${m[3]}`
 }
 
 /** Convierte fecha DD/MM/YYYY a otros formatos según dateFormat */
@@ -149,6 +151,8 @@ export function formatDateWithStyle(dateStr: string, dateFormat: string): string
       return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`
     case 'MES DD, YYYY':
       return `${MESES_INGLES[month - 1]} ${day}, ${year}`
+    case 'DD de Mes de YYYY':
+      return `${day} de ${MESESM[month - 1]} de ${year}`
     default:
       return dateStr
   }

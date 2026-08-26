@@ -1889,6 +1889,7 @@ img{max-width:100%;height:auto}
                 <option value="DD DE MES DE YYYY">15 DE AGOSTO DE 2026</option>
                 <option value="YYYY-MM-DD">2026-08-15</option>
                 <option value="MES DD, YYYY">August 15, 2026</option>
+                <option value="DD de Mes de YYYY">15 de Agosto de 2026</option>
               </select>
 
               <div className="w-px h-5 bg-border" />

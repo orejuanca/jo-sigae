@@ -510,7 +510,7 @@ function TextEditorContent() {
   return (
     <AppShell>
       <div className="space-y-4">
-        {/* Top bar - SAME layout as /validar */}
+        {/* Top bar - SAME layout as /VALIDAR */}
         <div className="flex items-center gap-3 flex-wrap">
           <Button size="sm" variant="outline" onClick={() => router.push('/editor-formatos')} className="h-8 text-xs">
             <ArrowLeft className="h-3 w-3 mr-1" /> Volver
@@ -588,7 +588,7 @@ function TextEditorContent() {
           </span>
         </div>
 
-        {/* Document - SAME structure as /validar but every line is editable */}
+        {/* Document - SAME structure as /VALIDAR but every line is editable */}
         <div className="bg-white rounded border shadow-lg mx-auto" style={{ maxWidth: '760px' }}>
           <div ref={previewRef} className="p-8" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', lineHeight: '1.6', color: '#000' }}>
 

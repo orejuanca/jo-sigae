@@ -327,7 +327,7 @@ export default function ValidarTituloPage() {
         const bgLogoName = bgLogoMatch ? bgLogoMatch[1].split(':')[0].trim().toLowerCase().replace(/_/g, '-') : ''
         const bgLogoSizeVal = bgLogoMatch ? (bgLogoMatch[1].split(':')[1]?.trim() || 'contain') : ''
         const isBgLogo = !!bgLogoMatch
-        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:${bgLogoSizeVal};background-position:center;background-repeat:no-repeat;` : ''
+        const bgLogoImg = isBgLogo ? `<img src="/logo-${bgLogoName}.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:${bgLogoSizeVal};pointer-events:none;">` : ''
         const imgTag = !isBgLogo && content && content.startsWith('##LOGO_') && content.endsWith('##')
           ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block;">` : ''
         const text = isBgLogo ? '' : (imgTag || (content || ''))
@@ -336,7 +336,7 @@ export default function ValidarTituloPage() {
           ? `<span style="display:inline-block;white-space:nowrap">${content}</span>` : text
         const wmStyle = cell.writingMode && cell.writingMode !== 'horizontal-tb' ? `writing-mode:${cell.writingMode};` : ''
         const transformStyle = cell.writingMode === 'rotate-180' ? 'transform:rotate(180deg);' : ''
-        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}${bgLogoStyle}background:${isBgLogo ? 'transparent' : (cell.bgColor || 'transparent')}>${autoFitSpan}</td>`
+        const bgPosStyle = isBgLogo ? 'position:relative;overflow:hidden;' : ''        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="${bgPosStyle}border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}background:${cell.bgColor || 'transparent'}">${bgLogoImg}${autoFitSpan}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }

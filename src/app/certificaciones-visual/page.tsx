@@ -376,8 +376,8 @@ function GridTable({
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         <img
-                          src="/logo-gob-mppe.png"
-                          alt="Logo Gobierno Bolivariano"
+                          src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`}
+                          alt="Logo"
                           style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
                         />
                       </div>
@@ -1628,7 +1628,11 @@ function CertVisualEditorContent() {
 
     const borderStyle = (enabled: boolean, color: string) =>
       enabled ? `1px solid ${color}` : 'none'
-    const logoSrc = `${window.location.origin}/logo-gob-mppe.png`
+    const getLogoSrc = (content: string) => {
+      if (!content.startsWith('##LOGO_') || !content.endsWith('##')) return ''
+      const name = content.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')
+      return name ? `${window.location.origin}/logo-${name}.png` : `${window.location.origin}/logo-gob-mppe.png`
+    }
 
     let rowsHtml = ''
     for (let r = 0; r < cfg.rows.length; r++) {
@@ -1644,7 +1648,7 @@ function CertVisualEditorContent() {
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="${logoSrc}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
+          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
           : ''
         const text = imgTag || (content || '')
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''

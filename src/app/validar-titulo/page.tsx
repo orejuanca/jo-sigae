@@ -324,7 +324,7 @@ export default function ValidarTituloPage() {
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block">` : ''
+          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:100%;object-fit:contain;display:block;">` : ''
         const text = imgTag || (content || '')
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
         const autoFitSpan = (cell.autoFit && !imgTag && content)
@@ -520,7 +520,7 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                           {cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
                             <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
                           ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
-                            <img src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                            <img src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`} style={{ maxWidth: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                           ) : (displayContent || ''))}
                         </td>
                       )

@@ -378,7 +378,7 @@ function GridTable({
                         <img
                           src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`}
                           alt="Logo"
-                          style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
+                          style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                         />
                       </div>
                     ) : (
@@ -1648,7 +1648,7 @@ function CertVisualEditorContent() {
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
         const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block">`
+          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:100%;object-fit:contain;display:block;">`
           : ''
         const text = imgTag || (content || '')
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''

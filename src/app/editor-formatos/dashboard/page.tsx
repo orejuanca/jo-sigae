@@ -1,24 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { SheetEditor } from '@/components/dashboard-content'
 
 type PlanType = 'vigente' | 'derogado'
 
 export default function EditorDashboardPage() {
-  const [plan, setPlan] = useState<PlanType>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      return params.get('plan') === 'derogado' ? 'derogado' : 'vigente'
-    }
-    return 'vigente'
-  })
+  const searchParams = useSearchParams()
+  const plan: PlanType = searchParams.get('plan') === 'derogado' ? 'derogado' : 'vigente'
 
   const handleSwitch = () => {
     const newPlan = plan === 'vigente' ? 'derogado' : 'vigente'
-    setPlan(newPlan)
     window.history.replaceState(null, '', `/editor-formatos/dashboard?plan=${newPlan}`)
+    window.location.reload()
   }
 
   return (

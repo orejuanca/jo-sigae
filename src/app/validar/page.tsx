@@ -323,15 +323,18 @@ export default function ValidarPage() {
         if (cell.dataBinding && data) content = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
-        const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:100%;object-fit:contain;display:block;">` : ''
-        const text = imgTag || (content || '')
+        const isBgLogo = content && content.startsWith('##BGLOGO_') && content.endsWith('##')
+        const bgLogoName = isBgLogo ? content.slice(8, -2).trim().toLowerCase().replace(/_/g, '-') : ''
+        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:contain;background-position:center;background-repeat:no-repeat;` : ''
+        const imgTag = !isBgLogo && content && content.startsWith('##LOGO_') && content.endsWith('##')
+          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block;">` : ''
+        const text = isBgLogo ? '' : (imgTag || (content || ''))
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
-        const autoFitSpan = (cell.autoFit && !imgTag && content)
+        const autoFitSpan = (cell.autoFit && !imgTag && !isBgLogo && content)
           ? `<span style="display:inline-block;white-space:nowrap">${content}</span>` : text
         const wmStyle = cell.writingMode && cell.writingMode !== 'horizontal-tb' ? `writing-mode:${cell.writingMode};` : ''
         const transformStyle = cell.writingMode === 'rotate-180' ? 'transform:rotate(180deg);' : ''
-        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
+        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}${bgLogoStyle}background:${isBgLogo ? 'transparent' : (cell.bgColor || 'transparent')}">${autoFitSpan}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }
@@ -512,15 +515,25 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                             textDecoration: cell.textDecoration === 'underline' ? 'underline' : undefined,
                             textAlign: cell.textAlign, verticalAlign: cell.verticalAlign,
                             color: cell.color || undefined, whiteSpace: cell.whiteSpace,
-                            padding: cell.padding, background: cell.bgColor || undefined,
+                            padding: cell.padding,
+                            background: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
+                              ? undefined
+                              : cell.bgColor || undefined,
+                            backgroundImage: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
+                              ? `url(/logo-${displayContent.slice(8, -2).trim().toLowerCase().replace(/_/g, '-')}.png)`
+                              : undefined,
+                            backgroundSize: displayContent && displayContent.startsWith('##BGLOGO_') ? 'contain' : undefined,
+                            backgroundPosition: displayContent && displayContent.startsWith('##BGLOGO_') ? 'center' : undefined,
+                            backgroundRepeat: displayContent && displayContent.startsWith('##BGLOGO_') ? 'no-repeat' : undefined,
                             writingMode: cell.writingMode || undefined,
                             userSelect: 'none', position: 'relative', overflow: 'hidden',
                           }}
                         >
-                          {cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
+                          {displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##') ? null
+                          : cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
                             <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
                           ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
-                            <img src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`} style={{ maxWidth: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                            <img src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
                           ) : (displayContent || ''))}
                         </td>
                       )

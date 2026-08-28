@@ -310,7 +310,15 @@ function GridTable({
                         ? 'rgba(59,130,246,0.15)'
                         : cellIsSelected
                           ? 'rgba(59,130,246,0.06)'
-                          : cell.bgColor || undefined,
+                          : displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
+                            ? undefined
+                            : cell.bgColor || undefined,
+                      backgroundImage: displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
+                        ? `url(/logo-${displayContent.slice(8, -2).trim().toLowerCase().replace(/_/g, '-')}.png)`
+                        : undefined,
+                      backgroundSize: displayContent.startsWith('##BGLOGO_') ? 'contain' : undefined,
+                      backgroundPosition: displayContent.startsWith('##BGLOGO_') ? 'center' : undefined,
+                      backgroundRepeat: displayContent.startsWith('##BGLOGO_') ? 'no-repeat' : undefined,
                       writingMode: cell.writingMode || undefined,
                       transform: cell.writingMode === 'rotate-180' ? 'rotate(180deg)' : undefined,
                       userSelect: 'none',                      
@@ -373,12 +381,14 @@ function GridTable({
                         {displayContent}
                       </span>
                       </AutoFitCell>
+                    ) : displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##') ? (
+                      null
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         <img
                           src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`}
                           alt="Logo"
-                          style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                          style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
                         />
                       </div>
                     ) : (
@@ -1647,17 +1657,20 @@ function CertVisualEditorContent() {
         }
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
-        const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
-          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:100%;object-fit:contain;display:block;">`
+        const isBgLogo = content && content.startsWith('##BGLOGO_') && content.endsWith('##')
+        const bgLogoName = isBgLogo ? content.slice(8, -2).trim().toLowerCase().replace(/_/g, '-') : ''
+        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:contain;background-position:center;background-repeat:no-repeat;` : ''
+        const imgTag = !isBgLogo && content && content.startsWith('##LOGO_') && content.endsWith('##')
+          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block;">`
           : ''
-        const text = imgTag || (content || '')
+        const text = isBgLogo ? '' : (imgTag || (content || ''))
         const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
-        const autoFitSpan = (cell.autoFit && !imgTag && content)
+        const autoFitSpan = (cell.autoFit && !imgTag && !isBgLogo && content)
           ? `<span style="display:inline-block;white-space:nowrap">${content}</span>`
           : text
         const wmStyle = cell.writingMode && cell.writingMode !== 'horizontal-tb' ? `writing-mode:${cell.writingMode};` : ''
         const transformStyle = cell.writingMode === 'rotate-180' ? 'transform:rotate(180deg);' : ''
-        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
+        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}${bgLogoStyle}background:${isBgLogo ? 'transparent' : (cell.bgColor || 'transparent')}">${autoFitSpan}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }

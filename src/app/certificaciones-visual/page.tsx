@@ -306,12 +306,12 @@ function GridTable({
                       outlineOffset: '-2px',
                       minWidth: hasContent ? undefined : '0px',
                       minHeight: '24px',
-                      background: cellInRange
+                      backgroundColor: cellInRange
                         ? 'rgba(59,130,246,0.15)'
                         : cellIsSelected
                           ? 'rgba(59,130,246,0.06)'
                           : displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
-                            ? undefined
+                            ? 'transparent'
                             : cell.bgColor || undefined,
                       backgroundImage: displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
                         ? `url(/logo-${displayContent.slice(8, -2).trim().toLowerCase().replace(/_/g, '-')}.png)`

@@ -516,8 +516,8 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                             textAlign: cell.textAlign, verticalAlign: cell.verticalAlign,
                             color: cell.color || undefined, whiteSpace: cell.whiteSpace,
                             padding: cell.padding,
-                            background: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
-                              ? undefined
+                            backgroundColor: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
+                              ? 'transparent'
                               : cell.bgColor || undefined,
                             backgroundImage: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
                               ? `url(/logo-${displayContent.slice(8, -2).trim().toLowerCase().replace(/_/g, '-')}.png)`

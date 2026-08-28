@@ -1693,7 +1693,7 @@ body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh
 table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
 td{overflow:hidden}
 img{max-width:100%;height:auto}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}}
 </style></head><body>${tableHtml}<script>
 // Auto-fit: reducir fontSize en celdas marcadas con data-autofit
  document.querySelectorAll('td[data-autofit]').forEach(function(td){

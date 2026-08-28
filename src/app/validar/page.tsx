@@ -358,7 +358,7 @@ body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; }
 #print-content img { max-width: 100%; height: auto; display: block; object-fit: contain; }
 @media print {
   html, body { width: 215.9mm; }
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
 }
 </style></head><body><div id="print-content">${tableHtml}</div><script>
 document.querySelectorAll('td[data-autofit]').forEach(function(td){

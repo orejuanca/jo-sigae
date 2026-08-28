@@ -278,7 +278,11 @@ function GridTable({
 
                 const cellIsSelected = isSingleSelected && selectedCell?.row === r && selectedCell?.col === c
                 const cellInRange = isRangeActive && inRange(r, c)
-                const hasContent = cell.content || cell.dataBinding
+                const hasContent = (cell.content || cell.dataBinding) && !cell.content.startsWith('##BGLOGO_')
+                const bgLogoMatch = displayContent.match(/^##BGLOGO_(.+)##$/)
+                const bgLogoName = bgLogoMatch ? bgLogoMatch[1].split(':')[0].trim().toLowerCase().replace(/_/g, '-') : ''
+                const bgLogoSizeVal = bgLogoMatch ? (bgLogoMatch[1].split(':')[1]?.trim() || 'contain') : ''
+                const isBgLogo = !!bgLogoMatch
 
                 cells.push(
                   <td
@@ -310,15 +314,13 @@ function GridTable({
                         ? 'rgba(59,130,246,0.15)'
                         : cellIsSelected
                           ? 'rgba(59,130,246,0.06)'
-                          : displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
+                          : isBgLogo
                             ? 'transparent'
                             : cell.bgColor || undefined,
-                      backgroundImage: displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
-                        ? `url(/logo-${displayContent.slice(8, -2).trim().toLowerCase().replace(/_/g, '-')}.png)`
-                        : undefined,
-                      backgroundSize: displayContent.startsWith('##BGLOGO_') ? 'contain' : undefined,
-                      backgroundPosition: displayContent.startsWith('##BGLOGO_') ? 'center' : undefined,
-                      backgroundRepeat: displayContent.startsWith('##BGLOGO_') ? 'no-repeat' : undefined,
+                      backgroundImage: isBgLogo ? `url(/logo-${bgLogoName}.png)` : undefined,
+                      backgroundSize: isBgLogo ? bgLogoSizeVal : undefined,
+                      backgroundPosition: isBgLogo ? 'center' : undefined,
+                      backgroundRepeat: isBgLogo ? 'no-repeat' : undefined,
                       writingMode: cell.writingMode || undefined,
                       transform: cell.writingMode === 'rotate-180' ? 'rotate(180deg)' : undefined,
                       userSelect: 'none',                      
@@ -381,7 +383,7 @@ function GridTable({
                         {displayContent}
                       </span>
                       </AutoFitCell>
-                    ) : displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##') ? (
+                    ) : isBgLogo ? (
                       null
                     ) : displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -1657,9 +1659,11 @@ function CertVisualEditorContent() {
         }
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
-        const isBgLogo = content && content.startsWith('##BGLOGO_') && content.endsWith('##')
-        const bgLogoName = isBgLogo ? content.slice(8, -2).trim().toLowerCase().replace(/_/g, '-') : ''
-        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:contain;background-position:center;background-repeat:no-repeat;` : ''
+        const bgLogoMatch = content && content.match(/^##BGLOGO_(.+)##$/)
+        const bgLogoName = bgLogoMatch ? bgLogoMatch[1].split(':')[0].trim().toLowerCase().replace(/_/g, '-') : ''
+        const bgLogoSizeVal = bgLogoMatch ? (bgLogoMatch[1].split(':')[1]?.trim() || 'contain') : ''
+        const isBgLogo = !!bgLogoMatch
+        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:${bgLogoSizeVal};background-position:center;background-repeat:no-repeat;` : ''
         const imgTag = !isBgLogo && content && content.startsWith('##LOGO_') && content.endsWith('##')
           ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block;">`
           : ''

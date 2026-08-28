@@ -323,9 +323,11 @@ export default function ValidarTituloPage() {
         if (cell.dataBinding && data) content = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
-        const isBgLogo = content && content.startsWith('##BGLOGO_') && content.endsWith('##')
-        const bgLogoName = isBgLogo ? content.slice(8, -2).trim().toLowerCase().replace(/_/g, '-') : ''
-        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:contain;background-position:center;background-repeat:no-repeat;` : ''
+        const bgLogoMatch = content && content.match(/^##BGLOGO_(.+)##$/)
+        const bgLogoName = bgLogoMatch ? bgLogoMatch[1].split(':')[0].trim().toLowerCase().replace(/_/g, '-') : ''
+        const bgLogoSizeVal = bgLogoMatch ? (bgLogoMatch[1].split(':')[1]?.trim() || 'contain') : ''
+        const isBgLogo = !!bgLogoMatch
+        const bgLogoStyle = isBgLogo ? `background-image:url(/logo-${bgLogoName}.png);background-size:${bgLogoSizeVal};background-position:center;background-repeat:no-repeat;` : ''
         const imgTag = !isBgLogo && content && content.startsWith('##LOGO_') && content.endsWith('##')
           ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block;">` : ''
         const text = isBgLogo ? '' : (imgTag || (content || ''))
@@ -495,6 +497,10 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                       if (cell.dataBinding && displayData) {
                         displayContent = resolveBinding(cell.dataBinding, displayData, gridConfig, cell.dateFormat) || ''
                       }
+                      const bgLogoMatch = displayContent.match(/^##BGLOGO_(.+)##$/)
+                      const bgLogoName = bgLogoMatch ? bgLogoMatch[1].split(':')[0].trim().toLowerCase().replace(/_/g, '-') : ''
+                      const bgLogoSizeVal = bgLogoMatch ? (bgLogoMatch[1].split(':')[1]?.trim() || 'contain') : ''
+                      const isBgLogo = !!bgLogoMatch
                       const borderS = (enabled: boolean) => {
                         const bs = cell.borderStyle || 'solid'
                         const bw = (bs === 'double' || bs === 'groove' || bs === 'ridge') ? '3px' : '1px'
@@ -516,20 +522,16 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
                             textAlign: cell.textAlign, verticalAlign: cell.verticalAlign,
                             color: cell.color || undefined, whiteSpace: cell.whiteSpace,
                             padding: cell.padding,
-                            backgroundColor: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
-                              ? 'transparent'
-                              : cell.bgColor || undefined,
-                            backgroundImage: displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##')
-                              ? `url(/logo-${displayContent.slice(8, -2).trim().toLowerCase().replace(/_/g, '-')}.png)`
-                              : undefined,
-                            backgroundSize: displayContent && displayContent.startsWith('##BGLOGO_') ? 'contain' : undefined,
-                            backgroundPosition: displayContent && displayContent.startsWith('##BGLOGO_') ? 'center' : undefined,
-                            backgroundRepeat: displayContent && displayContent.startsWith('##BGLOGO_') ? 'no-repeat' : undefined,
+                            backgroundColor: isBgLogo ? 'transparent' : cell.bgColor || undefined,
+                            backgroundImage: isBgLogo ? `url(/logo-${bgLogoName}.png)` : undefined,
+                            backgroundSize: isBgLogo ? bgLogoSizeVal : undefined,
+                            backgroundPosition: isBgLogo ? 'center' : undefined,
+                            backgroundRepeat: isBgLogo ? 'no-repeat' : undefined,
                             writingMode: cell.writingMode || undefined,
                             userSelect: 'none', position: 'relative', overflow: 'hidden',
                           }}
                         >
-                          {displayContent && displayContent.startsWith('##BGLOGO_') && displayContent.endsWith('##') ? null
+                          {isBgLogo ? null
                           : cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
                             <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
                           ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (

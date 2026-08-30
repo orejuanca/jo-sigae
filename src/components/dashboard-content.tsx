@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 
@@ -21,6 +21,8 @@ function computeShrink(text: string, baseFontSize: number, fontFamily: string, b
   return Math.max(scale, 0.5) // never shrink below 50%
 }
 import { AppShell } from '@/components/app-shell'
+import { OverlayImg } from '@/components/cert-visual/logo-overlay'
+import type { LogoOverlay } from '@/components/cert-visual/types'
 import * as VT from '@/lib/templates/vigente-template'
 import * as DT from '@/lib/templates/derogado-template'
 import { buildDerogadoFlatMap } from '@/lib/build-derogado-flatmap'
@@ -50,6 +52,7 @@ interface SheetState {
   bgColors: string[][]; textAligns: Align[][]; merges: Merge[]
   fontFamilies: string[][]; fontSizes: number[][]; fontColors: string[][]
   borders: boolean[][]; boldCells: boolean[][]
+  logoOverlay?: LogoOverlay | null
 }
 
 function readSavedOnce(plan: string): SheetState | null {
@@ -139,6 +142,7 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
   const [borders, setBorders] = useState<boolean[][]>(() => sv?.borders ?? tpl.makeInitialBorders(INIT_ROWS, INIT_COLS))
   const [boldCells, setBoldCells] = useState<boolean[][]>(() => sv?.boldCells ?? tpl.makeInitialBold(INIT_ROWS, INIT_COLS))
   const [merges, setMerges] = useState<Merge[]>(() => sv?.merges ?? [])
+  const [logoOverlay, setLogoOverlay] = useState<LogoOverlay | null>(sv?.logoOverlay ?? null)
 
   const [selectionStart, setSelectionStart] = useState<{r:number;c:number}|null>(null)
   const [selectionEnd, setSelectionEnd] = useState<{r:number;c:number}|null>(null)
@@ -177,8 +181,8 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
       .catch(() => {})
   }, [])
 
-  const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells })
-  stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells }
+  const stateRef = useRef<SheetState>({ numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells, logoOverlay })
+  stateRef.current = { numRows, numCols, cells, colWidths, rowHeights, bgColors, textAligns, merges, fontFamilies, fontSizes, fontColors, borders, boldCells, logoOverlay }
 
   const initialCellsRef = useRef<string[][] | null>(null)
   const initialRawDataRef = useRef<string | null>(null)
@@ -211,6 +215,7 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
         setFontFamilies(dbState.fontFamilies); setFontSizes(dbState.fontSizes)
         setFontColors(dbState.fontColors); setBorders(dbState.borders)
         setBoldCells(dbState.boldCells)
+        setLogoOverlay(dbState.logoOverlay ?? null)
         localStorage.setItem(STORAGE_KEY(plan), JSON.stringify(dbState))
         setLoadInfo(`BD: ${(JSON.stringify(dbState).length/1024).toFixed(0)}KB (${dbState.numRows}f x ${dbState.numCols}c)`)
       } else if (sv) {
@@ -283,13 +288,13 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
     if (!loaded || !dbLoaded || editMode || hasNewData) return
     const timer = setTimeout(() => { doSave(plan); setTimeout(() => setSaveStatus(''), 2000) }, 300)
     return () => clearTimeout(timer)
-  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, doSave])
+  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, logoOverlay, doSave])
 
   useEffect(() => {
     if (!loaded || !dbLoaded || editMode || hasNewData) return
     const timer = setTimeout(() => { saveToDb(plan, stateRef.current) }, 3000)
     return () => clearTimeout(timer)
-  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols])
+  }, [loaded, dbLoaded, plan, editMode, cells, bgColors, borders, boldCells, colWidths, rowHeights, textAligns, fontFamilies, fontSizes, fontColors, merges, numRows, numCols, logoOverlay])
 
   useEffect(() => {
     if (!loaded || !dbLoaded || editMode || hasNewData) return
@@ -336,6 +341,7 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
           setFontFamilies(state.fontFamilies); setFontSizes(state.fontSizes)
           setFontColors(state.fontColors); setBorders(state.borders)
           setBoldCells(state.boldCells)
+          setLogoOverlay(state.logoOverlay ?? null)
         })
       }
     }
@@ -356,6 +362,7 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
     setFontColors(tpl.makeInitialFontColors(INIT_ROWS, INIT_COLS))
     setBorders(tpl.makeInitialBorders(INIT_ROWS, INIT_COLS))
     setBoldCells(tpl.makeInitialBold(INIT_ROWS, INIT_COLS))
+    setLogoOverlay(null)
     setSaveStatus('Restaurado'); setTimeout(() => setSaveStatus(''), 2000)
   }
 
@@ -576,6 +583,16 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
   const SWITCH_ROW = 5, SWITCH_COL = 35
   const PRINT_ROW = 5, PRINT_COL = 30
   const switchBtnLabel = plan === 'vigente' ? 'ir a\nPlan Derogado' : 'ir a\nPlan Vigente'
+
+  // === ESTADO DE LOGO FLOTANTE ===
+  const [showLogoModal, setShowLogoModal] = useState(false)
+  const updateLogoOverlay = (patch: Partial<LogoOverlay> | null) => {
+    setLogoOverlay(prev => {
+      if (patch === null) return null
+      const base: LogoOverlay = prev ?? { name: 'Imagen2.png', size: 15, opacity: 1, position: 'top-left', margin: 8 }
+      return { ...base, ...patch }
+    })
+  }
 
   // === ESTADO DE BÚSQUEDA Y EDICIÓN ===
   const [showSearchModal, setShowSearchModal] = useState(false)
@@ -869,6 +886,7 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
         {saveStatus && <span className={saveStatus.includes('ERROR') ? 'text-red-400' : 'text-green-400'}>{saveStatus}</span>}
         <button onClick={async () => { try { const json = JSON.stringify(stateRef.current); localStorage.setItem(STORAGE_KEY(plan), json); await saveToDb(plan, stateRef.current); saveCountRef.current++; setSaveStatus(`GUARDADO #${saveCountRef.current} (BD+Cache) ${(json.length/1024).toFixed(0)}KB ✓`); bc.postMessage({ type: 'dashboard-layout-updated', plan }) } catch (e) { setSaveStatus('ERROR: ' + (e as Error).message) }; setTimeout(() => setSaveStatus(''), 4000) }} className="bg-green-700 hover:bg-green-600 px-3 py-0.5 rounded text-[10px] font-bold">GUARDAR</button>
         <button onClick={handleRestore} className="bg-red-800 hover:bg-red-700 px-2 py-0.5 rounded text-[9px]">Restaurar</button>
+        <button onClick={() => setShowLogoModal(true)} className={`px-2 py-0.5 rounded text-[9px] font-bold ${logoOverlay ? 'bg-fuchsia-500 hover:bg-fuchsia-400' : 'bg-fuchsia-800 hover:bg-fuchsia-700'}`} title="Logo flotante">Logo</button>
         <span className="text-gray-600">|</span>
         <input type="text" value={rangeInput} onChange={e => setRangeInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRangeSubmit() } }} placeholder="A1:D5" className="w-16 bg-gray-700 text-yellow-300 text-[9px] px-1 py-0.5 rounded border border-gray-500 placeholder-gray-500 text-center" title="Escribe rango y presiona Enter" />
         <span className="text-gray-400 ml-auto">{numRows}f x {numCols}c</span>
@@ -893,8 +911,9 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
           {hasSelection && <span className="text-[8px] text-gray-400">(a seleccion)</span>}
         </div>
       )}
-
-      <table ref={tableRef} className="border-separate border-spacing-0 table-fixed" onKeyDown={handleKeyDown} style={{ marginTop: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}>
+      <div style={{ position: 'relative', width: 'fit-content', marginTop: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}>
+        {logoOverlay && <OverlayImg overlay={logoOverlay} z={25} />}
+        <table ref={tableRef} className="border-separate border-spacing-0 table-fixed" onKeyDown={handleKeyDown}>        
         <colgroup><col style={{ width: designLocked ? '0px' : '35px' }} />{colWidths.map((w, i) => <col key={i} style={{ width: `${w}px` }} />)}</colgroup>
         <thead style={{ display: designLocked ? 'none' : '' }}>
           <tr><td className="border border-gray-400 bg-gray-300 text-[8px] text-center text-gray-600 sticky left-0 z-20" style={{ top: designLocked ? '0px' : (selectedCell ? '52px' : '28px') }}></td>
@@ -1012,7 +1031,56 @@ function SheetEditor({ plan, onSwitchPlan, designLocked }: { plan: string; onSwi
           ))}
         </tbody>
       </table>
+      </div>
 
+      {/* MODAL DE LOGO FLOTANTE */}
+      {showLogoModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40" style={{ marginTop: '0' }}>
+          <div className="bg-white rounded-lg shadow-2xl p-4 w-80 max-w-[90vw]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-bold text-gray-800">Logo Flotante</h3>
+              <button onClick={() => setShowLogoModal(false)} className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs text-gray-700">
+                <input type="checkbox" checked={!!logoOverlay} onChange={e => updateLogoOverlay(e.target.checked ? {} : null)} />
+                Mostrar logo flotante
+              </label>
+              {logoOverlay && (<>
+                <div className="relative bg-white border border-gray-300 rounded h-36 overflow-hidden">
+                  <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px,transparent 1px),linear-gradient(90deg,#e5e7eb 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
+                  <OverlayImg overlay={logoOverlay} z={25} />
+                </div>
+                <label className="block text-xs text-gray-700">Archivo en /public
+                  <input type="text" value={logoOverlay.name} onChange={e => updateLogoOverlay({ name: e.target.value })} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mt-0.5" />
+                </label>
+                <label className="block text-xs text-gray-700">Tamaño: {logoOverlay.size ?? 15}%
+                  <input type="range" min={5} max={60} value={logoOverlay.size ?? 15} onChange={e => updateLogoOverlay({ size: parseInt(e.target.value) })} className="w-full" />
+                </label>
+                <label className="block text-xs text-gray-700">Opacidad: {Math.round((logoOverlay.opacity ?? 1) * 100)}%
+                  <input type="range" min={10} max={100} value={Math.round((logoOverlay.opacity ?? 1) * 100)} onChange={e => updateLogoOverlay({ opacity: parseInt(e.target.value) / 100 })} className="w-full" />
+                </label>
+                <label className="block text-xs text-gray-700">Posición
+                  <select value={logoOverlay.position ?? 'top-left'} onChange={e => updateLogoOverlay({ position: e.target.value as LogoOverlay['position'] })} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mt-0.5">
+                    <option value="top-left">Arriba izquierda</option>
+                    <option value="top-right">Arriba derecha</option>
+                    <option value="bottom-left">Abajo izquierda</option>
+                    <option value="bottom-right">Abajo derecha</option>
+                    <option value="center">Centro</option>
+                  </select>
+                </label>
+                <label className="block text-xs text-gray-700">Margen: {logoOverlay.margin ?? 8}px
+                  <input type="range" min={0} max={100} value={logoOverlay.margin ?? 8} onChange={e => updateLogoOverlay({ margin: parseInt(e.target.value) })} className="w-full" />
+                </label>
+                <div className="flex justify-between pt-1">
+                  <button onClick={() => updateLogoOverlay(null)} className="px-3 py-1 text-xs font-bold border-2 border-red-400 text-red-600 rounded hover:bg-red-50">Quitar</button>
+                  <button onClick={() => setShowLogoModal(false)} className="px-4 py-1 text-xs font-bold bg-fuchsia-700 text-white rounded hover:bg-fuchsia-600">Listo</button>
+                </div>
+              </>)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE BÚSQUEDA */}
       {showSearchModal && (

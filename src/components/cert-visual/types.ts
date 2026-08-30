@@ -34,10 +34,22 @@ export interface GridRow {
   cells: Record<number, CellConfig>  // colIndex -> CellConfig
 }
 
+// === Logo Flotante (membrete) ===
+// Config del logo por layout: vive DENTRO de GridConfig.datos de cada layout (por ID).
+// Los layouts que NO tengan esta propiedad simplemente no muestran logo.
+export interface LogoOverlay {
+  name: string      // nombre del archivo en /public, ej: 'Imagen2.png'
+  size?: number     // % del ancho del contenedor (default 15)
+  opacity?: number  // 0-1 (default 1)
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center'
+  margin?: number   // separación del borde en px (default 8)
+}
+
 export interface GridConfig {
   totalCols: number
   columnWidths: string[]   // Width per column index, e.g., ['4.57%','13%','13%',...]
   rows: GridRow[]
+  logoOverlay?: LogoOverlay | null   // Logo flotante del layout (undefined/null = sin logo)
 }
 
 // Factory for empty cell with defaults

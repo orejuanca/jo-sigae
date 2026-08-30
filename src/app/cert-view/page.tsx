@@ -11,6 +11,7 @@ import {
   type GridConfig, type DisplayData,
   emptyCell, resolveBinding,
 } from '@/components/cert-visual/types'
+import { OverlayImg, overlayPrintHtml } from '@/components/cert-visual/logo-overlay'
 import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import { Loader2, Printer } from 'lucide-react'
 
@@ -152,7 +153,7 @@ function CertViewContent() {
 
     // Plan vigente: build from certData (same as editor)
     let fechaExp = certData.fechaExpedicion
-    if (/^d{4}-d{2}-d{2}$/.test(fechaExp)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
       const [y, m, d] = fechaExp.split('-')
       fechaExp = `${d}/${m}/${y}`
     }
@@ -290,7 +291,8 @@ function CertViewContent() {
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }
     const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
-    return `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`
+    const overlayHtml = cfg.logoOverlay ? overlayPrintHtml(cfg.logoOverlay) : ''
+    return `${overlayHtml}<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`
   }
 
   const handlePrint = () => {
@@ -417,7 +419,8 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
           <div className="text-center py-16 text-gray-500 text-sm">No se encontro el formato.</div>
         ) : (
           <div className="bg-white p-2 rounded border" style={{ maxWidth: '860px', margin: '0 auto' }}>
-            <div style={{ width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
+            <div style={{ position: 'relative', zIndex: 0, width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
+              {gridConfig.logoOverlay && <OverlayImg overlay={gridConfig.logoOverlay} z={-1} />}
               <table ref={tableRef} style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
                 <colgroup>
                   {gridConfig.columnWidths.map((w, i) => (

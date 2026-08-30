@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "seed": "npx tsx prisma/seed.ts",
-    "vercel-build": "npx prisma generate && next build"
+    "vercel-build": "npx prisma generate && next build",
+    "db:backup": "powershell -Command \"$fecha = Get-Date -Format 'yyyy-MM-dd_HH-mm'; pg_dump -U postgres -d jo_sigae -F c -b -v -f \\\"db-backup/backup_$fecha.dump\\\"\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

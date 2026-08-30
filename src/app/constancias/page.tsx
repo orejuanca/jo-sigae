@@ -130,7 +130,7 @@ export default function ConstanciasPage() {
                   <CardTitle className="text-base">{selectedStudent.apellidos}, {selectedStudent.nombres}</CardTitle>
                   <p className="text-sm text-muted-foreground">C.I.: {formatCedulaFinal(selectedStudent.cedula)}</p>
                 </div>
-                <Button onClick={handleGenerate} disabled={generating || !dash.loaded}>
+                <Button onClick={handleGenerate} disabled={generating}>
                   {generating ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando...</>
                   ) : (

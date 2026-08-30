@@ -12,6 +12,7 @@ import {
   type GridConfig, type DisplayData,
   emptyCell, resolveBinding,
 } from '@/components/cert-visual/types'
+import { OverlayImg, overlayPrintHtml } from '@/components/cert-visual/logo-overlay'
 import {
   Search, Printer, Loader2,
 } from 'lucide-react'
@@ -40,13 +41,12 @@ export default function ValidarPage() {
   const [rawDataFlat, setRawDataFlat] = useState<Record<string, string> | null>(null)
   const [dashboardCells, setDashboardCells] = useState<string[][] | null>(null)
 
-  // Load grid layout from DB — busca layout que contenga "validar nota"
+  // Load grid layout from DB — busca layout que contenga "validar notas"
   useEffect(() => {
     async function loadLayout() {
       try {
         // Normalizar texto: quitar acentos y pasar a minusculas
         const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-        const searchTerm = 'validar nota'
 
         // Busca layout que contenga "valida" (coincide con "validar" y "validacion") y "nota"
         const matchesName = (nombre: string) => {
@@ -336,12 +336,35 @@ export default function ValidarPage() {
           ? `<span style="display:inline-block;white-space:nowrap">${content}</span>` : text
         const wmStyle = cell.writingMode && cell.writingMode !== 'horizontal-tb' ? `writing-mode:${cell.writingMode};` : ''
         const transformStyle = cell.writingMode === 'rotate-180' ? 'transform:rotate(180deg);' : ''
-        const bgPosStyle = isBgLogo ? 'position:relative;overflow:hidden;' : ''        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="${bgPosStyle}border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}background:${cell.bgColor || 'transparent'}">${bgLogoImg}${autoFitSpan}</td>`
+        const bgPosStyle = isBgLogo ? 'position:relative;overflow:hidden;' : ''
+        const cellStyle = [
+          bgPosStyle,
+          `border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)}`,
+          `border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)}`,
+          `border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)}`,
+          `border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)}`,
+          `width:${cell.width || 'auto'}`,
+          `height:${cell.height || 'auto'}`,
+          `font-size:${cell.fontSize}pt`,
+          `font-weight:${cell.fontWeight}`,
+          `font-style:${cell.fontStyle}`,
+          `text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'}`,
+          `text-align:${cell.textAlign}`,
+          `vertical-align:${cell.verticalAlign}`,
+          `color:${cell.color || 'inherit'}`,
+          `white-space:${cell.whiteSpace}`,
+          `padding:${cell.padding}`,
+          wmStyle,
+          transformStyle,
+          `background:${cell.bgColor || 'transparent'}`,
+        ].filter(Boolean).join(';')
+        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="${cellStyle}">${bgLogoImg}${autoFitSpan}</td>`
       }
       rowsHtml += `<tr>${cellsHtml}</tr>`
     }
     const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
-    return `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`
+    const overlayHtml = cfg.logoOverlay ? overlayPrintHtml(cfg.logoOverlay) : ''
+    return `${overlayHtml}<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`
   }
 
   const handlePrint = () => {
@@ -352,7 +375,7 @@ export default function ValidarPage() {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 215.9mm; background: white; }
 body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; }
-#print-content { width: 215.9mm; }
+#print-content { width: 215.9mm; position: relative; z-index: 0; }
 #print-content table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.2; table-layout: fixed; }
 #print-content td { overflow: hidden; }
 #print-content img { max-width: 100%; height: auto; display: block; object-fit: contain; }
@@ -480,7 +503,8 @@ document.querySelectorAll('td[data-autofit]').forEach(function(td){
           </div>
         ) : (
           <div className="bg-white p-2 rounded border" style={{ maxWidth: '860px', margin: '0 auto' }}>
-            <div style={{ width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
+            <div style={{ position: 'relative', zIndex: 0, width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
+              {gridConfig.logoOverlay && <OverlayImg overlay={gridConfig.logoOverlay} z={-1} />}
               <table ref={tableRef} style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
                 <colgroup>
                   {gridConfig.columnWidths.map((w, i) => (

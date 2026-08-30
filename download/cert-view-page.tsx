@@ -1,0 +1,544 @@
+'use client'
+
+import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { AppShell } from '@/components/app-shell'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { StudentSearch } from '@/components/student-search'
+import { useToast } from '@/hooks/use-toast'
+import {
+  type GridConfig, type DisplayData,
+  emptyCell, resolveBinding,
+} from '@/components/cert-visual/types'
+import { OverlayImg, overlayPrintHtml } from '@/components/cert-visual/logo-overlay'
+import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
+import { Loader2, Printer } from 'lucide-react'
+
+interface Student {
+  id: string
+  cedula: string
+  apellidos: string
+  nombres: string
+  plan?: string
+}
+
+// Logo del ministerio VISIBLE en la grilla: existe un token ##LOGO_CEMG## en una celda que
+// NO está tapada por una combinación (rowspan/colspan) ni fuera del ancho de la tabla.
+// Un token tapado existe en los datos pero el render jamás lo pinta: esa era la razón de
+// logos que no aparecían aunque el layout "tuviera" el token.
+function logoMinisterioVisible(cfg: GridConfig): boolean {
+  const occ = new Set<string>()
+  for (let r = 0; r < (cfg.rows || []).length; r++) {
+    const row = cfg.rows[r]
+    if (!row) continue
+    for (const [key, cell] of Object.entries(row.cells || {})) {
+      const c = Number(key)
+      if ((cell.rowspan || 1) > 1) { for (let dr = 1; dr < (cell.rowspan || 1); dr++) occ.add(`${r + dr}-${c}`) }
+      if ((cell.colspan || 1) > 1) { for (let dc = 1; dc < (cell.colspan || 1); dc++) occ.add(`${r}-${c + dc}`) }
+    }
+  }
+  for (let r = 0; r < (cfg.rows || []).length; r++) {
+    const row = cfg.rows[r]
+    if (!row) continue
+    for (const [key, cell] of Object.entries(row.cells || {})) {
+      const c = Number(key)
+      if ((cell.content || '').trim() === '##LOGO_CEMG##' && !occ.has(`${r}-${c}`) && c < (cfg.totalCols || 0)) return true
+    }
+  }
+  return false
+}
+
+// Garantía visual del logo del ministerio: overlay con el mismo mecanismo probado del
+// membrete flotante. Se pinta (pantalla e impresión) cuando un layout del plan derogado
+// no tiene un ##LOGO_CEMG## visible, para que NINGUNA certificación salga sin el logo.
+const MINISTERIO_FALLBACK = { name: 'logo-cemg.png', size: 12, opacity: 1, position: 'top-left' as const, margin: 10 }
+
+function CertViewContent() {
+  const searchParams = useSearchParams()
+  const layoutId = searchParams.get('layout') || ''
+  const plan = searchParams.get('plan') || 'vigente'
+  const { toast } = useToast()
+
+  const [gridConfig, setGridConfig] = useState<GridConfig | null>(null)
+  const [loadingLayout, setLoadingLayout] = useState(true)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [certData, setCertData] = useState<any>(null)
+  const [loadingData, setLoadingData] = useState(false)
+  const [rawDataFlat, setRawDataFlat] = useState<Record<string, string> | null>(null)
+  const [dashboardCells, setDashboardCells] = useState<string[][] | null>(null)
+
+  // Reload layout (from DB, no cache)
+  const reloadLayout = useCallback(() => {
+    if (!layoutId) { setLoadingLayout(false); return }
+    fetch(`/api/cert-layouts?plan=${plan}&id=${layoutId}`)
+      .then(async r => r.ok ? r.json() : null)
+      .then(layout => {
+        if (layout?.datos) {
+          const parsed = typeof layout.datos === 'string' ? JSON.parse(layout.datos) : layout.datos
+          setGridConfig(parsed as GridConfig)
+        }
+        else toast({ title: 'Error', description: 'No se pudo cargar el formato.', variant: 'destructive' })
+      })
+      .catch(() => toast({ title: 'Error', description: 'Error cargando formato.', variant: 'destructive' }))
+      .finally(() => setLoadingLayout(false))
+  }, [layoutId, plan])
+
+  // Load layout on mount and reload when window regains focus (editor changes)
+  useEffect(() => { reloadLayout() }, [reloadLayout])
+  useEffect(() => {
+    const onFocus = () => reloadLayout()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [reloadLayout])
+
+  // Load dashboard cells (same as editor)
+  const reloadDashboardCells = useCallback(() => {
+    fetch(`/api/dashboard-state?plan=${plan}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.found && data.datos) {
+          const state = typeof data.datos === 'string' ? JSON.parse(data.datos) : data.datos
+          if (state.cells) setDashboardCells(state.cells)
+        }
+      })
+      .catch(() => {})
+  }, [plan])
+
+  useEffect(() => { reloadDashboardCells() }, [reloadDashboardCells])
+  useEffect(() => {
+    const onFocus = () => reloadDashboardCells()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [reloadDashboardCells])
+
+  // Build displayData — EXACT same logic as certificaciones-visual/page.tsx
+  const displayData: DisplayData | null = useMemo(() => {
+    const dashboardExtra: Record<string, string> = {}
+    if (dashboardCells) {
+      const z4 = dashboardCells[3]?.[25]?.trim() || ''
+      const ah4 = dashboardCells[3]?.[33]?.trim() || ''
+      const today = new Date()
+      const dd = String(today.getDate()).padStart(2, '0')
+      const mm = String(today.getMonth() + 1).padStart(2, '0')
+      const yyyy = today.getFullYear()
+      dashboardExtra['EXPEDICION.FECHA'] = z4 || `${dd}/${mm}/${yyyy}`
+      dashboardExtra['EXPEDICION.LUGAR'] = ah4 || 'MIRANDA'
+      const z6 = dashboardCells[5]?.[25]?.trim() || ''
+      const z7 = dashboardCells[6]?.[25]?.trim() || ''
+      dashboardExtra['DIRECTOR.NOMBRE'] = z6 || 'PAREDES HURTADO, RAQUEL'
+      dashboardExtra['DIRECTOR.CEDULA'] = z7 || 'V 6419439'
+    }
+
+    const rawDataMap = rawDataFlat ? { ...rawDataFlat, ...dashboardExtra } : (Object.keys(dashboardExtra).length > 0 ? dashboardExtra : undefined)
+
+    // Plan derogado: no certData, build from rawDataMap (same as editor)
+    if (!certData) {
+      if (rawDataMap && Object.keys(rawDataMap).length > 0) {
+        const YEAR_NAME_MAP_FB: Record<string, string> = { '1': 'Primer Año', '2': 'Segundo Año', '3': 'Tercer Año', '4': 'Cuarto Año', '5': 'Quinto Año' }
+        const SUBJECT_CODES_FB: Record<number, string[]> = {
+          1: ['CA', 'IN', 'MA', 'EN', 'HV', 'EFC', 'GG', 'EA', 'EF', 'EPT'],
+          2: ['CA', 'IN', 'MA', 'EPS', 'CB', 'HV', 'HU', 'EA', 'EF', 'ET'],
+          3: ['CA', 'IN', 'MA', 'CB', 'FI', 'QU', 'HVCB', 'GV', 'EF', 'ET'],
+          4: ['CA', 'MA', 'HC', 'IN', 'EF', 'FI', 'QU', 'BI', 'DT', 'FIL', 'IPM'],
+          5: ['IN', 'EF', 'GEV', 'CA', 'MA', 'FI', 'QU', 'BI', 'CT', 'IPM'],
+        }
+        const calificacionesFB: Record<string, any[]> = {}
+        for (let y = 1; y <= 5; y++) {
+          const codes = SUBJECT_CODES_FB[y]
+          if (!codes) continue
+          const yearName = YEAR_NAME_MAP_FB[String(y)]
+          const yearCals: any[] = []
+          for (let i = 0; i < codes.length; i++) {
+            const code = codes[i]
+            const nota = rawDataMap[`NOTA.${code}.${y}`] || ''
+            const literal = rawDataMap[`LITERAL.${code}.${y}`] || ''
+            const eval_ = rawDataMap[`EVAL.${code}.${y}`] || ''
+            const mes = rawDataMap[`MES.${code}.${y}`] || ''
+            const anio = rawDataMap[`AÑO.${code}.${y}`] || ''
+            const inst = rawDataMap[`INST.${code}.${y}`] || ''
+            if (nota || literal) {
+              yearCals.push({ materia: code, numero: i + 1, nota, literal, tipoEvaluacion: eval_, fechaMes: mes, fechaAnio: anio, instEduc: inst })
+            }
+          }
+          if (yearCals.length > 0) calificacionesFB[yearName] = yearCals
+        }
+        const literalesFB: string[] = []
+        for (let i = 1; i <= 5; i++) {
+          const val = rawDataMap[`LITERAL.FINAL.${i}`]
+          if (val) literalesFB.push(val)
+        }
+        return {
+          lugar: rawDataMap['EXPEDICION.LUGAR'] || '', fechaExpedicion: rawDataMap['EXPEDICION.FECHA'] || '', planEstudio: '', planCodigo: schoolConfig.planCodigo,
+          od: rawDataMap['OD'] || '', denominacion: rawDataMap['DENOMINACION'] || '', direccion: '', telefono: '', municipio: rawDataMap['MUNICIPIO'] || '', estado: rawDataMap['ESTADO'] || '', cdcce: rawDataMap['CDCEE'] || '',
+          estudiante: { cedula: rawDataMap.CEDULA || '', fechaNacimiento: rawDataMap.FECHA || '', apellidos: rawDataMap.APELLIDOS || '', nombres: rawDataMap.NOMBRES || '', pais: rawDataMap.PAIS || 'VENEZUELA', estado: rawDataMap.ESTADO || '', municipio: rawDataMap.MUNICIPIO || '' },
+          instituciones: [], calificaciones: calificacionesFB, orientacion: [], grupos: [],
+          observaciones: '', observacionesLines: [], promedioAcumulado: rawDataMap['PROMEDIO.BASICA'] || '',
+          director: { apellidosNombres: rawDataMap['DIRECTOR.NOMBRE'] || '', cedula: rawDataMap['DIRECTOR.CEDULA'] || '' }, directorCdcce: { apellidosNombres: '', cedula: '' },
+          acta: rawDataMap['ACTA'] || '', actaFecha: rawDataMap['FECHAEMISIONT'] || '', actaAnio: rawDataMap['EGRESOAÑO'] || '', literalesFinales: literalesFB,
+          rawDataMap,
+        }
+      }
+      return null
+    }
+
+    // Plan vigente: build from certData (same as editor)
+    let fechaExp = certData.fechaExpedicion
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
+      const [y, m, d] = fechaExp.split('-')
+      fechaExp = `${d}/${m}/${y}`
+    }
+
+    const dashLugar = dashboardExtra['EXPEDICION.LUGAR'] || ''
+    const dashFecha = dashboardExtra['EXPEDICION.FECHA'] || ''
+    const dashDirectorNombre = dashboardExtra['DIRECTOR.NOMBRE'] || ''
+    const dashDirectorCedula = dashboardExtra['DIRECTOR.CEDULA'] || ''
+
+    return {
+      lugar: dashLugar || certData.lugar,
+      fechaExpedicion: dashFecha || fechaExp,
+      planEstudio: certData.planEstudio,
+      planCodigo: schoolConfig.planCodigo,
+      od: certData.od,
+      denominacion: certData.denominacion,
+      direccion: certData.direccion,
+      telefono: certData.telefono,
+      municipio: certData.municipio,
+      estado: certData.estado,
+      cdcce: certData.cdcce,
+      estudiante: certData.estudiante,
+      instituciones: certData.instituciones || [],
+      calificaciones: certData.calificaciones || {},
+      orientacion: certData.orientacion || [],
+      grupos: certData.grupos || [],
+      observaciones: certData.observaciones || '',
+      observacionesLines: certData.observacionesLines || [],
+      promedioAcumulado: certData.promedioAcumulado || '',
+      director: {
+        apellidosNombres: dashDirectorNombre || certData.director?.apellidosNombres || '',
+        cedula: dashDirectorCedula || certData.director?.cedula || '',
+      },
+      directorCdcce: certData.directorCdcce || { apellidosNombres: '', cedula: '' },
+      acta: certData.acta || '',
+      actaFecha: certData.actaFecha || '',
+      actaAnio: certData.actaAnio || '',
+      literalesFinales: certData.literalesFinales || [],
+      rawDataMap,
+    }
+  }, [certData, rawDataFlat, dashboardCells])
+
+  // Load student data
+  const handleSelectStudent = useCallback(async (student: Student) => {
+    setSelectedStudent(student)
+    setCertData(null)
+    setRawDataFlat(null)
+    setLoadingData(true)
+    try {
+      const certApiUrl = plan === 'vigente'
+        ? `/api/plan-vigente/${student.id}/cert-data`
+        : `/api/plan-derogado/${student.id}/cert-data`
+      const res = await fetch(certApiUrl)
+      if (!res.ok) {
+        toast({ title: 'Sin datos', description: `No se encontraron datos para ${student.cedula}.`, variant: 'destructive' })
+        setLoadingData(false)
+        return
+      }
+      const result = await res.json()
+      if (result.rawDataFlat) {
+        const flat: Record<string, string> = {}
+        for (const [k, v] of Object.entries(result.rawDataFlat)) {
+          if (typeof v === 'string') flat[k] = v
+          else if (v !== null && v !== undefined) flat[k] = String(v)
+        }
+        setRawDataFlat(flat)
+      }
+      if (result.certData) {
+        const cd = result.certData
+        if (cd.calificaciones) {
+          for (const anio of Object.keys(cd.calificaciones)) {
+            for (const cal of cd.calificaciones[anio]) {
+              if (cal.nota === 'IN' && cal.literal !== 'INASISTENTE') cal.literal = 'INASISTENTE'
+              if (cal.nota === 'PE' && cal.literal !== 'PENDIENTE') cal.literal = 'PENDIENTE'
+              if (!cal.literal && cal.nota) cal.literal = notaEnLetras(cal.nota)
+            }
+          }
+        }
+        setCertData(cd)
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Error cargando datos.', variant: 'destructive' })
+    } finally {
+      setLoadingData(false)
+    }
+  }, [plan, toast])
+
+  // === Print ===
+  const buildTableHtml = () => {
+    const cfg = gridConfig!
+    const data = displayData
+    const occupied = new Set<string>()
+    for (let r = 0; r < cfg.rows.length; r++) {
+      const row = cfg.rows[r]
+      if (!row) continue
+      for (const [key, cell] of Object.entries(row.cells)) {
+        const c = Number(key)
+        const rs = cell.rowspan || 1
+        const cs = cell.colspan || 1
+        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occupied.add(`${r + dr}-${c}`) }
+        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occupied.add(`${r}-${c + dc}`) }
+      }
+    }
+      const borderStyle = (enabled: boolean, color: string, bs?: string) => {
+      const style = bs || 'solid'
+      const width = (style === 'double' || style === 'groove' || style === 'ridge') ? '3px' : '1px'
+      return enabled ? `${width} ${style} ${color}` : 'none'
+    }
+    const getLogoSrc = (content: string) => {
+      if (!content.startsWith('##LOGO_') || !content.endsWith('##')) return ''
+      const name = content.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')
+      return name ? `${window.location.origin}/logo-${name}.png` : `${window.location.origin}/logo-gob-mppe.png`
+    }
+    let rowsHtml = ''
+    for (let r = 0; r < cfg.rows.length; r++) {
+      const gridRow = cfg.rows[r]
+      let cellsHtml = ''
+      for (let c = 0; c < cfg.totalCols; c++) {
+        if (occupied.has(`${r}-${c}`)) continue
+        const cell = gridRow.cells[c] || emptyCell()
+        let content = cell.content
+        if (cell.dataBinding && data) {
+          const resolved = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
+          // Logo del ministerio: si el binding resuelve vacío, no pisar el token de la celda
+          const esCeldaLogo = (cell.content || '').startsWith('##LOGO_')
+          content = resolved || (esCeldaLogo ? cell.content : '')
+        }
+        const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
+        const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
+        const imgTag = content && content.startsWith('##LOGO_') && content.endsWith('##')
+          ? `<img src="${getLogoSrc(content)}" style="max-width:100%;height:auto;object-fit:contain;display:block">` : ''
+        const text = imgTag || (content || '')
+        const autoFitAttr = cell.autoFit ? ' data-autofit="1"' : ''
+        const autoFitSpan = (cell.autoFit && !imgTag && content)
+          ? `<span style="display:inline-block;white-space:nowrap">${content}</span>` : text
+        const wmStyle = cell.writingMode && cell.writingMode !== 'horizontal-tb' ? `writing-mode:${cell.writingMode};` : ''
+        const transformStyle = cell.writingMode === 'rotate-180' ? 'transform:rotate(180deg);' : ''
+        cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="border-top:${borderStyle(cell.borderTop, cell.borderColor, cell.borderStyle)};border-right:${borderStyle(cell.borderRight, cell.borderColor, cell.borderStyle)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor, cell.borderStyle)};border-left:${borderStyle(cell.borderLeft, cell.borderColor, cell.borderStyle)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}background:${cell.bgColor || 'transparent'}">${autoFitSpan}</td>`
+      }
+      rowsHtml += `<tr>${cellsHtml}</tr>`
+    }
+    const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
+    // Garantía del logo del ministerio (plan derogado): si el layout no tiene un ##LOGO_CEMG##
+    // visible, se inyecta como overlay (mismo mecanismo del membrete) para que la impresión
+    // nunca salga sin el logo oficial del ministerio.
+    const garantiaLogoHtml = plan === 'derogado' && !logoMinisterioVisible(cfg) ? overlayPrintHtml(MINISTERIO_FALLBACK) : ''
+    const overlayHtml = (cfg.logoOverlay ? overlayPrintHtml(cfg.logoOverlay) : '') + garantiaLogoHtml
+    return `${overlayHtml}<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`
+  }
+
+  const handlePrint = () => {
+    if (!gridConfig) return
+    const tableHtml = buildTableHtml()
+    const html = `<!DOCTYPE html><html><head><title>Certificacion</title><style>
+@page{size:Legal;margin:0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
+table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:9pt;line-height:1.2;table-layout:fixed;transform-origin:top center}
+td{overflow:hidden}
+img{max-width:100%;height:auto}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>${tableHtml}<script>
+document.querySelectorAll('td[data-autofit]').forEach(function(td){
+  var span=td.querySelector('span');
+  if(!span||!span.textContent.trim())return;
+  var cs=getComputedStyle(td);
+  var avail=td.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  if(avail<=0)return;
+  var textW=span.offsetWidth;
+  if(textW>avail){
+    var origSize=parseFloat(td.style.fontSize)||9;
+    var ratio=(avail*0.99)/textW;
+    var newSize=Math.max(Math.round(origSize*ratio*10)/10,origSize*0.5);
+    td.style.fontSize=newSize+'pt';
+    span.style.whiteSpace='nowrap';span.style.overflow='hidden';span.style.maxWidth=avail+'px';
+  }
+});
+</script></body></html>`
+    let iframe = document.getElementById('cert-print-frame') as HTMLIFrameElement | null
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.id = 'cert-print-frame'
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:215.9mm;height:400mm;border:none'
+      document.body.appendChild(iframe)
+    }
+    const doc = iframe.contentDocument!
+    doc.open(); doc.write(html); doc.close()
+    setTimeout(() => {
+      const imgs = doc.querySelectorAll('img')
+      if (imgs.length > 0) {
+        let loaded = 0
+        const onDone = () => { loaded++; if (loaded >= imgs.length) setTimeout(() => { iframe!.contentWindow!.print() }, 300) }
+        imgs.forEach(img => { if (img.complete) onDone(); else { img.onload = onDone; img.onerror = onDone } })
+      } else { setTimeout(() => { iframe!.contentWindow!.print() }, 300) }
+    }, 150)
+  }
+
+  // === Screen preview grid ===
+  const occupied = useMemo(() => {
+    if (!gridConfig) return new Set<string>()
+    const occ = new Set<string>()
+    for (let r = 0; r < gridConfig.rows.length; r++) {
+      const row = gridConfig.rows[r]
+      if (!row) continue
+      for (const [key, cell] of Object.entries(row.cells)) {
+        const c = Number(key)
+        const rs = cell.rowspan || 1; const cs = cell.colspan || 1
+        if (rs > 1) { for (let dr = 1; dr < rs; dr++) occ.add(`${r + dr}-${c}`) }
+        if (cs > 1) { for (let dc = 1; dc < cs; dc++) occ.add(`${r}-${c + dc}`) }
+      }
+    }
+    return occ
+  }, [gridConfig])
+
+  const tableRef = useRef<HTMLTableElement>(null)
+  useEffect(() => {
+    if (!gridConfig || !tableRef.current) return
+    const tds = tableRef.current.querySelectorAll('td[data-autofit="1"]')
+    tds.forEach(td => {
+      const span = td.querySelector('span') as HTMLSpanElement | null
+      if (!span?.textContent?.trim()) return
+      const cs = getComputedStyle(td)
+      const avail = td.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+      if (avail <= 0) return
+      if (span.scrollWidth > avail) {
+        const origSize = parseFloat(td.style.fontSize) || 9
+        const ratio = (avail * 0.99) / span.scrollWidth
+        const newSize = Math.max(Math.round(origSize * ratio * 10) / 10, origSize * 0.5)
+        ;(td as HTMLElement).style.fontSize = newSize + 'pt'
+      }
+    })
+  }, [gridConfig, displayData])
+
+  return (
+    <AppShell>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex-1 min-w-[250px]">
+            <StudentSearch
+              onSelect={handleSelectStudent}
+              placeholder="Buscar alumno por cedula, apellidos o nombres..."
+              plan={plan}
+              autoFocus
+            />
+          </div>
+          {selectedStudent && (
+            <div className="flex items-center gap-2">
+              <Badge variant={plan === 'derogado' ? 'destructive' : 'default'}>
+                {plan === 'derogado' ? 'Plan Derogado' : 'Plan Vigente'}
+              </Badge>
+              <span className="text-sm font-medium text-white">
+                {selectedStudent.apellidos}, {selectedStudent.nombres}
+              </span>
+              <span className="text-xs text-gray-400">
+                C.I.: {formatCedulaFinal(selectedStudent.cedula)}
+              </span>
+            </div>
+          )}
+          <Button size="sm" variant="outline" onClick={handlePrint} disabled={!displayData || !gridConfig}
+            className="h-8 text-xs">
+            <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+          </Button>
+          {loadingData && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+        </div>
+
+        {loadingLayout ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <span className="ml-2 text-sm text-gray-400">Cargando formato...</span>
+          </div>
+        ) : !gridConfig ? (
+          <div className="text-center py-16 text-gray-500 text-sm">No se encontro el formato.</div>
+        ) : (
+          <div className="bg-white p-2 rounded border" style={{ maxWidth: '860px', margin: '0 auto' }}>
+            <div style={{ position: 'relative', zIndex: 0, width: '816px', minHeight: '200px', maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', overflow: 'visible' }}>
+              {gridConfig.logoOverlay && <OverlayImg overlay={gridConfig.logoOverlay} z={-1} />}
+              {/* Garantía del logo del ministerio (plan derogado): si el layout no tiene un
+                  ##LOGO_CEMG## visible (falta o está tapado), se pinta igualmente como overlay
+                  con el mismo mecanismo del membrete — ninguna certificación sale sin el logo */}
+              {plan === 'derogado' && !logoMinisterioVisible(gridConfig) && (
+                <OverlayImg overlay={MINISTERIO_FALLBACK} z={-1} />
+              )}
+              <table ref={tableRef} style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
+                <colgroup>
+                  {gridConfig.columnWidths.map((w, i) => (
+                    <col key={i} style={{ width: w || `${100 / gridConfig.totalCols}%` }} />
+                  ))}
+                </colgroup>
+                <tbody>
+                  {gridConfig.rows.map((gridRow, r) => {
+                    const cells: React.ReactNode[] = []
+                    for (let c = 0; c < gridConfig.totalCols; c++) {
+                      if (occupied.has(`${r}-${c}`)) continue
+                      const cell = gridRow.cells[c] || emptyCell()
+                      let displayContent = cell.content
+                      if (cell.dataBinding && displayData) {
+                        const resolved = resolveBinding(cell.dataBinding, displayData, gridConfig, cell.dateFormat) || ''
+                        // Logo del ministerio: si el binding resuelve vacío, no pisar el token de la celda
+                        const esCeldaLogo = (cell.content || '').startsWith('##LOGO_')
+                        displayContent = resolved || (esCeldaLogo ? cell.content : '')
+                      }
+                      const borderS = (enabled: boolean) => {
+                        const bs = cell.borderStyle || 'solid'
+                        const bw = (bs === 'double' || bs === 'groove' || bs === 'ridge') ? '3px' : '1px'
+                        return enabled ? `${bw} ${bs} ${cell.borderColor}` : 'none'
+                      }
+                      cells.push(
+                        <td
+                          key={`${r}-${c}`}
+                          data-autofit={cell.autoFit ? '1' : undefined}
+                          colSpan={cell.colspan > 1 ? cell.colspan : undefined}
+                          rowSpan={cell.rowspan > 1 ? cell.rowspan : undefined}
+                          style={{
+                            borderTop: borderS(cell.borderTop), borderRight: borderS(cell.borderRight),
+                            borderBottom: borderS(cell.borderBottom), borderLeft: borderS(cell.borderLeft),
+                            width: cell.width || undefined, height: cell.height || '24px',
+                            fontSize: `${cell.fontSize}pt`, fontWeight: cell.fontWeight,
+                            fontStyle: cell.fontStyle,
+                            textDecoration: cell.textDecoration === 'underline' ? 'underline' : undefined,
+                            textAlign: cell.textAlign, verticalAlign: cell.verticalAlign,
+                            color: cell.color || undefined, whiteSpace: cell.whiteSpace,
+                            padding: cell.padding, background: cell.bgColor || undefined,
+                            writingMode: cell.writingMode || undefined,
+                            userSelect: 'none', position: 'relative', overflow: 'hidden',
+                          }}
+                        >
+                          {cell.autoFit && displayContent && !displayContent.startsWith('##LOGO_') ? (
+                          <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>{displayContent}</span>
+                        ) : (displayContent && displayContent.startsWith('##LOGO_') && displayContent.endsWith('##') ? (
+                          <img src={`/logo-${displayContent.slice(7, -2).trim().toLowerCase().replace(/_/g, '-')}.png`} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                        ) : (displayContent || ''))}
+                        </td>
+                      )
+                    }
+                    return <tr key={r}>{cells}</tr>
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </AppShell>
+  )
+}
+
+export default function CertViewPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen w-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    }>
+      <CertViewContent />
+    </Suspense>
+  )
+}

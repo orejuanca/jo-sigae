@@ -21,9 +21,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  type GridConfig, type CellConfig, type DisplayData,
+  type GridConfig, type CellConfig, type DisplayData, type LogoOverlay,
   emptyCell, emptyRow, createDefaultTemplate, resolveBinding, patchDataBindings,
 } from '@/components/cert-visual/types'
+import { OverlayImg, overlayPrintHtml } from '@/components/cert-visual/logo-overlay'
 import { schoolConfig, notaEnLetras, formatCedulaFinal } from '@/lib/school-config'
 import {
   Eye, EyeOff, Save, Upload, RotateCcw, Plus, Minus, Columns3, Loader2,
@@ -250,7 +251,10 @@ function GridTable({
       style={{ maxWidth: '860px', margin: '0 auto', overflow: 'visible' }}
       onMouseUp={() => !isPreview && onCellMouseUp()}
     >
-      <div style={{ width: `${pageWidth || 816}px`, height: `${pageHeight || 1344}px`, maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', overflowY: 'auto', overflowX: 'hidden', background: 'white' }}>
+      <div style={{ width: `${pageWidth || 816}px`, height: `${pageHeight || 1344}px`, maxWidth: '100%', margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,0.12)', position: 'relative', zIndex: 0, overflowY: 'auto', overflowX: 'hidden', background: 'white' }}>
+        {/* Logo flotante membrete: en modo diseño se ve ENCIMA (z=25) para configurarlo;
+            en Vista Previa se ve DETRAS del texto (z=-1), igual que en la impresion */}
+        {config.logoOverlay && <OverlayImg overlay={config.logoOverlay} z={isPreview ? -1 : 25} />}
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '9pt', fontFamily: 'Arial, sans-serif', lineHeight: '1.2', tableLayout: 'fixed' }}>
           <colgroup>
             {config.columnWidths.map((w, i) => (
@@ -494,7 +498,6 @@ function SavedLayoutsDialog({
             Selecciona un layout para cargarlo en el editor.
           </DialogDescription>
         </DialogHeader>
-
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -542,6 +545,89 @@ function SavedLayoutsDialog({
       </DialogContent>
     </Dialog>
   )
+}
+
+// === Reparación masiva del logo del ministerio (plan derogado) ===
+// Helpers puros sobre un GridConfig ya parseado de la BD: no tocan estado de React
+function findMinisterioLogo(datos: GridConfig): { row: number; col: number; colspan: number } | null {
+  for (let r = 0; r < (datos.rows || []).length; r++) {
+    const row = datos.rows[r]
+    if (!row) continue
+    for (const [k, cell] of Object.entries(row.cells || {})) {
+      if ((cell.content || '').trim() === '##LOGO_CEMG##') return { row: r, col: Number(k), colspan: cell.colspan || 1 }
+    }
+  }
+  return null
+}
+
+function hasAnyLogoToken(datos: GridConfig): boolean {
+  for (const row of (datos.rows || [])) {
+    if (!row) continue
+    for (const cell of Object.values(row.cells || {})) {
+      const c = (cell.content || '').trim()
+      if (c.startsWith('##LOGO_') && c.endsWith('##')) return true
+    }
+  }
+  return false
+}
+
+// Inserta ##LOGO_CEMG## en datos (mutación directa del JSON parseado):
+// 1º intenta la posición de referencia (la del logo en un layout vigente intacto, ej. EMG 31059),
+//    copiando su ancho combinado (colspan) igual que COMBINAR — solo si las celdas cubiertas
+//    están libres y no excede el total de columnas del layout,
+// 2º la primera celda vacía de las primeras 3 filas (zona superior). Retorna dónde quedó o null.
+function insertMinisterioLogo(datos: GridConfig, ref: { row: number; col: number; colspan: number } | null): string | null {
+  const setLogo = (cell: CellConfig) => {
+    cell.content = '##LOGO_CEMG##'
+    cell.dataBinding = ''
+    cell.textAlign = 'center'
+    cell.verticalAlign = 'middle'
+  }
+  const pos = ref ?? { row: 0, col: 0, colspan: 1 }
+  const direct = (datos.rows || [])[pos.row]?.cells?.[pos.col]
+  if (direct && !(direct.content || '').trim()) {
+    setLogo(direct)
+    // Copiar el ancho combinado de la referencia (igual que COMBINAR), solo si las
+    // celdas cubiertas están libres y no se pasa del total de columnas del layout
+    const cs = Math.max(1, pos.colspan || 1)
+    if (cs > 1 && pos.col + cs <= (datos.totalCols || cs)) {
+      const rowCells = (datos.rows || [])[pos.row].cells
+      let libres = true
+      for (let c = pos.col + 1; c < pos.col + cs; c++) {
+        if ((rowCells[c]?.content || '').trim()) { libres = false; break }
+      }
+      if (libres) {
+        direct.colspan = cs
+        for (let c = pos.col + 1; c < pos.col + cs; c++) delete rowCells[c]
+      }
+    }
+    return `fila ${pos.row + 1}, col ${pos.col + 1}` + (direct.colspan > 1 ? ` (combina ${direct.colspan} columnas, igual que la referencia)` : '')
+  }
+  for (let r = 0; r < Math.min((datos.rows || []).length, 3); r++) {
+    const row = datos.rows[r]
+    if (!row) continue
+    for (const [k, cell] of Object.entries(row.cells || {})) {
+      if (!(cell.content || '').trim()) {
+        setLogo(cell)
+        return `fila ${r + 1}, col ${Number(k) + 1}`
+      }
+    }
+  }
+  return null
+}
+
+// Estados del reporte de reparación/verificación + sus badges para el modal
+type RepairStatus = 'reparado' | 'ya-tenia' | 'manual' | 'error' | 'coincide' | 'posicion' | 'difiere' | 'sin-logo'
+interface RepairReportItem { nombre: string; status: RepairStatus; detalle: string }
+const REPAIR_STATUS: Record<RepairStatus, { label: string; cls: string }> = {
+  reparado: { label: 'REPARADO', cls: 'bg-emerald-100 text-emerald-800' },
+  'ya-tenia': { label: 'YA TENÍA', cls: 'bg-gray-100 text-gray-600' },
+  manual: { label: 'MANUAL', cls: 'bg-amber-100 text-amber-800' },
+  error: { label: 'ERROR', cls: 'bg-red-100 text-red-700' },
+  coincide: { label: 'COINCIDE', cls: 'bg-emerald-100 text-emerald-800' },
+  posicion: { label: 'POSICIÓN', cls: 'bg-sky-100 text-sky-800' },
+  difiere: { label: 'DIFIERE', cls: 'bg-amber-100 text-amber-800' },
+  'sin-logo': { label: 'SIN LOGO', cls: 'bg-red-100 text-red-700' },
 }
 
 // === Main Page Component ===
@@ -614,6 +700,184 @@ function CertVisualEditorContent() {
   const [loadingLayout, setLoadingLayout] = useState(false)
   const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState<string>('legal')
+  // Logo flotante membrete: vive en gridConfig.logoOverlay (se guarda con el layout)
+  const [showLogoModal, setShowLogoModal] = useState(false)
+  const updateLogoOverlay = (patch: Partial<LogoOverlay> | null) => {
+    setGridConfig(prev => {
+      if (patch === null) return { ...prev, logoOverlay: null }
+      const base: LogoOverlay = prev.logoOverlay ?? { name: 'Imagen2.png', size: 15, opacity: 1, position: 'top-left', margin: 8 }
+      return { ...prev, logoOverlay: { ...base, ...patch } }
+    })
+  }
+  // Restaurar logo del ministerio (##LOGO_CEMG##) en la celda seleccionada.
+  // Para layouts que perdieron el token: se selecciona la celda donde va el logo,
+  // se inserta el token y se limpia su dataBinding para que nada lo pise al imprimir.
+  const handleRestoreMinisterioLogo = () => {
+    if (selectedCell) {
+      setGridConfig(prev => updateCellInConfig(prev, selectedCell.row, selectedCell.col, {
+        content: '##LOGO_CEMG##', dataBinding: '', textAlign: 'center', verticalAlign: 'middle',
+      }))
+      toast({ title: 'Logo del ministerio insertado', description: `##LOGO_CEMG## en la celda (fila ${selectedCell.row + 1}, col ${selectedCell.col + 1}). Si quedó chico, combina más columnas (COMBINAR > Selección). Pulsa Guardar para persistir el layout.` })
+      return
+    }
+    // Sin celda seleccionada: diagnóstico del layout actual
+    for (let r = 0; r < gridConfig.rows.length; r++) {
+      const row = gridConfig.rows[r]
+      if (!row) continue
+      for (const [k, cell] of Object.entries(row.cells)) {
+        const c = (cell.content || '').trim()
+        if (c.startsWith('##LOGO_') && c.endsWith('##')) {
+          toast({ title: 'Este layout ya tiene logo', description: `Encontré ${c} en fila ${r + 1}, col ${Number(k) + 1}. Si no se ve, revisa que exista /public/logo-...png. Para reubicarlo: selecciona la celda destino y pulsa de nuevo.` })
+          return
+        }
+      }
+    }
+    toast({ title: 'Selecciona la celda del logo', description: 'Haz clic en la celda de la esquina donde iba el logo del ministerio (arriba a la izquierda) y vuelve a pulsar Restaurar Logo.', variant: 'destructive' })
+  }
+
+  // === Reparación masiva: re-inserta ##LOGO_CEMG## en TODAS las certificaciones del plan derogado ===
+  const [showRepairModal, setShowRepairModal] = useState(false)
+  const [repairing, setRepairing] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [reportMode, setReportMode] = useState<'reparar' | 'verificar'>('reparar')
+  const [repairReport, setRepairReport] = useState<RepairReportItem[]>([])
+  const handleRepairAllMinisterioLogos = async () => {
+    setRepairing(true)
+    setRepairReport([])
+    setReportMode('reparar')
+    try {
+      // 1. Listar layouts de certificaciones de ambos planes
+      const [resDer, resVig] = await Promise.all([
+        fetch('/api/cert-layouts?plan=derogado'),
+        fetch('/api/cert-layouts?plan=vigente'),
+      ])
+      const derList: SavedLayout[] = resDer.ok ? await resDer.json() : []
+      const vigList: SavedLayout[] = resVig.ok ? await resVig.json() : []
+      if (!Array.isArray(derList) || derList.length === 0) {
+        toast({ title: 'Sin layouts', description: 'No se encontraron layouts de certificaciones del plan derogado.', variant: 'destructive' })
+        return
+      }
+      // 2. Posición de referencia: la del logo en un layout vigente intacto (ej. EMG 31059)
+      let refPos: { row: number; col: number; colspan: number } | null = null
+      for (const l of vigList) {
+        try {
+          const r = await fetch(`/api/cert-layouts/${l.id}?plan=vigente`)
+          if (!r.ok) continue
+          const lay = await r.json()
+          const datos: GridConfig = typeof lay.datos === 'string' ? JSON.parse(lay.datos) : lay.datos
+          refPos = findMinisterioLogo(datos)
+          if (refPos) break
+        } catch { /* probar con el siguiente layout vigente */ }
+      }
+      // 3. Reparar cada certificación derogada que haya perdido el logo
+      const report: RepairReportItem[] = []
+      for (const l of derList) {
+        try {
+          const r = await fetch(`/api/cert-layouts/${l.id}?plan=derogado`)
+          if (!r.ok) { report.push({ nombre: l.nombre, status: 'error', detalle: 'No se pudo cargar desde la BD' }); continue }
+          const lay = await r.json()
+          const datos: GridConfig = typeof lay.datos === 'string' ? JSON.parse(lay.datos) : lay.datos
+          if (!datos || !Array.isArray(datos.rows) || !datos.totalCols) {
+            report.push({ nombre: l.nombre, status: 'error', detalle: 'Datos de layout inválidos' }); continue
+          }
+          if (hasAnyLogoToken(datos)) {
+            report.push({ nombre: l.nombre, status: 'ya-tenia', detalle: 'El logo ya estaba presente — no se tocó' }); continue
+          }
+          const donde = insertMinisterioLogo(datos, refPos)
+          if (!donde) {
+            report.push({ nombre: l.nombre, status: 'manual', detalle: 'Sin celda libre en la zona superior: abre el layout, selecciona la celda del logo y usa el botón esmeralda' }); continue
+          }
+          const put = await fetch(`/api/cert-layouts?id=${l.id}&plan=derogado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre: l.nombre, datos }),
+          })
+          if (!put.ok) { report.push({ nombre: l.nombre, status: 'error', detalle: 'La BD rechazó el guardado' }); continue }
+          report.push({ nombre: l.nombre, status: 'reparado', detalle: `##LOGO_CEMG## insertado en ${donde}` })
+        } catch (e) {
+          report.push({ nombre: l.nombre, status: 'error', detalle: e instanceof Error ? e.message : 'Error desconocido' })
+        }
+      }
+      setRepairReport(report)
+      const nRep = report.filter(i => i.status === 'reparado').length
+      toast({ title: 'Reparación terminada', description: `${nRep} de ${report.length} layouts del plan derogado recuperaron el logo.` })
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo completar la reparación masiva. Revisa tu conexión e inténtalo de nuevo.', variant: 'destructive' })
+    } finally {
+      setRepairing(false)
+    }
+  }
+
+  // === Verificación de posiciones (solo lectura: NO guarda nada en la BD) ===
+  // Compara fila, columna y ancho combinado del logo de cada certificación derogada
+  // contra la referencia (el logo de una certificación vigente intacta, ej. EMG 31059).
+  const handleVerifyMinisterioLogos = async () => {
+    setVerifying(true)
+    setRepairReport([])
+    setReportMode('verificar')
+    try {
+      const [resDer, resVig] = await Promise.all([
+        fetch('/api/cert-layouts?plan=derogado'),
+        fetch('/api/cert-layouts?plan=vigente'),
+      ])
+      const derList: SavedLayout[] = resDer.ok ? await resDer.json() : []
+      const vigList: SavedLayout[] = resVig.ok ? await resVig.json() : []
+      if (!Array.isArray(derList) || derList.length === 0) {
+        toast({ title: 'Sin layouts', description: 'No se encontraron layouts de certificaciones del plan derogado.', variant: 'destructive' })
+        return
+      }
+      // Referencia: el primer layout vigente con ##LOGO_CEMG## (ej. EMG 31059)
+      let ref: { row: number; col: number; colspan: number } | null = null
+      let refName = ''
+      for (const l of vigList) {
+        try {
+          const r = await fetch(`/api/cert-layouts/${l.id}?plan=vigente`)
+          if (!r.ok) continue
+          const lay = await r.json()
+          const datos: GridConfig = typeof lay.datos === 'string' ? JSON.parse(lay.datos) : lay.datos
+          ref = findMinisterioLogo(datos)
+          if (ref) { refName = l.nombre; break }
+        } catch { /* probar con el siguiente layout vigente */ }
+      }
+      const report: RepairReportItem[] = []
+      for (const l of derList) {
+        try {
+          const r = await fetch(`/api/cert-layouts/${l.id}?plan=derogado`)
+          if (!r.ok) { report.push({ nombre: l.nombre, status: 'error', detalle: 'No se pudo cargar desde la BD' }); continue }
+          const lay = await r.json()
+          const datos: GridConfig = typeof lay.datos === 'string' ? JSON.parse(lay.datos) : lay.datos
+          if (!datos || !Array.isArray(datos.rows)) { report.push({ nombre: l.nombre, status: 'error', detalle: 'Datos de layout inválidos' }); continue }
+          const logo = findMinisterioLogo(datos)
+          if (!logo) {
+            const otro = hasAnyLogoToken(datos) ? ' (tiene otro token ##LOGO_...## distinto del del ministerio)' : ''
+            report.push({ nombre: l.nombre, status: 'sin-logo', detalle: `Sin ##LOGO_CEMG##${otro} — ejecuta la reparación masiva` })
+            continue
+          }
+          const posTxt = `logo en fila ${logo.row + 1}, col ${logo.col + 1} (combina ${logo.colspan} columna${logo.colspan > 1 ? 's' : ''})`
+          if (!ref) {
+            report.push({ nombre: l.nombre, status: 'difiere', detalle: `${posTxt}; no hay certificación vigente con logo para comparar` })
+          } else if (logo.row === ref.row && logo.col === ref.col) {
+            if (logo.colspan === ref.colspan) {
+              report.push({ nombre: l.nombre, status: 'coincide', detalle: `${posTxt} — igual que la referencia (${refName})` })
+            } else {
+              report.push({ nombre: l.nombre, status: 'posicion', detalle: `${posTxt}, pero la referencia (${refName}) combina ${ref.colspan} — si el logo se ve chico: selecciona la celda y usa COMBINAR > Selección` })
+            }
+          } else {
+            report.push({ nombre: l.nombre, status: 'difiere', detalle: `${posTxt}; la referencia (${refName}) lo tiene en fila ${ref.row + 1}, col ${ref.col + 1} — para moverlo: selecciona la celda destino + botón esmeralda Restaurar Logo + Guardar` })
+          }
+        } catch (e) {
+          report.push({ nombre: l.nombre, status: 'error', detalle: e instanceof Error ? e.message : 'Error desconocido' })
+        }
+      }
+      setRepairReport(report)
+      const nOk = report.filter(i => i.status === 'coincide').length
+      toast({ title: 'Verificación terminada', description: `${nOk} de ${report.length} certificaciones tienen el logo exactamente donde la referencia.` })
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo completar la verificación. Revisa tu conexión e inténtalo de nuevo.', variant: 'destructive' })
+    } finally {
+      setVerifying(false)
+    }
+  }
   // Load grid from localStorage on mount (or from ?layout= param)
   useEffect(() => {
     const lid = searchParams.get('layout')
@@ -974,7 +1238,6 @@ function CertVisualEditorContent() {
       }
       return null
     }
-
     // Convert YYYY-MM-DD → DD/MM/YYYY
     let fechaExp = certData.fechaExpedicion
     if (/^\d{4}-\d{2}-\d{2}$/.test(fechaExp)) {
@@ -1153,6 +1416,7 @@ function CertVisualEditorContent() {
       totalCols: n,
       columnWidths: Array(n).fill(`${(100 / n).toFixed(2)}%`),
       rows: [emptyRow(n)],
+      logoOverlay: gridConfig.logoOverlay ?? null,
     }
     setGridConfig(newConfig)
     setSelectedCell(null)
@@ -1655,7 +1919,10 @@ function CertVisualEditorContent() {
         const cell = gridRow.cells[c] || emptyCell()
         let content = cell.content
         if (cell.dataBinding && data) {
-          content = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
+          const resolved = resolveBinding(cell.dataBinding, data, cfg, cell.dateFormat) || ''
+          // Logo del ministerio: si el binding resuelve vacío, no pisar el token de la celda
+          const esCeldaLogo = (cell.content || '').startsWith('##LOGO_') || (cell.content || '').startsWith('##BGLOGO_')
+          content = resolved || (esCeldaLogo ? cell.content : '')
         }
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ''
@@ -1673,7 +1940,7 @@ function CertVisualEditorContent() {
           ? `<span style="display:inline-block;white-space:nowrap">${content}</span>`
           : text
         const wmStyle = cell.writingMode && cell.writingMode !== 'horizontal-tb' ? `writing-mode:${cell.writingMode};` : ''
-        const transformStyle = cell.writingMode === 'rotate-180' ? 'transform:rotate(180deg);' : ''
+        const transformStyle = cell.writingMode === 'rotate-180' ? `transform:rotate(180deg);` : ''
         const bgPosStyle = isBgLogo ? 'position:relative;overflow:hidden;' : ''
         cellsHtml += `<td${csAttr}${rsAttr}${autoFitAttr} style="${bgPosStyle}border-top:${borderStyle(cell.borderTop, cell.borderColor)};border-right:${borderStyle(cell.borderRight, cell.borderColor)};border-bottom:${borderStyle(cell.borderBottom, cell.borderColor)};border-left:${borderStyle(cell.borderLeft, cell.borderColor)};width:${cell.width || 'auto'};height:${cell.height || 'auto'};font-size:${cell.fontSize}pt;font-weight:${cell.fontWeight};font-style:${cell.fontStyle};text-decoration:${cell.textDecoration === 'underline' ? 'underline' : 'none'};text-align:${cell.textAlign};vertical-align:${cell.verticalAlign};color:${cell.color || 'inherit'};white-space:${cell.whiteSpace};padding:${cell.padding};${wmStyle}${transformStyle}background:${cell.bgColor || 'transparent'}">${bgLogoImg}${autoFitSpan}</td>`
       }
@@ -1681,7 +1948,8 @@ function CertVisualEditorContent() {
     }
 
     const colgroupHtml = cfg.columnWidths.map(w => `<col style="width:${w || 'auto'}">`).join('')
-    return { tableHtml: `<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
+    const overlayHtml = cfg.logoOverlay ? overlayPrintHtml(cfg.logoOverlay) : ''
+    return { tableHtml: `${overlayHtml}<table><colgroup>${colgroupHtml}</colgroup><tbody>${rowsHtml}</tbody></table>`, colgroupHtml, hasLogo: rowsHtml.includes('<img') }
   }
 
   const executePrint = (scale: number) => {
@@ -1889,6 +2157,35 @@ img{max-width:100%;height:auto}
 
               <div className="w-px h-5 bg-border" />
 
+              {/* === LOGO FLOTANTE (membrete) === */}
+              <button
+                onClick={() => setShowLogoModal(true)}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold ${gridConfig.logoOverlay ? 'bg-fuchsia-500 hover:bg-fuchsia-400' : 'bg-fuchsia-800 hover:bg-fuchsia-700'}`}
+                title="Logo flotante membrete — se guarda junto con este layout"
+              >
+                Logo
+              </button>
+
+              {/* === LOGO MINISTERIO (en la grilla) === */}
+              <button
+                onClick={handleRestoreMinisterioLogo}
+                className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-700 hover:bg-emerald-600 text-white"
+                title="Inserta ##LOGO_CEMG## (logo oficial del ministerio) en la celda seleccionada — restaura layouts que perdieron su logo"
+              >
+                Restaurar Logo
+              </button>
+
+              {/* === REPARACIÓN MASIVA (plan derogado) === */}
+              <button
+                onClick={() => { setShowRepairModal(true); setRepairReport([]) }}
+                className="px-2 py-0.5 rounded text-[9px] font-bold bg-teal-600 hover:bg-teal-500 text-white"
+                title="Escanea TODAS las certificaciones del plan derogado y re-inserta ##LOGO_CEMG## (logo del ministerio) en las que lo perdieron"
+              >
+                Reparar Derogados
+              </button>
+
+              <div className="w-px h-5 bg-border" />
+
               {/* === FORMATO DE FECHA === */}
               <Badge variant="secondary" className="h-7 text-[10px] font-semibold px-2">FECHA</Badge>
               <select
@@ -2076,6 +2373,118 @@ img{max-width:100%;height:auto}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* === Logo Flotante Modal (membrete) === */}
+      {showLogoModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-2xl p-4 w-80 max-w-[90vw]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-bold text-gray-800">Logo Flotante (Membrete)</h3>
+              <button onClick={() => setShowLogoModal(false)} className="text-gray-500 hover:text-red-500 text-lg leading-none font-bold">&times;</button>
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs text-gray-700">
+                <input type="checkbox" checked={!!gridConfig.logoOverlay} onChange={e => updateLogoOverlay(e.target.checked ? {} : null)} />
+                Mostrar logo flotante
+              </label>
+              {gridConfig.logoOverlay && (<>
+                <div className="relative bg-white border border-gray-300 rounded h-36 overflow-hidden">
+                  <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px,transparent 1px),linear-gradient(90deg,#e5e7eb 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
+                  <OverlayImg overlay={gridConfig.logoOverlay} z={25} />
+                </div>
+                <label className="block text-xs text-gray-700">Archivo en /public
+                  <input type="text" value={gridConfig.logoOverlay.name} onChange={e => updateLogoOverlay({ name: e.target.value })} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mt-0.5" />
+                </label>
+                <label className="block text-xs text-gray-700">Tamaño: {gridConfig.logoOverlay.size ?? 15}%
+                  <input type="range" min={5} max={60} value={gridConfig.logoOverlay.size ?? 15} onChange={e => updateLogoOverlay({ size: parseInt(e.target.value) })} className="w-full" />
+                </label>
+                <label className="block text-xs text-gray-700">Opacidad: {Math.round((gridConfig.logoOverlay.opacity ?? 1) * 100)}%
+                  <input type="range" min={10} max={100} value={Math.round((gridConfig.logoOverlay.opacity ?? 1) * 100)} onChange={e => updateLogoOverlay({ opacity: parseInt(e.target.value) / 100 })} className="w-full" />
+                </label>
+                <label className="block text-xs text-gray-700">Posición
+                  <select value={gridConfig.logoOverlay.position ?? 'top-left'} onChange={e => updateLogoOverlay({ position: e.target.value as LogoOverlay['position'] })} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mt-0.5">
+                    <option value="top-left">Arriba izquierda</option>
+                    <option value="top-right">Arriba derecha</option>
+                    <option value="bottom-left">Abajo izquierda</option>
+                    <option value="bottom-right">Abajo derecha</option>
+                    <option value="center">Centro</option>
+                  </select>
+                </label>
+                <label className="block text-xs text-gray-700">Margen: {gridConfig.logoOverlay.margin ?? 8}px
+                  <input type="range" min={0} max={100} value={gridConfig.logoOverlay.margin ?? 8} onChange={e => updateLogoOverlay({ margin: parseInt(e.target.value) })} className="w-full" />
+                </label>
+                <div className="flex justify-between pt-1">
+                  <button onClick={() => updateLogoOverlay(null)} className="px-3 py-1 text-xs font-bold border-2 border-red-400 text-red-600 rounded hover:bg-red-50">Quitar</button>
+                  <button onClick={() => setShowLogoModal(false)} className="px-4 py-1 text-xs font-bold bg-fuchsia-700 text-white rounded hover:bg-fuchsia-600">Listo</button>
+                </div>
+              </>)}
+            </div>
+            <p className="text-[10px] text-gray-500 mt-2">El logo vive dentro de este layout: se guarda con el botón Guardar y lo muestran Validar Notas, Validar Título y Constancia de Notas.</p>
+          </div>
+        </div>
+      )}
+
+      {/* === MODAL REPARACIÓN MASIVA LOGO MINISTERIO (plan derogado) === */}
+      {showRepairModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40" onClick={() => { if (!repairing && !verifying) setShowRepairModal(false) }}>
+          <div className="bg-white rounded-lg shadow-xl w-[560px] max-w-[95vw] max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-bold text-gray-800">Reparar logo del ministerio — Plan Derogado</h3>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Escanea todas las certificaciones del plan derogado y re-inserta ##LOGO_CEMG## (logo oficial del ministerio) en los layouts que lo perdieron. Los layouts que ya tienen logo no se tocan.
+              </p>
+            </div>
+            {(repairing || verifying) ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-5 w-5 animate-spin text-emerald-700" />
+                <span className="ml-2 text-sm text-gray-600">{repairing ? 'Escaneando y reparando layouts…' : 'Verificando posiciones del logo…'}</span>
+              </div>
+            ) : repairReport.length === 0 ? (
+              <div className="p-4">
+                <p className="text-xs text-gray-600">
+                  Se tomará la posición del logo de las certificaciones vigentes intactas (p. ej. EMG 31059) como referencia y se insertará en el primer espacio libre de la zona superior de cada layout dañado.
+                </p>
+                <button onClick={handleRepairAllMinisterioLogos} className="mt-3 w-full px-3 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold">
+                  Iniciar reparación
+                </button>
+                <button onClick={handleVerifyMinisterioLogos} className="mt-2 w-full px-3 py-2 rounded border text-xs font-bold">
+                  Verificar posiciones (sin guardar nada)
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 overflow-y-auto flex-1">
+                <div className="text-[11px] font-semibold text-gray-700 mb-2">{reportMode === 'verificar' ? 'Verificación de posiciones — solo lectura, no se guardó nada' : 'Reparación aplicada en la base de datos'}</div>
+                <div className="space-y-1">
+                  {repairReport.map((item, i) => (
+                    <div key={i} className="flex items-start justify-between gap-2 p-2 rounded border">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold truncate">{item.nombre}</div>
+                        <div className="text-[10px] text-gray-500">{item.detalle}</div>
+                      </div>
+                      <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${REPAIR_STATUS[item.status].cls}`}>
+                        {REPAIR_STATUS[item.status].label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {reportMode === 'verificar' ? (
+                  <div className="mt-3 text-[11px] text-gray-600">
+                    Coinciden con la referencia: <b>{repairReport.filter(i => i.status === 'coincide').length}</b> · Posición ok, ancho distinto: <b>{repairReport.filter(i => i.status === 'posicion').length}</b> · En otra posición: <b>{repairReport.filter(i => i.status === 'difiere').length}</b> · Sin logo: <b>{repairReport.filter(i => i.status === 'sin-logo').length}</b> · Errores: <b>{repairReport.filter(i => i.status === 'error').length}</b>
+                  </div>
+                ) : (
+                  <div className="mt-3 text-[11px] text-gray-600">
+                    Reparados: <b>{repairReport.filter(i => i.status === 'reparado').length}</b> · Ya tenían logo: <b>{repairReport.filter(i => i.status === 'ya-tenia').length}</b> · Manual: <b>{repairReport.filter(i => i.status === 'manual').length}</b> · Errores: <b>{repairReport.filter(i => i.status === 'error').length}</b>
+                  </div>
+                )}
+                <p className="text-[10px] text-gray-400 mt-2">{reportMode === 'verificar' ? 'Pulsa Cerrar y vuelve a entrar para re-auditar tras reparar o mover un logo.' : 'Si tienes un layout derogado abierto en este editor, vuelve a cargarlo para ver el logo restaurado.'}</p>
+                <button onClick={() => { setShowRepairModal(false); setRepairReport([]) }} className="mt-3 w-full px-3 py-2 rounded border text-xs font-bold">
+                  Cerrar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* === Saved Layouts Dialog === */}
       <SavedLayoutsDialog

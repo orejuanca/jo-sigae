@@ -1,0 +1,211 @@
+{
+ "excel": "Control de Alumnos UENCC 2021 - 2022 - copia.xlsm",
+ "sha256": "be5106d4ba730c2e33f4e0add0fbc1853611a4cc320bef0714c7bb2af5e6c3f2",
+ "extraido": "2026-09-02T17:00:06.153389",
+ "hojas": [
+  {
+   "hoja": "AutoOpen Stub Data",
+   "archivo": "AutoOpen_Stub_Data.json",
+   "filas": 11,
+   "columnas": 1,
+   "celdas_con_datos": 11
+  },
+  {
+   "hoja": "InicioUENCCCA",
+   "archivo": "InicioUENCCCA.json",
+   "filas": 1,
+   "columnas": 1,
+   "celdas_con_datos": 0
+  },
+  {
+   "hoja": "PROFESORES",
+   "archivo": "PROFESORES.json",
+   "filas": 501,
+   "columnas": 73,
+   "celdas_con_datos": 680
+  },
+  {
+   "hoja": "LOGINUENCCCA",
+   "archivo": "LOGINUENCCCA.json",
+   "filas": 10,
+   "columnas": 2,
+   "celdas_con_datos": 20
+  },
+  {
+   "hoja": "ALUMNOS",
+   "archivo": "ALUMNOS.json",
+   "filas": 3000,
+   "columnas": 83,
+   "celdas_con_datos": 41232
+  },
+  {
+   "hoja": "SECCIONES",
+   "archivo": "SECCIONES.json",
+   "filas": 13,
+   "columnas": 54,
+   "celdas_con_datos": 670
+  },
+  {
+   "hoja": "LISTAS",
+   "archivo": "LISTAS.json",
+   "filas": 10007,
+   "columnas": 15,
+   "celdas_con_datos": 139
+  },
+  {
+   "hoja": "NOMINAS DE NOTAS",
+   "archivo": "NOMINAS_DE_NOTAS.json",
+   "filas": 49,
+   "columnas": 103,
+   "celdas_con_datos": 1711
+  },
+  {
+   "hoja": "NL 1°",
+   "archivo": "NL_1grado.json",
+   "filas": 535,
+   "columnas": 251,
+   "celdas_con_datos": 18321
+  },
+  {
+   "hoja": "NR 1°",
+   "archivo": "NR_1grado.json",
+   "filas": 481,
+   "columnas": 214,
+   "celdas_con_datos": 2183
+  },
+  {
+   "hoja": "RF 1°",
+   "archivo": "RF_1grado.json",
+   "filas": 77,
+   "columnas": 82,
+   "celdas_con_datos": 1029
+  },
+  {
+   "hoja": "NL 2°",
+   "archivo": "NL_2grado.json",
+   "filas": 535,
+   "columnas": 251,
+   "celdas_con_datos": 22707
+  },
+  {
+   "hoja": "NR 2°",
+   "archivo": "NR_2grado.json",
+   "filas": 481,
+   "columnas": 214,
+   "celdas_con_datos": 2211
+  },
+  {
+   "hoja": "RF 2°",
+   "archivo": "RF_2grado.json",
+   "filas": 77,
+   "columnas": 83,
+   "celdas_con_datos": 1311
+  },
+  {
+   "hoja": "NL 3°",
+   "archivo": "NL_3grado.json",
+   "filas": 535,
+   "columnas": 256,
+   "celdas_con_datos": 25396
+  },
+  {
+   "hoja": "NR 3°",
+   "archivo": "NR_3grado.json",
+   "filas": 481,
+   "columnas": 219,
+   "celdas_con_datos": 2305
+  },
+  {
+   "hoja": "RF 3°",
+   "archivo": "RF_3grado.json",
+   "filas": 78,
+   "columnas": 85,
+   "celdas_con_datos": 868
+  },
+  {
+   "hoja": "NL 4°",
+   "archivo": "NL_4grado.json",
+   "filas": 535,
+   "columnas": 132,
+   "celdas_con_datos": 23990
+  },
+  {
+   "hoja": "NR 4°",
+   "archivo": "NR_4grado.json",
+   "filas": 481,
+   "columnas": 19,
+   "celdas_con_datos": 2368
+  },
+  {
+   "hoja": "RF 4°",
+   "archivo": "RF_4grado.json",
+   "filas": 79,
+   "columnas": 88,
+   "celdas_con_datos": 882
+  },
+  {
+   "hoja": "NL 5°",
+   "archivo": "NL_5grado.json",
+   "filas": 536,
+   "columnas": 241,
+   "celdas_con_datos": 24053
+  },
+  {
+   "hoja": "NR 5°",
+   "archivo": "NR_5grado.json",
+   "filas": 481,
+   "columnas": 20,
+   "celdas_con_datos": 2242
+  },
+  {
+   "hoja": "RF 5°",
+   "archivo": "RF_5grado.json",
+   "filas": 80,
+   "columnas": 254,
+   "celdas_con_datos": 1561
+  },
+  {
+   "hoja": "HR 5°",
+   "archivo": "HR_5grado.json",
+   "filas": 61,
+   "columnas": 107,
+   "celdas_con_datos": 310
+  },
+  {
+   "hoja": "ESTADISTICA POR ASIGNATURA",
+   "archivo": "ESTADISTICA_POR_ASIGNATURA.json",
+   "filas": 64,
+   "columnas": 53,
+   "celdas_con_datos": 1846
+  },
+  {
+   "hoja": "ESTADISTICA GENERAL",
+   "archivo": "ESTADISTICA_GENERAL.json",
+   "filas": 41,
+   "columnas": 36,
+   "celdas_con_datos": 773
+  },
+  {
+   "hoja": "ESTADISTICA POR GRADO",
+   "archivo": "ESTADISTICA_POR_GRADO.json",
+   "filas": 44,
+   "columnas": 35,
+   "celdas_con_datos": 391
+  },
+  {
+   "hoja": "NUEVO AÑO",
+   "archivo": "NUEVO_AÑO.json",
+   "filas": 22,
+   "columnas": 4,
+   "celdas_con_datos": 17
+  },
+  {
+   "hoja": "LOGOS",
+   "archivo": "LOGOS.json",
+   "filas": 29,
+   "columnas": 13,
+   "celdas_con_datos": 3
+  }
+ ],
+ "total_celdas": 179230
+}

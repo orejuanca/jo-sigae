@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
   const donde = {
     OR: [
       { cedula: { contains: q.toUpperCase() } },
+      { cedulaEscolar: { contains: q.toUpperCase() } },
       { apellidos: { contains: q.toUpperCase() } },
       { nombres: { contains: q.toUpperCase() } },
     ],

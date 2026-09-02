@@ -232,20 +232,43 @@ model docenteSeccion {
 }
 
 model alumno {
-  id         String   @id @default(cuid())
-  cedula     String   @unique // "V 32787155"
-  apellidos  String
-  nombres    String
-  sexo       String? // M | F
-  fechaNac   String? // ISO
-  entidad    String? // municipio nacimiento
-  ef         String? // estado (sigla)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  inscripciones inscripcion[]
+  id             String   @id @default(cuid())
+  cedula         String   @unique // "V 32787155"
+  apellidos      String
+  nombres        String
+  sexo           String? // M | F
+  fechaNac       String? // ISO
+  entidad        String? // municipio nacimiento
+  ef             String? // estado (sigla)
+  // ---- Sabana de alumnos INTEGRA (Bloque 1) ----
+  cedulaEscolar  String? // col 23: cedula escolar (V10917790806)
+  estado         String? // col 14: estado (nombre completo: ARAGUA...)
+  pais           String? // col 17
+  localidad      String? // col 18
+  direccion      String? // col 28
+  telefono       String? // col 35
+  correo         String? // col 42
+  serial         String? // col 19: serial de la cedula
+  te             String? // col 20: campo TE de la sabana (F/NO)
+  obsHr          String? // col 21: observaciones HR (titulos)
+  repCedula      String? // col 24: cedula del representante
+  repNombre      String? // col 25
+  repApellido    String? // col 26
+  repAfinidad    String? // col 27: MADRE/PADRE...
+  plantelProc1   String? // col 29: plantel de procedencia 1
+  plantelProc2   String? // col 37
+  plantelProc3   String? // col 38
+  plantelProc4   String? // col 39
+  plantelProc5   String? // col 40
+  obsGenerales   String? // col 41: observaciones generales
+  eqv            String? // col 43: EQV
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  inscripciones  inscripcion[]
 
   @@index([apellidos])
   @@index([nombres])
+  @@index([cedulaEscolar])
 }
 
 model inscripcion {
@@ -257,6 +280,11 @@ model inscripcion {
   repitiente   Boolean   @default(false)
   materiaPend1 String? // materia pendiente 1 (código asignatura, ej: MA) — solo inscripciones en sección MP
   materiaPend2 String? // materia pendiente 2 (código asignatura)
+  numeroLista   String? // N- de la sabana (col 5)
+  condicion     String? // col 31: REGULAR | REPITE | REGULAR MP
+  sp            String? // col 32: campo SP de la sabana (U)
+  ingEgr        String? // col 36: INGRESO x LAPSO
+  obsBoletin    String? // col 30: observaciones boletin (por ano)
   fechaRetiro  DateTime?
   activo       Boolean   @default(true)
   alumno       alumno      @relation(fields: [alumnoId], references: [id])

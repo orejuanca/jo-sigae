@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 interface Seccion { id: string; grado: string; codigo: string; tipo: string }
@@ -195,7 +196,9 @@ export default function InscripcionPage() {
                 <tr key={i.inscripcionId} className={`border-b ${!i.activo ? 'bg-gray-50 text-gray-400 line-through' : ''}`}>
                   <td className="px-3 py-1.5 text-gray-400">{idx + 1}</td>
                   <td className="px-3 py-1.5 font-mono text-xs">{i.cedula}</td>
-                  <td className="px-3 py-1.5">{i.apellidos}</td>
+                  <td className="px-3 py-1.5">
+                    <Link href={`/control-estudios/alumnos?q=${encodeURIComponent(i.cedula)}`} className="hover:text-blue-700 hover:underline">{i.apellidos}</Link>
+                  </td>
                   <td className="px-3 py-1.5">{i.nombres}</td>
                   <td className="px-3 py-1.5">{i.sexo}</td>
                   <td className="px-3 py-1.5 text-xs text-gray-500">{i.fechaNac?.slice(0, 10)}</td>

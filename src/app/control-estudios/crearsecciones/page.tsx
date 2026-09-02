@@ -43,7 +43,7 @@ export default function CrearSeccionesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Crear Secciones</h1>
-          <p className="text-sm text-gray-500">Secciones por grado del año activo. MP = secciones de Misión/Patrocinio.</p>
+          <p className="text-sm text-gray-500">Secciones por grado del año activo. A–I y U = regulares · MP = Materia Pendiente.</p>
         </div>
         {!abierto && <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">AÑO CERRADO — SOLO LECTURA</span>}
       </div>
@@ -60,8 +60,10 @@ export default function CrearSeccionesPage() {
               </select>
               <button onClick={() => crear({ lote: { grado: manual.grado, letras: LETRAS } })}
                 className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">CREAR A–I</button>
+              <button onClick={() => crear({ lote: { grado: manual.grado, letras: ['U'] } })}
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea la sección U (regular) del grado">CREAR U</button>
               <button onClick={() => crear({ lote: { grado: manual.grado, letras: [], mp: true } })}
-                className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600">CREAR MP</button>
+                className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600" title="Crea la sección MP (Materia Pendiente) del grado">CREAR MP</button>
             </div>
           </div>
           <div className="rounded-lg border bg-white p-5">
@@ -73,7 +75,7 @@ export default function CrearSeccionesPage() {
               <input value={manual.codigo} onChange={e => setManual(m => ({ ...m, codigo: e.target.value.toUpperCase() }))}
                 placeholder="LETRA" maxLength={2} className="w-20 rounded border px-3 py-2 text-sm" />
               <label className="flex items-center gap-1 text-xs text-gray-600">
-                <input type="checkbox" checked={manual.mp} onChange={e => setManual(m => ({ ...m, mp: e.target.checked }))} /> es MP
+                <input type="checkbox" checked={manual.mp} onChange={e => setManual(m => ({ ...m, mp: e.target.checked }))} /> es Materia Pendiente (MP)
               </label>
               <button onClick={() => crear({ grado: manual.grado, codigo: manual.codigo, tipo: manual.mp ? 'MP' : 'REGULAR' })}
                 className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">CREAR</button>
@@ -87,7 +89,7 @@ export default function CrearSeccionesPage() {
         {GRADOS.map(g => (
           <div key={g} className="rounded-lg border bg-white p-4">
             <h3 className="mb-3 text-sm font-bold">{g}° AÑO</h3>
-            <div className="grid grid-cols-9 gap-2">
+            <div className="grid grid-cols-10 gap-2">
               {secciones.filter(s => s.grado === g).map(s => (
                 <div key={s.id} className={`rounded border p-2 text-center ${s.tipo === 'MP' ? 'border-amber-300 bg-amber-50' : 'bg-slate-50'}`}>
                   <div className="text-lg font-bold">{s.codigo}</div>
@@ -98,7 +100,7 @@ export default function CrearSeccionesPage() {
                 </div>
               ))}
               {GRADOS.includes(g) && !secciones.some(s => s.grado === g) && (
-                <div className="col-span-9 text-sm text-gray-400 italic">Sin secciones creadas.</div>
+                <div className="col-span-10 text-sm text-gray-400 italic">Sin secciones creadas.</div>
               )}
             </div>
           </div>

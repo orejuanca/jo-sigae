@@ -13,20 +13,29 @@ export default function ConfiguracionPage() {
   const [docentes, setDocentes] = useState<Doc[]>([]);
   const [nuevoAno, setNuevoAno] = useState('');
   const [msg, setMsg] = useState('');
+  const [msgOk, setMsgOk] = useState(true);
   const [na, setNa] = useState({ codigo: '', nombre: '' });
   const [nd, setNd] = useState({ cedula: '', nombre: '' });
 
+  const flash = (t: string, ok = true) => { setMsg(t); setMsgOk(ok); setTimeout(() => setMsg(''), 5000); };
+
   const cargar = useCallback(() => {
-    fetch('/api/control-estudios/anios').then(r => r.json()).then(d => {
-      setAnios(d.todos); setActivo(d.activo);
-    });
-    fetch('/api/control-estudios/catalogos').then(r => r.json()).then(d => {
-      setAsignaturas(d.asignaturas); setDocentes(d.docentes);
-    });
+    (async () => {
+      try {
+        const ra = await fetch('/api/control-estudios/anios');
+        const da = await ra.json();
+        if (ra.ok) { setAnios(da.todos ?? []); setActivo(da.activo); }
+        else flash(da.error ?? 'No se pudieron cargar los años', false);
+      } catch { flash('No se pudo conectar con el servidor de años', false); }
+      try {
+        const rc = await fetch('/api/control-estudios/catalogos');
+        const dc = await rc.json();
+        if (rc.ok) { setAsignaturas(dc.asignaturas ?? []); setDocentes(dc.docentes ?? []); }
+        else flash(dc.error ?? 'No se pudieron cargar los catálogos', false);
+      } catch { flash('Catálogos no disponibles: detén el servidor, ejecuta npm run db:generate y npm run db:push, y reinicia npm run dev', false); }
+    })();
   }, []);
   useEffect(cargar, [cargar]);
-
-  const flash = (t: string) => { setMsg(t); setTimeout(() => setMsg(''), 4000); };
 
   const crearAno = async () => {
     const r = await fetch('/api/control-estudios/anios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: nuevoAno }) });
@@ -50,14 +59,25 @@ export default function ConfiguracionPage() {
     const body = tipo === 'asignatura' ? { tipo, ...na } : { tipo, ...nd };
     const r = await fetch('/api/control-estudios/catalogos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const d = await r.json();
-    flash(r.ok ? 'GUARDADO' : d.error);
+    flash(r.ok ? 'GUARDADO' : d.error, r.ok);
     if (r.ok) { tipo === 'asignatura' ? setNa({ codigo: '', nombre: '' }) : setNd({ cedula: '', nombre: '' }); cargar(); }
+  };
+
+  const eliminar = async (tipo: 'asignatura' | 'docente', id: string, nombre: string) => {
+    const aviso = tipo === 'docente'
+      ? `¿Eliminar a ${nombre}? Sus asignaciones en la matriz quedarán SIN DOCENTE.`
+      : `¿Eliminar la asignatura ${nombre}?`;
+    if (!confirm(aviso)) return;
+    const r = await fetch(`/api/control-estudios/catalogos?tipo=${tipo}&id=${id}`, { method: 'DELETE' });
+    const d = await r.json();
+    flash(r.ok ? (d.desasignadas ? `ELIMINADO (${d.desasignadas} asignación(es) liberadas)` : 'ELIMINADO') : d.error, r.ok);
+    if (r.ok) cargar();
   };
 
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">Configuración del Año Escolar</h1>
-      {msg && <div className="mb-4 rounded border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">{msg}</div>}
+      {msg && <div className={`mb-4 rounded border px-4 py-2 text-sm font-semibold ${msgOk ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-red-300 bg-red-50 text-red-800'}`}>{msg}</div>}
 
       <div className="grid grid-cols-2 gap-6">
         {/* AÑOS */}
@@ -99,7 +119,9 @@ export default function ConfiguracionPage() {
             </div>
             <div className="max-h-40 overflow-y-auto flex flex-wrap gap-1.5">
               {asignaturas.map(a => (
-                <span key={a.id} className="rounded bg-slate-100 px-2 py-1 text-xs"><b>{a.codigo}</b> {a.nombre}</span>
+                <span key={a.id} className="rounded bg-slate-100 px-2 py-1 text-xs"><b>{a.codigo}</b> {a.nombre}
+                  <button onClick={() => eliminar('asignatura', a.id, a.nombre)} className="ml-1 text-red-400 hover:text-red-600" title="Eliminar">✕</button>
+                </span>
               ))}
             </div>
           </div>
@@ -111,7 +133,9 @@ export default function ConfiguracionPage() {
               <button onClick={() => agregar('docente')} className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">AGREGAR</button>
             </div>
             <div className="max-h-40 overflow-y-auto text-xs text-gray-600">
-              {docentes.map(d => <div key={d.id} className="border-b py-1"><b className="text-gray-800">{d.cedula}</b> · {d.nombre}</div>)}
+              {docentes.map(d => <div key={d.id} className="flex items-center justify-between border-b py-1"><span><b className="text-gray-800">{d.cedula}</b> · {d.nombre}</span>
+                <button onClick={() => eliminar('docente', d.id, d.nombre)} className="text-red-400 hover:text-red-600" title="Eliminar">✕</button>
+              </div>)}
             </div>
           </div>
         </section>

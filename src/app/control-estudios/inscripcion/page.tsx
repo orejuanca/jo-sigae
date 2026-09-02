@@ -118,7 +118,7 @@ export default function InscripcionPage() {
           <select value={seccionId} disabled={!grado} onChange={e => setSeccionId(e.target.value)}
             className="w-44 rounded border px-3 py-2 text-sm disabled:bg-gray-100">
             <option value="">{grado ? '— SELECCIONA —' : '…'}</option>
-            {delGrado.map(s => <option key={s.id} value={s.id}>{s.codigo === 'MP' ? 'MP (Misión/Patrocinio)' : `${grado}° ${s.codigo}`}</option>)}
+            {delGrado.map(s => <option key={s.id} value={s.id}>{s.codigo === 'MP' ? 'MP (Materia Pendiente)' : `${grado}° ${s.codigo}`}</option>)}
           </select>
         </div>
         {seccionId && (

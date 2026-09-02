@@ -3,11 +3,18 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function GET() {
-  const [asignaturas, docentes] = await Promise.all([
-    prisma.asignatura.findMany({ orderBy: { orden: 'asc' } }),
-    prisma.docente.findMany({ orderBy: { nombre: 'asc' } }),
-  ]);
-  return NextResponse.json({ asignaturas, docentes });
+  try {
+    const [asignaturas, docentes] = await Promise.all([
+      prisma.asignatura.findMany({ orderBy: { orden: 'asc' } }),
+      prisma.docente.findMany({ orderBy: { nombre: 'asc' } }),
+    ]);
+    return NextResponse.json({ asignaturas, docentes });
+  } catch {
+    // BD sin tablas nuevas o cliente prisma desactualizado: respuesta clara en vez de 500 vacío
+    return NextResponse.json({
+      error: 'Catálogos no disponibles. Detén el servidor (Ctrl+C) y ejecuta: npm run db:generate y luego npm run db:push. Si ya lo hiciste, reinicia npm run dev.',
+    }, { status: 503 });
+  }
 }
 
 // POST: agregar asignatura o docente
@@ -36,5 +43,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'tipo inválido' }, { status: 400 });
   } catch {
     return NextResponse.json({ error: 'No se pudo guardar' }, { status: 500 });
+  }
+}
+
+// DELETE: eliminar docente (desasigna sus celdas) o asignatura (solo si sin celdas)
+export async function DELETE(req: NextRequest) {
+  const sp = new URL(req.url).searchParams;
+  const tipo = sp.get('tipo');
+  const id = sp.get('id');
+  if (!id || !tipo) return NextResponse.json({ error: 'tipo e id requeridos' }, { status: 400 });
+  try {
+    if (tipo === 'docente') {
+      const celdas = await prisma.docenteSeccion.updateMany({ where: { docenteId: id }, data: { docenteId: null } });
+      await prisma.docente.delete({ where: { id } });
+      return NextResponse.json({ ok: true, desasignadas: celdas.count });
+    }
+    if (tipo === 'asignatura') {
+      const n = await prisma.docenteSeccion.count({ where: { asignaturaId: id } });
+      if (n > 0) return NextResponse.json({ error: `Tiene ${n} celda(s) en la matriz docente-materia. Quita esas asignaciones primero.` }, { status: 400 });
+      await prisma.asignatura.delete({ where: { id } });
+      return NextResponse.json({ ok: true });
+    }
+    return NextResponse.json({ error: 'tipo inválido' }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: 'No se pudo eliminar' }, { status: 500 });
   }
 }

@@ -14,10 +14,11 @@ export async function GET(req: NextRequest) {
       { nombres: { contains: q.toUpperCase() } },
     ],
   };
-  const [alumnos, inscritos] = await Promise.all([
-    prisma.alumno.findMany({ where: donde, take: 25, orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }] }),
-    ano ? prisma.inscripcion.findMany({ where: { anoEscolarId: ano.id, activo: true }, include: { seccion: true } }) : [],
-  ]);
+  const alumnos = await prisma.alumno.findMany({ where: donde, take: 25, orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }] });
+  let inscritos: { alumnoId: string; seccion: { grado: string; codigo: string } }[] = [];
+  if (ano) {
+    inscritos = await prisma.inscripcion.findMany({ where: { anoEscolarId: ano.id, activo: true }, include: { seccion: true } });
+  }
   const insPorAlumno = new Map(inscritos.map(i => [i.alumnoId, `${i.seccion.grado}${i.seccion.codigo === 'MP' ? ' MP' : i.seccion.codigo}`]));
   return NextResponse.json({
     alumnos: alumnos.map(a => ({ ...a, inscritoEn: insPorAlumno.get(a.id) ?? null })),

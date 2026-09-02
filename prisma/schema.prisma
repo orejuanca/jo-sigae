@@ -255,11 +255,14 @@ model inscripcion {
   anoEscolarId String
   matricula    String? // nro de matricula legacy
   repitiente   Boolean   @default(false)
+  materiaPend1 String? // materia pendiente 1 (código asignatura, ej: MA) — solo inscripciones en sección MP
+  materiaPend2 String? // materia pendiente 2 (código asignatura)
   fechaRetiro  DateTime?
   activo       Boolean   @default(true)
   alumno       alumno      @relation(fields: [alumnoId], references: [id])
   seccion      seccion     @relation(fields: [seccionId], references: [id])
   ano          anoEscolar  @relation(fields: [anoEscolarId], references: [id])
 
-  @@unique([alumnoId, anoEscolarId])
+  @@unique([alumnoId, seccionId]) // un alumno no repite sección, pero SÍ puede estar en su regular + MP
+  @@index([alumnoId, anoEscolarId])
 }

@@ -1,0 +1,18 @@
+# Descomprimir y copiar todo al repo en una pasada
+Expand-Archive "D:\jo-sigae\Download\jo-sigae-control-estudios.zip" -DestinationPath D:\ce-temp -Force
+robocopy D:\ce-temp D:\jo-sigae /E /XF LEEME.txt *.patch
+
+# Commit en rama nueva
+cd D:\jo-sigae
+git checkout -b feat/control-estudios
+git add src/app/control-estudios src/app/api/control-estudios prisma/schema.prisma scripts
+git commit -m "feat: modulo Control de Estudios"
+
+# Crear tablas nuevas (NO toca tus datos existentes) y cargar los datos legacy
+npm run db:push
+npx tsx scripts/seed_control.ts
+npx tsx scripts/seed_alumnos.ts
+
+# Probar
+npm run dev
+# abre http://localhost:3000/control-estudios

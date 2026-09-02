@@ -10,20 +10,21 @@ interface Ano {
 
 export default function ControlInicio() {
   const [activo, setActivo] = useState<Ano | null>(null);
+  const [alumnosUnicos, setAlumnosUnicos] = useState(0);
 
   const cargar = () => {
-    fetch('/api/control-estudios/anios').then(r => r.json()).then(d => setActivo(d.activo));
+    fetch('/api/control-estudios/anios').then(r => r.json()).then(d => { setActivo(d.activo); setAlumnosUnicos(d.alumnosUnicos ?? 0); });
   };
   useEffect(cargar, []);
 
   const secciones = activo?.secciones ?? [];
   const conDocentes = secciones.filter(s => s._count.docenteSecc > 0).length;
   const celdas = secciones.reduce((t, s) => t + s._count.docenteSecc, 0);
-  const inscritos = secciones.reduce((t, s) => t + s._count.inscripciones, 0);
+  const inscritos = alumnosUnicos || secciones.reduce((t, s) => t + s._count.inscripciones, 0);
 
   const CARDS = [
     { href: '/control-estudios/configuracion', titulo: 'CONFIGURACIÓN DEL AÑO', desc: 'Crear año escolar, agregar asignaturas y docentes. Activar/cerrar el año en uso.', chip: activo ? `AÑO ${activo.nombre}` : 'SIN AÑO ACTIVO' },
-    { href: '/control-estudios/crearsecciones', titulo: 'CREAR SECCIONES', desc: 'Definir las secciones por grado (A a I y MP) del año escolar activo.', chip: `${secciones.length} SECCIONES` },
+    { href: '/control-estudios/crearsecciones', titulo: 'CREAR SECCIONES', desc: 'Definir las secciones por grado (A a I, U y MP) del año escolar activo.', chip: `${secciones.length} SECCIONES` },
     { href: '/control-estudios/docente-seccion', titulo: 'DOCENTE-MATERIA', desc: 'Asignar el docente responsable de cada materia en cada sección.', chip: `${conDocentes} CON DOCENTES` },
     { href: '/control-estudios/inscripcion', titulo: 'INSCRIPCIÓN DE ALUMNOS', desc: 'Nómina de alumnos por sección: inscribir, retirar y buscar alumnos.', chip: `${inscritos} INSCRITOS` },
   ];

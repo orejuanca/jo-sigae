@@ -5,9 +5,10 @@ import { useCallback, useEffect, useState } from 'react';
 interface Seccion { id: string; grado: string; codigo: string; tipo: string }
 interface Inscrito {
   inscripcionId: string; alumnoId: string; matricula: string | null; repitiente: boolean; activo: boolean;
-  cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null;
+  materiaPend1?: string | null; materiaPend2?: string | null;
+  cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; tambienEn?: string[];
 }
-interface AlumnoBusqueda { id: string; cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; inscritoEn: string | null }
+interface AlumnoBusqueda { id: string; cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; inscritoEn: string | null; inscritoRegularEn: string | null; inscritoEnLista: string[] }
 
 const GRADOS = ['1', '2', '3', '4', '5'];
 
@@ -92,6 +93,10 @@ export default function InscripcionPage() {
 
   const activos = inscritos.filter(i => i.activo);
   const delGrado = secciones.filter(s => s.grado === grado);
+  const seccionSel = delGrado.find(s => s.id === seccionId);
+  const esMP = seccionSel?.tipo === 'MP';
+  const etiquetaSel = seccionSel ? (seccionSel.codigo === 'MP' ? `${grado}° MP` : `${grado}° ${seccionSel.codigo}`) : '';
+  const yaEnEstaSeccion = (a: AlumnoBusqueda) => a.inscritoEnLista.includes(etiquetaSel);
 
   return (
     <div>
@@ -151,10 +156,11 @@ export default function InscripcionPage() {
                     <td>{a.nombres}</td>
                     <td>{a.sexo}</td>
                     <td className="text-xs text-gray-500">{a.fechaNac?.slice(0, 10)}</td>
-                    <td>{a.inscritoEn ? <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">INSCRITO EN {a.inscritoEn}</span>
+                    <td>{yaEnEstaSeccion(a) ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">YA ESTÁ EN ESTA SECCIÓN</span>
+                      : a.inscritoEn ? <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">INSCRITO EN {a.inscritoEn}</span>
                       : <span className="text-xs text-gray-400">sin inscripción</span>}</td>
                     <td className="text-right">
-                      {!a.inscritoEn && <button onClick={() => inscribir(a.id)} className="rounded bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-500">INSCRIBIR AQUÍ</button>}
+                      {!yaEnEstaSeccion(a) && (esMP || !a.inscritoRegularEn) && <button onClick={() => inscribir(a.id)} className="rounded bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-500">INSCRIBIR AQUÍ</button>}
                     </td>
                   </tr>
                 ))}
@@ -196,7 +202,14 @@ export default function InscripcionPage() {
                   <td className="px-3 py-1.5">{edad(i.fechaNac)}</td>
                   <td className="px-3 py-1.5">{i.activo
                     ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">ACTIVO</span>
-                    : <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-500">RETIRADO</span>}</td>
+                    : <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-500">RETIRADO</span>}
+                    {esMP && i.activo && (i.materiaPend1 || i.materiaPend2) && (
+                      <div className="mt-0.5 text-[10px] font-semibold text-amber-700">
+                        pendiente: {[i.materiaPend1, i.materiaPend2].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
+                    {!!i.tambienEn?.length && i.activo && <div className="mt-0.5 text-[10px] text-blue-600">también: {i.tambienEn.join(', ')}</div>}
+                  </td>
                   {abierto && (
                     <td className="px-3 py-1.5 text-right">
                       {i.activo && <button onClick={() => retirar(i.inscripcionId)} className="text-xs font-semibold text-red-500 hover:underline">RETIRAR</button>}

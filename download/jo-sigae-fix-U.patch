@@ -1,0 +1,59 @@
+From 7ab9190e986d86a7f3894ab734c34ae86d334dec Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Wed, 2 Sep 2026 12:55:51 +0000
+Subject: [PATCH] fix(secciones): U integrada al lote regular A-I (sin boton
+ extra CREAR U)
+
+---
+ src/app/control-estudios/crearsecciones/page.tsx | 9 ++++-----
+ src/app/control-estudios/page.tsx                | 2 +-
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/src/app/control-estudios/crearsecciones/page.tsx b/src/app/control-estudios/crearsecciones/page.tsx
+index e3ca290..2c2c98f 100755
+--- a/src/app/control-estudios/crearsecciones/page.tsx
++++ b/src/app/control-estudios/crearsecciones/page.tsx
+@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
+ interface Seccion { id: string; grado: string; codigo: string; tipo: string; _count: { docenteSecc: number; inscripciones: number } }
+ 
+ const GRADOS = ['1', '2', '3', '4', '5'];
+-const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
++// Letras regulares del lote: A–I más la U (la U es sección REGULAR, no MP)
++const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'U'];
+ 
+ export default function CrearSeccionesPage() {
+   const [secciones, setSecciones] = useState<Seccion[]>([]);
+@@ -53,15 +54,13 @@ export default function CrearSeccionesPage() {
+       {abierto && (
+         <div className="mb-6 grid grid-cols-2 gap-4">
+           <div className="rounded-lg border bg-white p-5">
+-            <h2 className="mb-3 font-bold">Crear A a I de un grado (lote)</h2>
++            <h2 className="mb-3 font-bold">Crear secciones regulares de un grado (lote)</h2>
+             <div className="flex items-center gap-2">
+               <select onChange={e => setManual(m => ({ ...m, grado: e.target.value }))} className="rounded border px-3 py-2 text-sm">
+                 {GRADOS.map(g => <option key={g} value={g}>{g}° AÑO</option>)}
+               </select>
+               <button onClick={() => crear({ lote: { grado: manual.grado, letras: LETRAS } })}
+-                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">CREAR A–I</button>
+-              <button onClick={() => crear({ lote: { grado: manual.grado, letras: ['U'] } })}
+-                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea la sección U (regular) del grado">CREAR U</button>
++                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea A,B,C,D,E,F,G,H,I y U (regulares) del grado">CREAR A–I + U</button>
+               <button onClick={() => crear({ lote: { grado: manual.grado, letras: [], mp: true } })}
+                 className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600" title="Crea la sección MP (Materia Pendiente) del grado">CREAR MP</button>
+             </div>
+diff --git a/src/app/control-estudios/page.tsx b/src/app/control-estudios/page.tsx
+index 2204ec7..7f6ecab 100755
+--- a/src/app/control-estudios/page.tsx
++++ b/src/app/control-estudios/page.tsx
+@@ -23,7 +23,7 @@ export default function ControlInicio() {
+ 
+   const CARDS = [
+     { href: '/control-estudios/configuracion', titulo: 'CONFIGURACIÓN DEL AÑO', desc: 'Crear año escolar, agregar asignaturas y docentes. Activar/cerrar el año en uso.', chip: activo ? `AÑO ${activo.nombre}` : 'SIN AÑO ACTIVO' },
+-    { href: '/control-estudios/crearsecciones', titulo: 'CREAR SECCIONES', desc: 'Definir las secciones por grado (A a I y MP) del año escolar activo.', chip: `${secciones.length} SECCIONES` },
++    { href: '/control-estudios/crearsecciones', titulo: 'CREAR SECCIONES', desc: 'Definir las secciones por grado (A a I, U y MP) del año escolar activo.', chip: `${secciones.length} SECCIONES` },
+     { href: '/control-estudios/docente-seccion', titulo: 'DOCENTE-MATERIA', desc: 'Asignar el docente responsable de cada materia en cada sección.', chip: `${conDocentes} CON DOCENTES` },
+     { href: '/control-estudios/inscripcion', titulo: 'INSCRIPCIÓN DE ALUMNOS', desc: 'Nómina de alumnos por sección: inscribir, retirar y buscar alumnos.', chip: `${inscritos} INSCRITOS` },
+   ];
+-- 
+2.47.3
+

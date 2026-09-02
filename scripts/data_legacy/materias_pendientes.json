@@ -1,0 +1,227 @@
+[
+ {
+  "cedula": "V10814661954",
+  "grado": "2",
+  "seccion": "B",
+  "mp1": "AP",
+  "mp2": "CN",
+  "condicion": "REGULAR MP",
+  "sp": "U"
+ },
+ {
+  "cedula": "V10815092114",
+  "grado": "2",
+  "seccion": "C",
+  "mp1": "ILE",
+  "mp2": "",
+  "condicion": "REGULAR MP",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32493536",
+  "grado": "2",
+  "seccion": "D",
+  "mp1": "EF",
+  "mp2": "",
+  "condicion": "REGULAR MP",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32697683",
+  "grado": "2",
+  "seccion": "E",
+  "mp1": "CN",
+  "mp2": "",
+  "condicion": "REGULAR MP",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32493994",
+  "grado": "2",
+  "seccion": "F",
+  "mp1": "MA",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32816214",
+  "grado": "2",
+  "seccion": "F",
+  "mp1": "MA",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 33099481",
+  "grado": "2",
+  "seccion": "F",
+  "mp1": "CN",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31699269",
+  "grado": "3",
+  "seccion": "D",
+  "mp1": "CA",
+  "mp2": "MA",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32045834",
+  "grado": "3",
+  "seccion": "E",
+  "mp1": "ILE",
+  "mp2": "CN",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32059054",
+  "grado": "3",
+  "seccion": "E",
+  "mp1": "ILE",
+  "mp2": "EF",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31848023",
+  "grado": "3",
+  "seccion": "F",
+  "mp1": "EF",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31523119",
+  "grado": "4",
+  "seccion": "D",
+  "mp1": "MA",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32059269",
+  "grado": "4",
+  "seccion": "D",
+  "mp1": "QU",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32160651",
+  "grado": "4",
+  "seccion": "D",
+  "mp1": "CA",
+  "mp2": "MA",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31263737",
+  "grado": "4",
+  "seccion": "E",
+  "mp1": "FI",
+  "mp2": "QU",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31264039",
+  "grado": "4",
+  "seccion": "E",
+  "mp1": "CA",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 32058639",
+  "grado": "4",
+  "seccion": "E",
+  "mp1": "BI",
+  "mp2": "GHC",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 30138630",
+  "grado": "5",
+  "seccion": "C",
+  "mp1": "BI",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 30476075",
+  "grado": "5",
+  "seccion": "C",
+  "mp1": "BI",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 29594614",
+  "grado": "5",
+  "seccion": "D",
+  "mp1": "MA",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 30138588",
+  "grado": "5",
+  "seccion": "D",
+  "mp1": "ILE",
+  "mp2": "MA",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31010640",
+  "grado": "5",
+  "seccion": "D",
+  "mp1": "MA",
+  "mp2": "BI",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31523025",
+  "grado": "5",
+  "seccion": "D",
+  "mp1": "MA",
+  "mp2": "QU",
+  "condicion": "REGULAR",
+  "sp": "U"
+ },
+ {
+  "cedula": "V 31651259",
+  "grado": "5",
+  "seccion": "D",
+  "mp1": "BI",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": ""
+ },
+ {
+  "cedula": "V 31848729",
+  "grado": "5",
+  "seccion": "D",
+  "mp1": "BI",
+  "mp2": "",
+  "condicion": "REGULAR",
+  "sp": "U"
+ }
+]

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 interface Seccion { id: string; grado: string; codigo: string; tipo: string; _count: { docenteSecc: number; inscripciones: number } }
 
 const GRADOS = ['1', '2', '3', '4', '5'];
-const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+// Letras regulares del lote: A–I más la U (la U es sección REGULAR, no MP)
+const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'U'];
 
 export default function CrearSeccionesPage() {
   const [secciones, setSecciones] = useState<Seccion[]>([]);
@@ -53,15 +54,13 @@ export default function CrearSeccionesPage() {
       {abierto && (
         <div className="mb-6 grid grid-cols-2 gap-4">
           <div className="rounded-lg border bg-white p-5">
-            <h2 className="mb-3 font-bold">Crear A a I de un grado (lote)</h2>
+            <h2 className="mb-3 font-bold">Crear secciones regulares de un grado (lote)</h2>
             <div className="flex items-center gap-2">
               <select onChange={e => setManual(m => ({ ...m, grado: e.target.value }))} className="rounded border px-3 py-2 text-sm">
                 {GRADOS.map(g => <option key={g} value={g}>{g}° AÑO</option>)}
               </select>
               <button onClick={() => crear({ lote: { grado: manual.grado, letras: LETRAS } })}
-                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">CREAR A–I</button>
-              <button onClick={() => crear({ lote: { grado: manual.grado, letras: ['U'] } })}
-                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea la sección U (regular) del grado">CREAR U</button>
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea A,B,C,D,E,F,G,H,I y U (regulares) del grado">CREAR A–I + U</button>
               <button onClick={() => crear({ lote: { grado: manual.grado, letras: [], mp: true } })}
                 className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600" title="Crea la sección MP (Materia Pendiente) del grado">CREAR MP</button>
             </div>

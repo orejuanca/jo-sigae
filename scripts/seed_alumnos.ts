@@ -30,7 +30,7 @@ async function main() {
     nAlu++;
     const secId = secByClave.get(`${a.grado}|${a.seccion}`);
     if (!secId) { sinSeccion++; continue; }
-    const ya = await prisma.inscripcion.findUnique({ where: { alumnoId_anoEscolarId: { alumnoId: alumno.id, anoEscolarId: ano.id } } });
+    const ya = await prisma.inscripcion.findUnique({ where: { alumnoId_seccionId: { alumnoId: alumno.id, seccionId: secId } } });
     if (ya) { yaInsc++; continue; }
     await prisma.inscripcion.create({
       data: { alumnoId: alumno.id, seccionId: secId, anoEscolarId: ano.id, matricula: a.matricula || null },

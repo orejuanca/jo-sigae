@@ -1,0 +1,640 @@
+From 66f733a40d11bb714b64447e2c9f04defed46c31 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Wed, 2 Sep 2026 15:35:38 +0000
+Subject: [PATCH] feat(mp): alumnos con materia pendiente del Excel inscritos
+ en secciones MP + campos mp1/mp2 + secciones U creadas + repitientes marcados
+
+---
+ db-backup/backup_2026-08-26_01-31.dump        | Bin
+ db-backup/neon-backup-20260817.dump           | Bin
+ db-backup/neon-backup-20260817.sql            |   0
+ download/LEEME.md                             |   0
+ download/cert-logo-doctor-page.tsx            |   0
+ download/cert-view-page.tsx                   |   0
+ download/certificaciones-visual-page.tsx      |   0
+ download/constancias-page.tsx                 |   0
+ download/dashboard-content.tsx                |   0
+ download/logo-overlay.tsx                     |   0
+ download/reparar-logos-certificaciones.js     |   0
+ download/types.ts                             |   0
+ download/validar-page.tsx                     |   0
+ download/validar-titulo-page.tsx              |   0
+ prisma/schema.prisma                          |   2 +
+ public/Imagen1.png                            | Bin
+ public/Imagen2.png                            | Bin
+ scripts/data_legacy/alumnos.json              |   0
+ scripts/data_legacy/docentes.json             |   0
+ scripts/data_legacy/materias_pendientes.json  | 227 ++++++++++++++++++
+ scripts/data_legacy/matriz_secciones.json     |   0
+ scripts/data_legacy/repitientes.json          |  97 ++++++++
+ scripts/extraer_legacy.py                     |   0
+ scripts/extraer_todo.py                       |   0
+ scripts/reconciliar_docsec.ts                 |   0
+ scripts/seed_control.ts                       |   0
+ scripts/seed_pendientes.ts                    | 106 ++++++++
+ .../control-estudios/inscripciones/route.ts   |   1 +
+ src/app/control-estudios/inscripcion/page.tsx |   6 +
+ src/components/cert-visual/logo-overlay.tsx   |   0
+ 30 files changed, 439 insertions(+)
+ mode change 100644 => 100755 db-backup/backup_2026-08-26_01-31.dump
+ mode change 100644 => 100755 db-backup/neon-backup-20260817.dump
+ mode change 100644 => 100755 db-backup/neon-backup-20260817.sql
+ mode change 100644 => 100755 download/LEEME.md
+ mode change 100644 => 100755 download/cert-logo-doctor-page.tsx
+ mode change 100644 => 100755 download/cert-view-page.tsx
+ mode change 100644 => 100755 download/certificaciones-visual-page.tsx
+ mode change 100644 => 100755 download/constancias-page.tsx
+ mode change 100644 => 100755 download/dashboard-content.tsx
+ mode change 100644 => 100755 download/logo-overlay.tsx
+ mode change 100644 => 100755 download/reparar-logos-certificaciones.js
+ mode change 100644 => 100755 download/types.ts
+ mode change 100644 => 100755 download/validar-page.tsx
+ mode change 100644 => 100755 download/validar-titulo-page.tsx
+ mode change 100644 => 100755 public/Imagen1.png
+ mode change 100644 => 100755 public/Imagen2.png
+ mode change 100644 => 100755 scripts/data_legacy/alumnos.json
+ mode change 100644 => 100755 scripts/data_legacy/docentes.json
+ create mode 100644 scripts/data_legacy/materias_pendientes.json
+ mode change 100644 => 100755 scripts/data_legacy/matriz_secciones.json
+ create mode 100644 scripts/data_legacy/repitientes.json
+ mode change 100644 => 100755 scripts/extraer_legacy.py
+ mode change 100644 => 100755 scripts/extraer_todo.py
+ mode change 100644 => 100755 scripts/reconciliar_docsec.ts
+ mode change 100644 => 100755 scripts/seed_control.ts
+ create mode 100644 scripts/seed_pendientes.ts
+ mode change 100644 => 100755 src/components/cert-visual/logo-overlay.tsx
+
+diff --git a/db-backup/backup_2026-08-26_01-31.dump b/db-backup/backup_2026-08-26_01-31.dump
+old mode 100644
+new mode 100755
+diff --git a/db-backup/neon-backup-20260817.dump b/db-backup/neon-backup-20260817.dump
+old mode 100644
+new mode 100755
+diff --git a/db-backup/neon-backup-20260817.sql b/db-backup/neon-backup-20260817.sql
+old mode 100644
+new mode 100755
+diff --git a/download/LEEME.md b/download/LEEME.md
+old mode 100644
+new mode 100755
+diff --git a/download/cert-logo-doctor-page.tsx b/download/cert-logo-doctor-page.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/cert-view-page.tsx b/download/cert-view-page.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/certificaciones-visual-page.tsx b/download/certificaciones-visual-page.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/constancias-page.tsx b/download/constancias-page.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/dashboard-content.tsx b/download/dashboard-content.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/logo-overlay.tsx b/download/logo-overlay.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/reparar-logos-certificaciones.js b/download/reparar-logos-certificaciones.js
+old mode 100644
+new mode 100755
+diff --git a/download/types.ts b/download/types.ts
+old mode 100644
+new mode 100755
+diff --git a/download/validar-page.tsx b/download/validar-page.tsx
+old mode 100644
+new mode 100755
+diff --git a/download/validar-titulo-page.tsx b/download/validar-titulo-page.tsx
+old mode 100644
+new mode 100755
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index ae3b156..1db1d45 100755
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -255,6 +255,8 @@ model inscripcion {
+   anoEscolarId String
+   matricula    String? // nro de matricula legacy
+   repitiente   Boolean   @default(false)
++  materiaPend1 String? // materia pendiente 1 (código asignatura, ej: MA) — solo inscripciones en sección MP
++  materiaPend2 String? // materia pendiente 2 (código asignatura)
+   fechaRetiro  DateTime?
+   activo       Boolean   @default(true)
+   alumno       alumno      @relation(fields: [alumnoId], references: [id])
+diff --git a/public/Imagen1.png b/public/Imagen1.png
+old mode 100644
+new mode 100755
+diff --git a/public/Imagen2.png b/public/Imagen2.png
+old mode 100644
+new mode 100755
+diff --git a/scripts/data_legacy/alumnos.json b/scripts/data_legacy/alumnos.json
+old mode 100644
+new mode 100755
+diff --git a/scripts/data_legacy/docentes.json b/scripts/data_legacy/docentes.json
+old mode 100644
+new mode 100755
+diff --git a/scripts/data_legacy/materias_pendientes.json b/scripts/data_legacy/materias_pendientes.json
+new file mode 100644
+index 0000000..b6bf909
+--- /dev/null
++++ b/scripts/data_legacy/materias_pendientes.json
+@@ -0,0 +1,227 @@
++[
++ {
++  "cedula": "V10814661954",
++  "grado": "2",
++  "seccion": "B",
++  "mp1": "AP",
++  "mp2": "CN",
++  "condicion": "REGULAR MP",
++  "sp": "U"
++ },
++ {
++  "cedula": "V10815092114",
++  "grado": "2",
++  "seccion": "C",
++  "mp1": "ILE",
++  "mp2": "",
++  "condicion": "REGULAR MP",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32493536",
++  "grado": "2",
++  "seccion": "D",
++  "mp1": "EF",
++  "mp2": "",
++  "condicion": "REGULAR MP",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32697683",
++  "grado": "2",
++  "seccion": "E",
++  "mp1": "CN",
++  "mp2": "",
++  "condicion": "REGULAR MP",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32493994",
++  "grado": "2",
++  "seccion": "F",
++  "mp1": "MA",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32816214",
++  "grado": "2",
++  "seccion": "F",
++  "mp1": "MA",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 33099481",
++  "grado": "2",
++  "seccion": "F",
++  "mp1": "CN",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31699269",
++  "grado": "3",
++  "seccion": "D",
++  "mp1": "CA",
++  "mp2": "MA",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32045834",
++  "grado": "3",
++  "seccion": "E",
++  "mp1": "ILE",
++  "mp2": "CN",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32059054",
++  "grado": "3",
++  "seccion": "E",
++  "mp1": "ILE",
++  "mp2": "EF",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31848023",
++  "grado": "3",
++  "seccion": "F",
++  "mp1": "EF",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31523119",
++  "grado": "4",
++  "seccion": "D",
++  "mp1": "MA",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32059269",
++  "grado": "4",
++  "seccion": "D",
++  "mp1": "QU",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32160651",
++  "grado": "4",
++  "seccion": "D",
++  "mp1": "CA",
++  "mp2": "MA",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31263737",
++  "grado": "4",
++  "seccion": "E",
++  "mp1": "FI",
++  "mp2": "QU",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31264039",
++  "grado": "4",
++  "seccion": "E",
++  "mp1": "CA",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 32058639",
++  "grado": "4",
++  "seccion": "E",
++  "mp1": "BI",
++  "mp2": "GHC",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 30138630",
++  "grado": "5",
++  "seccion": "C",
++  "mp1": "BI",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 30476075",
++  "grado": "5",
++  "seccion": "C",
++  "mp1": "BI",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 29594614",
++  "grado": "5",
++  "seccion": "D",
++  "mp1": "MA",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 30138588",
++  "grado": "5",
++  "seccion": "D",
++  "mp1": "ILE",
++  "mp2": "MA",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31010640",
++  "grado": "5",
++  "seccion": "D",
++  "mp1": "MA",
++  "mp2": "BI",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31523025",
++  "grado": "5",
++  "seccion": "D",
++  "mp1": "MA",
++  "mp2": "QU",
++  "condicion": "REGULAR",
++  "sp": "U"
++ },
++ {
++  "cedula": "V 31651259",
++  "grado": "5",
++  "seccion": "D",
++  "mp1": "BI",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": ""
++ },
++ {
++  "cedula": "V 31848729",
++  "grado": "5",
++  "seccion": "D",
++  "mp1": "BI",
++  "mp2": "",
++  "condicion": "REGULAR",
++  "sp": "U"
++ }
++]
+\ No newline at end of file
+diff --git a/scripts/data_legacy/matriz_secciones.json b/scripts/data_legacy/matriz_secciones.json
+old mode 100644
+new mode 100755
+diff --git a/scripts/data_legacy/repitientes.json b/scripts/data_legacy/repitientes.json
+new file mode 100644
+index 0000000..e9bb82f
+--- /dev/null
++++ b/scripts/data_legacy/repitientes.json
+@@ -0,0 +1,97 @@
++[
++ {
++  "cedula": "V 32486444",
++  "grado": "1",
++  "seccion": "B"
++ },
++ {
++  "cedula": "V 33099783",
++  "grado": "1",
++  "seccion": "B"
++ },
++ {
++  "cedula": "V 34474120",
++  "grado": "1",
++  "seccion": "C"
++ },
++ {
++  "cedula": "V 32786907",
++  "grado": "1",
++  "seccion": "D"
++ },
++ {
++  "cedula": "V10819125291",
++  "grado": "1",
++  "seccion": "F"
++ },
++ {
++  "cedula": "V 33106536",
++  "grado": "2",
++  "seccion": "E"
++ },
++ {
++  "cedula": "V10615826455",
++  "grado": "2",
++  "seccion": "E"
++ },
++ {
++  "cedula": "V 31080141",
++  "grado": "2",
++  "seccion": "F"
++ },
++ {
++  "cedula": "V 31848752",
++  "grado": "2",
++  "seccion": "F"
++ },
++ {
++  "cedula": "V10715474295",
++  "grado": "2",
++  "seccion": "F"
++ },
++ {
++  "cedula": "V 31433564",
++  "grado": "3",
++  "seccion": "F"
++ },
++ {
++  "cedula": "V 33333863",
++  "grado": "3",
++  "seccion": "F"
++ },
++ {
++  "cedula": "V 30476823",
++  "grado": "4",
++  "seccion": "C"
++ },
++ {
++  "cedula": "V10406550549",
++  "grado": "4",
++  "seccion": "D"
++ },
++ {
++  "cedula": "V 32493801",
++  "grado": "4",
++  "seccion": "E"
++ },
++ {
++  "cedula": "V 32897870",
++  "grado": "4",
++  "seccion": "E"
++ },
++ {
++  "cedula": "V 30244231",
++  "grado": "5",
++  "seccion": "A"
++ },
++ {
++  "cedula": "V 31523478",
++  "grado": "5",
++  "seccion": "D"
++ },
++ {
++  "cedula": "V 32339350",
++  "grado": "5",
++  "seccion": "D"
++ }
++]
+\ No newline at end of file
+diff --git a/scripts/extraer_legacy.py b/scripts/extraer_legacy.py
+old mode 100644
+new mode 100755
+diff --git a/scripts/extraer_todo.py b/scripts/extraer_todo.py
+old mode 100644
+new mode 100755
+diff --git a/scripts/reconciliar_docsec.ts b/scripts/reconciliar_docsec.ts
+old mode 100644
+new mode 100755
+diff --git a/scripts/seed_control.ts b/scripts/seed_control.ts
+old mode 100644
+new mode 100755
+diff --git a/scripts/seed_pendientes.ts b/scripts/seed_pendientes.ts
+new file mode 100644
+index 0000000..e1fcb0a
+--- /dev/null
++++ b/scripts/seed_pendientes.ts
+@@ -0,0 +1,106 @@
++/**
++ * seed_pendientes.ts — completa los datos de Materia Pendiente del año activo:
++ *   1. Crea las secciones U (REGULAR) de todos los grados (la matriz del Excel tiene fila U por grado).
++ *   2. Crea la sección MP de 5° (en el Excel la fila MP de 5° existe sin docentes; el seed original no la creó).
++ *   3. Inscribe los 25 alumnos con materias pendientes (columnas MP1/MP2 de la hoja ALUMNOS)
++ *      en la sección MP de su grado, guardando materiaPend1/materiaPend2.
++ *   4. Marca repitiente=true en la inscripción regular de los 19 alumnos CONDICION=REPITE.
++ * Idempotente: puede ejecutarse varias veces sin duplicar.
++ *
++ * Uso: npx tsx scripts/seed_pendientes.ts
++ */
++import { readFileSync } from 'fs';
++import { join } from 'path';
++import { PrismaClient } from '@prisma/client';
++
++const prisma = new PrismaClient();
++const D = join(__dirname, 'data_legacy');
++
++// Normaliza cédula: "V10814661954" y "V 10814661954" -> "V 10814661954" (mismo criterio que el API de inscripciones)
++const norm = (c: string) => c.trim().toUpperCase().replace(/^([VEJ])\s*/, '$1 ');
++
++interface Pend { cedula: string; grado: string; seccion: string; mp1: string; mp2: string; condicion: string; sp: string }
++interface Rep { cedula: string; grado: string; seccion: string }
++
++async function main() {
++  const ano = await prisma.anoEscolar.findFirst({ where: { activo: true } });
++  if (!ano) throw new Error('No hay año escolar activo');
++
++  // 1) Secciones U (REGULAR) por grado — idempotente
++  for (const g of ['1', '2', '3', '4', '5']) {
++    await prisma.seccion.upsert({
++      where: { anoEscolarId_grado_codigo: { anoEscolarId: ano.id, grado: g, codigo: 'U' } },
++      update: {},
++      create: { anoEscolarId: ano.id, grado: g, codigo: 'U', tipo: 'REGULAR' },
++    });
++  }
++  console.log('secciones U OK (5 grados)');
++
++  // 2) Sección MP de 5° (faltante) — idempotente
++  await prisma.seccion.upsert({
++    where: { anoEscolarId_grado_codigo: { anoEscolarId: ano.id, grado: '5', codigo: 'MP' } },
++    update: {},
++    create: { anoEscolarId: ano.id, grado: '5', codigo: 'MP', tipo: 'MP' },
++  });
++  console.log('sección MP de 5° OK');
++
++  // 3) Inscripciones en MP de los alumnos con pendientes
++  const pends: Pend[] = JSON.parse(readFileSync(join(D, 'materias_pendientes.json'), 'utf8'));
++  const secciones = await prisma.seccion.findMany({ where: { anoEscolarId: ano.id } });
++  const mpPorGrado = new Map(secciones.filter(s => s.codigo === 'MP').map(s => [s.grado, s]));
++  let creadas = 0, actualizadas = 0, faltantes = 0;
++
++  for (const p of pends) {
++    const alumno = await prisma.alumno.findUnique({ where: { cedula: norm(p.cedula) } });
++    if (!alumno) { console.log('  !! alumno no encontrado:', p.cedula); faltantes++; continue; }
++    const mp = mpPorGrado.get(p.grado);
++    if (!mp) { console.log(`  !! no existe sección MP de ${p.grado}°`); faltantes++; continue; }
++    const existe = await prisma.inscripcion.findUnique({
++      where: { alumnoId_seccionId: { alumnoId: alumno.id, seccionId: mp.id } },
++    });
++    if (existe) {
++      await prisma.inscripcion.update({
++        where: { id: existe.id },
++        data: { activo: true, fechaRetiro: null, materiaPend1: p.mp1 || null, materiaPend2: p.mp2 || null },
++      });
++      actualizadas++;
++    } else {
++      const nro = (await prisma.inscripcion.count({ where: { seccionId: mp.id, activo: true } })) + 1;
++      await prisma.inscripcion.create({
++        data: {
++          alumnoId: alumno.id, seccionId: mp.id, anoEscolarId: ano.id,
++          matricula: String(nro), materiaPend1: p.mp1 || null, materiaPend2: p.mp2 || null,
++        },
++      });
++      creadas++;
++    }
++  }
++  console.log(`inscripciones MP: ${creadas} creadas, ${actualizadas} actualizadas, ${faltantes} con problema`);
++
++  // 4) Marcar repitientes en su inscripción regular
++  const reps: Rep[] = JSON.parse(readFileSync(join(D, 'repitientes.json'), 'utf8'));
++  let marcados = 0;
++  for (const r of reps) {
++    const alumno = await prisma.alumno.findUnique({ where: { cedula: norm(r.cedula) } });
++    if (!alumno) { console.log('  !! repitiente no encontrado:', r.cedula); continue; }
++    const res = await prisma.inscripcion.updateMany({
++      where: { alumnoId: alumno.id, anoEscolarId: ano.id, seccion: { grado: r.grado, tipo: 'REGULAR' } },
++      data: { repitiente: true },
++    });
++    marcados += res.count;
++  }
++  console.log(`repitientes marcados: ${marcados}/${reps.length}`);
++
++  // Resumen final
++  for (const s of await prisma.seccion.findMany({
++    where: { anoEscolarId: ano.id, OR: [{ codigo: 'MP' }, { codigo: 'U' }] },
++    orderBy: [{ grado: 'asc' }, { codigo: 'asc' }],
++    include: { _count: { select: { inscripciones: { where: { activo: true } } } } },
++  })) {
++    console.log(`  ${s.grado}° ${s.codigo} (${s.tipo}): ${s._count.inscripciones} alumnos`);
++  }
++}
++
++main()
++  .catch(e => { console.error(e); process.exit(1); })
++  .finally(() => prisma.$disconnect());
+diff --git a/src/app/api/control-estudios/inscripciones/route.ts b/src/app/api/control-estudios/inscripciones/route.ts
+index cf334fd..ba0573d 100755
+--- a/src/app/api/control-estudios/inscripciones/route.ts
++++ b/src/app/api/control-estudios/inscripciones/route.ts
+@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
+     seccion, inscripciones: inscripciones.map(i => ({
+       inscripcionId: i.id, alumnoId: i.alumnoId, matricula: i.matricula,
+       repitiente: i.repitiente, activo: i.activo,
++      materiaPend1: i.materiaPend1, materiaPend2: i.materiaPend2,
+       cedula: i.alumno.cedula, apellidos: i.alumno.apellidos, nombres: i.alumno.nombres,
+       sexo: i.alumno.sexo, fechaNac: i.alumno.fechaNac,
+       tambienEn: otrasMap[i.alumnoId] ?? [],
+diff --git a/src/app/control-estudios/inscripcion/page.tsx b/src/app/control-estudios/inscripcion/page.tsx
+index be8ef6b..ec6c97a 100755
+--- a/src/app/control-estudios/inscripcion/page.tsx
++++ b/src/app/control-estudios/inscripcion/page.tsx
+@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
+ interface Seccion { id: string; grado: string; codigo: string; tipo: string }
+ interface Inscrito {
+   inscripcionId: string; alumnoId: string; matricula: string | null; repitiente: boolean; activo: boolean;
++  materiaPend1?: string | null; materiaPend2?: string | null;
+   cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; tambienEn?: string[];
+ }
+ interface AlumnoBusqueda { id: string; cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; inscritoEn: string | null; inscritoRegularEn: string | null; inscritoEnLista: string[] }
+@@ -202,6 +203,11 @@ export default function InscripcionPage() {
+                   <td className="px-3 py-1.5">{i.activo
+                     ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">ACTIVO</span>
+                     : <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-500">RETIRADO</span>}
++                    {esMP && i.activo && (i.materiaPend1 || i.materiaPend2) && (
++                      <div className="mt-0.5 text-[10px] font-semibold text-amber-700">
++                        pendiente: {[i.materiaPend1, i.materiaPend2].filter(Boolean).join(' · ')}
++                      </div>
++                    )}
+                     {!!i.tambienEn?.length && i.activo && <div className="mt-0.5 text-[10px] text-blue-600">también: {i.tambienEn.join(', ')}</div>}
+                   </td>
+                   {abierto && (
+diff --git a/src/components/cert-visual/logo-overlay.tsx b/src/components/cert-visual/logo-overlay.tsx
+old mode 100644
+new mode 100755
+-- 
+2.47.3
+

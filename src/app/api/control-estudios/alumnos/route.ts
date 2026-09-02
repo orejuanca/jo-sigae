@@ -19,8 +19,25 @@ export async function GET(req: NextRequest) {
   if (ano) {
     inscritos = await prisma.inscripcion.findMany({ where: { anoEscolarId: ano.id, activo: true }, include: { seccion: true } });
   }
-  const insPorAlumno = new Map(inscritos.map(i => [i.alumnoId, `${i.seccion.grado}${i.seccion.codigo === 'MP' ? ' MP' : i.seccion.codigo}`]));
+  // Etiquetas por alumno de TODAS sus inscripciones activas en el año (regular + MP)
+  const etq = (g: string, c: string) => (c === 'MP' ? `${g}° MP` : `${g}° ${c}`);
+  const porAlumno = new Map<string, { etiquetas: string[]; regular: string | null }>();
+  for (const i of inscritos) {
+    const e = porAlumno.get(i.alumnoId) ?? { etiquetas: [], regular: null };
+    const label = etq(i.seccion.grado, i.seccion.codigo);
+    e.etiquetas.push(label);
+    if (i.seccion.codigo !== 'MP') e.regular = label;
+    porAlumno.set(i.alumnoId, e);
+  }
   return NextResponse.json({
-    alumnos: alumnos.map(a => ({ ...a, inscritoEn: insPorAlumno.get(a.id) ?? null })),
+    alumnos: alumnos.map(a => {
+      const e = porAlumno.get(a.id);
+      return {
+        ...a,
+        inscritoEn: e ? e.etiquetas.join(' + ') : null,
+        inscritoRegularEn: e?.regular ?? null,
+        inscritoEnLista: e?.etiquetas ?? [],
+      };
+    }),
   });
 }

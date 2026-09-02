@@ -10,7 +10,17 @@ export async function GET() {
     }),
     prisma.anoEscolar.findMany({ orderBy: { nombre: 'desc' } }),
   ]);
-  return NextResponse.json({ activo, todos });
+  // Alumnos distintos del año activo (un alumno con regular + MP no cuenta doble)
+  let alumnosUnicos = 0;
+  if (activo) {
+    const filas = await prisma.inscripcion.findMany({
+      where: { anoEscolarId: activo.id, activo: true, seccion: { anoEscolarId: activo.id } },
+      distinct: ['alumnoId'],
+      select: { alumnoId: true },
+    });
+    alumnosUnicos = filas.length;
+  }
+  return NextResponse.json({ activo, todos, alumnosUnicos });
 }
 
 // POST: crear nuevo año escolar (queda activo, sin secciones)

@@ -1,0 +1,309 @@
+From 7ab9190e986d86a7f3894ab734c34ae86d334dec Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Wed, 2 Sep 2026 12:55:51 +0000
+Subject: [PATCH 1/2] fix(secciones): U integrada al lote regular A-I (sin
+ boton extra CREAR U)
+
+---
+ src/app/control-estudios/crearsecciones/page.tsx | 9 ++++-----
+ src/app/control-estudios/page.tsx                | 2 +-
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/src/app/control-estudios/crearsecciones/page.tsx b/src/app/control-estudios/crearsecciones/page.tsx
+index e3ca290..2c2c98f 100755
+--- a/src/app/control-estudios/crearsecciones/page.tsx
++++ b/src/app/control-estudios/crearsecciones/page.tsx
+@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
+ interface Seccion { id: string; grado: string; codigo: string; tipo: string; _count: { docenteSecc: number; inscripciones: number } }
+ 
+ const GRADOS = ['1', '2', '3', '4', '5'];
+-const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
++// Letras regulares del lote: A–I más la U (la U es sección REGULAR, no MP)
++const LETRAS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'U'];
+ 
+ export default function CrearSeccionesPage() {
+   const [secciones, setSecciones] = useState<Seccion[]>([]);
+@@ -53,15 +54,13 @@ export default function CrearSeccionesPage() {
+       {abierto && (
+         <div className="mb-6 grid grid-cols-2 gap-4">
+           <div className="rounded-lg border bg-white p-5">
+-            <h2 className="mb-3 font-bold">Crear A a I de un grado (lote)</h2>
++            <h2 className="mb-3 font-bold">Crear secciones regulares de un grado (lote)</h2>
+             <div className="flex items-center gap-2">
+               <select onChange={e => setManual(m => ({ ...m, grado: e.target.value }))} className="rounded border px-3 py-2 text-sm">
+                 {GRADOS.map(g => <option key={g} value={g}>{g}° AÑO</option>)}
+               </select>
+               <button onClick={() => crear({ lote: { grado: manual.grado, letras: LETRAS } })}
+-                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">CREAR A–I</button>
+-              <button onClick={() => crear({ lote: { grado: manual.grado, letras: ['U'] } })}
+-                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea la sección U (regular) del grado">CREAR U</button>
++                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500" title="Crea A,B,C,D,E,F,G,H,I y U (regulares) del grado">CREAR A–I + U</button>
+               <button onClick={() => crear({ lote: { grado: manual.grado, letras: [], mp: true } })}
+                 className="rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600" title="Crea la sección MP (Materia Pendiente) del grado">CREAR MP</button>
+             </div>
+diff --git a/src/app/control-estudios/page.tsx b/src/app/control-estudios/page.tsx
+index 2204ec7..7f6ecab 100755
+--- a/src/app/control-estudios/page.tsx
++++ b/src/app/control-estudios/page.tsx
+@@ -23,7 +23,7 @@ export default function ControlInicio() {
+ 
+   const CARDS = [
+     { href: '/control-estudios/configuracion', titulo: 'CONFIGURACIÓN DEL AÑO', desc: 'Crear año escolar, agregar asignaturas y docentes. Activar/cerrar el año en uso.', chip: activo ? `AÑO ${activo.nombre}` : 'SIN AÑO ACTIVO' },
+-    { href: '/control-estudios/crearsecciones', titulo: 'CREAR SECCIONES', desc: 'Definir las secciones por grado (A a I y MP) del año escolar activo.', chip: `${secciones.length} SECCIONES` },
++    { href: '/control-estudios/crearsecciones', titulo: 'CREAR SECCIONES', desc: 'Definir las secciones por grado (A a I, U y MP) del año escolar activo.', chip: `${secciones.length} SECCIONES` },
+     { href: '/control-estudios/docente-seccion', titulo: 'DOCENTE-MATERIA', desc: 'Asignar el docente responsable de cada materia en cada sección.', chip: `${conDocentes} CON DOCENTES` },
+     { href: '/control-estudios/inscripcion', titulo: 'INSCRIPCIÓN DE ALUMNOS', desc: 'Nómina de alumnos por sección: inscribir, retirar y buscar alumnos.', chip: `${inscritos} INSCRITOS` },
+   ];
+-- 
+2.47.3
+
+
+From d5dba44e9de1c4191b518bf1411d9e229bed1632 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Wed, 2 Sep 2026 14:55:27 +0000
+Subject: [PATCH 2/2] feat(mp): alumno puede estar en su seccion regular Y en
+ la MP de su grado
+
+- schema: unique (alumno,seccion) + indice (alumno,ano); reglas API:
+  max 1 regular por anio, MP siempre adicional, no duplicados
+- busqueda muestra todas las inscripciones (regular + MP)
+- nominas muestran 'tambien: X' (donde mas esta el alumno)
+- panel cuenta alumnos distintos (no inscripciones)
+---
+ prisma/schema.prisma                          |  3 +-
+ scripts/seed_alumnos.ts                       |  2 +-
+ src/app/api/control-estudios/alumnos/route.ts | 21 +++++++++-
+ src/app/api/control-estudios/anios/route.ts   | 12 +++++-
+ .../control-estudios/inscripciones/route.ts   | 40 ++++++++++++++++---
+ src/app/control-estudios/inscripcion/page.tsx | 17 +++++---
+ src/app/control-estudios/page.tsx             |  5 ++-
+ 7 files changed, 83 insertions(+), 17 deletions(-)
+ mode change 100644 => 100755 scripts/seed_alumnos.ts
+
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 72b9cbe..ae3b156 100755
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -261,5 +261,6 @@ model inscripcion {
+   seccion      seccion     @relation(fields: [seccionId], references: [id])
+   ano          anoEscolar  @relation(fields: [anoEscolarId], references: [id])
+ 
+-  @@unique([alumnoId, anoEscolarId])
++  @@unique([alumnoId, seccionId]) // un alumno no repite sección, pero SÍ puede estar en su regular + MP
++  @@index([alumnoId, anoEscolarId])
+ }
+diff --git a/scripts/seed_alumnos.ts b/scripts/seed_alumnos.ts
+old mode 100644
+new mode 100755
+index 0d652b5..7c0a0fd
+--- a/scripts/seed_alumnos.ts
++++ b/scripts/seed_alumnos.ts
+@@ -30,7 +30,7 @@ async function main() {
+     nAlu++;
+     const secId = secByClave.get(`${a.grado}|${a.seccion}`);
+     if (!secId) { sinSeccion++; continue; }
+-    const ya = await prisma.inscripcion.findUnique({ where: { alumnoId_anoEscolarId: { alumnoId: alumno.id, anoEscolarId: ano.id } } });
++    const ya = await prisma.inscripcion.findUnique({ where: { alumnoId_seccionId: { alumnoId: alumno.id, seccionId: secId } } });
+     if (ya) { yaInsc++; continue; }
+     await prisma.inscripcion.create({
+       data: { alumnoId: alumno.id, seccionId: secId, anoEscolarId: ano.id, matricula: a.matricula || null },
+diff --git a/src/app/api/control-estudios/alumnos/route.ts b/src/app/api/control-estudios/alumnos/route.ts
+index cb9df02..8f37a61 100755
+--- a/src/app/api/control-estudios/alumnos/route.ts
++++ b/src/app/api/control-estudios/alumnos/route.ts
+@@ -19,8 +19,25 @@ export async function GET(req: NextRequest) {
+   if (ano) {
+     inscritos = await prisma.inscripcion.findMany({ where: { anoEscolarId: ano.id, activo: true }, include: { seccion: true } });
+   }
+-  const insPorAlumno = new Map(inscritos.map(i => [i.alumnoId, `${i.seccion.grado}${i.seccion.codigo === 'MP' ? ' MP' : i.seccion.codigo}`]));
++  // Etiquetas por alumno de TODAS sus inscripciones activas en el año (regular + MP)
++  const etq = (g: string, c: string) => (c === 'MP' ? `${g}° MP` : `${g}° ${c}`);
++  const porAlumno = new Map<string, { etiquetas: string[]; regular: string | null }>();
++  for (const i of inscritos) {
++    const e = porAlumno.get(i.alumnoId) ?? { etiquetas: [], regular: null };
++    const label = etq(i.seccion.grado, i.seccion.codigo);
++    e.etiquetas.push(label);
++    if (i.seccion.codigo !== 'MP') e.regular = label;
++    porAlumno.set(i.alumnoId, e);
++  }
+   return NextResponse.json({
+-    alumnos: alumnos.map(a => ({ ...a, inscritoEn: insPorAlumno.get(a.id) ?? null })),
++    alumnos: alumnos.map(a => {
++      const e = porAlumno.get(a.id);
++      return {
++        ...a,
++        inscritoEn: e ? e.etiquetas.join(' + ') : null,
++        inscritoRegularEn: e?.regular ?? null,
++        inscritoEnLista: e?.etiquetas ?? [],
++      };
++    }),
+   });
+ }
+diff --git a/src/app/api/control-estudios/anios/route.ts b/src/app/api/control-estudios/anios/route.ts
+index fcff78b..302deb4 100755
+--- a/src/app/api/control-estudios/anios/route.ts
++++ b/src/app/api/control-estudios/anios/route.ts
+@@ -10,7 +10,17 @@ export async function GET() {
+     }),
+     prisma.anoEscolar.findMany({ orderBy: { nombre: 'desc' } }),
+   ]);
+-  return NextResponse.json({ activo, todos });
++  // Alumnos distintos del año activo (un alumno con regular + MP no cuenta doble)
++  let alumnosUnicos = 0;
++  if (activo) {
++    const filas = await prisma.inscripcion.findMany({
++      where: { anoEscolarId: activo.id, activo: true, seccion: { anoEscolarId: activo.id } },
++      distinct: ['alumnoId'],
++      select: { alumnoId: true },
++    });
++    alumnosUnicos = filas.length;
++  }
++  return NextResponse.json({ activo, todos, alumnosUnicos });
+ }
+ 
+ // POST: crear nuevo año escolar (queda activo, sin secciones)
+diff --git a/src/app/api/control-estudios/inscripciones/route.ts b/src/app/api/control-estudios/inscripciones/route.ts
+index 2bee33a..cf334fd 100755
+--- a/src/app/api/control-estudios/inscripciones/route.ts
++++ b/src/app/api/control-estudios/inscripciones/route.ts
+@@ -13,12 +13,25 @@ export async function GET(req: NextRequest) {
+     orderBy: [{ activo: 'desc' }, { alumno: { apellidos: 'asc' } }, { alumno: { nombres: 'asc' } }],
+     include: { alumno: true },
+   });
++  // Otras inscripciones activas del mismo año (p.ej. su sección regular si estamos en la MP, o viceversa)
++  const alumnoIds = inscripciones.map(i => i.alumnoId);
++  const otras = alumnoIds.length
++    ? await prisma.inscripcion.findMany({
++        where: { anoEscolarId: seccion.anoEscolarId, activo: true, alumnoId: { in: alumnoIds }, NOT: { seccionId } },
++        include: { seccion: true },
++      })
++    : [];
++  const otrasMap: Record<string, string[]> = {};
++  for (const o of otras) {
++    (otrasMap[o.alumnoId] ??= []).push(o.seccion.codigo === 'MP' ? `${o.seccion.grado}° MP` : `${o.seccion.grado}° ${o.seccion.codigo}`);
++  }
+   return NextResponse.json({
+     seccion, inscripciones: inscripciones.map(i => ({
+       inscripcionId: i.id, alumnoId: i.alumnoId, matricula: i.matricula,
+       repitiente: i.repitiente, activo: i.activo,
+       cedula: i.alumno.cedula, apellidos: i.alumno.apellidos, nombres: i.alumno.nombres,
+       sexo: i.alumno.sexo, fechaNac: i.alumno.fechaNac,
++      tambienEn: otrasMap[i.alumnoId] ?? [],
+     })),
+   });
+ }
+@@ -45,13 +58,30 @@ export async function POST(req: NextRequest) {
+   }
+   if (!aId) return NextResponse.json({ error: 'alumnoId o nuevo requerido' }, { status: 400 });
+ 
+-  const ya = await prisma.inscripcion.findUnique({ where: { alumnoId_anoEscolarId: { alumnoId: aId, anoEscolarId: seccion.anoEscolarId } } });
+-  if (ya?.activo) return NextResponse.json({ error: 'Ya está inscrito en este año' }, { status: 400 });
+-  if (ya) {
+-    const upd = await prisma.inscripcion.update({ where: { id: ya.id }, data: { seccionId, activo: true, fechaRetiro: null } });
++  // Reglas de inscripción:
++  //  - Máximo UNA sección REGULAR activa por año (2°B o 2°C, no ambas).
++  //  - La sección MP (Materia Pendiente) se permite ADEMÁS de la regular:
++  //    alumno en 2°B que también cursa su pendiente en 2°MP.
++  //  - No se duplica en la misma sección (fila activa).
++  const existentes = await prisma.inscripcion.findMany({
++    where: { alumnoId: aId, anoEscolarId: seccion.anoEscolarId },
++    include: { seccion: true },
++  });
++  const enEsta = existentes.find(e => e.seccionId === seccionId);
++  if (enEsta?.activo) return NextResponse.json({ error: 'Ya está inscrito en esta sección' }, { status: 400 });
++  if (seccion.tipo !== 'MP') {
++    const enRegular = existentes.find(e => e.activo && e.seccion.tipo !== 'MP' && e.seccionId !== seccionId);
++    if (enRegular) {
++      const s = enRegular.seccion;
++      return NextResponse.json({ error: `Ya está inscrito en ${s.grado}° ${s.codigo}. Retíralo de allí antes de inscribirlo en otra sección regular` }, { status: 400 });
++    }
++  }
++  if (enEsta && !enEsta.activo) {
++    // venia retirado de esta misma sección: reactivamos su fila
++    const upd = await prisma.inscripcion.update({ where: { id: enEsta.id }, data: { activo: true, fechaRetiro: null } });
+     return NextResponse.json({ ok: true, inscripcion: upd, reactivado: true });
+   }
+-  const total = await prisma.inscripcion.count({ where: { seccionId } });
++  const total = await prisma.inscripcion.count({ where: { seccionId, activo: true } });
+   const insc = await prisma.inscripcion.create({
+     data: { alumnoId: aId, seccionId, anoEscolarId: seccion.anoEscolarId, matricula: String(total + 1) },
+   });
+diff --git a/src/app/control-estudios/inscripcion/page.tsx b/src/app/control-estudios/inscripcion/page.tsx
+index b036ca4..be8ef6b 100755
+--- a/src/app/control-estudios/inscripcion/page.tsx
++++ b/src/app/control-estudios/inscripcion/page.tsx
+@@ -5,9 +5,9 @@ import { useCallback, useEffect, useState } from 'react';
+ interface Seccion { id: string; grado: string; codigo: string; tipo: string }
+ interface Inscrito {
+   inscripcionId: string; alumnoId: string; matricula: string | null; repitiente: boolean; activo: boolean;
+-  cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null;
++  cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; tambienEn?: string[];
+ }
+-interface AlumnoBusqueda { id: string; cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; inscritoEn: string | null }
++interface AlumnoBusqueda { id: string; cedula: string; apellidos: string; nombres: string; sexo: string | null; fechaNac: string | null; inscritoEn: string | null; inscritoRegularEn: string | null; inscritoEnLista: string[] }
+ 
+ const GRADOS = ['1', '2', '3', '4', '5'];
+ 
+@@ -92,6 +92,10 @@ export default function InscripcionPage() {
+ 
+   const activos = inscritos.filter(i => i.activo);
+   const delGrado = secciones.filter(s => s.grado === grado);
++  const seccionSel = delGrado.find(s => s.id === seccionId);
++  const esMP = seccionSel?.tipo === 'MP';
++  const etiquetaSel = seccionSel ? (seccionSel.codigo === 'MP' ? `${grado}° MP` : `${grado}° ${seccionSel.codigo}`) : '';
++  const yaEnEstaSeccion = (a: AlumnoBusqueda) => a.inscritoEnLista.includes(etiquetaSel);
+ 
+   return (
+     <div>
+@@ -151,10 +155,11 @@ export default function InscripcionPage() {
+                     <td>{a.nombres}</td>
+                     <td>{a.sexo}</td>
+                     <td className="text-xs text-gray-500">{a.fechaNac?.slice(0, 10)}</td>
+-                    <td>{a.inscritoEn ? <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">INSCRITO EN {a.inscritoEn}</span>
++                    <td>{yaEnEstaSeccion(a) ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">YA ESTÁ EN ESTA SECCIÓN</span>
++                      : a.inscritoEn ? <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">INSCRITO EN {a.inscritoEn}</span>
+                       : <span className="text-xs text-gray-400">sin inscripción</span>}</td>
+                     <td className="text-right">
+-                      {!a.inscritoEn && <button onClick={() => inscribir(a.id)} className="rounded bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-500">INSCRIBIR AQUÍ</button>}
++                      {!yaEnEstaSeccion(a) && (esMP || !a.inscritoRegularEn) && <button onClick={() => inscribir(a.id)} className="rounded bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-500">INSCRIBIR AQUÍ</button>}
+                     </td>
+                   </tr>
+                 ))}
+@@ -196,7 +201,9 @@ export default function InscripcionPage() {
+                   <td className="px-3 py-1.5">{edad(i.fechaNac)}</td>
+                   <td className="px-3 py-1.5">{i.activo
+                     ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">ACTIVO</span>
+-                    : <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-500">RETIRADO</span>}</td>
++                    : <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-500">RETIRADO</span>}
++                    {!!i.tambienEn?.length && i.activo && <div className="mt-0.5 text-[10px] text-blue-600">también: {i.tambienEn.join(', ')}</div>}
++                  </td>
+                   {abierto && (
+                     <td className="px-3 py-1.5 text-right">
+                       {i.activo && <button onClick={() => retirar(i.inscripcionId)} className="text-xs font-semibold text-red-500 hover:underline">RETIRAR</button>}
+diff --git a/src/app/control-estudios/page.tsx b/src/app/control-estudios/page.tsx
+index 7f6ecab..a54a102 100755
+--- a/src/app/control-estudios/page.tsx
++++ b/src/app/control-estudios/page.tsx
+@@ -10,16 +10,17 @@ interface Ano {
+ 
+ export default function ControlInicio() {
+   const [activo, setActivo] = useState<Ano | null>(null);
++  const [alumnosUnicos, setAlumnosUnicos] = useState(0);
+ 
+   const cargar = () => {
+-    fetch('/api/control-estudios/anios').then(r => r.json()).then(d => setActivo(d.activo));
++    fetch('/api/control-estudios/anios').then(r => r.json()).then(d => { setActivo(d.activo); setAlumnosUnicos(d.alumnosUnicos ?? 0); });
+   };
+   useEffect(cargar, []);
+ 
+   const secciones = activo?.secciones ?? [];
+   const conDocentes = secciones.filter(s => s._count.docenteSecc > 0).length;
+   const celdas = secciones.reduce((t, s) => t + s._count.docenteSecc, 0);
+-  const inscritos = secciones.reduce((t, s) => t + s._count.inscripciones, 0);
++  const inscritos = alumnosUnicos || secciones.reduce((t, s) => t + s._count.inscripciones, 0);
+ 
+   const CARDS = [
+     { href: '/control-estudios/configuracion', titulo: 'CONFIGURACIÓN DEL AÑO', desc: 'Crear año escolar, agregar asignaturas y docentes. Activar/cerrar el año en uso.', chip: activo ? `AÑO ${activo.nombre}` : 'SIN AÑO ACTIVO' },
+-- 
+2.47.3
+

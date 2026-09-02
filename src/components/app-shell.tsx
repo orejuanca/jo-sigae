@@ -58,26 +58,29 @@ export function AppShell({ children }: { children: ReactNode }) {
   const showPlanLabel = pathname !== '/dashboard'
 
   useEffect(() => {
-    if (!isAuthenticated) router.push('/')
-  }, [isAuthenticated, router])
+    if (!isAuthenticated) {
+      try { sessionStorage.setItem('login_redirect', pathname) } catch { /* noop */ }
+      router.push('/')
+    }
+  }, [isAuthenticated, router, pathname])
 
   if (!isAuthenticated) return null
 
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Top bar */}
-      <div className="bg-gray-950 text-white px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold tracking-wide">JO-SIGAE</span>
+      <div className="bg-gray-950 text-white px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-sm font-bold tracking-wide shrink-0">JO-SIGAE</span>
           {showPlanLabel && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${plan === 'derogado' ? 'bg-orange-500' : 'bg-green-600'} text-white`}>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${plan === 'derogado' ? 'bg-orange-500' : 'bg-green-600'} text-white shrink-0`}>
               PLAN {plan === 'derogado' ? 'DEROGADO' : 'VIGENTE'}
             </span>
           )}
         </div>
         <button
           onClick={logout}
-          className="px-3 py-1 text-xs bg-red-700 hover:bg-red-600 rounded transition"
+          className="px-3 py-1.5 text-xs bg-red-700 hover:bg-red-600 active:bg-red-800 rounded transition shrink-0"
         >
           Cerrar Sesion
         </button>
@@ -105,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </div>
 
-          {/* Mobile: grid of buttons */}
+          {/* Mobile: grid of buttons (touch targets >= 44px) */}
           <div className="lg:hidden grid grid-cols-3 sm:grid-cols-4 gap-1.5">
             {navItems.map(item => (
               <button
@@ -117,7 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   }
                   router.push(item.href)
                 }}
-                className={`${item.bg} text-white text-[10px] font-bold px-2 py-2 rounded transition shadow-sm text-center`}
+                className={`${item.bg} text-white text-[10px] font-bold px-2 min-h-[44px] rounded transition shadow-sm text-center leading-tight active:scale-95 active:brightness-90`}
               >
                 {item.label}
               </button>

@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { schoolConfig } from '@/lib/school-config'
 
+const DESTINO_POR_DEFECTO = '/control-estudios'
+
+function destinoGuardado(): string {
+  try {
+    const d = sessionStorage.getItem('login_redirect')
+    if (d && d.startsWith('/') && !d.startsWith('//')) return d
+  } catch { /* noop */ }
+  return DESTINO_POR_DEFECTO
+}
+
 export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -14,7 +24,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard')
+      router.push(destinoGuardado())
     }
   }, [isAuthenticated, router])
 
@@ -24,7 +34,9 @@ export default function LoginPage() {
     setLoading(true)
 
     if (login(password)) {
-      router.push('/dashboard')
+      const destino = destinoGuardado()
+      try { sessionStorage.removeItem('login_redirect') } catch { /* noop */ }
+      router.push(destino)
     } else {
       setError('Contraseña incorrecta')
       setLoading(false)

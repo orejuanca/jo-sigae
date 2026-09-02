@@ -20,8 +20,11 @@ export default function ControlLayout({ children }: { children: React.ReactNode 
   const [ano, setAno] = useState<string>('');
 
   useEffect(() => {
-    if (!isAuthenticated) router.push('/');
-  }, [isAuthenticated, router]);
+    if (!isAuthenticated) {
+      try { sessionStorage.setItem('login_redirect', path) } catch { /* noop */ }
+      router.push('/');
+    }
+  }, [isAuthenticated, router, path]);
 
   useEffect(() => {
     fetch('/api/control-estudios/anios').then(r => r.json()).then(d => {

@@ -1,0 +1,410 @@
+[
+ {
+  "nombre": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "nombre": "ALSINA C, VICTOR E",
+  "cedula": "V 17473007"
+ },
+ {
+  "nombre": "ALVAREZ, JOSE",
+  "cedula": "V 9244672"
+ },
+ {
+  "nombre": "ANGILERI GARCIA, ANTONIETA",
+  "cedula": "V 6396526"
+ },
+ {
+  "nombre": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "nombre": "ASCANIO G, JUAN J",
+  "cedula": "V 14130316"
+ },
+ {
+  "nombre": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "nombre": "AZA D, YESENIA DEL V",
+  "cedula": "V 13490096"
+ },
+ {
+  "nombre": "BACALLAO, MAYRA",
+  "cedula": "V 5009652"
+ },
+ {
+  "nombre": "BARETTA, MARIELMA",
+  "cedula": "V 9481781"
+ },
+ {
+  "nombre": "BERROTERAN, MILAGROS",
+  "cedula": "V 10890623"
+ },
+ {
+  "nombre": "BETANCOURT, YONI",
+  "cedula": "V 13217259"
+ },
+ {
+  "nombre": "BLANCO C, YOLET DEL C",
+  "cedula": "V 10889648"
+ },
+ {
+  "nombre": "BLANCO C, YUDIT J",
+  "cedula": "V 6424425"
+ },
+ {
+  "nombre": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "nombre": "BUSTAMANTE, LILIA",
+  "cedula": "V 5687845"
+ },
+ {
+  "nombre": "CASTILLO, OLGA",
+  "cedula": "V 19493335"
+ },
+ {
+  "nombre": "COLINA V, MANGILUZ A",
+  "cedula": "V 21148057"
+ },
+ {
+  "nombre": "DELGADO, JOSE",
+  "cedula": "V 6991767"
+ },
+ {
+  "nombre": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "nombre": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "nombre": "DIAZ, OVIDIO",
+  "cedula": "V 5892774"
+ },
+ {
+  "nombre": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "nombre": "ECHENIQUE L, BRENDA",
+  "cedula": "V 18842406"
+ },
+ {
+  "nombre": "ESCALONA, IRIS",
+  "cedula": "V 14720349"
+ },
+ {
+  "nombre": "ESCALONA, IRIS DE",
+  "cedula": "V 6103948"
+ },
+ {
+  "nombre": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "nombre": "FLORES G, CARLOS J",
+  "cedula": "V 22041609"
+ },
+ {
+  "nombre": "FUENTES, GLADYS",
+  "cedula": "V 8570958"
+ },
+ {
+  "nombre": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "nombre": "GARCIA, OCARILIA",
+  "cedula": "V 10504370"
+ },
+ {
+  "nombre": "GONZALEZ, DOLLYRA",
+  "cedula": "V 17687631"
+ },
+ {
+  "nombre": "GONZALEZ, JAILEEN",
+  "cedula": "V 15654206"
+ },
+ {
+  "nombre": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "nombre": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "nombre": "GUERRA, MIRLA",
+  "cedula": "V 8572601"
+ },
+ {
+  "nombre": "GUTIERREZ, FLORENCIO",
+  "cedula": "V 5400386"
+ },
+ {
+  "nombre": "HERNANDEZ B, YEREMI N",
+  "cedula": "V 18529659"
+ },
+ {
+  "nombre": "HERNANDEZ, ALEXANDER",
+  "cedula": "V 6339844"
+ },
+ {
+  "nombre": "HERNANDEZ, DOLLYRA",
+  "cedula": "V 17687631"
+ },
+ {
+  "nombre": "HERNANDEZ, ENY",
+  "cedula": "V 6396869"
+ },
+ {
+  "nombre": "HERNANDEZ, WILMER",
+  "cedula": "V 10869537"
+ },
+ {
+  "nombre": "HERNANDEZ, YORDELIS",
+  "cedula": "V 18025849"
+ },
+ {
+  "nombre": "HERRERA G, JUAN J",
+  "cedula": "V 14013941"
+ },
+ {
+  "nombre": "JARAMILLO J, LUINA T",
+  "cedula": "V 14154506"
+ },
+ {
+  "nombre": "JASPE DE H, JACKMI C",
+  "cedula": "V 15420572"
+ },
+ {
+  "nombre": "KHAZEN, JOSE G",
+  "cedula": "V 6962788"
+ },
+ {
+  "nombre": "LANDAETA E, EGLY I",
+  "cedula": "V 16902674"
+ },
+ {
+  "nombre": "LARA, MERCEDES M",
+  "cedula": "V 5606632"
+ },
+ {
+  "nombre": "LEZAMA DE R, ODALIS Y",
+  "cedula": "V 5182944"
+ },
+ {
+  "nombre": "LOPEZ D, WILLIANS J",
+  "cedula": "V 12300585"
+ },
+ {
+  "nombre": "MACERO, GLEIDIS",
+  "cedula": "V 17473922"
+ },
+ {
+  "nombre": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "nombre": "MARQUEZ DE P, ROSALBA J",
+  "cedula": "V 4945438"
+ },
+ {
+  "nombre": "MARTINEZ M, MARTHA E",
+  "cedula": "V 6321723"
+ },
+ {
+  "nombre": "MARTINEZ V, FRECXY C",
+  "cedula": "V 18541767"
+ },
+ {
+  "nombre": "MARTINEZ, LILIANA",
+  "cedula": "V 9682529"
+ },
+ {
+  "nombre": "MARTINEZ, MARYNELA",
+  "cedula": "V 8632411"
+ },
+ {
+  "nombre": "MAYORA, DANIELINA",
+  "cedula": "V 6412931"
+ },
+ {
+  "nombre": "MEDINA L, ALFREDO A",
+  "cedula": "V 4357543"
+ },
+ {
+  "nombre": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "nombre": "MEJIAS L, BEMELYS C",
+  "cedula": "V 14967437"
+ },
+ {
+  "nombre": "MELENDEZ, RUTH",
+  "cedula": "V 17757869"
+ },
+ {
+  "nombre": "MENDEZ, ALEXANDER",
+  "cedula": "V 10867210"
+ },
+ {
+  "nombre": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "nombre": "MONASTERIO, MANUEL",
+  "cedula": "V 2584381"
+ },
+ {
+  "nombre": "MONTILLA, ARNALDO",
+  "cedula": "V 18375142"
+ },
+ {
+  "nombre": "MONZON M, JOSE J",
+  "cedula": "V 23434675"
+ },
+ {
+  "nombre": "MORENO, GLORIA",
+  "cedula": "V 12384996"
+ },
+ {
+  "nombre": "MORENO, LUIS",
+  "cedula": "V 11676342"
+ },
+ {
+  "nombre": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "nombre": "MUÑOZ, EVELITZA",
+  "cedula": "V 12822362"
+ },
+ {
+  "nombre": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "nombre": "PADRINO N, LISBETH DEL M",
+  "cedula": "V 14721810"
+ },
+ {
+  "nombre": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "nombre": "PEREIRA, YESICA",
+  "cedula": "V 14744060"
+ },
+ {
+  "nombre": "PEREZ DE R, YANA",
+  "cedula": "V 10825257"
+ },
+ {
+  "nombre": "PEÑALOZA R, EVENCIA J",
+  "cedula": "V 10074103"
+ },
+ {
+  "nombre": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "nombre": "PONCE C, YORMAN A",
+  "cedula": "V 17685473"
+ },
+ {
+  "nombre": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "nombre": "REGALADO, NANCY",
+  "cedula": "V 10630422"
+ },
+ {
+  "nombre": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "nombre": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "nombre": "RIVERO, YEIDERSON",
+  "cedula": "V 20309517"
+ },
+ {
+  "nombre": "ROBLES F, YELIVER T",
+  "cedula": "V 11552264"
+ },
+ {
+  "nombre": "RODRIGUEZ DE B, SUYIN",
+  "cedula": "V 10181119"
+ },
+ {
+  "nombre": "ROJAS A, JOSE G",
+  "cedula": "V 14154413"
+ },
+ {
+  "nombre": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "nombre": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "nombre": "SAAVEDRA F, KENNETH A",
+  "cedula": "V 14327059"
+ },
+ {
+  "nombre": "SALMERON C, ADRIANA I",
+  "cedula": "V 14645027"
+ },
+ {
+  "nombre": "SISCO, ALEXIS",
+  "cedula": "V 4681985"
+ },
+ {
+  "nombre": "SOTOMAYOR F, YORLINDA D",
+  "cedula": "V 12395157"
+ },
+ {
+  "nombre": "SUAREZ, RAIZA",
+  "cedula": "V 10546616"
+ },
+ {
+  "nombre": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "nombre": "TERAN, NESVIER",
+  "cedula": "V 16811339"
+ },
+ {
+  "nombre": "UGARTE, YANNETT",
+  "cedula": "V 7274901"
+ },
+ {
+  "nombre": "VASQUEZ, JUSTINA",
+  "cedula": "V 7475117"
+ },
+ {
+  "nombre": "VELASQUEZ, RORAIMA",
+  "cedula": "V 5568001"
+ },
+ {
+  "nombre": "VILLORIN, TULIO",
+  "cedula": "V 19391815"
+ },
+ {
+  "nombre": "YEPEZ F, JAIME I",
+  "cedula": "V 16663648"
+ }
+]

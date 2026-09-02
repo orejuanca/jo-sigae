@@ -1,0 +1,3608 @@
+[
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "EF",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "CN",
+  "docenteRaw": "MARQUEZ DE P, ROSALBA J",
+  "cedula": "V 4945438"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "GHC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "OC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "1",
+  "seccion": "A",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "EF",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "AP",
+  "docenteRaw": "YEPEZ F, JAIME I",
+  "cedula": "V 16663648"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "GHC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "OC",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "2",
+  "seccion": "A",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "QU",
+  "docenteRaw": "MEDINA L, ALFREDO A",
+  "cedula": "V 4357543"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "3",
+  "seccion": "A",
+  "codigo": "OC",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "GHC",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "FSN",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "OC",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "4",
+  "seccion": "A",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "FI",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "QU",
+  "docenteRaw": "MEDINA L, ALFREDO A",
+  "cedula": "V 4357543"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "CT",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "GHC",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "FSN",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "OC",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "5",
+  "seccion": "A",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "EF",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "GHC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "OC",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "1",
+  "seccion": "B",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "AP",
+  "docenteRaw": "YEPEZ F, JAIME I",
+  "cedula": "V 16663648"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "GHC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "OC",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "2",
+  "seccion": "B",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "QU",
+  "docenteRaw": "MEDINA L, ALFREDO A",
+  "cedula": "V 4357543"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "3",
+  "seccion": "B",
+  "codigo": "OC",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "GHC",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "FSN",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "OC",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "4",
+  "seccion": "B",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "EF",
+  "docenteRaw": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "FI",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "QU",
+  "docenteRaw": "MEDINA L, ALFREDO A",
+  "cedula": "V 4357543"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "CT",
+  "docenteRaw": "PIMENTEL B, ANGELICA D",
+  "cedula": "V 15259625"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "GHC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "FSN",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "OC",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "5",
+  "seccion": "B",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "EF",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "GHC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "OC",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "1",
+  "seccion": "C",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "EF",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "CN",
+  "docenteRaw": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "GHC",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "OC",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "2",
+  "seccion": "C",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "QU",
+  "docenteRaw": "MEDINA L, ALFREDO A",
+  "cedula": "V 4357543"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "GHC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "3",
+  "seccion": "C",
+  "codigo": "OC",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "GHC",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "FSN",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "OC",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "C",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "FI",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "QU",
+  "docenteRaw": "KHAZEN, JOSE G",
+  "cedula": "V 6962788"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "BI",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "CT",
+  "docenteRaw": "OLIVEROS, ARAMIS A",
+  "cedula": "V 9203310"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "GHC",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "FSN",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "OC",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "5",
+  "seccion": "C",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "EF",
+  "docenteRaw": "GONZALEZ, YNGRI M",
+  "cedula": "V 11834556"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "AP",
+  "docenteRaw": "YEPEZ F, JAIME I",
+  "cedula": "V 16663648"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "CN",
+  "docenteRaw": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "OC",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "1",
+  "seccion": "D",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "CN",
+  "docenteRaw": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "OC",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "D",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "EF",
+  "docenteRaw": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "GHC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "3",
+  "seccion": "D",
+  "codigo": "OC",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "GHC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "FSN",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "OC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "4",
+  "seccion": "D",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "EF",
+  "docenteRaw": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "FI",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "QU",
+  "docenteRaw": "KHAZEN, JOSE G",
+  "cedula": "V 6962788"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "BI",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "CT",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "GHC",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "FSN",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "OC",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "5",
+  "seccion": "D",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "CN",
+  "docenteRaw": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "OC",
+  "docenteRaw": "MARQUEZ DE P, ROSALBA J",
+  "cedula": "V 4945438"
+ },
+ {
+  "grado": "1",
+  "seccion": "E",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "CN",
+  "docenteRaw": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "OC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "2",
+  "seccion": "E",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "EF",
+  "docenteRaw": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "GHC",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "OC",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "3",
+  "seccion": "E",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "EF",
+  "docenteRaw": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "QU",
+  "docenteRaw": "KHAZEN, JOSE G",
+  "cedula": "V 6962788"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "GHC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "FSN",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "OC",
+  "docenteRaw": "TERAN DE L, JORGE L",
+  "cedula": "V 14839009"
+ },
+ {
+  "grado": "4",
+  "seccion": "E",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "E",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "EF",
+  "docenteRaw": "FERRER C, EUMELINA DEL C",
+  "cedula": "V 10070341"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "OC",
+  "docenteRaw": "AVENDAÑO T, LIRIXI S",
+  "cedula": "V 24698911"
+ },
+ {
+  "grado": "1",
+  "seccion": "F",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "CA",
+  "docenteRaw": "MEDRANO, KARLA J",
+  "cedula": "V 12300074"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "ILE",
+  "docenteRaw": "DIAZ S, MIGUEL A",
+  "cedula": "V 4281417"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "GHC",
+  "docenteRaw": "QUINTERO DE R, MIRNA D",
+  "cedula": "V 5816139"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "OC",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "2",
+  "seccion": "F",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "CA",
+  "docenteRaw": "DURAN G, CELIA M",
+  "cedula": "V 13423691"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "ILE",
+  "docenteRaw": "APONTE G, CARMEN M",
+  "cedula": "V 10865195"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "FI",
+  "docenteRaw": "ROJAS B, XAVIER A",
+  "cedula": "V 16076653"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "BI",
+  "docenteRaw": "GARCIA R, CARMEN M",
+  "cedula": "V 11157820"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "GHC",
+  "docenteRaw": "ACOSTA M, CHEYLA J",
+  "cedula": "V 16093523"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "OC",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "3",
+  "seccion": "F",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "F",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "F",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "G",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "G",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "G",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "G",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "G",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "H",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "H",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "H",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "H",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "H",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "I",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "I",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "I",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "I",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "I",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "U",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "CN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "U",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "U",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "U",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "U",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "MA",
+  "docenteRaw": "RIOS P, JENNIFER DEL C",
+  "cedula": "V 11413492"
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "AP",
+  "docenteRaw": "GUARIGUATA F, JOSE A",
+  "cedula": "V 14594593"
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "1",
+  "seccion": "MP",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "EF",
+  "docenteRaw": "MOSQUEDA O, RODNEY E",
+  "cedula": "V 23521196"
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "AP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "CN",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "2",
+  "seccion": "MP",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "CA",
+  "docenteRaw": "RIVAS DE V, MARIA T",
+  "cedula": "V 6450412"
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "MA",
+  "docenteRaw": "DIAZ V, SAMMY J",
+  "cedula": "V 14157119"
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "FI",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "BI",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "GHC",
+  "docenteRaw": "ROJAS, YUDITH C",
+  "cedula": "V 6998554"
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "3",
+  "seccion": "MP",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "ILE",
+  "docenteRaw": "PAREDES H, RAQUEL",
+  "cedula": "V 6419439"
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "MA",
+  "docenteRaw": "MENDOZA G, JAIME E",
+  "cedula": "V 5134302"
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "QU",
+  "docenteRaw": "MARQUEZ DE B, BELKIS B",
+  "cedula": "V 8774629"
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "BI",
+  "docenteRaw": "BURGOS A, GERSINKIN L",
+  "cedula": "V 11471500"
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "4",
+  "seccion": "MP",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "CA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "ILE",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "MA",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "EF",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "FI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "QU",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "BI",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "CT",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "GHC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "FSN",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "OC",
+  "docenteRaw": null
+ },
+ {
+  "grado": "5",
+  "seccion": "MP",
+  "codigo": "PGCRP",
+  "docenteRaw": null
+ }
+]

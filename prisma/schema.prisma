@@ -180,3 +180,86 @@ model PlanDerogado {
   @@index([apellidos])
   @@index([nombres])
 }
+
+model anoEscolar {
+  id        String   @id @default(cuid())
+  nombre    String   @unique // "2021 - 2022"
+  activo    Boolean  @default(false) // solo uno activo
+  abierto   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  secciones seccion[]
+  inscripciones inscripcion[]
+}
+
+model asignatura {
+  id          String           @id @default(cuid())
+  codigo      String           @unique // CA, ILE, MA...
+  nombre      String // Castellano, Matematicas...
+  orden       Int              @default(0)
+  docenteSecc docenteSeccion[]
+}
+
+model docente {
+  id          String           @id @default(cuid())
+  cedula      String           @unique // "V 9203310"
+  nombre      String // "OLIVEROS, ARAMIS"
+  docenteSecc docenteSeccion[]
+}
+
+model seccion {
+  id           String           @id @default(cuid())
+  anoEscolarId String
+  grado        String // "1".."5"
+  codigo       String // "A".."I", "MP"
+  tipo         String           @default("REGULAR") // REGULAR | MP
+  ano          anoEscolar       @relation(fields: [anoEscolarId], references: [id])
+  docenteSecc  docenteSeccion[]
+  inscripciones inscripcion[]
+
+  @@unique([anoEscolarId, grado, codigo])
+}
+
+model docenteSeccion {
+  id           String      @id @default(cuid())
+  seccionId    String
+  asignaturaId String
+  docenteId    String?
+  seccion      seccion     @relation(fields: [seccionId], references: [id])
+  asignatura   asignatura  @relation(fields: [asignaturaId], references: [id])
+  docente      docente?    @relation(fields: [docenteId], references: [id])
+
+  @@unique([seccionId, asignaturaId])
+}
+
+model alumno {
+  id         String   @id @default(cuid())
+  cedula     String   @unique // "V 32787155"
+  apellidos  String
+  nombres    String
+  sexo       String? // M | F
+  fechaNac   String? // ISO
+  entidad    String? // municipio nacimiento
+  ef         String? // estado (sigla)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  inscripciones inscripcion[]
+
+  @@index([apellidos])
+  @@index([nombres])
+}
+
+model inscripcion {
+  id           String    @id @default(cuid())
+  alumnoId     String
+  seccionId    String
+  anoEscolarId String
+  matricula    String? // nro de matricula legacy
+  repitiente   Boolean   @default(false)
+  fechaRetiro  DateTime?
+  activo       Boolean   @default(true)
+  alumno       alumno      @relation(fields: [alumnoId], references: [id])
+  seccion      seccion     @relation(fields: [seccionId], references: [id])
+  ano          anoEscolar  @relation(fields: [anoEscolarId], references: [id])
+
+  @@unique([alumnoId, anoEscolarId])
+}

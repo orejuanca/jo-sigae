@@ -1,0 +1,110 @@
+================================================================
+JO-SIGAE - ENTREGA v7 - ENTEROS + ORDEN DEL EXCEL + MP COMO LAS
+REGULARES
+================================================================
+
+Que trae esta entrega (los 3 puntos que reportaste):
+----------------------------------------------------------------
+1) NOTAS ENTERAS. Ya no hay notas con decimales. Tu Excel guarda
+   las fórmulas con decimales por dentro (ej. 9.666) pero la
+   celda MUESTRA el entero (10). El sistema ahora hace igual:
+   - El import redondeó todas las notas al entero que muestra
+     la celda (26.153 notas de lapso + 51 momentos revisados).
+   - La DEFINITIVA es el promedio redondeado al entero, igual
+     que tu planilla (verificado contra las 6.964 definitivas
+     del Excel: coincide todas).
+   - Si se escribe un decimal al corregir, se guarda el entero
+     (12.5 se guarda como 13, con el mismo redondeo del Excel).
+
+2) ORDEN DE LAS MATERIAS EXACTO AL EXCEL. Cada grado usa el
+   orden exacto de tus sábanas NL:
+     1° y 2°:  CA ILE MA EF AP CN GHC OC PG
+     3°:       CA ILE MA EF FI QU BI GHC OC PG
+     4°:       CA ILE MA EF FI QU BI GHC FS OC PG
+     5°:       CA ILE MA EF FI QU BI CT GHC FS OC PG
+   (GHC va DESPUÉS de BI, y en 5° CT y FS en su puesto; GRUPO
+   queda al final como columna aparte, igual que el Excel.)
+
+3) MATERIA PENDIENTE COMO LAS REGULARES. La planilla MP ahora
+   es IGUAL que las secciones regulares:
+   - UNA FILA POR ESTUDIANTE (cédula primero, menor a mayor):
+     el que debe 2 materias tiene sus 2 notas en la misma fila.
+   - Todas las materias del grado como columnas, en el orden
+     del Excel; solo se EDITAN las que debe, todas las demás
+     columnas llevan * (también OC, PG y GRUPO), como en la
+     sábana "Materia Pendiente".
+   - Se selecciona el MOMENTO: [1M OCTUBRE][2M DICIEMBRE]
+     [3M ENERO][4M JUNIO] (ya no se dice "lapso" en MP).
+   - El ESTADO por materia queda a la derecha (APROBADA xM ·
+     nota, EN PROCESO, APLAZADA → QUEDA MP, SIN ASENTAR).
+
+PASOS (PowerShell - todo en D:\, con PNPM)
+----------------------------------------------------------------
+1) Descomprimir y copiar sobre tu proyecto (sin tocar tu .env):
+     Expand-Archive .\download\jo-sigae-b2-notas-v7.zip -DestinationPath D:\jo-sigae-v7 -Force
+     robocopy D:\jo-sigae-v7 D:\jo-sigae /E /XF LEEME.txt .env
+
+2) Dependencias y base de datos (no cambia ninguna tabla):
+     cd D:\jo-sigae
+     pnpm install
+     pnpm db:generate
+     pnpm db:push
+
+3) ACTUALIZAR LAS NOTAS A ENTEROS (paso nuevo, obligatorio para
+   corregir los decimales que quedaron de la v6):
+     pnpm dlx tsx scripts/seed_notas_historicas.ts
+   Es idempotente: puedes correrlo las veces que quieras. Al
+   terminar imprime: notaLapso=26153 - notaGrupo=2568 -
+   notaMomento=51 (los mismos de antes, ahora todos enteros).
+
+4) Arrancar y entrar:
+     pnpm dev
+   Abrir http://localhost:3000/control-estudios/notas (menu NOTAS)
+
+VERIFICACION DE 5 MINUTOS
+----------------------------------------------------------------
+A) NOTAS > GRADO 1 > SECCION A > 1ER LAPSO:
+   - OSPINO BLANQUICET: CA 2 - ILE 3 - MA 2 - EF 2 - AP 2 -
+     CN 5 - GHC 2 - OC D - PG EX - GRUPO EXONERADO.
+     (El ILE 1er lapso era el 2.5 de la v6: tu Excel lo muestra
+     como 3 y asi quedó. Todo entero, sin puntos decimales.)
+B) NOTAS > GRADO 1 > SECCION A > DEFINITIVAS:
+   - ILE 2 y CN 3: promedio redondeado al entero, igual que tu
+     planilla (ya no se ve 2.17).
+C) NOTAS > GRADO 3 > SECCION A:
+   - Las columnas van CA ILE MA EF FI QU BI GHC OC PG: GHC
+     DESPUES de BI, exacto como tu sábana.
+D) NOTAS > GRADO 1 > SECCION MP:
+   - Una fila por estudiante; PEREZ LACEDES solo tiene la celda
+     EF editable (13) y el resto de columnas con *.
+   - HERNANDEZ RIVAS tiene las 2 que debe en la MISMA fila
+     (AP 11 y CN 10).
+   - Botones 1M OCTUBRE / 2M DICIEMBRE / 3M ENERO / 4M JUNIO.
+   - ABARCA QUINTANA: IN en 1M y en 4M JUNIO se ve 10 ->
+     MA APROBADA 4M - 10.
+E) NOTAS > GRADO 4 > SECCION MP:
+   - BLANCO COLMENARES BI 14 en los 4 momentos (su fila rara
+     del Excel se importó igual).
+
+NOTAS DEL EXCEL ORIGINAL (para que no te sorprendan)
+----------------------------------------------------------------
+- 4C SOSA OJEDA CA lapso 2: el Excel trae "20'" (con apóstrofo).
+  Se importó como 20.
+- 5D NELCHA HEREDIA BI lapso 2: el Excel trae 22 (sic). Igual
+  que el original.
+- El redondeo es el del Excel: 2.5 pasa a 3, 2.4 pasa a 2,
+  9.666 pasa a 10 (la celda siempre muestra el entero).
+
+SI ALGO SALE MAL
+----------------------------------------------------------------
+- "Unknown command generate": el generate no lleva "db".
+  Usa "pnpm db:generate".
+- Notas con decimales en pantalla: confirma que corriste el
+  paso 3 (seed_notas_historicas) DESPUÉS de copiar la v7.
+- La vista MP no cambia: refresca el navegador (Ctrl+Shift+R).
+- Si node_modules fue instalado con npm en algún momento y pnpm
+  se queja: borra node_modules y repite "pnpm install".
+
+TU EQUIPO (recordatorio)
+----------------------------------------------------------------
+- Todo en D:\jo-sigae. Tu .env (PostgreSQL 18 local) NO se toca.

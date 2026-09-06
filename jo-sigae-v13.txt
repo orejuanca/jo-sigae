@@ -1,0 +1,95 @@
+================================================================
+JO-SIGAE - ENTREGA v13 - RF: DISEÑO DEL FORMATO CORREGIDO
+   (reemplaza a la v12 — NO APLIQUES v12, esta la sustituye)
+================================================================
+
+QUE SE CORRIGIÓ (todo confirmado contigo)
+----------------------------------------------------------------
+1) LÍNEAS FANTASMA (el defecto principal). Tu Excel guarda
+   bordes escondidos DENTRO de las celdas combinadas que él
+   nunca dibuja. La v12 los estaba pintando: rayas partiendo la
+   cédula, los apellidos, los nombres, el lugar, el MES, cada
+   nota en dos, el GRUPO ("A | EX | EXONERADO"), el pie y los
+   sellos. La v13 los elimina todos: el dibujo queda igual al
+   que Excel muestra de verdad (~35 líneas verticales reales por
+   hoja, no 84).
+
+2) LÍNEA VERTICAL DEL EXTREMO DERECHO. En la v12 no se veía
+   (la cortaba medio pixel del contenedor). Tu formato original
+   SÍ la tiene: corre desde la primera fila (caja del título)
+   hasta la última (sello de la zona educativa) — verificado
+   contra tu Excel: borde derecho de la columna BN definido en
+   las 77-80 filas y visible en el PDF del archivo. La v13 la
+   muestra completa, como el original.
+
+3) TÍTULO SUBRAYADO. "RESUMEN FINAL DEL RENDIMIENTO
+   ESTUDIANTIL" va subrayado como en tu Excel (Arial 9 negrita +
+   subrayado; en 4° también la segunda línea del título, igual
+   que el original).
+
+4) CÓDIGO 31059. Volvió a salir bajo "CÓDIGO:" en el bloque VI
+   (Identificación del Curso), en los 5 grados. La v12 lo habia
+   tragado al excluir los totales del pie.
+
+5) VERTICALES SEXO / DIA / MES / AÑO compactos: la raya del
+   borde ya no cruza las letras (el navegador las apilaba un
+   poco más alto que Excel).
+
+6) TERCER GRADO ARREGLADO. En la hoja RF 3° tu Excel dejó
+   guardado "REVISION" (sin tilde) y el buscador de la celda del
+   tipo se resbalaba hasta el TÍTULO (porque contiene la palabra
+   "FINAL"): el tipo se dibujaba encima del título y el título ni
+   salía. Ahora el tipo cae en su celda y el título se ve
+   subrayado, igual que en los otros grados.
+
+7) CONFIRMADO COMO PEDISTE:
+   - SIN el relleno verde: en tu Excel era solo el marcador de
+     campos editables; la app lo deja blanco.
+   - "U E N CREACION CUA" queda VERBATIM (así está en tu Excel;
+     cuando el ministerio lo modifique, se modificará).
+
+Todo lo demás queda IGUAL (alumnos, notas, pie de totales,
+observaciones NL/NR, paginación 01..35, S/C, asteriscos,
+impresión OFICIO 8.5x13, ortografía corregida y cédula
+reducida con V12345678900 completo).
+
+PASOS (PowerShell - todo en D:\, con PNPM)
+----------------------------------------------------------------
+1) Descomprimir y copiar sobre tu proyecto (tu .env NO viene en
+   el zip y no se toca):
+     Expand-Archive .\download\jo-sigae-b2-rf-diseno-corregido-v13.zip -DestinationPath D:\jo-sigae-v13 -Force
+-Force
+     Copy-Item -Path D:\jo-sigae-v13\* -Destination D:\jo-sigae\ -Recurse -Force
+     Remove-Item -Recurse -Force D:\jo-sigae-v13
+
+2) NO HAY CAMBIO DE ESQUEMA NI SEEDS NUEVOS: no necesitas
+   db:push ni re-correr nada.
+
+3) Arrancar y entrar:
+     cd D:\jo-sigae
+     pnpm dev
+   Abrir http://localhost:3000/control-estudios/rf
+
+VERIFICACION DE 5 MINUTOS (solo lo corregido)
+----------------------------------------------------------------
+A) 5° + D + FINAL + PRIMERA HOJA: la tabla de alumnos debe estar
+   LIMPIA — ni una raya partiendo la cédula, los apellidos, las
+   notas ni el GRUPO (antes "A | EX | EXONERADO").
+B) Mismo formato: mirar el borde derecho de arriba (caja del
+   título) hasta abajo (sello de la zona educativa): la línea
+   vertical debe verse completa.
+C) Arriba: el título RESUMEN FINAL... subrayado; y bajo
+   "CÓDIGO:" debe salir 31059.
+D) Cambiar a 3° + PRIMERA HOJA: el título subrayado y el
+   "Tipo de Evaluación: FINAL" en su caja (no encima del título).
+E) La cabecera SEXO / FECHA DE NACIMIENTO (DIA MES AÑO en
+   vertical): las letras no deben tocar la raya del borde.
+F) IMPRIMIR HOJA: el papel sale igual a la pantalla.
+
+Test automatico: con el servidor corriendo,
+  node scripts/test_rf_v11.mjs  -> 54 OK, 0 fallos.
+
+TU EQUIPO (recordatorio)
+----------------------------------------------------------------
+- Todo en D:\jo-sigae. Tu .env (PostgreSQL 18 local) NO se toca.
+- La v12 NO hace falta aplicarla: esta v13 la reemplaza completa.

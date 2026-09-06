@@ -36,7 +36,7 @@ const CAMPOS: { k: keyof Ficha; l: string; seccion: string }[] = [
   { k: 'sexo', l: 'SEXO', seccion: 'id' },
   { k: 'fechaNac', l: 'FECHA DE NACIMIENTO', seccion: 'id' },
   { k: 'serial', l: 'SERIAL', seccion: 'id' },
-  { k: 'eqv', l: 'EQV', seccion: 'id' },
+  { k: 'eqv', l: 'EQV (RÉGIMEN DE EQUIVALENCIA)', seccion: 'id' },
   { k: 'te', l: 'TE', seccion: 'id' },
   { k: 'pais', l: 'PAÍS', seccion: 'ub' },
   { k: 'estado', l: 'ESTADO', seccion: 'ub' },
@@ -267,7 +267,7 @@ export default function AlumnosFicha() {
                   {ficha.inscripciones.map(i => (
                     <tr key={i.id} className="border-b last:border-0">
                       <td className="py-1.5 pr-3">{i.ano.nombre}</td>
-                      <td className="py-1.5 pr-3 font-semibold">{i.seccion.grado}° {i.seccion.codigo}{i.seccion.codigo === 'MP' ? ' (Materia Pendiente)' : ''}</td>
+                      <td className="py-1.5 pr-3 font-semibold">{i.seccion.grado}° {i.seccion.codigo}{i.seccion.codigo === 'MP' ? ' (Materia Pendiente)' : i.seccion.codigo === 'U' ? ' (Régimen de Equivalencia)' : ''}</td>
                       <td className="py-1.5 pr-3">{i.numeroLista ?? i.matricula ?? '—'}</td>
                       <td className="py-1.5 pr-3">{i.condicion ?? '—'}{i.sp ? ` · SP:${i.sp}` : ''}</td>
                       <td className="py-1.5 pr-3">

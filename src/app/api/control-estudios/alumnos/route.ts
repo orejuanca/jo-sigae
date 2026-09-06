@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
       { nombres: { contains: q.toUpperCase() } },
     ],
   };
-  const alumnos = await prisma.alumno.findMany({ where: donde, take: 25, orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }] });
+  // Resultados por CÉDULA de menor a mayor (regla de la escuela); tope 25 resultados
+  const encontrados = await prisma.alumno.findMany({ where: donde, take: 200 });
+  const cedNum = (c: string) => { const n = Number((c || '').replace(/\D/g, '')); return isFinite(n) ? n : Number.MAX_SAFE_INTEGER; };
+  const alumnos = encontrados.sort((a, b) => cedNum(a.cedula) - cedNum(b.cedula) || a.cedula.localeCompare(b.cedula)).slice(0, 25);
   let inscritos: { alumnoId: string; seccion: { grado: string; codigo: string } }[] = [];
   if (ano) {
     inscritos = await prisma.inscripcion.findMany({ where: { anoEscolarId: ano.id, activo: true }, include: { seccion: true } });

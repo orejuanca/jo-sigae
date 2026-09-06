@@ -197,6 +197,9 @@ model asignatura {
   nombre      String // Castellano, Matematicas...
   orden       Int              @default(0)
   docenteSecc docenteSeccion[]
+  notaLapsos  notaLapso[]
+  notaMomentos notaMomento[]
+  notaRevisiones notaRevision[]
 }
 
 model docente {
@@ -290,7 +293,90 @@ model inscripcion {
   alumno       alumno      @relation(fields: [alumnoId], references: [id])
   seccion      seccion     @relation(fields: [seccionId], references: [id])
   ano          anoEscolar  @relation(fields: [anoEscolarId], references: [id])
+  notaLapsos   notaLapso[]
+  notaMomentos notaMomento[]
+  notaGrupos   notaGrupo[]
+  notaRevisiones notaRevision[]
 
   @@unique([alumnoId, seccionId]) // un alumno no repite sección, pero SÍ puede estar en su regular + MP
   @@index([alumnoId, anoEscolarId])
+}
+
+// ==================== NOTAS (Bloque 2) ====================
+
+// Nota de LAPSO de una asignatura para una inscripción (secciones regulares).
+// SOLO los 3 lapsos se guardan; la definitiva es promedio calculado (nunca se guarda).
+model notaLapso {
+  id            String      @id @default(cuid())
+  inscripcionId String
+  asignaturaId  String
+  lapso         Int         // 1 | 2 | 3
+  valor         String?     // "15.5" (1-20, 1 decimal) | cualitativa (A/B/C/D/EX) | null = pendiente
+  updatedAt     DateTime    @updatedAt
+  inscripcion   inscripcion @relation(fields: [inscripcionId], references: [id])
+  asignatura    asignatura  @relation(fields: [asignaturaId], references: [id])
+
+  @@unique([inscripcionId, asignaturaId, lapso])
+  @@index([asignaturaId])
+}
+
+// GRUPO: columna cualitativa del Excel (GRUPO11..GRUPO14 en las hojas NL).
+// En secciones regulares se guarda por lapso (1-3) como OC/PG.
+// En secciones MP se guarda un valor único por estudiante (lapso 4),
+// porque el bloque U del Excel trae la columna GRUPO sin división útil.
+// Valor real usado en 2021-2022: "EXONERADO".
+model notaGrupo {
+  id            String      @id @default(cuid())
+  inscripcionId String
+  lapso         Int         // 1 | 2 | 3 (regular) | 4 (valor único en MP)
+  valor         String?     // "EXONERADO" | null = pendiente
+  updatedAt     DateTime    @updatedAt
+  inscripcion   inscripcion @relation(fields: [inscripcionId], references: [id])
+
+  @@unique([inscripcionId, lapso])
+}
+
+// Nota de MOMENTO de una materia pendiente (secciones MP).
+// 4 momentos ÚNICOS E INDEPENDIENTES según la sábana PROFESORES:
+//   1M = OCTUBRE, 2M = DICIEMBRE, 3M = ENERO, 4M = JUNIO.
+// Regla de la escuela: al aprobar (nota >= 10) en cualquier momento, la materia
+// queda aprobada y los momentos siguientes se ANULAN con "*" (derivado, no se guarda).
+// Aplazado en 4M -> queda MP para el próximo año (P en todas las asignaturas de su
+// sección regular y sin derecho a revisión; se aplica en el cierre del año escolar).
+model notaMomento {
+  id            String      @id @default(cuid())
+  inscripcionId String      // la inscripción en la sección MP (grado anterior)
+  asignaturaId  String      // la materia que debe (asignatura del grado anterior)
+  momento       Int         // 1 | 2 | 3 | 4
+  valor         String?     // "12" (>=10, aprobó) | "IN" (insuficiente) | null = sin asentar
+  updatedAt     DateTime    @updatedAt
+  inscripcion   inscripcion @relation(fields: [inscripcionId], references: [id])
+  asignatura    asignatura  @relation(fields: [asignaturaId], references: [id])
+
+  @@unique([inscripcionId, asignaturaId, momento])
+  @@index([asignaturaId])
+}
+
+// ==================== REVISIÓN (hojas NR del Excel) ====================
+
+// Resultado de la REVISIÓN de la definitiva de una asignatura NUMÉRICA de
+// sección regular (hojas "NR 1°".."NR 5°" del Excel). Va a revisión quien NO
+// aprobó todas las materias: definitiva numérica < 10 (mismo criterio que el
+// Excel; P y las materias sin definitiva no llevan revisión).
+// El Excel NR trae por celda: "IN" (insuficiente, sigue aplazado) o un ENTERO
+// (resultado tras la revisión: 10, 11, 12, 13, 16... también hay "2").
+// Lo aprobado sin revisión se muestra con "*" derivado (nunca se guarda).
+// Las cualitativas (OC/PGCRP/GRUPO) NO llevan revisión: en el Excel NR
+// siempre están con "*" (verificado en los 5 grados).
+model notaRevision {
+  id            String      @id @default(cuid())
+  inscripcionId String
+  asignaturaId  String
+  valor         String      // "IN" | entero 1-20 (resultado de la revisión)
+  updatedAt     DateTime    @updatedAt
+  inscripcion   inscripcion @relation(fields: [inscripcionId], references: [id])
+  asignatura    asignatura  @relation(fields: [asignaturaId], references: [id])
+
+  @@unique([inscripcionId, asignaturaId])
+  @@index([asignaturaId])
 }

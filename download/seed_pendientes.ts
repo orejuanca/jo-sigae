@@ -1,10 +1,6 @@
 /**
  * seed_pendientes.ts — completa los datos de Materia Pendiente del año activo:
- *   1. Crea las secciones U de todos los grados (la matriz del Excel tiene fila U por
- *      grado). LA SECCION U ES EL REGIMEN DE EQUIVALENCIA (casos especiales de
- *      presentación, ej: alumnos venidos de planteles técnicos): NO es inscripción
- *      regular — el alumno solo tiene UNA matrícula regular. La fila U de la matriz
- *      SECCIONES trae puro "*" (sin docentes).
+ *   1. Crea las secciones U (REGULAR) de todos los grados (la matriz del Excel tiene fila U por grado).
  *   2. Crea las secciones MP de 1° a 5° si faltan (en el Excel la fila MP de la matriz
  *      SECCIONES trae docentes de 1° a 4° y puro "*" en 5°).
  *   3. Inscribe los 25 alumnos con materias pendientes (columnas MP1/MP2 de la hoja ALUMNOS)
@@ -12,13 +8,6 @@
  *      de 3° -> MP de 2°, etc.), guardando materiaPend1/materiaPend2.
  *      Verificado contra el Excel: los pendientes aparecen listados en las hojas NL del
  *      grado anterior (NL_1grado filas 485+, NL_2grado, NL_3grado, NL_4grado/RF_4grado).
- *      EXCEPCIÓN EQV (ley del usuario): si la sábana ALUMNOS trae EQV="U", la pendiente
- *      NO va en la MP sino en la sección U del grado pendiente (régimen de
- *      equivalencia). Caso único 2021-22: BLANCO COLMENARES V 31651259 (5°D,
- *      MP1=BI, EQV=U, "VIENE DE TECNICA"): su BI 14|14|14|14 está en el bloque
- *      "Notas de Lapso y Definitivas 4° U", NO en el bloque de Materia Pendiente.
- *      Al moverlo de la MP a la U se BORRAN sus notaMomento (mal importados: eran
- *      lapsos del bloque U).
  *   4. Marca repitiente=true en la inscripción regular de los 19 alumnos CONDICION=REPITE.
  * Idempotente: puede ejecutarse varias veces sin duplicar.
  *
@@ -41,17 +30,15 @@ async function main() {
   const ano = await prisma.anoEscolar.findFirst({ where: { activo: true } });
   if (!ano) throw new Error('No hay año escolar activo');
 
-  // 1) Secciones U por grado — idempotente. TIPO 'U' = régimen de equivalencia
-  //    (casos especiales de presentación; no es inscripción regular). Si alguna
-  //    quedó tipo REGULAR (versión vieja del seed), se actualiza.
+  // 1) Secciones U (REGULAR) por grado — idempotente
   for (const g of ['1', '2', '3', '4', '5']) {
     await prisma.seccion.upsert({
       where: { anoEscolarId_grado_codigo: { anoEscolarId: ano.id, grado: g, codigo: 'U' } },
-      update: { tipo: 'U' },
-      create: { anoEscolarId: ano.id, grado: g, codigo: 'U', tipo: 'U' },
+      update: {},
+      create: { anoEscolarId: ano.id, grado: g, codigo: 'U', tipo: 'REGULAR' },
     });
   }
-  console.log('secciones U OK (5 grados, tipo U = régimen de equivalencia)');
+  console.log('secciones U OK (5 grados)');
 
   // 2) Secciones MP por AÑO PENDIENTE — idempotente.
   //    LA LEY: la MP corresponde al año inmediatamente ANTERIOR al que cursa el
@@ -67,81 +54,17 @@ async function main() {
   }
   console.log('secciones MP OK (1° a 5°)');
 
-  // 3) Inscripciones en MP de los alumnos con pendientes (EXCEPCIÓN: EQV="U" -> sección U)
+  // 3) Inscripciones en MP de los alumnos con pendientes
   const pends: Pend[] = JSON.parse(readFileSync(join(D, 'materias_pendientes.json'), 'utf8'));
-  // Columna EQV (43) de la sábana ALUMNOS verbatim: "U" = régimen de equivalencia
-  const sabanaAlumnos = JSON.parse(readFileSync(join(D, 'excel_integro', 'ALUMNOS.json'), 'utf8')) as { celdas: { r: number; c: number; v: unknown }[] };
-  const eqvPorCed = new Map<string, string>();
-  const filasAlumnos = new Map<number, Record<number, unknown>>();
-  for (const c of sabanaAlumnos.celdas) {
-    let f = filasAlumnos.get(c.r);
-    if (!f) { f = {}; filasAlumnos.set(c.r, f); }
-    f[c.c] = c.v;
-  }
-  for (const [r, f] of filasAlumnos) {
-    if (r <= 1 || !f[1]) continue;
-    const eqv = f[43];
-    if (typeof eqv === 'string' && eqv.trim() && eqv.trim() !== 'EQV') {
-      eqvPorCed.set(norm(String(f[1])), eqv.trim());
-    }
-  }
   const secciones = await prisma.seccion.findMany({ where: { anoEscolarId: ano.id } });
   const mpPorGrado = new Map(secciones.filter(s => s.codigo === 'MP').map(s => [s.grado, s]));
-  const uPorGrado = new Map(secciones.filter(s => s.codigo === 'U').map(s => [s.grado, s]));
   let creadas = 0, actualizadas = 0, movidas = 0, faltantes = 0;
-  let eqvCreadas = 0, eqvMovidas = 0, eqvActualizadas = 0;
 
   for (const p of pends) {
     const alumno = await prisma.alumno.findUnique({ where: { cedula: norm(p.cedula) } });
     if (!alumno) { console.log('  !! alumno no encontrado:', p.cedula); faltantes++; continue; }
     // LA MP VA EN EL GRADO INMEDIATAMENTE ANTERIOR: alumno de 2° -> MP de 1°, etc.
     const gradoMp = String(Number(p.grado) - 1);
-
-    // ===== EXCEPCIÓN EQV="U": régimen de equivalencia -> sección U (NO la MP) =====
-    if (eqvPorCed.get(norm(p.cedula)) === 'U') {
-      const u = uPorGrado.get(gradoMp);
-      if (!u) { console.log(`  !! no existe sección U de ${gradoMp}° (para alumno de ${p.grado}°)`); faltantes++; continue; }
-      const enU = await prisma.inscripcion.findUnique({
-        where: { alumnoId_seccionId: { alumnoId: alumno.id, seccionId: u.id } },
-      });
-      // inscripciones previas en MP (mal ubicadas para este caso) — se limpian con sus notas de momentos
-      const enMp = await prisma.inscripcion.findMany({
-        where: { alumnoId: alumno.id, anoEscolarId: ano.id, activo: true, seccion: { codigo: 'MP' } },
-      });
-      let insId: string;
-      if (enU) {
-        await prisma.inscripcion.update({
-          where: { id: enU.id },
-          data: { activo: true, fechaRetiro: null, materiaPend1: p.mp1 || null, materiaPend2: p.mp2 || null },
-        });
-        insId = enU.id;
-        eqvActualizadas++;
-      } else if (enMp.length > 0) {
-        // mover la inscripción MP a la U; sus notaMomento eran lapsos mal importados -> borrar
-        insId = enMp[0].id;
-        const borram = await prisma.notaMomento.deleteMany({ where: { inscripcionId: insId } });
-        await prisma.inscripcion.update({
-          where: { id: insId },
-          data: { seccionId: u.id, materiaPend1: p.mp1 || null, materiaPend2: p.mp2 || null },
-        });
-        eqvMovidas++;
-        if (borram.count) console.log(`  EQV ${alumno.apellidos}: ${borram.count} notaMomento mal importados borrados (eran lapsos del bloque U)`);
-      } else {
-        const nro = (await prisma.inscripcion.count({ where: { seccionId: u.id, activo: true } })) + 1;
-        const nueva = await prisma.inscripcion.create({
-          data: { alumnoId: alumno.id, seccionId: u.id, anoEscolarId: ano.id, matricula: String(nro), materiaPend1: p.mp1 || null, materiaPend2: p.mp2 || null },
-        });
-        insId = nueva.id;
-        eqvCreadas++;
-      }
-      for (const m of enMp) {
-        if (m.id === insId) continue;
-        await prisma.notaMomento.deleteMany({ where: { inscripcionId: m.id } });
-        await prisma.inscripcion.delete({ where: { id: m.id } });
-      }
-      continue;
-    }
-
     const mp = mpPorGrado.get(gradoMp);
     if (!mp) { console.log(`  !! no existe sección MP de ${gradoMp}° (para alumno de ${p.grado}°)`); faltantes++; continue; }
     const existe = await prisma.inscripcion.findUnique({
@@ -177,7 +100,6 @@ async function main() {
     }
   }
   console.log(`inscripciones MP: ${creadas} creadas, ${actualizadas} actualizadas, ${movidas} movidas al grado correcto, ${faltantes} con problema`);
-  console.log(`régimen de equivalencia (EQV=U): ${eqvCreadas} creadas en U, ${eqvMovidas} movidas de MP a U, ${eqvActualizadas} actualizadas`);
 
   // 4) Marcar repitientes en su inscripción regular
   const reps: Rep[] = JSON.parse(readFileSync(join(D, 'repitientes.json'), 'utf8'));

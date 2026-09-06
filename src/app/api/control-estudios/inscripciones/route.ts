@@ -8,11 +8,16 @@ export async function GET(req: NextRequest) {
   if (!seccionId) return NextResponse.json({ error: 'seccionId requerido' }, { status: 400 });
   const seccion = await prisma.seccion.findUnique({ where: { id: seccionId } });
   if (!seccion) return NextResponse.json({ error: 'Sección no encontrada' }, { status: 404 });
-  const inscripciones = await prisma.inscripcion.findMany({
+  const inscripcionesRaw = await prisma.inscripcion.findMany({
     where: { seccionId },
-    orderBy: [{ activo: 'desc' }, { alumno: { apellidos: 'asc' } }, { alumno: { nombres: 'asc' } }],
     include: { alumno: true },
   });
+  // Orden del listado: activos primero y por CÉDULA de menor a mayor (regla de la escuela)
+  const cedNum = (c: string) => { const n = Number((c || '').replace(/\D/g, '')); return isFinite(n) ? n : Number.MAX_SAFE_INTEGER; };
+  const inscripciones = inscripcionesRaw.sort((a, b) =>
+    (b.activo ? 1 : 0) - (a.activo ? 1 : 0)
+    || cedNum(a.alumno.cedula) - cedNum(b.alumno.cedula)
+    || a.alumno.apellidos.localeCompare(b.alumno.apellidos));
   // Otras inscripciones activas del mismo año (p.ej. su sección regular si estamos en la MP, o viceversa)
   const alumnoIds = inscripciones.map(i => i.alumnoId);
   const otras = alumnoIds.length

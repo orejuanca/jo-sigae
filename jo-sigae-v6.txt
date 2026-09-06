@@ -1,0 +1,109 @@
+================================================================
+JO-SIGAE - ENTREGA v6 - NOTAS CON EL HISTORICO DEL EXCEL
+================================================================
+
+Que trae esta entrega (todo lo anterior se respeta):
+----------------------------------------------------------------
+1) NOTAS HISTORICAS IMPORTADAS. La pantalla NOTAS ya no arranca
+   vacia: trae las notas reales 2021-2022 copiadas 1:1 desde el
+   Excel (verificacion automatica celda por celda):
+   - 26.153 notas de lapso (incluye letras OC/PG)
+   - 2.568 notas de GRUPO
+   - 51 notas de momentos de materias pendientes
+   Nada inventado: solo se copio lo que esta en el Excel.
+   La definitiva NO se importa: la calcula el sistema igual que
+   el Excel (promedio de los 3 lapsos).
+
+2) GRUPO. Columna nueva en todas las secciones (1 a 5, regulares
+   y MP), igual que en la planilla. Valor usado en 2021-22:
+   EXONERADO (lista desplegable). En la pestana DEFINITIVAS
+   aparece su final cuando los 3 lapsos coinciden.
+
+3) OC con EX. La lista de OC ahora trae A/B/C/D y EX, ademas de
+   PG que ya lo tenia. (En el Excel de 2021-22 OC solo tiene
+   A-D, pero la opcion EX queda disponible como pediste.)
+
+4) NC y P. Los codigos del Excel ahora se aceptan en las
+   materias numericas: NC (no cursante) y P (pendiente).
+   La definitiva sigue al Excel: si un lapso es P, el final es
+   P; NC no promedia.
+
+5) CEDULA Y ORDEN. En todos los listados la CEDULA es la primera
+   columna y todos van ordenados por cedula de MENOR a MAYOR:
+   la planilla de notas (regular y MP), la nomina de inscripcion
+   y el buscador de alumnos. (Los que ya tenian cedula arriba
+   siguen igual.)
+
+PASOS (PowerShell - todo en D:\, con PNPM)
+----------------------------------------------------------------
+1) Descomprimir y copiar sobre tu proyecto (sin tocar tu .env):
+     Expand-Archive .\download\jo-sigae-b2-notas-v6.zip -DestinationPath D:\jo-sigae-v6 -Force
+     robocopy D:\jo-sigae-v6 D:\jo-sigae /E /XF LEEME.txt .env
+
+2) Dependencias y base de datos (crea 1 tabla nueva: notaGrupo;
+   NO modifica ningun dato existente):
+     cd D:\jo-sigae
+     pnpm install
+     pnpm db:generate
+     pnpm db:push
+
+3) IMPORTAR LAS NOTAS HISTORICAS (paso nuevo, obligatorio para
+   ver las notas del Excel):
+     pnpm dlx tsx scripts/seed_notas_historicas.ts
+   Es idempotente: puedes correrlo las veces que quieras, no
+   duplica ni borra nada. Al terminar imprime un resumen:
+   notaLapso=26153 - notaGrupo=2568 - notaMomento=51
+   (si tu base ya tenia notas escritas a mano, esas se conservan
+   y el import las actualiza con el valor del Excel).
+
+4) Arrancar y entrar:
+     pnpm dev
+   Abrir http://localhost:3000/control-estudios/notas (menu NOTAS)
+
+VERIFICACION DE 5 MINUTOS
+----------------------------------------------------------------
+A) NOTAS > GRADO 1 > SECCION A (con notas ya cargadas):
+   - 24 estudiantes ordenados por cedula (V 32787155 primero).
+   - Primera fila: OSPINO BLANQUICET, CRISTOFER ALEJANDRO
+     CA 2 - ILE 2.5 - MA 2 - EF 2 - AP 2 - CN 5 - GHC 2,
+     OC D - PG EX - GRUPO EXONERADO (todo "completo").
+   - Pestana DEFINITIVAS: ILE 2.17 y CN 3 (promedio exacto).
+B) NOTAS > GRADO 1 > SECCION MP:
+   - 7 estudiantes - 8 pendientes, ordenados por cedula.
+   - PEREZ LACEDES EF: 13 y * en 2M/3M/4M -> APROBADA 1M - 13.
+   - ABARCA QUINTANA MA: IN IN IN 10 -> APROBADA 4M - 10.
+C) NOTAS > GRADO 4 > SECCION MP:
+   - NELCHA HEREDIA (2 hermanas): MA/ILE IN IN IN IN
+     -> APLAZADA - QUEDA MP.
+   - BLANCO COLMENARES BI: 14 -> APROBADA (su fila del Excel
+     esta en un lugar raro y se importo igual).
+D) NOTAS > GRADO 5 > SECCION D > pestana DEFINITIVAS:
+   - Las hermanas NELCHA HEREDIA muestran P en el final de casi
+     todas las materias (asi lo tiene el Excel: lapso 3 = P).
+   - OC y PGCRP muestran - (en el Excel su lapso 3 esta vacio).
+E) INSCRIPCION: la nomina de una seccion arranca con CEDULA y
+   ordenada de menor a mayor.
+
+NOTAS DEL EXCEL ORIGINAL (para que no te sorprendan)
+----------------------------------------------------------------
+- 4C SOSA OJEDA CA lapso 2: el Excel trae "20'" (con apostrofo).
+  Se importo como 20.
+- 5D NELCHA HEREDIA BI lapso 2: el Excel trae 22 (sic). Se copio
+  tal cual, como todo lo demas.
+- El Excel tiene 1 fila (de 908) sin inscripcion regular: es un
+  alumno MP; sus notas se importaron por el lado MP.
+
+SI ALGO SALE MAL
+----------------------------------------------------------------
+- "Unknown command generate": el generate no lleva "db".
+  Usa "pnpm db:generate".
+- Si node_modules fue instalado con npm en algun momento y pnpm
+  se queja: borra node_modules y repite "pnpm install".
+- Notas vacias en pantalla: confirma que corriste el paso 3
+  (seed_notas_historicas) y que el ano activo sea 2021-2022.
+- La vista NOTAS no aparece: confirma que el robocopy copio
+  src/app/control-estudios/notas y reinicia "pnpm dev".
+
+TU EQUIPO (recordatorio)
+----------------------------------------------------------------
+- Todo en D:\jo-sigae. Tu .env (PostgreSQL 18 local) NO se toca.

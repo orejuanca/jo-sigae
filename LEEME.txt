@@ -1,0 +1,62 @@
+================================================================
+JO-SIGAE - ENTREGA v19 - IMPRESION DEVUELTA COMO ESTABA (REVERT
+DE LO AGREGADO EN v17/v18)
+   (se aplica ENCIMA de cualquier version anterior; no toca
+   datos ni el diseno de tus formatos)
+================================================================
+
+QUE PASO
+----------------------------------------------------------------
+La vista previa / impresion del EDITOR DE FORMATOS funcionaba
+bien y los cambios que se le hicieron en v17/v18 la complicaron.
+Pido disculpas por eso: se deshizo todo. Esta version devuelve
+el flujo de impresion EXACTAMENTE como estaba en la v16, que es
+la que te funcionaba.
+
+QUE QUEDA EXACTAMENTE IGUAL QUE EN LA v16
+----------------------------------------------------------------
+1) EDITOR DE FORMATOS: el boton Imprimir vuelve a comportarse
+   como siempre: arma la hoja y abre el dialogo de impresion del
+   navegador, con el auto-ajuste de letra en celdas apretadas y
+   esperando a que cargue el logo antes de imprimir. El boton
+   Vista Previa de pantalla sigue igual. Nada nuevo encima.
+
+2) RESUMEN FINAL: la vista de pantalla vuelve al render de
+   siempre (el que se veia bien) y el boton IMPRIMIR HOJA vuelve
+   a imprimir directo con el dialogo del navegador, como en la
+   v16.
+
+3) El componente nuevo que se habia agregado (panel de impresion
+   de la v18) fue ELIMINADO del codigo. No queda rastro.
+
+QUE NO SE PIERDE (todo lo bueno de v15 y v16 sigue incluido)
+----------------------------------------------------------------
+- El asterisco (*) sigue siendo valido en OC/PGCRP/GRUPO en
+  Notas y en el Resumen Final (v16).
+- Guardar Como en el editor sigue creando una copia y deja el
+  original intacto (v15).
+- Los datos, la base de datos y el diseno de tus formatos: no se
+  tocan.
+
+COMO APLICAR (PowerShell, igual que siempre)
+----------------------------------------------------------------
+1) Extrae el zip en D:\temp-v19 (quedan los archivos sueltos:
+   src, package.json, LEEME.txt, etc., igual que la v16/v17/v18)
+2) Abre PowerShell en D:\temp-v19 y ejecuta:
+   Copy-Item -Path 'D:\temp-v19\*' -Destination 'D:\jo-sigae\' -Force -Recurse
+3) Si la app estaba corriendo, detenla (Ctrl+C) y vuelve a subir:
+   pnpm dev
+4) NO hace falta db:push (no hay cambios de base de datos).
+   No hace falta aplicar versiones anteriores antes: la v19 ya
+   las incluye todas.
+
+VERIFICACION DE 5 MINUTOS
+----------------------------------------------------------------
+A) Editor de formatos -> abre un layout -> Imprimir: abre el
+   dialogo de impresion del navegador como siempre (sin paneles
+   nuevos de por medio).
+B) Resumen Final -> 5° D FINAL JULIO - 2022 -> PRIMERA HOJA: la
+   planilla se ve en pantalla como siempre; IMPRIMIR HOJA abre
+   el dialogo de impresion del navegador directamente.
+C) Notas: asienta * en OC/PGCRP/GRUPO -> se guarda tal cual (v16).
+D) Guardar Como en el editor: copia nueva + original intacto (v15).

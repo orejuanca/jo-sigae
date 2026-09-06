@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "npx prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint .",
@@ -13,7 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "seed": "npx tsx prisma/seed.ts",
-    "vercel-build": "npx prisma generate && next build",
+    "vercel-build": "prisma generate && next build",
     "db:backup": "powershell -Command \"$fecha = Get-Date -Format 'yyyy-MM-dd_HH-mm'; pg_dump -U postgres -d jo_sigae -F c -b -v -f \\\"db-backup/backup_$fecha.dump\\\"\""
   },
   "dependencies": {

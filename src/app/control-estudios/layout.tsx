@@ -12,6 +12,9 @@ const NAV = [
   { href: '/control-estudios/docente-seccion', label: 'DOCENTE-MATERIA' },
   { href: '/control-estudios/inscripcion', label: 'INSCRIPCIÓN' },
   { href: '/control-estudios/alumnos', label: 'ALUMNOS' },
+  { href: '/control-estudios/notas', label: 'NOTAS' },
+  { href: '/control-estudios/revision', label: 'REVISIÓN' },
+  { href: '/control-estudios/rf', label: 'RESUMEN FINAL' },
 ];
 
 export default function ControlLayout({ children }: { children: React.ReactNode }) {

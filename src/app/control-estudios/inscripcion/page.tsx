@@ -180,21 +180,20 @@ export default function InscripcionPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-slate-50 text-left text-xs text-gray-500">
-                <th className="px-3 py-3 w-12">Nº</th>
                 <th className="px-3 py-3 w-32">CÉDULA</th>
                 <th className="px-3 py-3">APELLIDOS</th>
                 <th className="px-3 py-3">NOMBRES</th>
                 <th className="px-3 py-3 w-14">SEXO</th>
                 <th className="px-3 py-3 w-28">F. NAC.</th>
                 <th className="px-3 py-3 w-14">EDAD</th>
+                <th className="px-3 py-3 w-12">Nº</th>
                 <th className="px-3 py-3 w-24">ESTADO</th>
                 {abierto && <th className="px-3 py-3 w-20"></th>}
               </tr>
             </thead>
             <tbody>
-              {inscritos.map((i, idx) => (
+              {inscritos.map((i) => (
                 <tr key={i.inscripcionId} className={`border-b ${!i.activo ? 'bg-gray-50 text-gray-400 line-through' : ''}`}>
-                  <td className="px-3 py-1.5 text-gray-400">{idx + 1}</td>
                   <td className="px-3 py-1.5 font-mono text-xs">{i.cedula}</td>
                   <td className="px-3 py-1.5">
                     <Link href={`/control-estudios/alumnos?q=${encodeURIComponent(i.cedula)}`} className="hover:text-blue-700 hover:underline">{i.apellidos}</Link>
@@ -203,6 +202,7 @@ export default function InscripcionPage() {
                   <td className="px-3 py-1.5">{i.sexo}</td>
                   <td className="px-3 py-1.5 text-xs text-gray-500">{i.fechaNac?.slice(0, 10)}</td>
                   <td className="px-3 py-1.5">{edad(i.fechaNac)}</td>
+                  <td className="px-3 py-1.5 text-gray-400">{i.matricula ?? ''}</td>
                   <td className="px-3 py-1.5">{i.activo
                     ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">ACTIVO</span>
                     : <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-500">RETIRADO</span>}

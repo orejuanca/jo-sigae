@@ -699,6 +699,7 @@ function CertVisualEditorContent() {
   const [loadingLayouts, setLoadingLayouts] = useState(false)
   const [loadingLayout, setLoadingLayout] = useState(false)
   const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null)
+  const [originalName, setOriginalName] = useState('') // nombre con el que se CARGÓ el layout: si cambia al guardar, es COPIA (el original queda intacto)
   const [pageSize, setPageSize] = useState<string>('legal')
   // Logo flotante membrete: vive en gridConfig.logoOverlay (se guarda con el layout)
   const [showLogoModal, setShowLogoModal] = useState(false)
@@ -899,6 +900,7 @@ function CertVisualEditorContent() {
         if (autoScale) { setPrintScale(autoScale) }
             for (const ls of LAYOUT_SCALES) { if (layout.nombre === ls.nombre) { setPrintScale(ls.escala); break } }
             setSaveName(layout.nombre || '')
+            setOriginalName(layout.nombre || '')
             toast({ title: 'Layout cargado', description: `"${layout.nombre}"` })
           }
         })
@@ -923,6 +925,7 @@ function CertVisualEditorContent() {
       })
       setEditingLayoutId(null)
       setSaveName('')
+      setOriginalName('')
       setGridInitialized(true)
     }
   }, [searchParams, plan, toast])
@@ -1760,15 +1763,21 @@ function CertVisualEditorContent() {
       return
     }
 
+    const nombreNuevo = saveName.trim()
+    // Regla Guardar Como: si el layout está abierto y el usuario CAMBIA el nombre en el
+    // diálogo, se crea una COPIA nueva (POST) y el original queda intacto. Solo se
+    // actualiza (PUT) cuando el nombre sigue siendo el mismo que el del original.
+    const esCopia = !!editingLayoutId && nombreNuevo !== originalName
+
     setSaving(true)
     try {
-      if (editingLayoutId) {
-        const datosWithMeta = { ...gridConfig, _printScale: printScale, meta: { ...(gridConfig as any).meta, plan } }
+      const datosWithMeta = { ...gridConfig, _printScale: printScale, meta: { ...(gridConfig as any).meta, plan } }
+      if (editingLayoutId && !esCopia) {
         const res = await fetch(`/api/cert-layouts?id=${editingLayoutId}&plan=${plan}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            nombre: saveName.trim(),
+            nombre: nombreNuevo,
             datos: datosWithMeta,
           }),
         })
@@ -1779,16 +1788,15 @@ function CertVisualEditorContent() {
         setShowSaveDialog(false)
         toast({
           title: '¡Actualizado!',
-          description: `"${saveName.trim()}" se actualizó correctamente.`,
+          description: `"${nombreNuevo}" se actualizó correctamente.`,
         })
         router.push('/editor-formatos')
       } else {
-        const datosWithMeta = { ...gridConfig, _printScale: printScale, meta: { ...(gridConfig as any).meta, plan } }
         const res = await fetch(`/api/cert-layouts?plan=${plan}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            nombre: saveName.trim(),
+            nombre: nombreNuevo,
             datos: datosWithMeta,
           }),
         })
@@ -1796,10 +1804,17 @@ function CertVisualEditorContent() {
           const err = await res.json()
           throw new Error(err.error || 'Error al guardar')
         }
+        const creado = await res.json().catch(() => null)
+        if (creado?.id) {
+          setEditingLayoutId(creado.id)
+          setOriginalName(nombreNuevo)
+        }
         setShowSaveDialog(false)
         toast({
-          title: '¡Guardado exitoso!',
-          description: `"${saveName.trim()}" se guardó correctamente en la base de datos.`,
+          title: esCopia ? '¡Copia guardada!' : '¡Guardado exitoso!',
+          description: esCopia
+            ? `"${nombreNuevo}" se guardó como copia nueva; el original "${originalName}" queda intacto.`
+            : `"${nombreNuevo}" se guardó correctamente en la base de datos.`,
         })
         router.push('/editor-formatos')
       }
@@ -2350,6 +2365,11 @@ img{max-width:100%;height:auto}
               className="mt-1.5"
               autoFocus
             />
+            {editingLayoutId && originalName && saveName.trim() && saveName.trim() !== originalName && (
+              <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                Cambiaste el nombre: se guardará como COPIA nueva y el original "{originalName}" queda intacto.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button

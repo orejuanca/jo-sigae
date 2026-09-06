@@ -60,3 +60,6 @@ server.log
  d b / * . d b - w a l 
  
  db-backup/
+download/*.zip
+download/*.patch
+download/*.png
